@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA Control Operativo</title>
+<title>EXPLORA FINAL PROBADA</title>
 <style>
 :root{
   --bg:#080808;
@@ -229,7 +229,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
-    <div class="subtitle">Control Operativo · V15 ESTABLE</div>
+    <div class="subtitle">Control Operativo · FINAL PROBADA</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -262,12 +262,23 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="metric"><span>Facturación</span><strong id="todayTotal">$0</strong></div>
     </div>
 
+    <div class="card">
+      <h3>Mi resumen</h3>
+      <div class="grid">
+        <div class="metric"><span>Semana</span><strong id="driverWeekTotal">$0</strong></div>
+        <div class="metric"><span>Viajes semana</span><strong id="driverWeekTrips">0</strong></div>
+        <div class="metric"><span>Mes</span><strong id="driverMonthTotal">$0</strong></div>
+        <div class="metric"><span>Viajes mes</span><strong id="driverMonthTrips">0</strong></div>
+      </div>
+      <p class="note">Solo información real, sin metas ni presión por objetivos.</p>
+    </div>
+
     <div class="grid">
-      <button class="bigbtn" onclick="openNewService()"><span class="icon">🚕</span><strong>Nuevo servicio</strong></button>
-      <button class="bigbtn" onclick="showPanel('derivePanel')"><span class="icon">🔄</span><strong>Derivar servicio</strong></button>
-      <button class="bigbtn" onclick="showPanel('expensePanel')"><span class="icon">💸</span><strong>Cargar gasto</strong></button>
-      <button class="bigbtn" onclick="showPanel('historyPanel')"><span class="icon">📋</span><strong>Historial hoy</strong></button>
-      <button class="bigbtn" onclick="closeDay()"><span class="icon">✅</span><strong>Cerrar día</strong></button>
+      <button id="btnNuevoServicio" type="button" class="bigbtn"><span class="icon">🚕</span><strong>Nuevo servicio</strong></button>
+      <button id="btnDerivarServicio" type="button" class="bigbtn"><span class="icon">🔄</span><strong>Derivar servicio</strong></button>
+      <button id="btnCargarGasto" type="button" class="bigbtn"><span class="icon">💸</span><strong>Cargar gasto</strong></button>
+      <button id="btnHistorialHoy" type="button" class="bigbtn"><span class="icon">📋</span><strong>Historial hoy</strong></button>
+      <button id="btnCerrarDia" type="button" class="bigbtn"><span class="icon">✅</span><strong>Cerrar día</strong></button>
     </div>
 
     <div id="servicePanel" class="card hidden">
@@ -298,6 +309,9 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
         <option value="transferencia">Transferencia</option>
         <option value="tarjeta">Tarjeta</option>
       </select>
+
+      <label>Observación opcional</label>
+      <input id="serviceNote" placeholder="Ej: Hotel, pasajero, cambio de destino" />
 
       <button id="saveTripBtn" class="btn-gold" onclick="saveTrip()">Guardar servicio</button>
       <div id="serviceMsg"></div>
@@ -335,6 +349,9 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
         <option value="transferencia">Transferencia</option>
         <option value="tarjeta">Tarjeta</option>
       </select>
+
+      <label>Observación opcional</label>
+      <input id="deriveNote" placeholder="Ej: Coordinado por WhatsApp" />
 
       <button id="saveDerivationBtn" class="btn-gold" onclick="saveDerivation()">Derivar servicio</button>
       <div id="deriveMsg"></div>
@@ -423,6 +440,11 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
     </div>
 
     <div class="card">
+      <h3>Resultado mensual</h3>
+      <div id="adminResultadoMensual"></div>
+    </div>
+
+    <div class="card">
       <h3>Ranking mensual</h3>
       <div id="adminRankingMensual"></div>
     </div>
@@ -462,6 +484,11 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
     <div class="card">
       <h3>Cierres de hoy</h3>
       <div id="adminCierres"></div>
+    </div>
+
+    <div class="card">
+      <h3>Auditoría de hoy</h3>
+      <div id="adminAuditoria"></div>
     </div>
 
     <div class="card">
@@ -520,6 +547,12 @@ let adminRealtimeStarted = false;
 const $ = id => document.getElementById(id);
 const today = () => new Date().toISOString().slice(0,10);
 const currentMonth = () => new Date().toISOString().slice(0,7);
+const weekStart = () => {
+  const d = new Date();
+  const day = d.getDay() || 7;
+  d.setDate(d.getDate() - day + 1);
+  return d.toISOString().slice(0,10);
+};
 const money = n => "$" + Number(n || 0).toLocaleString("es-AR");
 
 function msg(el, text, ok=false){
@@ -587,6 +620,7 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
       await loadAdmin();
     }else{
       $("driverView").classList.remove("hidden");
+      conectarBotonesChofer();
       await loadDriver();
     }
 
@@ -616,6 +650,7 @@ async function loadDriver(){
   await loadDeriveDrivers();
   await checkKmToday();
   await loadTodayTrips();
+  await loadDriverSummary();
 }
 
 function setStatusButton(status){
@@ -663,12 +698,29 @@ async function checkKmToday(){
 }
 
 window.openNewService = async function(){
-  await checkKmToday();
-  if(!kmTodaySaved){
-    $("kmModal").classList.remove("hidden");
-    return;
+  try{
+    if(!currentProfile || currentProfile.rol === "admin"){
+      alert("Esta acción es solo para choferes.");
+      return;
+    }
+
+    if(!currentVehicle){
+      alert("No hay vehículo asignado.");
+      return;
+    }
+
+    await checkKmToday();
+
+    if(!kmTodaySaved){
+      $("kmModal").classList.remove("hidden");
+      return;
+    }
+
+    showPanel("servicePanel");
+
+  }catch(e){
+    alert("Error abriendo Nuevo servicio: " + e.message);
   }
-  showPanel("servicePanel");
 }
 
 window.saveDailyKm = async function(){
@@ -695,8 +747,13 @@ window.saveDailyKm = async function(){
 }
 
 window.showPanel = function(id){
-  ["servicePanel","derivePanel","expensePanel","historyPanel"].forEach(p=>$(p).classList.add("hidden"));
-  $(id).classList.remove("hidden");
+  ["servicePanel","derivePanel","expensePanel","historyPanel"].forEach(p=>{
+    const el = $(p);
+    if(el) el.classList.add("hidden");
+  });
+
+  const target = $(id);
+  if(target) target.classList.remove("hidden");
 }
 
 
@@ -744,6 +801,24 @@ window.updateServicePrice = function(){
   $("chargedAmount").value = min;
 }
 
+
+async function registrarAuditoria(accion, detalle = {}){
+  try{
+    await addDoc(collection(db,"auditoria"),{
+      fecha: today(),
+      mes: currentMonth(),
+      hora: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
+      usuario: currentUserId || "sistema",
+      accion,
+      detalle,
+      creado: serverTimestamp()
+    });
+  }catch(e){
+    console.warn("No se pudo registrar auditoría", e);
+  }
+}
+
+
 window.saveTrip = async function(){
   if(savingTrip) return;
   savingTrip = true;
@@ -776,8 +851,18 @@ window.saveTrip = async function(){
       tarifaMinima: min,
       monto: charged,
       pago: $("paymentMethod").value,
+      observacion: $("serviceNote").value.trim(),
       tarifaSuperior: charged > min,
       creado: serverTimestamp()
+    });
+
+    await registrarAuditoria("servicio_guardado",{
+      chofer: currentUserId,
+      vehiculo: currentVehicle.id,
+      servicio: service.nombre,
+      monto: charged,
+      pago: $("paymentMethod").value,
+      tipo: tramoUnico ? "Tramo único" : (type === "solo_ida" ? "Solo ida" : "Ida y vuelta")
     });
 
     await updateDoc(doc(db,"choferes",currentUserId),{
@@ -786,10 +871,12 @@ window.saveTrip = async function(){
 
     msg($("serviceMsg"),"Servicio guardado correctamente.",true);
     await loadTodayTrips();
+    await loadDriverSummary();
 
     setTimeout(()=>{
       $("servicePanel").classList.add("hidden");
       $("serviceMsg").innerHTML="";
+      $("serviceNote").value="";
     },900);
 
   }catch(e){
@@ -801,6 +888,42 @@ window.saveTrip = async function(){
   }
 }
 
+
+async function loadDriverSummary(){
+  const qMes = query(
+    collection(db,"viajes"),
+    where("mes","==",currentMonth()),
+    where("chofer","==",currentUserId)
+  );
+
+  const snapMes = await getDocs(qMes);
+
+  let mesTotal = 0;
+  let mesViajes = 0;
+  let semanaTotal = 0;
+  let semanaViajes = 0;
+  const inicioSemana = weekStart();
+
+  snapMes.forEach(d=>{
+    const v = d.data();
+    const monto = Number(v.monto || 0);
+
+    mesTotal += monto;
+    mesViajes++;
+
+    if((v.fecha || "") >= inicioSemana){
+      semanaTotal += monto;
+      semanaViajes++;
+    }
+  });
+
+  $("driverWeekTotal").textContent = money(semanaTotal);
+  $("driverWeekTrips").textContent = semanaViajes;
+  $("driverMonthTotal").textContent = money(mesTotal);
+  $("driverMonthTrips").textContent = mesViajes;
+}
+
+
 async function loadTodayTrips(){
   const q = query(collection(db,"viajes"), where("fecha","==",today()), where("chofer","==",currentUserId));
   const snap = await getDocs(q);
@@ -808,7 +931,7 @@ async function loadTodayTrips(){
   snap.forEach(d=>{
     const v = d.data();
     total += Number(v.monto || 0); count++;
-    html += `<div class="trip"><b>${v.servicioNombre}</b><br><small>${v.hora} · ${v.tipo} · ${v.pago}</small><br><b style="color:var(--gold)">${money(v.monto)}</b>${v.tarifaSuperior ? `<br><span class="extra-fare">⭐ Tarifa superior</span>` : ""}</div>`;
+    html += `<div class="trip"><b>${v.servicioNombre}</b><br><small>${v.hora} · ${v.tipo} · ${v.pago}</small><br>${v.observacion ? `<small>Obs: ${v.observacion}</small><br>` : ""}<b style="color:var(--gold)">${money(v.monto)}</b>${v.tarifaSuperior ? `<br><span class="extra-fare">⭐ Tarifa superior</span>` : ""}</div>`;
   });
   $("todayTrips").textContent = count;
   $("todayTotal").textContent = money(total);
@@ -911,6 +1034,7 @@ window.saveDerivation = async function(){
 
   const tipoTexto = tramoUnico ? "Tramo único" : (type === "solo_ida" ? "Solo ida" : "Ida y vuelta");
   const hora = new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"});
+  const observacion = $("deriveNote").value.trim();
 
   await addDoc(collection(db,"derivaciones"),{
     fecha: today(),
@@ -926,6 +1050,7 @@ window.saveDerivation = async function(){
     tarifaMinima: min,
     monto: charged,
     pago: $("derivePaymentMethod").value,
+    observacion,
     tarifaSuperior: charged > min,
     estado: "derivado",
     puntosOrigen: 1,
@@ -946,10 +1071,21 @@ window.saveDerivation = async function(){
     tarifaMinima: min,
     monto: charged,
     pago: $("derivePaymentMethod").value,
+    observacion,
     tarifaSuperior: charged > min,
     derivadoPor: currentUserId,
     derivacion: true,
     creado: serverTimestamp()
+  });
+
+  await registrarAuditoria("servicio_derivado",{
+    origen: currentUserId,
+    destino,
+    vehiculoDestino,
+    servicio: service.nombre,
+    monto: charged,
+    pago: $("derivePaymentMethod").value,
+    tipo: tipoTexto
   });
 
   await updateDoc(doc(db,"choferes",currentUserId),{
@@ -958,10 +1094,12 @@ window.saveDerivation = async function(){
 
   msg($("deriveMsg"),"Servicio derivado correctamente.",true);
   await loadTodayTrips();
+  await loadDriverSummary();
 
   setTimeout(()=>{
     $("derivePanel").classList.add("hidden");
     $("deriveMsg").innerHTML="";
+    $("deriveNote").value="";
   },900);
 
   }catch(e){
@@ -1006,6 +1144,14 @@ window.saveExpense = async function(){
     creado: serverTimestamp()
   });
 
+  await registrarAuditoria("gasto_guardado",{
+    chofer: currentUserId,
+    vehiculo: currentVehicle.id,
+    tipo,
+    monto,
+    detalle
+  });
+
   await updateDoc(doc(db,"choferes",currentUserId),{
     ultimaActividad: new Date().toLocaleString("es-AR")
   });
@@ -1030,65 +1176,88 @@ window.saveExpense = async function(){
 
 
 window.closeDay = async function(){
-  if(!currentVehicle){
-    alert("No hay vehículo asignado.");
-    return;
+  try{
+    if(!currentProfile || currentProfile.rol === "admin"){
+      alert("Esta acción es solo para choferes.");
+      return;
+    }
+
+    if(!currentVehicle){
+      alert("No hay vehículo asignado.");
+      return;
+    }
+
+    const q = query(
+      collection(db,"viajes"),
+      where("fecha","==",today()),
+      where("chofer","==",currentUserId)
+    );
+
+    const snap = await getDocs(q);
+
+    let total = 0;
+    let efectivo = 0;
+    let transferencia = 0;
+    let tarjeta = 0;
+    let viajes = 0;
+
+    snap.forEach(d=>{
+      const v = d.data();
+      const monto = Number(v.monto || 0);
+
+      total += monto;
+      viajes++;
+
+      if(v.pago === "efectivo") efectivo += monto;
+      if(v.pago === "transferencia") transferencia += monto;
+      if(v.pago === "tarjeta") tarjeta += monto;
+    });
+
+    const cierreId = `${currentUserId}_${today()}`;
+
+    await setDoc(doc(db,"cierres_diarios",cierreId),{
+      fecha: today(),
+      mes: currentMonth(),
+      chofer: currentUserId,
+      vehiculo: currentVehicle.id,
+      viajes,
+      efectivo,
+      transferencia,
+      tarjeta,
+      total,
+      cerrado: true,
+      creado: serverTimestamp()
+    });
+
+    if(typeof registrarAuditoria === "function"){
+      await registrarAuditoria("cierre_diario",{
+        chofer: currentUserId,
+        vehiculo: currentVehicle.id,
+        viajes,
+        efectivo,
+        transferencia,
+        tarjeta,
+        total
+      });
+    }
+
+    await updateDoc(doc(db,"choferes",currentUserId),{
+      ultimoCierre: today(),
+      ultimaActividad: new Date().toLocaleString("es-AR")
+    });
+
+    alert(
+      `Cierre guardado correctamente\n\n` +
+      `Viajes: ${viajes}\n` +
+      `Efectivo: ${money(efectivo)}\n` +
+      `Transferencia: ${money(transferencia)}\n` +
+      `Tarjeta: ${money(tarjeta)}\n` +
+      `Total: ${money(total)}`
+    );
+
+  }catch(e){
+    alert("Error cerrando día: " + e.message);
   }
-
-  const q = query(
-    collection(db,"viajes"),
-    where("fecha","==",today()),
-    where("chofer","==",currentUserId)
-  );
-
-  const snap = await getDocs(q);
-
-  let total = 0;
-  let efectivo = 0;
-  let transferencia = 0;
-  let tarjeta = 0;
-  let viajes = 0;
-
-  snap.forEach(d=>{
-    const v = d.data();
-    const monto = Number(v.monto || 0);
-
-    total += monto;
-    viajes++;
-
-    if(v.pago === "efectivo") efectivo += monto;
-    if(v.pago === "transferencia") transferencia += monto;
-    if(v.pago === "tarjeta") tarjeta += monto;
-  });
-
-  const cierreId = `${currentUserId}_${today()}`;
-
-  await setDoc(doc(db,"cierres_diarios",cierreId),{
-    fecha: today(),
-    chofer: currentUserId,
-    vehiculo: currentVehicle.id,
-    viajes,
-    efectivo,
-    transferencia,
-    tarjeta,
-    total,
-    cerrado: true,
-    creado: serverTimestamp()
-  });
-
-  await updateDoc(doc(db,"choferes",currentUserId),{
-    ultimoCierre: today(),
-    ultimaActividad: new Date().toLocaleString("es-AR")
-  });
-
-  alert(
-    `Cierre guardado correctamente\\n\\n` +
-    `Viajes: ${viajes}\\n` +
-    `Efectivo: ${money(efectivo)}\\n` +
-    `Transferencia: ${money(transferencia)}\\n` +
-    `Tarjeta: ${money(tarjeta)}\\n` +
-    `Total: ${money(total)}`
-  );
 }
 
 
@@ -1188,7 +1357,7 @@ async function loadDerivacionesAdmin(){
     html += `
       <div class="trip">
         <b>${x.origen} → ${x.destino}</b><br>
-        <small>${x.servicioNombre} · ${x.tipo} · ${x.pago}</small><br>
+        <small>${x.servicioNombre} · ${x.tipo} · ${x.pago}</small><br>${x.observacion ? `<small>Obs: ${x.observacion}</small><br>` : ""}
         <b style="color:var(--gold)">${money(x.monto || 0)}</b>
       </div>
     `;
@@ -1299,6 +1468,11 @@ window.actualizarTarifa = async function(id){
     precio:nuevoPrecio
   });
 
+  await registrarAuditoria("tarifa_actualizada",{
+    servicioId:id,
+    nuevoPrecio
+  });
+
   alert("Tarifa actualizada correctamente.");
   await loadTarifasAdmin();
 }
@@ -1349,7 +1523,7 @@ function startAdminRealtime(){
   if(adminRealtimeStarted) return;
   adminRealtimeStarted = true;
 
-  const colecciones = ["viajes","gastos","derivaciones","cierres_diarios","choferes","vehiculos","servicios"];
+  const colecciones = ["viajes","gastos","derivaciones","cierres_diarios","choferes","vehiculos","servicios","auditoria"];
 
   colecciones.forEach(nombre=>{
     onSnapshot(collection(db,nombre), ()=>{
@@ -1359,6 +1533,38 @@ function startAdminRealtime(){
     });
   });
 }
+
+
+async function loadResultadoMensualAdmin(){
+  const qViajes = query(collection(db,"viajes"), where("mes","==",currentMonth()));
+  const qGastos = query(collection(db,"gastos"), where("mes","==",currentMonth()));
+
+  const viajesSnap = await getDocs(qViajes);
+  const gastosSnap = await getDocs(qGastos);
+
+  let ingresos = 0;
+  let gastos = 0;
+
+  viajesSnap.forEach(d=>{
+    ingresos += Number(d.data().monto || 0);
+  });
+
+  gastosSnap.forEach(d=>{
+    gastos += Number(d.data().monto || 0);
+  });
+
+  const neto = ingresos - gastos;
+
+  $("adminResultadoMensual").innerHTML = `
+    <div class="grid">
+      <div class="metric"><span>Facturación mes</span><strong>${money(ingresos)}</strong></div>
+      <div class="metric"><span>Gastos mes</span><strong>${money(gastos)}</strong></div>
+      <div class="metric"><span>Resultado mes</span><strong>${money(neto)}</strong></div>
+      <div class="metric"><span>Mes</span><strong>${currentMonth()}</strong></div>
+    </div>
+  `;
+}
+
 
 async function loadRankingMensualAdmin(){
   const q = query(collection(db,"viajes"), where("mes","==",currentMonth()));
@@ -1396,6 +1602,46 @@ async function loadRankingMensualAdmin(){
 }
 
 
+
+async function loadAuditoriaAdmin(){
+  const q = query(collection(db,"auditoria"), where("fecha","==",today()));
+  const snap = await getDocs(q);
+
+  let html = "";
+
+  snap.forEach(d=>{
+    const a = d.data();
+    const detalle = a.detalle || {};
+
+    let descripcion = "";
+
+    if(a.accion === "servicio_guardado"){
+      descripcion = `${detalle.servicio || ""} · ${money(detalle.monto || 0)} · ${detalle.pago || ""}`;
+    }else if(a.accion === "servicio_derivado"){
+      descripcion = `${detalle.origen || ""} → ${detalle.destino || ""} · ${detalle.servicio || ""}`;
+    }else if(a.accion === "gasto_guardado"){
+      descripcion = `${detalle.tipo || ""} · ${money(detalle.monto || 0)} · ${detalle.vehiculo || ""}`;
+    }else if(a.accion === "cierre_diario"){
+      descripcion = `${detalle.viajes || 0} viajes · ${money(detalle.total || 0)}`;
+    }else if(a.accion === "tarifa_actualizada"){
+      descripcion = `${detalle.servicioId || ""} · ${money(detalle.nuevoPrecio || 0)}`;
+    }else{
+      descripcion = JSON.stringify(detalle);
+    }
+
+    html += `
+      <div class="trip">
+        <b>${a.accion}</b><br>
+        <small>${a.hora || ""} · ${a.usuario || ""}</small><br>
+        <small>${descripcion}</small>
+      </div>
+    `;
+  });
+
+  $("adminAuditoria").innerHTML = html || `<p class="note">Todavía no hay movimientos de auditoría hoy.</p>`;
+}
+
+
 async function loadAdmin(){
   await loadGastosAdmin();
   await loadChoferesAdmin();
@@ -1404,6 +1650,8 @@ async function loadAdmin(){
   await loadColaboracionAdmin();
   await loadDerivacionesAdmin();
   await loadCierresAdmin();
+  await loadAuditoriaAdmin();
+  await loadResultadoMensualAdmin();
   await loadRankingMensualAdmin();
 
   const q = query(collection(db,"viajes"), where("fecha","==",today()));
@@ -1457,7 +1705,7 @@ async function loadAdmin(){
     html += `
       <div class="trip">
         <b>${v.servicioNombre}</b><br>
-        <small>${chofer} · ${vehiculo} · ${v.pago} · ${v.tipo || ""}</small><br>
+        <small>${chofer} · ${vehiculo} · ${v.pago} · ${v.tipo || ""}</small><br>${v.observacion ? `<small>Obs: ${v.observacion}</small><br>` : ""}
         <b style="color:var(--gold)">${money(monto)}</b>
         ${v.tarifaSuperior ? `<br><span class="extra-fare">⭐ Tarifa superior</span>` : ""}
       </div>
@@ -1529,6 +1777,29 @@ async function loadAdmin(){
   $("adminRanking").innerHTML = rankingHtml || `<p class="note">Todavía no hay ranking para hoy.</p>`;
   $("adminHistory").innerHTML = html || `<p class="note">Todavía no hay servicios cargados hoy.</p>`;
 }
+
+function conectarBotonesChofer(){
+  const acciones = [
+    ["btnNuevoServicio", () => window.openNewService()],
+    ["btnDerivarServicio", () => showPanel("derivePanel")],
+    ["btnCargarGasto", () => showPanel("expensePanel")],
+    ["btnHistorialHoy", () => showPanel("historyPanel")],
+    ["btnCerrarDia", () => window.closeDay()]
+  ];
+
+  acciones.forEach(([id, fn])=>{
+    const btn = $(id);
+    if(btn && !btn.dataset.listenerOk){
+      btn.dataset.listenerOk = "1";
+      btn.addEventListener("click", (e)=>{
+        e.preventDefault();
+        e.stopPropagation();
+        fn();
+      });
+    }
+  });
+}
+
 const serviciosExplora = [
   { id:"salida_out_igr", nombre:"Salida-Out IGR", precio:25000 },
   { id:"local", nombre:"Local", precio:20000 },
