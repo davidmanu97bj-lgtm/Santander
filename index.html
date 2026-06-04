@@ -892,9 +892,13 @@ window.closeDay = async function(){
         12000,
         "El cierre tardó demasiado en cargar. Revisá internet y tocá Ver cierre semanal otra vez."
       );
+      cierreSemanalPendiente.pagoSemanal = await getEstadoPagoSemanal(currentUserId, periodo.id);
       cierreSemanalCache = { key: cacheKey, data: cierreSemanalPendiente };
     }
 
+    if(!cierreSemanalPendiente.pagoSemanal){
+      cierreSemanalPendiente.pagoSemanal = await getEstadoPagoSemanal(currentUserId, periodo.id);
+    }
     renderCierreSemanal(cierreSemanalPendiente);
   }catch(e){
     if(resumen){
@@ -1168,11 +1172,20 @@ async function calcularCierreSemanalLiviano(chofer, periodo){
 }
 
 function renderCierreSemanal(c){
+  const pago = c.pagoSemanal || null;
+  const yaPagado = pago && pago.pagado === true;
+
   const resultado = c.choferDebe > 0
     ? `<div class="msg err"><b>El chofer debe depositar a David:</b><br>${money(c.choferDebe)}</div>`
     : c.davidDebe > 0
       ? `<div class="msg ok"><b>David debe transferir al chofer:</b><br>${money(c.davidDebe)}</div>`
       : `<div class="msg ok"><b>Cierre equilibrado:</b><br>No hay diferencia.</div>`;
+
+  const pagoHtml = yaPagado
+    ? `<div class="paid-box" style="margin-top:10px">✅ Pago marcado como realizado<br><small>${pago.fechaPago || ""} ${pago.horaPago || ""} · ${pago.marcadoPor || ""}</small></div>`
+    : (c.choferDebe > 0 || c.davidDebe > 0)
+      ? `<button id="btnPagoChofer" class="btn-gold" style="margin-top:10px" onclick="marcarPagoSemanalChofer()">Marcar pagado</button><div class="note">Usá este botón cuando el dinero ya fue entregado/transferido y quedan al día.</div>`
+      : "";
 
   $("cierreSemanalResumen").innerHTML = `
     <div class="trip"><b>Período de trabajo</b><br><small>${c.periodo.start} al ${c.periodo.end}</small><br><small>Cierre obligatorio: ${c.periodo.closeDate}</small></div>
@@ -1182,7 +1195,7 @@ function renderCierreSemanal(c){
     <div class="trip"><b>Resultado 50/50</b><br><small>Neto: ${money(c.neto)}</small><br><small>Parte chofer: ${money(c.mitadChofer)}</small><br><small>Parte David: ${money(c.mitadDavid)}</small><br><small>Efectivo neto del chofer: ${money(c.efectivoNetoChofer)}</small><br><small>Diferencia antes de premio: ${money(c.diferenciaBase)}</small></div>
     <div class="trip"><b>Premio semanal</b><br><small>Ganador: ${c.ganadorSemana || "sin ganador"}</small><br><small>Premio configurado: ${money(c.premioSemanal)}</small><br><small>Aplicado a este chofer: ${money(c.premioAplicado)}</small></div>
     ${resultado}
-    ${(c.choferDebe > 0 || c.davidDebe > 0) ? `<button class="btn-gold" style="margin-top:10px" onclick="marcarPagoSemanalChofer()">Marcar pagado</button><div class="note">Usá este botón cuando el dinero ya fue entregado/transferido y quedan al día.</div>` : ""}
+    ${pagoHtml}
   `;
 }
 
@@ -1195,50 +1208,66 @@ window.confirmarCierreSemanal = async function(){
     return;
   }
 
-  const c = cierreSemanalPendiente;
-  const cierreId = `${currentUserId}_${c.periodo.id}`;
+  const btn = $("confirmarCierreSemanalBtn");
+  if(btn){
+    btn.disabled = true;
+    btn.textContent = "Confirmando cierre...";
+  }
 
-  await setDoc(doc(db,"cierres_semanales",cierreId),{
-    fechaConfirmacion: today(),
-    horaConfirmacion: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
-    periodoInicio: c.periodo.start,
-    periodoFin: c.periodo.end,
-    cierreObligatorio: c.periodo.closeDate,
-    periodoId: c.periodo.id,
-    chofer: currentUserId,
-    vehiculo: currentVehicle ? currentVehicle.id : "",
-    totalViajes: c.totalViajes,
-    cantidadViajes: c.cantidadViajes,
-    efectivo: c.efectivo,
-    transferencia: c.transferencia,
-    tarjeta: c.tarjeta,
-    totalGastos: c.totalGastos,
-    cantidadGastos: c.cantidadGastos,
-    neto: c.neto,
-    mitadChofer: c.mitadChofer,
-    mitadDavid: c.mitadDavid,
-    efectivoNetoChofer: c.efectivoNetoChofer,
-    ganadorSemana: c.ganadorSemana,
-    ganadorId: c.ganadorId,
-    premioSemanal: c.premioSemanal,
-    premioAplicado: c.premioAplicado,
-    diferenciaBase: c.diferenciaBase,
-    diferenciaFinal: c.diferenciaFinal,
-    choferDebe: c.choferDebe,
-    davidDebe: c.davidDebe,
-    confirmado: true,
-    creado: serverTimestamp()
-  });
+  try{
+    const c = cierreSemanalPendiente;
+    const cierreId = `${currentUserId}_${c.periodo.id}`;
 
-  await updateDoc(doc(db,"choferes",currentUserId),{
-    ultimoCierreSemanal: c.periodo.id,
-    ultimaActividad: new Date().toLocaleString("es-AR")
-  });
+    await setDoc(doc(db,"cierres_semanales",cierreId),{
+      fechaConfirmacion: today(),
+      horaConfirmacion: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
+      periodoInicio: c.periodo.start,
+      periodoFin: c.periodo.end,
+      cierreObligatorio: c.periodo.closeDate,
+      periodoId: c.periodo.id,
+      chofer: currentUserId,
+      vehiculo: currentVehicle ? currentVehicle.id : "",
+      totalViajes: c.totalViajes,
+      cantidadViajes: c.cantidadViajes,
+      efectivo: c.efectivo,
+      transferencia: c.transferencia,
+      tarjeta: c.tarjeta,
+      totalGastos: c.totalGastos,
+      cantidadGastos: c.cantidadGastos,
+      neto: c.neto,
+      mitadChofer: c.mitadChofer,
+      mitadDavid: c.mitadDavid,
+      efectivoNetoChofer: c.efectivoNetoChofer,
+      ganadorSemana: c.ganadorSemana,
+      ganadorId: c.ganadorId,
+      premioSemanal: c.premioSemanal,
+      premioAplicado: c.premioAplicado,
+      diferenciaBase: c.diferenciaBase,
+      diferenciaFinal: c.diferenciaFinal,
+      choferDebe: c.choferDebe,
+      davidDebe: c.davidDebe,
+      pagoSemanal: c.pagoSemanal || null,
+      confirmado: true,
+      creado: serverTimestamp()
+    });
 
-  cierreSemanalPendiente = null;
-  cierreSemanalCache = null;
-  $("cierreSemanalModal").classList.add("hidden");
-  alert("Cierre semanal confirmado correctamente.");
+    await updateDoc(doc(db,"choferes",currentUserId),{
+      ultimoCierreSemanal: c.periodo.id,
+      ultimaActividad: new Date().toLocaleString("es-AR")
+    });
+
+    cierreSemanalPendiente = null;
+    cierreSemanalCache = null;
+    $("cierreSemanalModal").classList.add("hidden");
+    alert("Cierre semanal confirmado correctamente.");
+  }catch(e){
+    msg($("cierreSemanalMsg"),"No se pudo confirmar el cierre: " + e.message);
+  }finally{
+    if(btn){
+      btn.disabled = false;
+      btn.textContent = "Confirmar cierre semanal";
+    }
+  }
 }
 
 async function checkCierreSemanalAutomatico(){
@@ -1261,6 +1290,8 @@ async function checkCierreSemanalAutomatico(){
       return;
     }
 
+    cierreSemanalPendiente.pagoSemanal = await getEstadoPagoSemanal(currentUserId, periodo.id);
+    cierreSemanalCache = { key: `${currentUserId}_${periodo.id}`, data: cierreSemanalPendiente };
     renderCierreSemanal(cierreSemanalPendiente);
   }catch(e){
     $("cierreSemanalResumen").innerHTML = `<div class="msg err">No se pudo calcular cierre automático: ${e.message}</div>`;
@@ -1914,6 +1945,11 @@ async function getEstadoPagoSemanal(chofer, periodoId){
 }
 
 window.marcarPagoSemanalAdmin = async function(chofer, periodoId, sentido, monto){
+  const buttons = Array.from(document.querySelectorAll('button'));
+  buttons.forEach(b=>{
+    if((b.textContent || '').includes('Marcar pagado')) b.disabled = true;
+  });
+
   await setDoc(doc(db,"pagos_semanales",`${chofer}_${periodoId}`),{
     chofer,
     periodoId,
@@ -1931,10 +1967,18 @@ window.marcarPagoSemanalAdmin = async function(chofer, periodoId, sentido, monto
 
 window.marcarPagoSemanalChofer = async function(){
   if(!cierreSemanalPendiente) return;
+
+  const btn = $("btnPagoChofer");
+  if(btn){
+    btn.disabled = true;
+    btn.textContent = "Marcando pagado...";
+  }
+
   const c = cierreSemanalPendiente;
   const sentido = c.choferDebe > 0 ? "chofer_a_david" : c.davidDebe > 0 ? "david_a_chofer" : "sin_diferencia";
   const monto = c.choferDebe > 0 ? c.choferDebe : c.davidDebe;
-  await setDoc(doc(db,"pagos_semanales",`${currentUserId}_${c.periodo.id}`),{
+
+  const pago = {
     chofer: currentUserId,
     periodoId: c.periodo.id,
     sentido,
@@ -1944,8 +1988,21 @@ window.marcarPagoSemanalChofer = async function(){
     fechaPago:today(),
     horaPago:new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
     actualizado:serverTimestamp()
-  });
-  alert("Pago marcado como pagado.");
+  };
+
+  try{
+    await setDoc(doc(db,"pagos_semanales",`${currentUserId}_${c.periodo.id}`),pago);
+    cierreSemanalPendiente.pagoSemanal = pago;
+    cierreSemanalCache = { key: `${currentUserId}_${c.periodo.id}`, data: cierreSemanalPendiente };
+    renderCierreSemanal(cierreSemanalPendiente);
+    msg($("cierreSemanalMsg"),"Pago marcado como realizado. Ahora podés confirmar el cierre semanal.",true);
+  }catch(e){
+    if(btn){
+      btn.disabled = false;
+      btn.textContent = "Marcar pagado";
+    }
+    msg($("cierreSemanalMsg"),"No se pudo marcar pagado: " + e.message);
+  }
 }
 
 window.calcularResumenMensualAdmin = async function(){
