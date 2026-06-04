@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA FINAL LIVIANA</title>
+<title>EXPLORA CIERRE AUTOMÁTICO LIVIANO</title>
 <style>
 :root{
   --bg:#080808;
@@ -249,7 +249,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
-    <div class="subtitle">Control Operativo · FINAL LIVIANA</div>
+    <div class="subtitle">Control Operativo · CIERRE AUTOMÁTICO LIVIANO</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -498,7 +498,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 <div id="cierreSemanalModal" class="modal hidden">
   <div class="card">
     <h2>Cierre semanal</h2>
-    <p class="note">El cierre se calcula solo al abrir esta pantalla para evitar lentitud.</p>
+    <p class="note">Si hay cierre semanal pendiente, esta pantalla aparece automáticamente y bloquea la app hasta confirmar.</p>
     <div id="cierreSemanalResumen"></div>
     <button id="confirmarCierreSemanalBtn" class="btn-gold" onclick="confirmarCierreSemanal()">Confirmar cierre semanal</button>
     <div id="cierreSemanalMsg"></div>
@@ -650,6 +650,8 @@ async function loadDriver(){
   await loadDeriveDrivers();
   await checkKmToday();
   await loadTodayTrips();
+
+  await checkCierreSemanalAutomatico();
 }
 
 function setStatusButton(status){
@@ -1138,6 +1140,43 @@ window.confirmarCierreSemanal = async function(){
   cierreSemanalPendiente = null;
   $("cierreSemanalModal").classList.add("hidden");
 }
+
+
+async function checkCierreSemanalAutomatico(){
+  try{
+    const periodo = getPeriodoCierrePendiente();
+
+    if(!periodo){
+      return;
+    }
+
+    const cierreId = `${currentUserId}_${periodo.id}`;
+    const cierreSnap = await getDoc(doc(db,"cierres_semanales",cierreId));
+
+    if(cierreSnap.exists()){
+      return;
+    }
+
+    $("cierreSemanalModal").classList.remove("hidden");
+    $("cierreSemanalResumen").innerHTML = "Calculando cierre semanal pendiente...";
+
+    cierreSemanalPendiente = await calcularCierreSemanalLiviano(currentUserId, periodo);
+
+    // Si no hubo viajes ni gastos, no bloquea.
+    if(cierreSemanalPendiente.cantidadViajes === 0 && cierreSemanalPendiente.cantidadGastos === 0){
+      cierreSemanalPendiente = null;
+      $("cierreSemanalModal").classList.add("hidden");
+      return;
+    }
+
+    renderCierreSemanal(cierreSemanalPendiente);
+
+  }catch(e){
+    $("cierreSemanalModal").classList.remove("hidden");
+    $("cierreSemanalResumen").innerHTML = `<div class="msg err">No se pudo calcular el cierre automático: ${e.message}</div>`;
+  }
+}
+
 
 async function loadTodayTrips(){
   const q = query(collection(db,"viajes"), where("fecha","==",today()), where("chofer","==",currentUserId));
