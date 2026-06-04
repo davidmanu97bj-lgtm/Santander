@@ -273,6 +273,14 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   background:var(--gold);
 }
 
+.admin-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.admin-actions button{width:auto;min-width:130px;padding:12px 10px;font-size:14px}
+.admin-vehicle-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.admin-vehicle-head small{color:var(--muted)}
+.paid-box{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.35);color:#86efac;border-radius:12px;padding:10px;margin-top:10px;font-weight:800}
+.pending-box{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);color:#fecaca;border-radius:12px;padding:10px;margin-top:10px;font-weight:800}
+.month-box{background:#121212;border:1px solid #292929;border-radius:16px;padding:14px;margin:10px 0}
+
 </style>
 </head>
 <body>
@@ -444,25 +452,42 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
     <div class="card">
       <h2>Panel Administrador</h2>
-      <p class="note">Vista simplificada: premio semanal, vehículos, recaudación, gastos, diferencias 50/50 y alertas.</p>
-      <button class="btn-dark" type="button" onclick="loadAdmin()">Actualizar administrador</button>
+      <p class="note">Vista liviana: premio semanal, vehículos, choferes, 50/50, pagos y alertas. El ranking queda solo para los choferes.</p>
+      <button class="btn-dark" onclick="loadAdmin()">Actualizar administrador</button>
       <div id="adminMsg"></div>
     </div>
 
     <div class="card">
       <h3>Premio semanal</h3>
-      <div id="adminPeriodoSemana" class="note">Cargando período...</div>
-      <div id="adminGanadorSemana" class="leader-card" style="margin-top:12px">Cargando ganador...</div>
+      <p id="adminPeriodoSemana" class="note">Cargando período...</p>
+      <div id="adminGanadorSemana" class="leader-card">Cargando ganador...</div>
       <label>Valor del premio para el ganador</label>
-      <input id="adminPremioMonto" type="number" inputmode="numeric" placeholder="Ej: 50000" />
-      <button class="btn-gold" type="button" onclick="guardarPremioSemanaAdmin()">Guardar premio semanal</button>
+      <input id="adminPremioInput" type="number" inputmode="numeric" placeholder="Ej: 50000" />
+      <button class="btn-gold" onclick="guardarPremioSemanalAdmin()">Guardar premio semanal</button>
       <div id="adminPremioMsg"></div>
     </div>
 
     <div class="card">
       <h3>Vehículos y choferes</h3>
-      <p class="note">Cálculo semanal 50/50 por chofer asignado. Se considera efectivo en mano del chofer, transferencias/tarjeta en cuenta David y gastos cargados.</p>
-      <div id="adminVehiculosSemana">Cargando...</div>
+      <p class="note">Tocá “Calcular semana” en cada vehículo para ver recaudación, gastos, diferencia 50/50 y pago pendiente. Así el admin no se sobrecarga.</p>
+      <div id="adminVehiculosResumen">Cargando vehículos...</div>
+    </div>
+
+    <div class="card">
+      <h3>Resumen mensual por auto</h3>
+      <p class="note">Se carga solo cuando lo pedís. Sirve para revisar cuánto facturó y gastó cada auto por mes sin hacer lento el administrador.</p>
+      <label>Mes</label>
+      <input id="adminMesInput" type="month" />
+      <label>Vehículo</label>
+      <select id="adminMesVehiculoSelect"></select>
+      <button class="btn-gold" onclick="calcularResumenMensualAdmin()">Ver resumen mensual</button>
+      <div id="adminMensualResultado"></div>
+    </div>
+
+    <div class="card">
+      <h3>Herramientas</h3>
+      <button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios EXPLORA</button>
+      <div id="adminToolsMsg"></div>
     </div>
   </section>
 
@@ -1157,6 +1182,7 @@ function renderCierreSemanal(c){
     <div class="trip"><b>Resultado 50/50</b><br><small>Neto: ${money(c.neto)}</small><br><small>Parte chofer: ${money(c.mitadChofer)}</small><br><small>Parte David: ${money(c.mitadDavid)}</small><br><small>Efectivo neto del chofer: ${money(c.efectivoNetoChofer)}</small><br><small>Diferencia antes de premio: ${money(c.diferenciaBase)}</small></div>
     <div class="trip"><b>Premio semanal</b><br><small>Ganador: ${c.ganadorSemana || "sin ganador"}</small><br><small>Premio configurado: ${money(c.premioSemanal)}</small><br><small>Aplicado a este chofer: ${money(c.premioAplicado)}</small></div>
     ${resultado}
+    ${(c.choferDebe > 0 || c.davidDebe > 0) ? `<button class="btn-gold" style="margin-top:10px" onclick="marcarPagoSemanalChofer()">Marcar pagado</button><div class="note">Usá este botón cuando el dinero ya fue entregado/transferido y quedan al día.</div>` : ""}
   `;
 }
 
@@ -1704,255 +1730,280 @@ async function loadGastosAdmin(){
 
 
 async function loadAdmin(){
-  const periodo = getPeriodoTrabajoActual(today());
   const adminMsg = $("adminMsg");
-  if(adminMsg) msg(adminMsg,"Cargando administrador...",true);
+  if(adminMsg) msg(adminMsg,"Actualizando administrador...",true);
+
+  const periodo = getPeriodoTrabajoActual(today());
+  if($("adminPeriodoSemana")) $("adminPeriodoSemana").textContent = `Semana: ${periodo.start} al ${periodo.end} · Cierre: ${periodo.closeDate}`;
+  if($("adminMesInput")) $("adminMesInput").value = today().slice(0,7);
 
   try{
-    const [choferesSnap, vehiculosSnap, viajesSnap, gastosSnap, premioSnap] = await Promise.all([
-      withTimeout(getDocs(collection(db,"choferes")), 9000, "Tardó demasiado cargando choferes."),
-      withTimeout(getDocs(collection(db,"vehiculos")), 9000, "Tardó demasiado cargando vehículos."),
-      withTimeout(getDocs(query(collection(db,"viajes"), where("fecha",">=",periodo.start), where("fecha","<=",periodo.end))), 9000, "Tardó demasiado cargando viajes de la semana."),
-      withTimeout(getDocs(query(collection(db,"gastos"), where("fecha",">=",periodo.start), where("fecha","<=",periodo.end))), 9000, "Tardó demasiado cargando gastos de la semana."),
-      getDoc(doc(db,"configuracion",`premio_${periodo.id}`))
-    ]);
-
-    const choferes = {};
-    choferesSnap.forEach(d=>{
-      const c = d.data();
-      if(c.rol === "admin") return;
-      if(c.activo === false) return;
-      choferes[d.id] = {
-        id:d.id,
-        nombre:c.nombre || d.id,
-        vehiculo:c.vehiculo || "",
-        viajes:0,
-        recaudado:0,
-        efectivo:0,
-        transferencia:0,
-        tarjeta:0,
-        gastos:0,
-        cantidadGastos:0
-      };
-    });
-
-    const vehiculos = {};
-    vehiculosSnap.forEach(d=>{
-      vehiculos[d.id] = { id:d.id, ...d.data() };
-    });
-
-    viajesSnap.forEach(d=>{
-      const v = d.data();
-      const choferId = v.chofer || "";
-      const vehiculoId = v.vehiculo || "";
-      if(!choferes[choferId]){
-        choferes[choferId] = {
-          id:choferId || "sin_chofer",
-          nombre:choferId || "Sin chofer",
-          vehiculo:vehiculoId,
-          viajes:0,
-          recaudado:0,
-          efectivo:0,
-          transferencia:0,
-          tarjeta:0,
-          gastos:0,
-          cantidadGastos:0
-        };
-      }
-      if(!choferes[choferId].vehiculo && vehiculoId) choferes[choferId].vehiculo = vehiculoId;
-      const monto = Number(v.monto || 0);
-      choferes[choferId].viajes += 1;
-      choferes[choferId].recaudado += monto;
-      if(v.pago === "efectivo") choferes[choferId].efectivo += monto;
-      if(v.pago === "transferencia") choferes[choferId].transferencia += monto;
-      if(v.pago === "tarjeta") choferes[choferId].tarjeta += monto;
-    });
-
-    gastosSnap.forEach(d=>{
-      const g = d.data();
-      const choferId = g.chofer || "";
-      const vehiculoId = g.vehiculo || "";
-      let targetId = choferId;
-      if(!targetId){
-        const encontrado = Object.values(choferes).find(c=>c.vehiculo === vehiculoId);
-        targetId = encontrado ? encontrado.id : "sin_chofer";
-      }
-      if(!choferes[targetId]){
-        choferes[targetId] = {
-          id:targetId,
-          nombre:targetId,
-          vehiculo:vehiculoId,
-          viajes:0,
-          recaudado:0,
-          efectivo:0,
-          transferencia:0,
-          tarjeta:0,
-          gastos:0,
-          cantidadGastos:0
-        };
-      }
-      if(!choferes[targetId].vehiculo && vehiculoId) choferes[targetId].vehiculo = vehiculoId;
-      choferes[targetId].gastos += Number(g.monto || 0);
-      choferes[targetId].cantidadGastos += 1;
-    });
-
-    const lista = Object.values(choferes).sort((a,b)=>String(a.vehiculo || "").localeCompare(String(b.vehiculo || ""),"es") || String(a.nombre).localeCompare(String(b.nombre),"es"));
-    const ganador = lista.slice().sort((a,b)=>b.recaudado-a.recaudado || b.viajes-a.viajes)[0] || null;
-    const premio = premioSnap.exists() ? Number(premioSnap.data().monto || 0) : 0;
-
-    const periodoEl = $("adminPeriodoSemana");
-    if(periodoEl) periodoEl.innerHTML = `Semana actual: <b>${periodo.start}</b> al <b>${periodo.end}</b>`;
-
-    const premioInput = $("adminPremioMonto");
-    if(premioInput) premioInput.value = premio || "";
-
-    const ganadorEl = $("adminGanadorSemana");
-    if(ganadorEl){
-      ganadorEl.innerHTML = ganador
-        ? `<h3>🏆 Ganador actual</h3><b>${ganador.nombre}</b><br><small>${ganador.viajes} viajes · ${money(ganador.recaudado)} recaudado</small><br><small>Premio configurado: ${money(premio)}</small>`
-        : `<h3>🏆 Ganador actual</h3><small>Todavía no hay viajes en esta semana.</small>`;
-    }
-
-    let html = "";
-    let totalRecaudado = 0;
-    let totalGastado = 0;
-
-    lista.forEach(c=>{
-      const vehiculoId = c.vehiculo || "sin_vehiculo";
-      const vehiculo = vehiculos[vehiculoId] || {};
-      const neto = c.recaudado - c.gastos;
-      const parteChofer = neto / 2;
-      const efectivoNetoChofer = c.efectivo - c.gastos;
-      const premioAplicado = ganador && ganador.id === c.id ? premio : 0;
-      const diferencia = efectivoNetoChofer - parteChofer - premioAplicado;
-      const choferDebe = diferencia > 0 ? diferencia : 0;
-      const davidDebe = diferencia < 0 ? Math.abs(diferencia) : 0;
-      const alertas = getAlertasVehiculoAdmin(vehiculoId, vehiculo);
-
-      totalRecaudado += c.recaudado;
-      totalGastado += c.gastos;
-
-      let resultado = `<div class="msg ok"><b>Equilibrado:</b><br>No hay diferencia.</div>`;
-      if(choferDebe > 0){
-        resultado = `<div class="msg err"><b>El chofer debe pasarte:</b><br>${money(choferDebe)}</div>`;
-      }else if(davidDebe > 0){
-        resultado = `<div class="msg ok"><b>Vos debés pasarle al chofer:</b><br>${money(davidDebe)}</div>`;
-      }
-
-      html += `
-        <div class="vehicle-card">
-          <b>${vehiculoId}</b><br>
-          <small>${vehiculo.modelo || "Vehículo"} · Chofer: ${c.nombre}</small><br>
-          <hr>
-          <small>Viajes semana: ${c.viajes}</small><br>
-          <small>Total recaudado: <b style="color:var(--gold)">${money(c.recaudado)}</b></small><br>
-          <small>Total gastado: <b style="color:var(--gold)">${money(c.gastos)}</b></small><br>
-          <small>Efectivo: ${money(c.efectivo)} · Transferencia: ${money(c.transferencia)} · Tarjeta: ${money(c.tarjeta)}</small><br>
-          ${premioAplicado ? `<small>Premio aplicado: ${money(premioAplicado)}</small><br>` : ""}
-          ${alertas || `<div class="msg ok">Sin vencimientos próximos cargados.</div>`}
-          ${resultado}
-        </div>
-      `;
-    });
-
-    const resumen = `
-      <div class="grid" style="margin-bottom:12px">
-        <div class="metric"><span>Total recaudado semana</span><strong>${money(totalRecaudado)}</strong></div>
-        <div class="metric"><span>Total gastado semana</span><strong>${money(totalGastado)}</strong></div>
-      </div>
-    `;
-
-    const target = $("adminVehiculosSemana");
-    if(target) target.innerHTML = resumen + (html || `<p class="note">Todavía no hay choferes o vehículos cargados.</p>`);
-    if(adminMsg) adminMsg.innerHTML = "";
+    await cargarPremioAdmin(periodo);
+    await cargarVehiculosAdminSimple(periodo);
+    if(adminMsg) msg(adminMsg,"Administrador actualizado.",true);
   }catch(e){
     if(adminMsg) msg(adminMsg,"Error cargando administrador: " + e.message);
-    const target = $("adminVehiculosSemana");
-    if(target) target.innerHTML = `<div class="msg err">No se pudo cargar el administrador: ${e.message}</div>`;
+    if($("adminVehiculosResumen")) $("adminVehiculosResumen").innerHTML = `<div class="msg err">No se pudo cargar el administrador: ${e.message}</div>`;
   }
 }
 
-function getAlertasVehiculoAdmin(vehiculoId, v){
+async function cargarPremioAdmin(periodo){
+  try{
+    const premio = await getPremioSemana(periodo);
+    if($("adminPremioInput")) $("adminPremioInput").value = premio || "";
+
+    let rankingData = null;
+    try{ rankingData = await calcularRankingSemanalLiviano(periodo); }catch(e){ console.warn("Ranking admin no disponible", e); }
+    const ganador = rankingData && rankingData.ranking ? rankingData.ranking[0] : null;
+
+    if($("adminGanadorSemana")){
+      $("adminGanadorSemana").innerHTML = ganador
+        ? `<h3>🏆 Ganador actual</h3><b>${ganador.nombre}</b><br><small>${ganador.porcentaje}% · Premio: ${money(premio)}</small>`
+        : `<h3>🏆 Ganador actual</h3><small>Todavía no hay datos suficientes.</small>`;
+    }
+  }catch(e){
+    if($("adminGanadorSemana")) $("adminGanadorSemana").innerHTML = `<div class="msg err">No se pudo cargar premio: ${e.message}</div>`;
+  }
+}
+
+window.guardarPremioSemanalAdmin = async function(){
+  const periodo = getPeriodoTrabajoActual(today());
+  const monto = Number($("adminPremioInput").value || 0);
+  if(monto < 0) return msg($("adminPremioMsg"),"Ingrese un valor válido.");
+
+  await setDoc(doc(db,"configuracion",`premio_${periodo.id}`),{
+    monto,
+    periodoId: periodo.id,
+    periodoInicio: periodo.start,
+    periodoFin: periodo.end,
+    actualizado: serverTimestamp()
+  });
+
+  msg($("adminPremioMsg"),"Premio semanal guardado.",true);
+  await cargarPremioAdmin(periodo);
+}
+
+async function cargarVehiculosAdminSimple(periodo){
+  const [vehSnap, choferSnap] = await Promise.all([
+    withTimeout(getDocs(collection(db,"vehiculos")), 9000, "Tardó demasiado cargando vehículos."),
+    withTimeout(getDocs(collection(db,"choferes")), 9000, "Tardó demasiado cargando choferes.")
+  ]);
+
+  const choferesPorVehiculo = {};
+  const choferesPorId = {};
+  choferSnap.forEach(d=>{
+    const c = d.data();
+    if(c.rol === "admin") return;
+    if(c.activo === false) return;
+    choferesPorId[d.id] = {id:d.id,...c};
+    if(c.vehiculo) choferesPorVehiculo[c.vehiculo] = {id:d.id,...c};
+  });
+
+  let html = "";
+  const selectMes = $("adminMesVehiculoSelect");
+  if(selectMes) selectMes.innerHTML = "";
+
+  vehSnap.forEach(d=>{
+    const v = {id:d.id,...d.data()};
+    const c = choferesPorVehiculo[v.id] || null;
+    const choferId = c ? c.id : "";
+    const alertas = renderAlertasVehiculo(v,c);
+
+    if(selectMes){
+      const opt = document.createElement("option");
+      opt.value = v.id;
+      opt.textContent = `${v.id} - ${c ? (c.nombre || c.id) : "sin chofer"}`;
+      selectMes.appendChild(opt);
+    }
+
+    html += `
+      <div class="vehicle-card" id="adminVehicle_${safeId(v.id)}">
+        <div class="admin-vehicle-head">
+          <div>
+            <b>${v.id}</b><br>
+            <small>${v.modelo || "Vehículo"}</small><br>
+            <small>Chofer: <b>${c ? (c.nombre || c.id) : "sin asignar"}</b></small><br>
+            <small>Estado: ${c ? (c.estado || "sin estado") : "sin chofer"}</small>
+          </div>
+          <span class="pill ${c && c.estado === "servicio" ? "pill-red" : c && c.estado === "disponible" ? "pill-green" : "pill-gray"}">${c ? (c.estado === "servicio" ? "En servicio" : c.estado === "disponible" ? "Disponible" : "Inactivo") : "Sin chofer"}</span>
+        </div>
+        ${alertas}
+        <div class="admin-actions">
+          <button class="btn-gold" onclick="calcularSemanaVehiculoAdmin('${v.id}','${choferId}')">Calcular semana</button>
+        </div>
+        <div id="adminCalc_${safeId(v.id)}"></div>
+      </div>
+    `;
+  });
+
+  $("adminVehiculosResumen").innerHTML = html || `<p class="note">Todavía no hay vehículos cargados.</p>`;
+}
+
+function safeId(value){ return String(value || "").replace(/[^a-zA-Z0-9_-]/g,"_"); }
+
+function renderAlertasVehiculo(v,c){
   const alertas = [];
   const kmActual = Number(v.kmActual || 0);
-  const aceiteUltimoKm = Number(v.aceiteUltimoKm || v.ultimoCambioAceiteKm || 0);
+  const aceiteUltimoKm = Number(v.aceiteUltimoKm || 0);
   if(aceiteUltimoKm){
     const proximoAceite = aceiteUltimoKm + 10000;
     const faltan = proximoAceite - kmActual;
-    if(faltan <= 0){
-      alertas.push(`⚠️ Aceite vencido. Próximo marcado: ${proximoAceite.toLocaleString("es-AR")} km`);
-    }else if(faltan <= 1000){
-      alertas.push(`⚠️ Faltan ${faltan.toLocaleString("es-AR")} km para cambio de aceite`);
-    }
+    if(faltan <= 0) alertas.push(`⚠️ Aceite vencido. Próximo: ${proximoAceite.toLocaleString("es-AR")} km`);
+    else if(faltan <= 1000) alertas.push(`⚠️ Aceite próximo: faltan ${faltan.toLocaleString("es-AR")} km`);
   }
 
   const camposFecha = [
-    ["seguroVence","Seguro"], ["seguroVencimiento","Seguro"],
-    ["vtvVence","VTV"], ["vtvVencimiento","VTV"],
-    ["patenteVence","Patente"], ["patenteVencimiento","Patente"],
-    ["licenciaVence","Licencia"], ["licenciaVencimiento","Licencia"],
-    ["habilitacionVence","Habilitación"], ["habilitacionVencimiento","Habilitación"]
+    ["seguroVence","Seguro"],["vtvVence","VTV"],["licenciaVence","Licencia"],["patenteVence","Patente"],["canonVence","Canon"],
+    ["vencimientoSeguro","Seguro"],["vencimientoVtv","VTV"],["vencimientoLicencia","Licencia"]
   ];
-
-  const vistos = new Set();
   camposFecha.forEach(([campo,nombre])=>{
-    if(vistos.has(nombre)) return;
-    const valor = v[campo];
-    if(!valor) return;
-    const fecha = normalizarFechaAdmin(valor);
-    if(!fecha) return;
-    const dias = daysBetween(today(), fecha);
-    if(dias < 0){
-      alertas.push(`⚠️ ${nombre} vencido el ${fecha}`);
-      vistos.add(nombre);
-    }else if(dias <= 30){
-      alertas.push(`⚠️ ${nombre} vence en ${dias} días (${fecha})`);
-      vistos.add(nombre);
-    }
+    const val = v[campo] || (c ? c[campo] : "");
+    if(!val) return;
+    const dias = daysBetween(today(), String(val).slice(0,10));
+    if(dias < 0) alertas.push(`⚠️ ${nombre} vencido hace ${Math.abs(dias)} días`);
+    else if(dias <= 30) alertas.push(`⚠️ ${nombre} vence en ${dias} días`);
   });
 
-  if(!alertas.length) return "";
+  if(!alertas.length) return `<div class="paid-box">✅ Sin vencimientos próximos cargados</div>`;
   return alertas.map(a=>`<div class="alert-soft">${a}</div>`).join("");
 }
 
-function normalizarFechaAdmin(valor){
-  if(!valor) return "";
-  if(typeof valor === "string"){
-    const m = valor.match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if(m) return `${m[1]}-${m[2]}-${m[3]}`;
-    const p = valor.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    if(p) return `${p[3]}-${String(p[2]).padStart(2,"0")}-${String(p[1]).padStart(2,"0")}`;
-    return "";
-  }
-  if(valor && typeof valor.toDate === "function") return formatDateLocal(valor.toDate());
-  return "";
-}
-
-window.guardarPremioSemanaAdmin = async function(){
-  const input = $("adminPremioMonto");
-  const monto = Number(input ? input.value : 0);
-  if(monto < 0 || Number.isNaN(monto)){
-    return msg($("adminPremioMsg"),"Ingrese un valor válido.");
+window.calcularSemanaVehiculoAdmin = async function(vehiculoId, choferId){
+  const box = $("adminCalc_" + safeId(vehiculoId));
+  if(!box) return;
+  if(!choferId){
+    box.innerHTML = `<div class="msg err">Este vehículo no tiene chofer asignado.</div>`;
+    return;
   }
 
-  const periodo = getPeriodoTrabajoActual(today());
+  box.innerHTML = `<div class="msg ok">Calculando semana...</div>`;
   try{
-    await setDoc(doc(db,"configuracion",`premio_${periodo.id}`),{
-      monto,
-      periodoId: periodo.id,
-      periodoInicio: periodo.start,
-      periodoFin: periodo.end,
-      actualizado: serverTimestamp()
-    });
-    cierreSemanalCache = null;
-    msg($("adminPremioMsg"),"Premio semanal guardado correctamente.",true);
-    await loadAdmin();
+    const periodo = getPeriodoTrabajoActual(today());
+    const c = await calcularCierreSemanalLiviano(choferId, periodo);
+    const pago = await getEstadoPagoSemanal(choferId, periodo.id);
+    box.innerHTML = renderResumenSemanalAdmin(vehiculoId, c, pago);
   }catch(e){
-    msg($("adminPremioMsg"),"No se pudo guardar el premio: " + e.message);
+    box.innerHTML = `<div class="msg err">No se pudo calcular la semana: ${e.message}</div>`;
   }
 }
 
+function renderResumenSemanalAdmin(vehiculoId,c,pago){
+  const estadoPago = pago && pago.pagado ? `<div class="paid-box">✅ Pagado · ${pago.fechaPago || ""} ${pago.horaPago || ""}</div>` : "";
+  const accion = c.choferDebe > 0
+    ? `<div class="pending-box">El chofer debe pasarte: ${money(c.choferDebe)}</div><button class="btn-gold" onclick="marcarPagoSemanalAdmin('${c.chofer}','${c.periodo.id}','chofer_a_david',${Math.round(c.choferDebe)})">Marcar pagado</button>`
+    : c.davidDebe > 0
+      ? `<div class="pending-box">Vos debés transferir al chofer: ${money(c.davidDebe)}</div><button class="btn-gold" onclick="marcarPagoSemanalAdmin('${c.chofer}','${c.periodo.id}','david_a_chofer',${Math.round(c.davidDebe)})">Marcar pagado</button>`
+      : `<div class="paid-box">✅ No hay diferencia pendiente.</div>`;
 
+  return `
+    <div class="trip">
+      <b>Semana ${c.periodo.start} al ${c.periodo.end}</b><br>
+      <small>Recaudado: ${money(c.totalViajes)} · Gastos: ${money(c.totalGastos)}</small><br>
+      <small>Efectivo chofer: ${money(c.efectivo)} · Transferencia/Tarjeta David: ${money(c.transferencia + c.tarjeta)}</small><br>
+      <small>Neto 50/50: ${money(c.neto)} · Parte chofer: ${money(c.mitadChofer)} · Parte David: ${money(c.mitadDavid)}</small>
+      ${estadoPago || accion}
+    </div>
+  `;
+}
+
+async function getEstadoPagoSemanal(chofer, periodoId){
+  try{
+    const snap = await getDoc(doc(db,"pagos_semanales",`${chofer}_${periodoId}`));
+    return snap.exists() ? snap.data() : null;
+  }catch(e){ return null; }
+}
+
+window.marcarPagoSemanalAdmin = async function(chofer, periodoId, sentido, monto){
+  await setDoc(doc(db,"pagos_semanales",`${chofer}_${periodoId}`),{
+    chofer,
+    periodoId,
+    sentido,
+    monto:Number(monto || 0),
+    pagado:true,
+    marcadoPor:"admin",
+    fechaPago:today(),
+    horaPago:new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
+    actualizado:serverTimestamp()
+  });
+  alert("Pago marcado como pagado.");
+  await loadAdmin();
+}
+
+window.marcarPagoSemanalChofer = async function(){
+  if(!cierreSemanalPendiente) return;
+  const c = cierreSemanalPendiente;
+  const sentido = c.choferDebe > 0 ? "chofer_a_david" : c.davidDebe > 0 ? "david_a_chofer" : "sin_diferencia";
+  const monto = c.choferDebe > 0 ? c.choferDebe : c.davidDebe;
+  await setDoc(doc(db,"pagos_semanales",`${currentUserId}_${c.periodo.id}`),{
+    chofer: currentUserId,
+    periodoId: c.periodo.id,
+    sentido,
+    monto:Number(monto || 0),
+    pagado:true,
+    marcadoPor:"chofer",
+    fechaPago:today(),
+    horaPago:new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
+    actualizado:serverTimestamp()
+  });
+  alert("Pago marcado como pagado.");
+}
+
+window.calcularResumenMensualAdmin = async function(){
+  const mes = $("adminMesInput").value || today().slice(0,7);
+  const vehiculo = $("adminMesVehiculoSelect").value;
+  const box = $("adminMensualResultado");
+  if(!vehiculo) return msg(box,"Seleccione un vehículo.");
+  box.innerHTML = `<div class="msg ok">Calculando resumen mensual...</div>`;
+
+  try{
+    const start = `${mes}-01`;
+    const end = addDays(addDays(start, 32).slice(0,8) + "01", -1);
+
+    const [viajesSnap,gastosSnap] = await Promise.all([
+      withTimeout(getDocs(query(collection(db,"viajes"), where("vehiculo","==",vehiculo))), 9000, "Tardó demasiado cargando viajes del mes."),
+      withTimeout(getDocs(query(collection(db,"gastos"), where("vehiculo","==",vehiculo))), 9000, "Tardó demasiado cargando gastos del mes.")
+    ]);
+
+    let totalViajes=0, cantidadViajes=0, efectivo=0, transferencia=0, tarjeta=0;
+    viajesSnap.forEach(d=>{
+      const v=d.data(); const fecha=v.fecha || "";
+      if(fecha < start || fecha > end) return;
+      const monto=Number(v.monto || 0);
+      totalViajes += monto; cantidadViajes++;
+      if(v.pago === "efectivo") efectivo += monto;
+      if(v.pago === "transferencia") transferencia += monto;
+      if(v.pago === "tarjeta") tarjeta += monto;
+    });
+
+    let totalGastos=0, cantidadGastos=0;
+    gastosSnap.forEach(d=>{
+      const g=d.data(); const fecha=g.fecha || "";
+      if(fecha < start || fecha > end) return;
+      totalGastos += Number(g.monto || 0); cantidadGastos++;
+    });
+
+    const neto = totalViajes - totalGastos;
+
+    await setDoc(doc(db,"resumenes_mensuales",`${vehiculo}_${mes}`),{
+      vehiculo, mes, inicio:start, fin:end, totalViajes, cantidadViajes, efectivo, transferencia, tarjeta, totalGastos, cantidadGastos, neto,
+      actualizado:serverTimestamp()
+    });
+
+    box.innerHTML = `
+      <div class="month-box">
+        <b>${vehiculo} · ${mes}</b><br>
+        <small>Período: ${start} al ${end}</small><br>
+        <small>Viajes: ${cantidadViajes} · Gastos cargados: ${cantidadGastos}</small><br>
+        <small>Efectivo: ${money(efectivo)} · Transferencia: ${money(transferencia)} · Tarjeta: ${money(tarjeta)}</small><br>
+        <b style="color:var(--gold)">Facturado: ${money(totalViajes)}</b><br>
+        <b style="color:var(--red)">Gastado: ${money(totalGastos)}</b><br>
+        <b>Neto mensual: ${money(neto)}</b>
+      </div>
+    `;
+  }catch(e){
+    box.innerHTML = `<div class="msg err">No se pudo calcular el mes: ${e.message}</div>`;
+  }
+}
 const serviciosExplora = [
   { id:"salida_out_igr", nombre:"Salida-Out IGR", precio:25000 },
   { id:"local", nombre:"Local", precio:20000 },
@@ -1981,11 +2032,11 @@ window.instalarServiciosExplora = async function(){
       });
     }
 
-    msg($("adminMsg"), "Servicios EXPLORA instalados correctamente.", true);
+    msg($("adminToolsMsg") || $("adminMsg"), "Servicios EXPLORA instalados correctamente.", true);
     await loadAdmin();
 
   }catch(e){
-    msg($("adminMsg"), "Error instalando servicios: " + e.message);
+    msg($("adminToolsMsg") || $("adminMsg"), "Error instalando servicios: " + e.message);
   }
 }
 
