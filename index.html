@@ -485,8 +485,44 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
     </div>
 
     <div class="card">
+      <h3>Alta de chofer y vehículo</h3>
+      <p class="note">Crea el usuario real en Firebase Authentication y también guarda el chofer y el vehículo en Firestore. El usuario entra con el nombre sin @.</p>
+
+      <label>Nombre del chofer</label>
+      <input id="nuevoChoferNombre" placeholder="Ej: Marcelo" />
+
+      <label>Usuario</label>
+      <input id="nuevoChoferUsuario" placeholder="Ej: marcelo" autocapitalize="none" />
+      <div class="price-note">Entrará como usuario: marcelo / Firebase usa marcelo@explora.local</div>
+
+      <label>Contraseña</label>
+      <input id="nuevoChoferPass" type="password" placeholder="Mínimo 6 caracteres" />
+
+      <label>Patente / ID del vehículo</label>
+      <input id="nuevoVehiculoPatente" placeholder="Ej: AG123CD" autocapitalize="characters" />
+
+      <label>Modelo del vehículo</label>
+      <input id="nuevoVehiculoModelo" placeholder="Ej: Fiat Cronos 2024" />
+
+      <div class="row">
+        <div>
+          <label>Km actual</label>
+          <input id="nuevoVehiculoKm" type="number" inputmode="numeric" placeholder="Ej: 165867" />
+        </div>
+        <div>
+          <label>Último aceite km</label>
+          <input id="nuevoVehiculoAceite" type="number" inputmode="numeric" placeholder="Opcional" />
+        </div>
+      </div>
+
+      <button class="btn-gold" onclick="crearChoferVehiculoAdmin()">Crear chofer y vehículo</button>
+      <div id="nuevoChoferMsg"></div>
+    </div>
+
+    <div class="card">
       <h3>Herramientas</h3>
-      <button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios, choferes y vehículos</button>
+      <button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios EXPLORA</button>
+      <button class="btn-red" style="margin-top:10px" onclick="eliminarChoferesDemoAdmin()">Eliminar choferes demo anteriores</button>
       <div id="adminToolsMsg"></div>
     </div>
   </section>
@@ -517,10 +553,10 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc,
+  getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, addDoc,
   query, where, getDocs, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
@@ -2061,6 +2097,110 @@ window.calcularResumenMensualAdmin = async function(){
     box.innerHTML = `<div class="msg err">No se pudo calcular el mes: ${e.message}</div>`;
   }
 }
+
+
+function normalizarUsuarioExplora(value){
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^a-z0-9._-]/g,"");
+}
+
+window.crearChoferVehiculoAdmin = async function(){
+  const box = $("nuevoChoferMsg");
+  const nombre = String($("nuevoChoferNombre").value || "").trim();
+  const usuario = normalizarUsuarioExplora($("nuevoChoferUsuario").value);
+  const pass = String($("nuevoChoferPass").value || "").trim();
+  const patente = String($("nuevoVehiculoPatente").value || "").trim().toUpperCase().replace(/\s+/g,"");
+  const modelo = String($("nuevoVehiculoModelo").value || "").trim();
+  const kmActual = Number($("nuevoVehiculoKm").value || 0);
+  const aceiteUltimoKm = Number($("nuevoVehiculoAceite").value || 0);
+
+  if(!nombre) return msg(box,"Ingrese el nombre del chofer.");
+  if(!usuario) return msg(box,"Ingrese un usuario válido, sin espacios ni acentos.");
+  if(pass.length < 6) return msg(box,"La contraseña debe tener mínimo 6 caracteres.");
+  if(!patente) return msg(box,"Ingrese la patente / ID del vehículo.");
+  if(!modelo) return msg(box,"Ingrese el modelo del vehículo.");
+
+  const btns = Array.from(document.querySelectorAll('button'));
+  btns.forEach(b=>{ if((b.textContent || '').includes('Crear chofer')) b.disabled = true; });
+  msg(box,"Creando usuario en Firebase y guardando datos...",true);
+
+  let secondaryApp = null;
+
+  try{
+    // Se usa una app secundaria para crear el usuario sin cerrar la sesión del admin actual.
+    secondaryApp = initializeApp(firebaseConfig, "crearUsuario_" + Date.now());
+    const secondaryAuth = getAuth(secondaryApp);
+
+    await createUserWithEmailAndPassword(secondaryAuth, `${usuario}@explora.local`, pass);
+    await signOut(secondaryAuth).catch(()=>{});
+
+    await setDoc(doc(db,"vehiculos",patente),{
+      modelo,
+      chofer: usuario,
+      kmActual: kmActual || 0,
+      aceiteUltimoKm: aceiteUltimoKm || 0,
+      activo: true,
+      creadoPor: currentUserId || "admin",
+      actualizado: serverTimestamp()
+    }, { merge:true });
+
+    await setDoc(doc(db,"choferes",usuario),{
+      nombre,
+      rol:"chofer",
+      vehiculo: patente,
+      estado:"disponible",
+      activo:true,
+      usuario,
+      email:`${usuario}@explora.local`,
+      creadoPor: currentUserId || "admin",
+      ultimaActividad:"sin registro",
+      actualizado: serverTimestamp()
+    }, { merge:true });
+
+    msg(box,`Chofer creado correctamente.<br><b>Usuario:</b> ${usuario}<br><b>Contraseña:</b> ${pass}<br><b>Vehículo:</b> ${patente}`,true);
+
+    ["nuevoChoferNombre","nuevoChoferUsuario","nuevoChoferPass","nuevoVehiculoPatente","nuevoVehiculoModelo","nuevoVehiculoKm","nuevoVehiculoAceite"].forEach(id=>{ if($(id)) $(id).value=""; });
+    await loadAdmin();
+
+  }catch(e){
+    let texto = e.message || String(e);
+    if(String(e.code || "").includes("email-already-in-use")) texto = "Ese usuario ya existe en Firebase Authentication. Probá con otro usuario o usá el mismo documento del chofer existente.";
+    if(String(e.code || "").includes("operation-not-allowed")) texto = "Firebase Authentication no permite crear usuarios con email/contraseña. Activá Email/Password en Firebase Console > Authentication > Sign-in method.";
+    msg(box,"No se pudo crear el chofer: " + texto);
+  }finally{
+    if(secondaryApp) await deleteApp(secondaryApp).catch(()=>{});
+    btns.forEach(b=>{ if((b.textContent || '').includes('Crear chofer')) b.disabled = false; });
+  }
+}
+
+const choferesDemoAEliminar = ["marcelo","joel","rodolfo","fede","lucio","ezequiel","flor","demo1","demo2","demo3","demo4","demo5"];
+const vehiculosDemoAEliminar = ["AG456CD","AH789EF","AI234GH","AJ567IJ","AK890KL","AL321MN","AM654OP","DEMO001","DEMO002","DEMO003"];
+
+window.eliminarChoferesDemoAdmin = async function(){
+  const confirmar = confirm("Esto elimina de Firestore los choferes/vehículos demo conocidos. No elimina usuarios de Firebase Authentication. ¿Continuar?");
+  if(!confirmar) return;
+
+  const box = $("adminToolsMsg") || $("adminMsg");
+  msg(box,"Eliminando registros demo...",true);
+
+  try{
+    for(const id of choferesDemoAEliminar){
+      await deleteDoc(doc(db,"choferes",id)).catch(()=>{});
+    }
+    for(const id of vehiculosDemoAEliminar){
+      await deleteDoc(doc(db,"vehiculos",id)).catch(()=>{});
+    }
+    msg(box,"Choferes y vehículos demo eliminados de Firestore. Si creaste usuarios demo en Authentication, elimínalos una sola vez desde Firebase Console.",true);
+    await loadAdmin();
+  }catch(e){
+    msg(box,"No se pudieron eliminar demos: " + e.message);
+  }
+}
+
 const serviciosExplora = [
   { id:"salida_out_igr", nombre:"Salida-Out IGR", precio:25000 },
   { id:"local", nombre:"Local", precio:20000 },
@@ -2079,26 +2219,6 @@ const serviciosExplora = [
   { id:"eldorado", nombre:"Eldorado", precio:120000 }
 ];
 
-const vehiculosDemoExplora = [
-  { id:"AA123AA", modelo:"Fiat Cronos 2024", chofer:"ariel", kmActual:165867, aceiteUltimoKm:160000, seguroVence:"2026-06-25", vtvVence:"2026-07-10", patenteVence:"2026-06-30" },
-  { id:"AB234BB", modelo:"Chevrolet Prisma", chofer:"ezequiel", kmActual:98240, aceiteUltimoKm:89000, seguroVence:"2026-07-01", vtvVence:"2026-08-15", patenteVence:"2026-07-20" },
-  { id:"AC345CC", modelo:"Chevrolet Cruze", chofer:"flor", kmActual:124500, aceiteUltimoKm:124000, seguroVence:"2026-06-18", vtvVence:"2026-09-05", patenteVence:"2026-07-05" },
-  { id:"AD456DD", modelo:"Fiat Cronos", chofer:"lucio", kmActual:73200, aceiteUltimoKm:69000, seguroVence:"2026-07-12", vtvVence:"2026-06-28", patenteVence:"2026-08-01" },
-  { id:"AE567EE", modelo:"Chevrolet Spin 7 lugares", chofer:"fede", kmActual:210300, aceiteUltimoKm:201000, seguroVence:"2026-06-09", vtvVence:"2026-07-30", patenteVence:"2026-07-15" },
-  { id:"AF678FF", modelo:"Toyota Etios", chofer:"rodolfo", kmActual:154900, aceiteUltimoKm:149500, seguroVence:"2026-08-01", vtvVence:"2026-06-22", patenteVence:"2026-06-29" },
-  { id:"AG789GG", modelo:"Volkswagen Voyage", chofer:"joel", kmActual:188600, aceiteUltimoKm:179000, seguroVence:"2026-07-18", vtvVence:"2026-07-08", patenteVence:"2026-08-10" }
-];
-
-const choferesDemoExplora = [
-  { id:"ariel", nombre:"Ariel", vehiculo:"AA123AA", estado:"disponible", rol:"chofer", activo:true, licenciaVence:"2026-07-12" },
-  { id:"ezequiel", nombre:"Ezequiel", vehiculo:"AB234BB", estado:"disponible", rol:"chofer", activo:true, licenciaVence:"2026-08-20" },
-  { id:"flor", nombre:"Flor", vehiculo:"AC345CC", estado:"disponible", rol:"chofer", activo:true, licenciaVence:"2026-06-26" },
-  { id:"lucio", nombre:"Lucio", vehiculo:"AD456DD", estado:"disponible", rol:"chofer", activo:true, licenciaVence:"2026-09-02" },
-  { id:"fede", nombre:"Fede", vehiculo:"AE567EE", estado:"disponible", rol:"chofer", activo:true, licenciaVence:"2026-07-03" },
-  { id:"rodolfo", nombre:"Rodolfo", vehiculo:"AF678FF", estado:"disponible", rol:"chofer", activo:true, licenciaVence:"2026-06-19" },
-  { id:"joel", nombre:"Joel", vehiculo:"AG789GG", estado:"disponible", rol:"chofer", activo:true, licenciaVence:"2026-08-14" }
-];
-
 window.instalarServiciosExplora = async function(){
   try{
     for(const s of serviciosExplora){
@@ -2106,34 +2226,10 @@ window.instalarServiciosExplora = async function(){
         nombre: s.nombre,
         precio: s.precio,
         activo: true
-      }, { merge:true });
+      });
     }
 
-    for(const v of vehiculosDemoExplora){
-      await setDoc(doc(db, "vehiculos", v.id), {
-        modelo: v.modelo,
-        chofer: v.chofer,
-        kmActual: v.kmActual,
-        aceiteUltimoKm: v.aceiteUltimoKm,
-        seguroVence: v.seguroVence,
-        vtvVence: v.vtvVence,
-        patenteVence: v.patenteVence,
-        activo: true
-      }, { merge:true });
-    }
-
-    for(const c of choferesDemoExplora){
-      await setDoc(doc(db, "choferes", c.id), {
-        nombre: c.nombre,
-        vehiculo: c.vehiculo,
-        estado: c.estado,
-        rol: c.rol,
-        activo: c.activo,
-        licenciaVence: c.licenciaVence
-      }, { merge:true });
-    }
-
-    msg($("adminToolsMsg") || $("adminMsg"), "Servicios, choferes y vehículos demo instalados correctamente. Para que esos choferes puedan iniciar sesión también hay que crear sus usuarios en Firebase Auth.", true);
+    msg($("adminToolsMsg") || $("adminMsg"), "Servicios EXPLORA instalados correctamente.", true);
     await loadAdmin();
 
   }catch(e){
