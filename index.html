@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA CIERRE AUTOMÁTICO LIVIANO</title>
+<title>EXPLORA SEMANAL 50/50</title>
 <style>
 :root{
   --bg:#080808;
@@ -72,6 +72,12 @@ button{
   font-size:16px;
   font-weight:800;
   cursor:pointer;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+button:disabled{
+  opacity:.65;
+  cursor:not-allowed;
 }
 .btn-gold{background:var(--gold);color:#0b0b0b}
 .btn-dark{background:#222;color:white;border:1px solid #333}
@@ -112,10 +118,36 @@ button{
 .ok{background:rgba(34,197,94,.14);color:#86efac}
 .err{background:rgba(239,68,68,.14);color:#fecaca}
 .modal{
-  position:fixed;inset:0;background:rgba(0,0,0,.82);
-  display:flex;align-items:center;justify-content:center;padding:20px;z-index:20;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.82);
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  padding:18px 18px calc(42px + env(safe-area-inset-bottom));
+  z-index:20;
+  overflow-y:scroll;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  touch-action:pan-y;
 }
-.modal .card{width:100%;max-width:460px}
+.modal .card{
+  width:100%;
+  max-width:460px;
+  margin:0 auto 36px;
+  max-height:none;
+  flex:0 0 auto;
+}
+#cierreSemanalModal .card{
+  padding-bottom:18px;
+}
+#confirmarCierreSemanalBtn{
+  position:static;
+  margin-top:14px;
+  margin-bottom:6px;
+  box-shadow:none;
+}
 .nav{
   position:sticky;bottom:0;background:rgba(8,8,8,.9);
   backdrop-filter:blur(10px);border-top:1px solid #222;
@@ -249,7 +281,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
-    <div class="subtitle">Control Operativo · CIERRE AUTOMÁTICO LIVIANO</div>
+    <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -409,86 +441,28 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="small-logo">EXPLORA ADMIN</div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
+
     <div class="card">
       <h2>Panel Administrador</h2>
-      <p class="note">Primera versión conectada a Firebase. Luego agregaremos choferes, vehículos, tarifas, alertas y rankings.</p>
-      <button class="btn-gold" onclick="instalarServiciosExplora()">Instalar servicios EXPLORA</button>
+      <p class="note">Vista simplificada: premio semanal, vehículos, recaudación, gastos, diferencias 50/50 y alertas.</p>
+      <button class="btn-dark" type="button" onclick="loadAdmin()">Actualizar administrador</button>
       <div id="adminMsg"></div>
-      <div class="row">
-        <div class="metric"><span>Viajes hoy</span><strong id="adminTrips">0</strong></div>
-        <div class="metric"><span>Facturación hoy</span><strong id="adminTotal">$0</strong></div>
-      </div>
-
-      <hr>
-
-      <h3>Caja diaria</h3>
-      <div class="grid">
-        <div class="metric"><span>Efectivo</span><strong id="adminCash">$0</strong></div>
-        <div class="metric"><span>Transferencia</span><strong id="adminTransfer">$0</strong></div>
-        <div class="metric"><span>Tarjeta</span><strong id="adminCard">$0</strong></div>
-        <div class="metric"><span>Choferes</span><strong id="adminDrivers">0</strong></div>
-      </div>
-
-      <hr>
-
-      <h3>Resultado diario</h3>
-      <div class="grid">
-        <div class="metric"><span>Facturación</span><strong id="adminDailyRevenue">$0</strong></div>
-        <div class="metric"><span>Gastos</span><strong id="adminDailyExpenses">$0</strong></div>
-        <div class="metric"><span>Resultado</span><strong id="adminDailyNet">$0</strong></div>
-        <div class="metric"><span>Servicios</span><strong id="adminDailyTrips">0</strong></div>
-      </div>
-    </div>
-    <div class="card">
-      <h3>Gastos de hoy</h3>
-      <div id="adminGastos"></div>
     </div>
 
     <div class="card">
-      <h3>Resultado por vehículo hoy</h3>
-      <div id="adminResultadoVehiculos"></div>
+      <h3>Premio semanal</h3>
+      <div id="adminPeriodoSemana" class="note">Cargando período...</div>
+      <div id="adminGanadorSemana" class="leader-card" style="margin-top:12px">Cargando ganador...</div>
+      <label>Valor del premio para el ganador</label>
+      <input id="adminPremioMonto" type="number" inputmode="numeric" placeholder="Ej: 50000" />
+      <button class="btn-gold" type="button" onclick="guardarPremioSemanaAdmin()">Guardar premio semanal</button>
+      <div id="adminPremioMsg"></div>
     </div>
 
     <div class="card">
-      <h3>Choferes</h3>
-      <div id="adminChoferes"></div>
-    </div>
-
-    <div class="card">
-      <h3>Vehículos</h3>
-      <div id="adminVehiculos"></div>
-    </div>
-
-    <div class="card">
-      <h3>Tarifas</h3>
-      <p class="note">Podés cambiar precios desde acá sin tocar Firebase manualmente.</p>
-      <div id="adminTarifas"></div>
-    </div>
-
-    <div class="card">
-      <h3>Ranking de colaboración</h3>
-      <p class="note">Suma 1 punto por cada servicio derivado dentro de EXPLORA.</p>
-      <div id="adminColaboracion"></div>
-    </div>
-
-    <div class="card">
-      <h3>Ranking de facturación de hoy</h3>
-      <div id="adminRanking"></div>
-    </div>
-
-    <div class="card">
-      <h3>Historial de derivaciones de hoy</h3>
-      <div id="adminDerivaciones"></div>
-    </div>
-
-    <div class="card">
-      <h3>Cierres de hoy</h3>
-      <div id="adminCierres"></div>
-    </div>
-
-    <div class="card">
-      <h3>Servicios cargados hoy</h3>
-      <div id="adminHistory"></div>
+      <h3>Vehículos y choferes</h3>
+      <p class="note">Cálculo semanal 50/50 por chofer asignado. Se considera efectivo en mano del chofer, transferencias/tarjeta en cuenta David y gastos cargados.</p>
+      <div id="adminVehiculosSemana">Cargando...</div>
     </div>
   </section>
 
@@ -497,7 +471,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
 <div id="cierreSemanalModal" class="modal hidden">
   <div class="card">
-    <h2>Cierre semanal</h2>
+    <h2>Cierre semanal pendiente</h2>
     <p class="note">Si hay cierre semanal pendiente, esta pantalla aparece automáticamente y bloquea la app hasta confirmar.</p>
     <div id="cierreSemanalResumen"></div>
     <button id="confirmarCierreSemanalBtn" class="btn-gold" onclick="confirmarCierreSemanal()">Confirmar cierre semanal</button>
@@ -546,13 +520,28 @@ let kmTodaySaved = false;
 let adminGastosHoyTotal = 0;
 let adminGastosPorVehiculo = {};
 let cierreSemanalPendiente = null;
+let cierreSemanalCargando = false;
+let cierreSemanalCache = null;
 
 const $ = id => document.getElementById(id);
-const today = () => new Date().toISOString().slice(0,10);
+function today(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
 const money = n => "$" + Number(n || 0).toLocaleString("es-AR");
 
 function msg(el, text, ok=false){
   el.innerHTML = `<div class="msg ${ok?'ok':'err'}">${text}</div>`;
+}
+
+function withTimeout(promise, ms, label){
+  return Promise.race([
+    promise,
+    new Promise((_, reject)=>setTimeout(()=>reject(new Error(label || "La carga tardó demasiado. Revisá internet y volvé a tocar.")), ms))
+  ]);
 }
 
 window.login = async function(){
@@ -681,17 +670,22 @@ async function loadServices(){
   const snap = await getDocs(q);
   services = [];
   snap.forEach(d=>services.push({id:d.id,...d.data()}));
-  const select = $("serviceSelect");
-  select.innerHTML = "";
-  services.forEach(s=>{
-    const opt = document.createElement("option");
-    opt.value = s.id;
-    opt.textContent = s.nombre;
-    select.appendChild(opt);
-  });
-  updateServicePrice();
-}
+  services.sort((a,b)=>String(a.nombre || "").localeCompare(String(b.nombre || ""), "es"));
 
+  const selects = [$('serviceSelect'), $('deriveServiceSelect')].filter(Boolean);
+  selects.forEach(select=>{
+    select.innerHTML = "";
+    services.forEach(s=>{
+      const opt = document.createElement("option");
+      opt.value = s.id;
+      opt.textContent = s.nombre;
+      select.appendChild(opt);
+    });
+  });
+
+  updateServicePrice();
+  updateDerivePrice();
+}
 async function checkKmToday(){
   const kmId = `${currentVehicle.id}_${today()}`;
   const snap = await getDoc(doc(db,"kilometrajes",kmId));
@@ -825,6 +819,7 @@ window.saveTrip = async function(){
     ultimaActividad: new Date().toLocaleString("es-AR")
   });
 
+  cierreSemanalCache = null;
   msg($("serviceMsg"),"Servicio guardado correctamente.",true);
   await loadTodayTrips();
   setTimeout(()=>{$("servicePanel").classList.add("hidden");$("serviceMsg").innerHTML="";},900);
@@ -832,6 +827,77 @@ window.saveTrip = async function(){
 
 
 // ===== FUNCIONES LIVIANAS DE FECHA / RANKING / CIERRE =====
+
+window.closeDay = async function(){
+  const btn = $("btnCerrarDia");
+  const modal = $("cierreSemanalModal");
+  const resumen = $("cierreSemanalResumen");
+
+  if(cierreSemanalCargando){
+    if(modal) modal.classList.remove("hidden");
+    return;
+  }
+
+  cierreSemanalCargando = true;
+
+  if(btn){
+    btn.disabled = true;
+    btn.innerHTML = '<span class="icon">⏳</span><strong>Cargando cierre...</strong>';
+  }
+
+  if(modal){
+    modal.classList.remove("hidden");
+    modal.scrollTop = 0;
+  }
+  if(resumen){
+    resumen.innerHTML = `<div class="msg ok">Calculando cierre semanal... Esperá unos segundos.</div>`;
+  }
+
+  await new Promise(resolve => setTimeout(resolve, 80));
+
+  try{
+    const periodo = getPeriodoCierrePendiente() || getPeriodoTrabajoActual();
+    const cacheKey = `${currentUserId}_${periodo.id}`;
+
+    if(cierreSemanalCache && cierreSemanalCache.key === cacheKey){
+      cierreSemanalPendiente = cierreSemanalCache.data;
+    }else{
+      cierreSemanalPendiente = await withTimeout(
+        calcularCierreSemanalLiviano(currentUserId, periodo),
+        12000,
+        "El cierre tardó demasiado en cargar. Revisá internet y tocá Ver cierre semanal otra vez."
+      );
+      cierreSemanalCache = { key: cacheKey, data: cierreSemanalPendiente };
+    }
+
+    renderCierreSemanal(cierreSemanalPendiente);
+  }catch(e){
+    if(resumen){
+      resumen.innerHTML = `<div class="msg err">No se pudo calcular cierre: ${e.message}</div>`;
+    }
+  }finally{
+    cierreSemanalCargando = false;
+    if(btn){
+      btn.disabled = false;
+      btn.innerHTML = '<span class="icon">✅</span><strong>Ver cierre semanal</strong>';
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+// ===== EXPLORA: RANKING Y CIERRE SEMANAL LIVIANO =====
+const PRIMER_PERIODO_INICIO = "2026-06-05";
+const PRIMER_PERIODO_FIN = "2026-06-10";
+const CICLO_SEMANAL_ANCLA = "2026-06-11";
+
 function parseLocalDate(dateStr){
   const [y,m,d] = dateStr.split("-").map(Number);
   return new Date(y, m - 1, d);
@@ -854,12 +920,6 @@ function daysBetween(a,b){
   return Math.floor((parseLocalDate(b) - parseLocalDate(a)) / 86400000);
 }
 
-// Primer período: 05/06/2026 al 10/06/2026. Cierre: 11/06/2026.
-// Luego: 11/06 al 17/06. Cierre: 18/06. Y así sucesivamente.
-const PRIMER_PERIODO_INICIO = "2026-06-05";
-const PRIMER_PERIODO_FIN = "2026-06-10";
-const CICLO_SEMANAL_ANCLA = "2026-06-11";
-
 function getPeriodoTrabajoActual(dateStr = today()){
   if(dateStr < CICLO_SEMANAL_ANCLA){
     return {
@@ -875,7 +935,6 @@ function getPeriodoTrabajoActual(dateStr = today()){
   const start = addDays(CICLO_SEMANAL_ANCLA, index * 7);
   const end = addDays(start, 6);
   const closeDate = addDays(end, 1);
-
   return {start,end,closeDate,id:`${start}_${end}`};
 }
 
@@ -906,8 +965,7 @@ async function getPremioSemana(periodo){
   }
 }
 
-async function calcularRankingSemanalLiviano(){
-  const periodo = getPeriodoTrabajoActual(today());
+async function calcularRankingSemanalLiviano(periodo = getPeriodoTrabajoActual(today())){
   const stats = {};
 
   const choferesSnap = await getDocs(collection(db,"choferes"));
@@ -918,12 +976,12 @@ async function calcularRankingSemanalLiviano(){
     stats[d.id] = {id:d.id,nombre:c.nombre || d.id,viajes:0,derivaciones:0,facturacion:0,porcentaje:0};
   });
 
-  // Consulta liviana: lee viajes del período actual por fecha.
-  const viajesSnap = await getDocs(query(
+  // Consulta liviana por fecha. No combina chofer + fecha, así evita índice compuesto.
+  const viajesSnap = await withTimeout(getDocs(query(
     collection(db,"viajes"),
     where("fecha",">=",periodo.start),
     where("fecha","<=",periodo.end)
-  ));
+  )), 9000, "El ranking tardó demasiado cargando viajes.");
 
   viajesSnap.forEach(d=>{
     const v = d.data();
@@ -933,19 +991,20 @@ async function calcularRankingSemanalLiviano(){
     }
   });
 
-  // Derivaciones del período.
-  const derivSnap = await getDocs(query(
-    collection(db,"derivaciones"),
-    where("fecha",">=",periodo.start),
-    where("fecha","<=",periodo.end)
-  ));
+  try{
+    const derivSnap = await withTimeout(getDocs(query(
+      collection(db,"derivaciones"),
+      where("fecha",">=",periodo.start),
+      where("fecha","<=",periodo.end)
+    )), 9000, "El ranking tardó demasiado cargando derivaciones.");
 
-  derivSnap.forEach(d=>{
-    const x = d.data();
-    if(stats[x.origen]){
-      stats[x.origen].derivaciones += 1;
-    }
-  });
+    derivSnap.forEach(d=>{
+      const x = d.data();
+      if(stats[x.origen]) stats[x.origen].derivaciones += 1;
+    });
+  }catch(e){
+    console.warn("No se pudieron cargar derivaciones para ranking", e);
+  }
 
   const arr = Object.values(stats);
   const maxViajes = Math.max(1,...arr.map(x=>x.viajes));
@@ -1016,31 +1075,40 @@ window.openRankingPanel = async function(){
 }
 
 async function calcularCierreSemanalLiviano(chofer, periodo){
-  const viajesSnap = await getDocs(query(collection(db,"viajes"), where("chofer","==",chofer)));
-  const gastosSnap = await getDocs(query(collection(db,"gastos"), where("chofer","==",chofer)));
+  // Evita el índice compuesto: consulta solo por chofer y filtra fecha en JavaScript.
+  // Es mucho más rápido que leer toda la colección completa.
+  const viajesSnap = await withTimeout(getDocs(query(
+    collection(db,"viajes"),
+    where("chofer","==",chofer)
+  )), 9000, "El cierre tardó demasiado cargando viajes.");
+
+  const gastosSnap = await withTimeout(getDocs(query(
+    collection(db,"gastos"),
+    where("chofer","==",chofer)
+  )), 9000, "El cierre tardó demasiado cargando gastos.");
 
   let totalViajes = 0, efectivo = 0, transferencia = 0, tarjeta = 0, cantidadViajes = 0;
   viajesSnap.forEach(d=>{
     const v = d.data();
     const fecha = v.fecha || "";
-    if(fecha >= periodo.start && fecha <= periodo.end){
-      const monto = Number(v.monto || 0);
-      totalViajes += monto;
-      cantidadViajes++;
-      if(v.pago === "efectivo") efectivo += monto;
-      if(v.pago === "transferencia") transferencia += monto;
-      if(v.pago === "tarjeta") tarjeta += monto;
-    }
+    if(fecha < periodo.start || fecha > periodo.end) return;
+
+    const monto = Number(v.monto || 0);
+    totalViajes += monto;
+    cantidadViajes++;
+    if(v.pago === "efectivo") efectivo += monto;
+    if(v.pago === "transferencia") transferencia += monto;
+    if(v.pago === "tarjeta") tarjeta += monto;
   });
 
   let totalGastos = 0, cantidadGastos = 0;
   gastosSnap.forEach(d=>{
     const g = d.data();
     const fecha = g.fecha || "";
-    if(fecha >= periodo.start && fecha <= periodo.end){
-      totalGastos += Number(g.monto || 0);
-      cantidadGastos++;
-    }
+    if(fecha < periodo.start || fecha > periodo.end) return;
+
+    totalGastos += Number(g.monto || 0);
+    cantidadGastos++;
   });
 
   const neto = totalViajes - totalGastos;
@@ -1049,8 +1117,14 @@ async function calcularCierreSemanalLiviano(chofer, periodo){
   const efectivoNetoChofer = efectivo - totalGastos;
   const diferenciaBase = efectivoNetoChofer - mitadChofer;
 
-  const rankingData = await calcularRankingSemanalLiviano();
-  const ganador = rankingData.ranking[0] || null;
+  let ganador = null;
+  try{
+    const rankingData = await calcularRankingSemanalLiviano(periodo);
+    ganador = rankingData.ranking[0] || null;
+  }catch(e){
+    console.warn("Ranking no disponible para cierre", e);
+  }
+
   const premioSemanal = await getPremioSemana(periodo);
   const esGanador = ganador && ganador.id === chofer;
   const premioAplicado = esGanador ? premioSemanal : 0;
@@ -1078,25 +1152,16 @@ function renderCierreSemanal(c){
   $("cierreSemanalResumen").innerHTML = `
     <div class="trip"><b>Período de trabajo</b><br><small>${c.periodo.start} al ${c.periodo.end}</small><br><small>Cierre obligatorio: ${c.periodo.closeDate}</small></div>
     <div class="trip"><b>Viajes</b><br><small>Cantidad: ${c.cantidadViajes}</small><br><b style="color:var(--gold)">${money(c.totalViajes)}</b></div>
-    <div class="trip"><b>Medios de pago</b><br><small>Efectivo: ${money(c.efectivo)}</small><br><small>Transferencia: ${money(c.transferencia)}</small><br><small>Tarjeta: ${money(c.tarjeta)}</small></div>
+    <div class="trip"><b>Medios de pago</b><br><small>Efectivo en mano del chofer: ${money(c.efectivo)}</small><br><small>Transferencia en cuenta David: ${money(c.transferencia)}</small><br><small>Tarjeta en cuenta David: ${money(c.tarjeta)}</small></div>
     <div class="trip"><b>Gastos</b><br><small>Cantidad: ${c.cantidadGastos}</small><br><b style="color:var(--gold)">${money(c.totalGastos)}</b></div>
-    <div class="trip"><b>50/50</b><br><small>Neto: ${money(c.neto)}</small><br><small>Parte chofer: ${money(c.mitadChofer)}</small><br><small>Parte David: ${money(c.mitadDavid)}</small><br><small>Diferencia antes de premio: ${money(c.diferenciaBase)}</small></div>
-    <div class="trip"><b>Premio semanal</b><br><small>Ganador: ${c.ganadorSemana || "sin ganador"}</small><br><small>Premio: ${money(c.premioSemanal)}</small><br><small>Aplicado a este chofer: ${money(c.premioAplicado)}</small></div>
+    <div class="trip"><b>Resultado 50/50</b><br><small>Neto: ${money(c.neto)}</small><br><small>Parte chofer: ${money(c.mitadChofer)}</small><br><small>Parte David: ${money(c.mitadDavid)}</small><br><small>Efectivo neto del chofer: ${money(c.efectivoNetoChofer)}</small><br><small>Diferencia antes de premio: ${money(c.diferenciaBase)}</small></div>
+    <div class="trip"><b>Premio semanal</b><br><small>Ganador: ${c.ganadorSemana || "sin ganador"}</small><br><small>Premio configurado: ${money(c.premioSemanal)}</small><br><small>Aplicado a este chofer: ${money(c.premioAplicado)}</small></div>
     ${resultado}
   `;
 }
 
-window.closeDay = async function(){
-  const periodo = getPeriodoCierrePendiente() || getPeriodoTrabajoActual();
-  $("cierreSemanalModal").classList.remove("hidden");
-  $("cierreSemanalResumen").innerHTML = "Calculando cierre...";
-  try{
-    cierreSemanalPendiente = await calcularCierreSemanalLiviano(currentUserId, periodo);
-    renderCierreSemanal(cierreSemanalPendiente);
-  }catch(e){
-    $("cierreSemanalResumen").innerHTML = `<div class="msg err">No se pudo calcular cierre: ${e.message}</div>`;
-  }
-}
+
+
 
 window.confirmarCierreSemanal = async function(){
   if(!cierreSemanalPendiente){
@@ -1117,15 +1182,22 @@ window.confirmarCierreSemanal = async function(){
     chofer: currentUserId,
     vehiculo: currentVehicle ? currentVehicle.id : "",
     totalViajes: c.totalViajes,
+    cantidadViajes: c.cantidadViajes,
     efectivo: c.efectivo,
     transferencia: c.transferencia,
     tarjeta: c.tarjeta,
     totalGastos: c.totalGastos,
+    cantidadGastos: c.cantidadGastos,
     neto: c.neto,
     mitadChofer: c.mitadChofer,
     mitadDavid: c.mitadDavid,
+    efectivoNetoChofer: c.efectivoNetoChofer,
+    ganadorSemana: c.ganadorSemana,
+    ganadorId: c.ganadorId,
     premioSemanal: c.premioSemanal,
     premioAplicado: c.premioAplicado,
+    diferenciaBase: c.diferenciaBase,
+    diferenciaFinal: c.diferenciaFinal,
     choferDebe: c.choferDebe,
     davidDebe: c.davidDebe,
     confirmado: true,
@@ -1138,31 +1210,25 @@ window.confirmarCierreSemanal = async function(){
   });
 
   cierreSemanalPendiente = null;
+  cierreSemanalCache = null;
   $("cierreSemanalModal").classList.add("hidden");
+  alert("Cierre semanal confirmado correctamente.");
 }
 
-
 async function checkCierreSemanalAutomatico(){
+  const periodo = getPeriodoCierrePendiente();
+  if(!periodo) return;
+
+  const cierreId = `${currentUserId}_${periodo.id}`;
+  const cierreSnap = await getDoc(doc(db,"cierres_semanales",cierreId));
+  if(cierreSnap.exists()) return;
+
+  $("cierreSemanalModal").classList.remove("hidden");
+  $("cierreSemanalResumen").innerHTML = "Calculando cierre semanal pendiente...";
+
   try{
-    const periodo = getPeriodoCierrePendiente();
+    cierreSemanalPendiente = await withTimeout(calcularCierreSemanalLiviano(currentUserId, periodo), 12000, "El cierre automático tardó demasiado. Tocá Ver cierre semanal para reintentar.");
 
-    if(!periodo){
-      return;
-    }
-
-    const cierreId = `${currentUserId}_${periodo.id}`;
-    const cierreSnap = await getDoc(doc(db,"cierres_semanales",cierreId));
-
-    if(cierreSnap.exists()){
-      return;
-    }
-
-    $("cierreSemanalModal").classList.remove("hidden");
-    $("cierreSemanalResumen").innerHTML = "Calculando cierre semanal pendiente...";
-
-    cierreSemanalPendiente = await calcularCierreSemanalLiviano(currentUserId, periodo);
-
-    // Si no hubo viajes ni gastos, no bloquea.
     if(cierreSemanalPendiente.cantidadViajes === 0 && cierreSemanalPendiente.cantidadGastos === 0){
       cierreSemanalPendiente = null;
       $("cierreSemanalModal").classList.add("hidden");
@@ -1170,20 +1236,21 @@ async function checkCierreSemanalAutomatico(){
     }
 
     renderCierreSemanal(cierreSemanalPendiente);
-
   }catch(e){
-    $("cierreSemanalModal").classList.remove("hidden");
-    $("cierreSemanalResumen").innerHTML = `<div class="msg err">No se pudo calcular el cierre automático: ${e.message}</div>`;
+    $("cierreSemanalResumen").innerHTML = `<div class="msg err">No se pudo calcular cierre automático: ${e.message}</div>`;
   }
 }
 
-
 async function loadTodayTrips(){
-  const q = query(collection(db,"viajes"), where("fecha","==",today()), where("chofer","==",currentUserId));
-  const snap = await getDocs(q);
+  // Sin índice compuesto: filtramos por fecha y chofer en JavaScript.
+  const snap = await getDocs(collection(db,"viajes"));
   let total = 0, count = 0, html = "";
+  const hoy = today();
+
   snap.forEach(d=>{
     const v = d.data();
+    if(v.fecha !== hoy || v.chofer !== currentUserId) return;
+
     total += Number(v.monto || 0); count++;
     html += `<div class="trip"><b>${v.servicioNombre}</b><br><small>${v.hora} · ${v.tipo} · ${v.pago}</small><br><b style="color:var(--gold)">${money(v.monto)}</b></div>`;
   });
@@ -1224,7 +1291,9 @@ async function loadDeriveDrivers(){
 }
 
 window.updateDerivePrice = function(){
-  const service = services.find(s=>s.id === $("deriveServiceSelect").value);
+  const select = $("deriveServiceSelect");
+  if(!select) return;
+  const service = services.find(s=>s.id === select.value);
   if(!service) return;
 
   const tramoUnico = isTramoUnico(service.id);
@@ -1323,6 +1392,7 @@ window.saveDerivation = async function(){
     ultimaActividad: new Date().toLocaleString("es-AR")
   });
 
+  cierreSemanalCache = null;
   msg($("deriveMsg"),"Servicio derivado correctamente.",true);
   await loadTodayTrips();
 
@@ -1365,6 +1435,7 @@ window.saveExpense = async function(){
   $("expenseAmount").value = "";
   $("expenseDetail").value = "";
 
+  cierreSemanalCache = null;
   msg($("expenseMsg"),"Gasto guardado correctamente.",true);
   setTimeout(()=>{
     $("expensePanel").classList.add("hidden");
@@ -1373,72 +1444,8 @@ window.saveExpense = async function(){
 }
 
 
-window.closeDay = async function(){
-  try{
-    if(!currentVehicle){
-      alert("No hay vehículo asignado.");
-      return;
-    }
 
-    const q = query(
-      collection(db,"viajes"),
-      where("fecha","==",today()),
-      where("chofer","==",currentUserId)
-    );
 
-    const snap = await getDocs(q);
-
-    let total = 0;
-    let efectivo = 0;
-    let transferencia = 0;
-    let tarjeta = 0;
-    let viajes = 0;
-
-    snap.forEach(d=>{
-      const v = d.data();
-      const monto = Number(v.monto || 0);
-
-      total += monto;
-      viajes++;
-
-      if(v.pago === "efectivo") efectivo += monto;
-      if(v.pago === "transferencia") transferencia += monto;
-      if(v.pago === "tarjeta") tarjeta += monto;
-    });
-
-    const cierreId = `${currentUserId}_${today()}`;
-
-    await setDoc(doc(db,"cierres_diarios",cierreId),{
-      fecha: today(),
-      chofer: currentUserId,
-      vehiculo: currentVehicle.id,
-      viajes,
-      efectivo,
-      transferencia,
-      tarjeta,
-      total,
-      cerrado: true,
-      creado: serverTimestamp()
-    });
-
-    await updateDoc(doc(db,"choferes",currentUserId),{
-      ultimoCierre: today(),
-      ultimaActividad: new Date().toLocaleString("es-AR")
-    });
-
-    alert(
-      `Cierre guardado correctamente\n\n` +
-      `Viajes: ${viajes}\n` +
-      `Efectivo: ${money(efectivo)}\n` +
-      `Transferencia: ${money(transferencia)}\n` +
-      `Tarjeta: ${money(tarjeta)}\n` +
-      `Total: ${money(total)}`
-    );
-
-  }catch(e){
-    alert("Error al cerrar día: " + e.message);
-  }
-}
 
 
 async function loadChoferesAdmin(){
@@ -1548,27 +1555,30 @@ async function loadDerivacionesAdmin(){
 
 
 async function loadCierresAdmin(){
-  const q = query(collection(db,"cierres_diarios"), where("fecha","==",today()));
-  const snap = await getDocs(q);
-
   let html = "";
 
-  snap.forEach(d=>{
-    const c = d.data();
+  try{
+    const q = query(collection(db,"cierres_semanales"), where("fechaConfirmacion","==",today()));
+    const snap = await getDocs(q);
 
-    html += `
-      <div class="trip">
-        <b>${c.chofer}</b><br>
-        <small>${c.vehiculo} · ${c.viajes || 0} viajes</small><br>
-        <small>Efectivo: ${money(c.efectivo || 0)} · Transferencia: ${money(c.transferencia || 0)} · Tarjeta: ${money(c.tarjeta || 0)}</small><br>
-        <b style="color:var(--gold)">${money(c.total || 0)}</b>
-      </div>
-    `;
-  });
+    snap.forEach(d=>{
+      const c = d.data();
+      const total = Number(c.totalViajes || 0);
+      html += `
+        <div class="trip">
+          <b>${c.chofer}</b><br>
+          <small>${c.vehiculo || "sin vehículo"} · ${c.cantidadViajes || 0} viajes · ${c.periodoInicio || ""} al ${c.periodoFin || ""}</small><br>
+          <small>Efectivo: ${money(c.efectivo || 0)} · Transferencia: ${money(c.transferencia || 0)} · Tarjeta: ${money(c.tarjeta || 0)}</small><br>
+          <b style="color:var(--gold)">${money(total)}</b>
+        </div>
+      `;
+    });
+  }catch(e){
+    html = `<div class="msg err">No se pudieron cargar cierres semanales: ${e.message}</div>`;
+  }
 
-  $("adminCierres").innerHTML = html || `<p class="note">Todavía no hay cierres cargados hoy.</p>`;
+  $("adminCierres").innerHTML = html || `<p class="note">Todavía no hay cierres semanales confirmados hoy.</p>`;
 }
-
 
 
 async function loadVehiculosAdmin(){
@@ -1694,113 +1704,255 @@ async function loadGastosAdmin(){
 
 
 async function loadAdmin(){
-  await loadGastosAdmin();
-  await loadChoferesAdmin();
-  await loadVehiculosAdmin();
-  await loadTarifasAdmin();
-  await loadColaboracionAdmin();
-  await loadDerivacionesAdmin();
-  await loadCierresAdmin();
+  const periodo = getPeriodoTrabajoActual(today());
+  const adminMsg = $("adminMsg");
+  if(adminMsg) msg(adminMsg,"Cargando administrador...",true);
 
-  const q = query(collection(db,"viajes"), where("fecha","==",today()));
-  const snap = await getDocs(q);
+  try{
+    const [choferesSnap, vehiculosSnap, viajesSnap, gastosSnap, premioSnap] = await Promise.all([
+      withTimeout(getDocs(collection(db,"choferes")), 9000, "Tardó demasiado cargando choferes."),
+      withTimeout(getDocs(collection(db,"vehiculos")), 9000, "Tardó demasiado cargando vehículos."),
+      withTimeout(getDocs(query(collection(db,"viajes"), where("fecha",">=",periodo.start), where("fecha","<=",periodo.end))), 9000, "Tardó demasiado cargando viajes de la semana."),
+      withTimeout(getDocs(query(collection(db,"gastos"), where("fecha",">=",periodo.start), where("fecha","<=",periodo.end))), 9000, "Tardó demasiado cargando gastos de la semana."),
+      getDoc(doc(db,"configuracion",`premio_${periodo.id}`))
+    ]);
 
-  let total = 0;
-  let count = 0;
-  let efectivo = 0;
-  let transferencia = 0;
-  let tarjeta = 0;
-  let html = "";
-  const ranking = {};
-  const facturacionPorVehiculo = {};
+    const choferes = {};
+    choferesSnap.forEach(d=>{
+      const c = d.data();
+      if(c.rol === "admin") return;
+      if(c.activo === false) return;
+      choferes[d.id] = {
+        id:d.id,
+        nombre:c.nombre || d.id,
+        vehiculo:c.vehiculo || "",
+        viajes:0,
+        recaudado:0,
+        efectivo:0,
+        transferencia:0,
+        tarjeta:0,
+        gastos:0,
+        cantidadGastos:0
+      };
+    });
 
-  snap.forEach(d=>{
-    const v = d.data();
-    const monto = Number(v.monto || 0);
-    const chofer = v.chofer || "sin_chofer";
-    const vehiculo = v.vehiculo || "sin_vehiculo";
+    const vehiculos = {};
+    vehiculosSnap.forEach(d=>{
+      vehiculos[d.id] = { id:d.id, ...d.data() };
+    });
 
-    total += monto;
-    count++;
+    viajesSnap.forEach(d=>{
+      const v = d.data();
+      const choferId = v.chofer || "";
+      const vehiculoId = v.vehiculo || "";
+      if(!choferes[choferId]){
+        choferes[choferId] = {
+          id:choferId || "sin_chofer",
+          nombre:choferId || "Sin chofer",
+          vehiculo:vehiculoId,
+          viajes:0,
+          recaudado:0,
+          efectivo:0,
+          transferencia:0,
+          tarjeta:0,
+          gastos:0,
+          cantidadGastos:0
+        };
+      }
+      if(!choferes[choferId].vehiculo && vehiculoId) choferes[choferId].vehiculo = vehiculoId;
+      const monto = Number(v.monto || 0);
+      choferes[choferId].viajes += 1;
+      choferes[choferId].recaudado += monto;
+      if(v.pago === "efectivo") choferes[choferId].efectivo += monto;
+      if(v.pago === "transferencia") choferes[choferId].transferencia += monto;
+      if(v.pago === "tarjeta") choferes[choferId].tarjeta += monto;
+    });
 
-    if(v.pago === "efectivo") efectivo += monto;
-    if(v.pago === "transferencia") transferencia += monto;
-    if(v.pago === "tarjeta") tarjeta += monto;
+    gastosSnap.forEach(d=>{
+      const g = d.data();
+      const choferId = g.chofer || "";
+      const vehiculoId = g.vehiculo || "";
+      let targetId = choferId;
+      if(!targetId){
+        const encontrado = Object.values(choferes).find(c=>c.vehiculo === vehiculoId);
+        targetId = encontrado ? encontrado.id : "sin_chofer";
+      }
+      if(!choferes[targetId]){
+        choferes[targetId] = {
+          id:targetId,
+          nombre:targetId,
+          vehiculo:vehiculoId,
+          viajes:0,
+          recaudado:0,
+          efectivo:0,
+          transferencia:0,
+          tarjeta:0,
+          gastos:0,
+          cantidadGastos:0
+        };
+      }
+      if(!choferes[targetId].vehiculo && vehiculoId) choferes[targetId].vehiculo = vehiculoId;
+      choferes[targetId].gastos += Number(g.monto || 0);
+      choferes[targetId].cantidadGastos += 1;
+    });
 
-    if(!ranking[chofer]){
-      ranking[chofer] = { viajes:0, total:0 };
+    const lista = Object.values(choferes).sort((a,b)=>String(a.vehiculo || "").localeCompare(String(b.vehiculo || ""),"es") || String(a.nombre).localeCompare(String(b.nombre),"es"));
+    const ganador = lista.slice().sort((a,b)=>b.recaudado-a.recaudado || b.viajes-a.viajes)[0] || null;
+    const premio = premioSnap.exists() ? Number(premioSnap.data().monto || 0) : 0;
+
+    const periodoEl = $("adminPeriodoSemana");
+    if(periodoEl) periodoEl.innerHTML = `Semana actual: <b>${periodo.start}</b> al <b>${periodo.end}</b>`;
+
+    const premioInput = $("adminPremioMonto");
+    if(premioInput) premioInput.value = premio || "";
+
+    const ganadorEl = $("adminGanadorSemana");
+    if(ganadorEl){
+      ganadorEl.innerHTML = ganador
+        ? `<h3>🏆 Ganador actual</h3><b>${ganador.nombre}</b><br><small>${ganador.viajes} viajes · ${money(ganador.recaudado)} recaudado</small><br><small>Premio configurado: ${money(premio)}</small>`
+        : `<h3>🏆 Ganador actual</h3><small>Todavía no hay viajes en esta semana.</small>`;
     }
 
-    ranking[chofer].viajes++;
-    ranking[chofer].total += monto;
+    let html = "";
+    let totalRecaudado = 0;
+    let totalGastado = 0;
 
-    if(!facturacionPorVehiculo[vehiculo]){
-      facturacionPorVehiculo[vehiculo] = 0;
-    }
+    lista.forEach(c=>{
+      const vehiculoId = c.vehiculo || "sin_vehiculo";
+      const vehiculo = vehiculos[vehiculoId] || {};
+      const neto = c.recaudado - c.gastos;
+      const parteChofer = neto / 2;
+      const efectivoNetoChofer = c.efectivo - c.gastos;
+      const premioAplicado = ganador && ganador.id === c.id ? premio : 0;
+      const diferencia = efectivoNetoChofer - parteChofer - premioAplicado;
+      const choferDebe = diferencia > 0 ? diferencia : 0;
+      const davidDebe = diferencia < 0 ? Math.abs(diferencia) : 0;
+      const alertas = getAlertasVehiculoAdmin(vehiculoId, vehiculo);
 
-    facturacionPorVehiculo[vehiculo] += monto;
+      totalRecaudado += c.recaudado;
+      totalGastado += c.gastos;
 
-    html += `
-      <div class="trip">
-        <b>${v.servicioNombre}</b><br>
-        <small>${chofer} · ${vehiculo} · ${v.pago} · ${v.tipo || ""}</small><br>
-        <b style="color:var(--gold)">${money(monto)}</b>
+      let resultado = `<div class="msg ok"><b>Equilibrado:</b><br>No hay diferencia.</div>`;
+      if(choferDebe > 0){
+        resultado = `<div class="msg err"><b>El chofer debe pasarte:</b><br>${money(choferDebe)}</div>`;
+      }else if(davidDebe > 0){
+        resultado = `<div class="msg ok"><b>Vos debés pasarle al chofer:</b><br>${money(davidDebe)}</div>`;
+      }
+
+      html += `
+        <div class="vehicle-card">
+          <b>${vehiculoId}</b><br>
+          <small>${vehiculo.modelo || "Vehículo"} · Chofer: ${c.nombre}</small><br>
+          <hr>
+          <small>Viajes semana: ${c.viajes}</small><br>
+          <small>Total recaudado: <b style="color:var(--gold)">${money(c.recaudado)}</b></small><br>
+          <small>Total gastado: <b style="color:var(--gold)">${money(c.gastos)}</b></small><br>
+          <small>Efectivo: ${money(c.efectivo)} · Transferencia: ${money(c.transferencia)} · Tarjeta: ${money(c.tarjeta)}</small><br>
+          ${premioAplicado ? `<small>Premio aplicado: ${money(premioAplicado)}</small><br>` : ""}
+          ${alertas || `<div class="msg ok">Sin vencimientos próximos cargados.</div>`}
+          ${resultado}
+        </div>
+      `;
+    });
+
+    const resumen = `
+      <div class="grid" style="margin-bottom:12px">
+        <div class="metric"><span>Total recaudado semana</span><strong>${money(totalRecaudado)}</strong></div>
+        <div class="metric"><span>Total gastado semana</span><strong>${money(totalGastado)}</strong></div>
       </div>
     `;
-  });
 
-  const rankingOrdenado = Object.entries(ranking)
-    .sort((a,b)=> b[1].total - a[1].total);
-
-  let rankingHtml = "";
-
-  rankingOrdenado.forEach(([chofer,data],index)=>{
-    rankingHtml += `
-      <div class="trip">
-        <b>${index + 1}. ${chofer}</b><br>
-        <small>${data.viajes} viajes</small><br>
-        <b style="color:var(--gold)">${money(data.total)}</b>
-      </div>
-    `;
-  });
-
-  const todosVehiculos = new Set([
-    ...Object.keys(facturacionPorVehiculo),
-    ...Object.keys(adminGastosPorVehiculo)
-  ]);
-
-  let resultadoVehiculosHtml = "";
-
-  todosVehiculos.forEach(vehiculo=>{
-    const ingresos = facturacionPorVehiculo[vehiculo] || 0;
-    const gastos = adminGastosPorVehiculo[vehiculo] || 0;
-    const neto = ingresos - gastos;
-
-    resultadoVehiculosHtml += `
-      <div class="trip">
-        <b>${vehiculo}</b><br>
-        <small>Facturación: ${money(ingresos)} · Gastos: ${money(gastos)}</small><br>
-        <b style="color:${neto >= 0 ? 'var(--gold)' : 'var(--red)'}">${money(neto)}</b>
-      </div>
-    `;
-  });
-
-  const netoDia = total - adminGastosHoyTotal;
-
-  $("adminTrips").textContent = count;
-  $("adminTotal").textContent = money(total);
-  $("adminCash").textContent = money(efectivo);
-  $("adminTransfer").textContent = money(transferencia);
-  $("adminCard").textContent = money(tarjeta);
-  $("adminDrivers").textContent = Object.keys(ranking).length;
-  $("adminDailyRevenue").textContent = money(total);
-  $("adminDailyExpenses").textContent = money(adminGastosHoyTotal);
-  $("adminDailyNet").textContent = money(netoDia);
-  $("adminDailyTrips").textContent = count;
-  $("adminResultadoVehiculos").innerHTML = resultadoVehiculosHtml || `<p class="note">Todavía no hay resultado por vehículo hoy.</p>`;
-  $("adminRanking").innerHTML = rankingHtml || `<p class="note">Todavía no hay ranking para hoy.</p>`;
-  $("adminHistory").innerHTML = html || `<p class="note">Todavía no hay servicios cargados hoy.</p>`;
+    const target = $("adminVehiculosSemana");
+    if(target) target.innerHTML = resumen + (html || `<p class="note">Todavía no hay choferes o vehículos cargados.</p>`);
+    if(adminMsg) adminMsg.innerHTML = "";
+  }catch(e){
+    if(adminMsg) msg(adminMsg,"Error cargando administrador: " + e.message);
+    const target = $("adminVehiculosSemana");
+    if(target) target.innerHTML = `<div class="msg err">No se pudo cargar el administrador: ${e.message}</div>`;
+  }
 }
+
+function getAlertasVehiculoAdmin(vehiculoId, v){
+  const alertas = [];
+  const kmActual = Number(v.kmActual || 0);
+  const aceiteUltimoKm = Number(v.aceiteUltimoKm || v.ultimoCambioAceiteKm || 0);
+  if(aceiteUltimoKm){
+    const proximoAceite = aceiteUltimoKm + 10000;
+    const faltan = proximoAceite - kmActual;
+    if(faltan <= 0){
+      alertas.push(`⚠️ Aceite vencido. Próximo marcado: ${proximoAceite.toLocaleString("es-AR")} km`);
+    }else if(faltan <= 1000){
+      alertas.push(`⚠️ Faltan ${faltan.toLocaleString("es-AR")} km para cambio de aceite`);
+    }
+  }
+
+  const camposFecha = [
+    ["seguroVence","Seguro"], ["seguroVencimiento","Seguro"],
+    ["vtvVence","VTV"], ["vtvVencimiento","VTV"],
+    ["patenteVence","Patente"], ["patenteVencimiento","Patente"],
+    ["licenciaVence","Licencia"], ["licenciaVencimiento","Licencia"],
+    ["habilitacionVence","Habilitación"], ["habilitacionVencimiento","Habilitación"]
+  ];
+
+  const vistos = new Set();
+  camposFecha.forEach(([campo,nombre])=>{
+    if(vistos.has(nombre)) return;
+    const valor = v[campo];
+    if(!valor) return;
+    const fecha = normalizarFechaAdmin(valor);
+    if(!fecha) return;
+    const dias = daysBetween(today(), fecha);
+    if(dias < 0){
+      alertas.push(`⚠️ ${nombre} vencido el ${fecha}`);
+      vistos.add(nombre);
+    }else if(dias <= 30){
+      alertas.push(`⚠️ ${nombre} vence en ${dias} días (${fecha})`);
+      vistos.add(nombre);
+    }
+  });
+
+  if(!alertas.length) return "";
+  return alertas.map(a=>`<div class="alert-soft">${a}</div>`).join("");
+}
+
+function normalizarFechaAdmin(valor){
+  if(!valor) return "";
+  if(typeof valor === "string"){
+    const m = valor.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(m) return `${m[1]}-${m[2]}-${m[3]}`;
+    const p = valor.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if(p) return `${p[3]}-${String(p[2]).padStart(2,"0")}-${String(p[1]).padStart(2,"0")}`;
+    return "";
+  }
+  if(valor && typeof valor.toDate === "function") return formatDateLocal(valor.toDate());
+  return "";
+}
+
+window.guardarPremioSemanaAdmin = async function(){
+  const input = $("adminPremioMonto");
+  const monto = Number(input ? input.value : 0);
+  if(monto < 0 || Number.isNaN(monto)){
+    return msg($("adminPremioMsg"),"Ingrese un valor válido.");
+  }
+
+  const periodo = getPeriodoTrabajoActual(today());
+  try{
+    await setDoc(doc(db,"configuracion",`premio_${periodo.id}`),{
+      monto,
+      periodoId: periodo.id,
+      periodoInicio: periodo.start,
+      periodoFin: periodo.end,
+      actualizado: serverTimestamp()
+    });
+    cierreSemanalCache = null;
+    msg($("adminPremioMsg"),"Premio semanal guardado correctamente.",true);
+    await loadAdmin();
+  }catch(e){
+    msg($("adminPremioMsg"),"No se pudo guardar el premio: " + e.message);
+  }
+}
+
+
 const serviciosExplora = [
   { id:"salida_out_igr", nombre:"Salida-Out IGR", precio:25000 },
   { id:"local", nombre:"Local", precio:20000 },
