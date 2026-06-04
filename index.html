@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA FINAL REPARADA</title>
+<title>EXPLORA FINAL FUNCIONAL</title>
 <style>
 :root{
   --bg:#080808;
@@ -217,7 +217,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
-    <div class="subtitle">Control Operativo · FINAL REPARADA</div>
+    <div class="subtitle">Control Operativo · FINAL FUNCIONAL</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -251,11 +251,11 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
     </div>
 
     <div class="grid">
-      <button id="btnNuevoServicio" type="button" class="bigbtn" onclick="openNewService()"><span class="icon">🚕</span><strong>Nuevo servicio</strong></button>
-      <button id="btnDerivarServicio" type="button" class="bigbtn" onclick="showPanel('derivePanel')"><span class="icon">🔄</span><strong>Derivar servicio</strong></button>
-      <button id="btnCargarGasto" type="button" class="bigbtn" onclick="showPanel('expensePanel')"><span class="icon">💸</span><strong>Cargar gasto</strong></button>
-      <button id="btnHistorialHoy" type="button" class="bigbtn" onclick="showPanel('historyPanel')"><span class="icon">📋</span><strong>Historial hoy</strong></button>
-      <button id="btnCerrarDia" type="button" class="bigbtn" onclick="closeDay()"><span class="icon">✅</span><strong>Cerrar día</strong></button>
+      <button id="btnNuevoServicio" class="bigbtn" type="button" onclick="openNewService()"><span class="icon">🚕</span><strong>Nuevo servicio</strong></button>
+      <button id="btnDerivarServicio" class="bigbtn" type="button" onclick="showPanel('derivePanel')"><span class="icon">🔄</span><strong>Derivar servicio</strong></button>
+      <button id="btnCargarGasto" class="bigbtn" type="button" onclick="showPanel('expensePanel')"><span class="icon">💸</span><strong>Cargar gasto</strong></button>
+      <button id="btnHistorialHoy" class="bigbtn" type="button" onclick="showPanel('historyPanel')"><span class="icon">📋</span><strong>Historial hoy</strong></button>
+      <button id="btnCerrarDia" class="bigbtn" type="button" onclick="closeDay()"><span class="icon">✅</span><strong>Cerrar día</strong></button>
     </div>
 
     <div id="servicePanel" class="card hidden">
@@ -502,7 +502,13 @@ function msg(el, text, ok=false){
 window.login = async function(){
   const user = $("loginUser").value.trim().toLowerCase();
   const pass = $("loginPass").value.trim();
-  if(!user || !pass) return msg($("loginMsg"),"Ingrese usuario y contraseña.");
+
+  if(!user || !pass){
+    return msg($("loginMsg"),"Ingrese usuario y contraseña.");
+  }
+
+  msg($("loginMsg"),"Ingresando...",true);
+
   try{
     await signInWithEmailAndPassword(auth, `${user}@explora.local`, pass);
   }catch(e){
@@ -680,8 +686,8 @@ window.saveDailyKm = async function(){
 
 window.showPanel = function(id){
   ["servicePanel","derivePanel","expensePanel","historyPanel"].forEach(p=>{
-    const el = $(p);
-    if(el) el.classList.add("hidden");
+    const panel = $(p);
+    if(panel) panel.classList.add("hidden");
   });
 
   const target = $(id);
@@ -1015,11 +1021,11 @@ window.closeDay = async function(){
     });
 
     alert(
-      `Cierre guardado correctamente\\n\\n` +
-      `Viajes: ${viajes}\\n` +
-      `Efectivo: ${money(efectivo)}\\n` +
-      `Transferencia: ${money(transferencia)}\\n` +
-      `Tarjeta: ${money(tarjeta)}\\n` +
+      `Cierre guardado correctamente\n\n` +
+      `Viajes: ${viajes}\n` +
+      `Efectivo: ${money(efectivo)}\n` +
+      `Transferencia: ${money(transferencia)}\n` +
+      `Tarjeta: ${money(tarjeta)}\n` +
       `Total: ${money(total)}`
     );
 
@@ -1426,5 +1432,18 @@ window.instalarServiciosExplora = async function(){
 }
 
 </script>
+
+<script>
+setTimeout(function(){
+  var btn = document.querySelector('#loginView button');
+  if (btn && typeof window.login !== 'function') {
+    btn.addEventListener('click', function(){
+      var box = document.getElementById('loginMsg');
+      if (box) box.innerHTML = '<div class="msg err">Error cargando la app. Actualizá la página o revisá que el index.html se haya subido completo.</div>';
+    });
+  }
+}, 1500);
+</script>
+
 </body>
 </html>
