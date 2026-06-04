@@ -785,6 +785,9 @@ window.saveDailyKm = async function(){
     fecha: today(),
     chofer: currentUserId,
     vehiculo: currentVehicle.id,
+    periodoId: periodoOperativo.id,
+    periodoInicio: periodoOperativo.start,
+    periodoFin: periodoOperativo.end,
     kmAnterior: lastKm,
     kmActual: km,
     diferencia: km - lastKm,
@@ -862,6 +865,8 @@ window.saveTrip = async function(){
     : (type === "solo_ida" ? Math.round(Number(service.precio)/2) : Number(service.precio));
   const charged = Number($("chargedAmount").value);
   if(charged < min) return msg($("serviceMsg"),`El monto no puede ser menor a ${money(min)}.`);
+
+  const periodoOperativo = await getPeriodoOperativoChofer(currentUserId);
 
   await addDoc(collection(db,"viajes"),{
     fecha: today(),
@@ -959,9 +964,11 @@ window.closeDay = async function(){
 
 
 // ===== EXPLORA: RANKING Y CIERRE SEMANAL LIVIANO =====
-const PRIMER_PERIODO_INICIO = "2026-06-05";
-const PRIMER_PERIODO_FIN = "2026-06-10";
-const CICLO_SEMANAL_ANCLA = "2026-06-11";
+// Calendario operativo: cada semana cierra el día SÁBADO.
+// Período normal: domingo a sábado.
+// Si el chofer confirma cierre un sábado y luego carga otro servicio ese mismo día,
+// ese servicio entra al período activo siguiente gracias a periodoActivoId.
+const CALENDARIO_CIERRE = "sabado";
 
 function parseLocalDate(dateStr){
   const [y,m,d] = dateStr.split("-").map(Number);
@@ -985,40 +992,79 @@ function daysBetween(a,b){
   return Math.floor((parseLocalDate(b) - parseLocalDate(a)) / 86400000);
 }
 
-function getPeriodoTrabajoActual(dateStr = today()){
-  if(dateStr < CICLO_SEMANAL_ANCLA){
-    return {
-      start: PRIMER_PERIODO_INICIO,
-      end: PRIMER_PERIODO_FIN,
-      closeDate: CICLO_SEMANAL_ANCLA,
-      id: `${PRIMER_PERIODO_INICIO}_${PRIMER_PERIODO_FIN}`
-    };
-  }
+function isSaturday(dateStr){
+  return parseLocalDate(dateStr).getDay() === 6;
+}
 
-  const diff = daysBetween(CICLO_SEMANAL_ANCLA, dateStr);
-  const index = Math.floor(diff / 7);
-  const start = addDays(CICLO_SEMANAL_ANCLA, index * 7);
+function getPeriodoTrabajoActual(dateStr = today()){
+  const d = parseLocalDate(dateStr);
+  const day = d.getDay(); // 0 domingo ... 6 sábado
+
+  // Semana operativa: domingo a sábado. El cierre corresponde al sábado.
+  const start = addDays(dateStr, -day);
   const end = addDays(start, 6);
-  const closeDate = addDays(end, 1);
+  const closeDate = end;
+
   return {start,end,closeDate,id:`${start}_${end}`};
 }
 
 function getPeriodoCierrePendiente(dateStr = today()){
-  if(dateStr < CICLO_SEMANAL_ANCLA) return null;
+  const actual = getPeriodoTrabajoActual(dateStr);
 
-  if(dateStr >= CICLO_SEMANAL_ANCLA && dateStr <= "2026-06-17"){
-    return {
-      start: PRIMER_PERIODO_INICIO,
-      end: PRIMER_PERIODO_FIN,
-      closeDate: CICLO_SEMANAL_ANCLA,
-      id:`${PRIMER_PERIODO_INICIO}_${PRIMER_PERIODO_FIN}`
-    };
+  // El sábado se cierra la semana actual.
+  if(isSaturday(dateStr)){
+    return actual;
   }
 
-  const actual = getPeriodoTrabajoActual(dateStr);
+  // De domingo a viernes, si quedó una semana anterior sin confirmar, se exige cerrar esa anterior.
   const start = addDays(actual.start, -7);
   const end = addDays(actual.start, -1);
-  return {start,end,closeDate:actual.start,id:`${start}_${end}`};
+  const closeDate = end;
+  return {start,end,closeDate,id:`${start}_${end}`};
+}
+
+function getPeriodoSiguiente(periodo){
+  const start = addDays(periodo.end, 1);
+  const end = addDays(start, 6);
+  const closeDate = end;
+  return {start,end,closeDate,id:`${start}_${end}`};
+}
+
+function perteneceAlPeriodo(data, periodo){
+  const periodoId = String(data.periodoId || "");
+  if(periodoId){
+    return periodoId === periodo.id;
+  }
+  const fecha = data.fecha || "";
+  return fecha >= periodo.start && fecha <= periodo.end;
+}
+
+async function getPeriodoOperativoChofer(choferId){
+  try{
+    const snap = await getDoc(doc(db,"choferes",choferId));
+    if(snap.exists()){
+      const c = snap.data();
+
+      // Solo se respeta el período activo si fue generado con el calendario nuevo de cierre sábado.
+      // Esto evita arrastrar períodos viejos de versiones anteriores.
+      if(
+        c.periodoActivoCalendario === CALENDARIO_CIERRE &&
+        c.periodoActivoId &&
+        c.periodoActivoInicio &&
+        c.periodoActivoFin
+      ){
+        return {
+          id: c.periodoActivoId,
+          start: c.periodoActivoInicio,
+          end: c.periodoActivoFin,
+          closeDate: c.periodoActivoCierre || c.periodoActivoFin
+        };
+      }
+    }
+  }catch(e){
+    console.warn("No se pudo leer período activo del chofer", e);
+  }
+  return getPeriodoTrabajoActual(today());
 }
 
 async function getPremioSemana(periodo){
@@ -1041,15 +1087,27 @@ async function calcularRankingSemanalLiviano(periodo = getPeriodoTrabajoActual(t
     stats[d.id] = {id:d.id,nombre:c.nombre || d.id,viajes:0,derivaciones:0,facturacion:0,porcentaje:0};
   });
 
-  // Consulta liviana por fecha. No combina chofer + fecha, así evita índice compuesto.
-  const viajesSnap = await withTimeout(getDocs(query(
+  // Trae viajes por fecha y también por periodoId para incluir servicios cargados después del cierre en el mismo día.
+  const viajesMap = new Map();
+  const viajesSnapFecha = await withTimeout(getDocs(query(
     collection(db,"viajes"),
     where("fecha",">=",periodo.start),
     where("fecha","<=",periodo.end)
   )), 9000, "El ranking tardó demasiado cargando viajes.");
+  viajesSnapFecha.forEach(d=>viajesMap.set(d.id,d.data()));
 
-  viajesSnap.forEach(d=>{
-    const v = d.data();
+  try{
+    const viajesSnapPeriodo = await withTimeout(getDocs(query(
+      collection(db,"viajes"),
+      where("periodoId","==",periodo.id)
+    )), 9000, "El ranking tardó demasiado cargando viajes por período.");
+    viajesSnapPeriodo.forEach(d=>viajesMap.set(d.id,d.data()));
+  }catch(e){
+    console.warn("Viajes por periodoId no disponibles todavía", e);
+  }
+
+  viajesMap.forEach(v=>{
+    if(!perteneceAlPeriodo(v, periodo)) return;
     if(stats[v.chofer]){
       stats[v.chofer].viajes += 1;
       stats[v.chofer].facturacion += Number(v.monto || 0);
@@ -1065,6 +1123,7 @@ async function calcularRankingSemanalLiviano(periodo = getPeriodoTrabajoActual(t
 
     derivSnap.forEach(d=>{
       const x = d.data();
+      if(x.periodoId && x.periodoId !== periodo.id) return;
       if(stats[x.origen]) stats[x.origen].derivaciones += 1;
     });
   }catch(e){
@@ -1155,8 +1214,7 @@ async function calcularCierreSemanalLiviano(chofer, periodo){
   let totalViajes = 0, efectivo = 0, transferencia = 0, tarjeta = 0, cantidadViajes = 0;
   viajesSnap.forEach(d=>{
     const v = d.data();
-    const fecha = v.fecha || "";
-    if(fecha < periodo.start || fecha > periodo.end) return;
+    if(!perteneceAlPeriodo(v, periodo)) return;
 
     const monto = Number(v.monto || 0);
     totalViajes += monto;
@@ -1169,8 +1227,7 @@ async function calcularCierreSemanalLiviano(chofer, periodo){
   let totalGastos = 0, cantidadGastos = 0;
   gastosSnap.forEach(d=>{
     const g = d.data();
-    const fecha = g.fecha || "";
-    if(fecha < periodo.start || fecha > periodo.end) return;
+    if(!perteneceAlPeriodo(g, periodo)) return;
 
     totalGastos += Number(g.monto || 0);
     cantidadGastos++;
@@ -1287,8 +1344,16 @@ window.confirmarCierreSemanal = async function(){
       creado: serverTimestamp()
     });
 
+    const proximoPeriodo = getPeriodoSiguiente(c.periodo);
+
     await updateDoc(doc(db,"choferes",currentUserId),{
       ultimoCierreSemanal: c.periodo.id,
+      periodoActivoId: proximoPeriodo.id,
+      periodoActivoInicio: proximoPeriodo.start,
+      periodoActivoFin: proximoPeriodo.end,
+      periodoActivoCierre: proximoPeriodo.closeDate,
+      periodoActivoCalendario: CALENDARIO_CIERRE,
+      periodoActivoDesde: today(),
       ultimaActividad: new Date().toLocaleString("es-AR")
     });
 
@@ -1444,12 +1509,17 @@ window.saveDerivation = async function(){
 
   const tipoTexto = tramoUnico ? "Tramo único" : (type === "solo_ida" ? "Solo ida" : "Ida y vuelta");
   const hora = new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"});
+  const periodoOrigen = await getPeriodoOperativoChofer(currentUserId);
+  const periodoDestino = await getPeriodoOperativoChofer(destino);
 
   await addDoc(collection(db,"derivaciones"),{
     fecha: today(),
     hora,
     origen: currentUserId,
     destino,
+    periodoId: periodoOrigen.id,
+    periodoOrigenId: periodoOrigen.id,
+    periodoDestinoId: periodoDestino.id,
     vehiculoOrigen: currentVehicle ? currentVehicle.id : "",
     vehiculoDestino,
     servicioId: service.id,
@@ -1470,6 +1540,9 @@ window.saveDerivation = async function(){
     hora,
     chofer: destino,
     vehiculo: vehiculoDestino,
+    periodoId: periodoDestino.id,
+    periodoInicio: periodoDestino.start,
+    periodoFin: periodoDestino.end,
     servicioId: service.id,
     servicioNombre: service.nombre,
     tipo: tipoTexto,
@@ -1510,11 +1583,16 @@ window.saveExpense = async function(){
     return msg($("expenseMsg"),"Ingrese un monto válido.");
   }
 
+  const periodoOperativo = await getPeriodoOperativoChofer(currentUserId);
+
   await addDoc(collection(db,"gastos"),{
     fecha: today(),
     hora: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
     chofer: currentUserId,
     vehiculo: currentVehicle.id,
+    periodoId: periodoOperativo.id,
+    periodoInicio: periodoOperativo.start,
+    periodoFin: periodoOperativo.end,
     tipo,
     monto,
     detalle,
