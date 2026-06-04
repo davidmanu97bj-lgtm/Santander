@@ -486,7 +486,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
     <div class="card">
       <h3>Herramientas</h3>
-      <button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios EXPLORA</button>
+      <button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios, choferes y vehículos</button>
       <div id="adminToolsMsg"></div>
     </div>
   </section>
@@ -2079,6 +2079,26 @@ const serviciosExplora = [
   { id:"eldorado", nombre:"Eldorado", precio:120000 }
 ];
 
+const vehiculosDemoExplora = [
+  { id:"AA123AA", modelo:"Fiat Cronos 2024", chofer:"ariel", kmActual:165867, aceiteUltimoKm:160000, seguroVence:"2026-06-25", vtvVence:"2026-07-10", patenteVence:"2026-06-30" },
+  { id:"AB234BB", modelo:"Chevrolet Prisma", chofer:"ezequiel", kmActual:98240, aceiteUltimoKm:89000, seguroVence:"2026-07-01", vtvVence:"2026-08-15", patenteVence:"2026-07-20" },
+  { id:"AC345CC", modelo:"Chevrolet Cruze", chofer:"flor", kmActual:124500, aceiteUltimoKm:124000, seguroVence:"2026-06-18", vtvVence:"2026-09-05", patenteVence:"2026-07-05" },
+  { id:"AD456DD", modelo:"Fiat Cronos", chofer:"lucio", kmActual:73200, aceiteUltimoKm:69000, seguroVence:"2026-07-12", vtvVence:"2026-06-28", patenteVence:"2026-08-01" },
+  { id:"AE567EE", modelo:"Chevrolet Spin 7 lugares", chofer:"fede", kmActual:210300, aceiteUltimoKm:201000, seguroVence:"2026-06-09", vtvVence:"2026-07-30", patenteVence:"2026-07-15" },
+  { id:"AF678FF", modelo:"Toyota Etios", chofer:"rodolfo", kmActual:154900, aceiteUltimoKm:149500, seguroVence:"2026-08-01", vtvVence:"2026-06-22", patenteVence:"2026-06-29" },
+  { id:"AG789GG", modelo:"Volkswagen Voyage", chofer:"joel", kmActual:188600, aceiteUltimoKm:179000, seguroVence:"2026-07-18", vtvVence:"2026-07-08", patenteVence:"2026-08-10" }
+];
+
+const choferesDemoExplora = [
+  { id:"ariel", nombre:"Ariel", vehiculo:"AA123AA", estado:"disponible", rol:"chofer", activo:true, licenciaVence:"2026-07-12" },
+  { id:"ezequiel", nombre:"Ezequiel", vehiculo:"AB234BB", estado:"disponible", rol:"chofer", activo:true, licenciaVence:"2026-08-20" },
+  { id:"flor", nombre:"Flor", vehiculo:"AC345CC", estado:"disponible", rol:"chofer", activo:true, licenciaVence:"2026-06-26" },
+  { id:"lucio", nombre:"Lucio", vehiculo:"AD456DD", estado:"disponible", rol:"chofer", activo:true, licenciaVence:"2026-09-02" },
+  { id:"fede", nombre:"Fede", vehiculo:"AE567EE", estado:"disponible", rol:"chofer", activo:true, licenciaVence:"2026-07-03" },
+  { id:"rodolfo", nombre:"Rodolfo", vehiculo:"AF678FF", estado:"disponible", rol:"chofer", activo:true, licenciaVence:"2026-06-19" },
+  { id:"joel", nombre:"Joel", vehiculo:"AG789GG", estado:"disponible", rol:"chofer", activo:true, licenciaVence:"2026-08-14" }
+];
+
 window.instalarServiciosExplora = async function(){
   try{
     for(const s of serviciosExplora){
@@ -2086,10 +2106,34 @@ window.instalarServiciosExplora = async function(){
         nombre: s.nombre,
         precio: s.precio,
         activo: true
-      });
+      }, { merge:true });
     }
 
-    msg($("adminToolsMsg") || $("adminMsg"), "Servicios EXPLORA instalados correctamente.", true);
+    for(const v of vehiculosDemoExplora){
+      await setDoc(doc(db, "vehiculos", v.id), {
+        modelo: v.modelo,
+        chofer: v.chofer,
+        kmActual: v.kmActual,
+        aceiteUltimoKm: v.aceiteUltimoKm,
+        seguroVence: v.seguroVence,
+        vtvVence: v.vtvVence,
+        patenteVence: v.patenteVence,
+        activo: true
+      }, { merge:true });
+    }
+
+    for(const c of choferesDemoExplora){
+      await setDoc(doc(db, "choferes", c.id), {
+        nombre: c.nombre,
+        vehiculo: c.vehiculo,
+        estado: c.estado,
+        rol: c.rol,
+        activo: c.activo,
+        licenciaVence: c.licenciaVence
+      }, { merge:true });
+    }
+
+    msg($("adminToolsMsg") || $("adminMsg"), "Servicios, choferes y vehículos demo instalados correctamente. Para que esos choferes puedan iniciar sesión también hay que crear sus usuarios en Firebase Auth.", true);
     await loadAdmin();
 
   }catch(e){
