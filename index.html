@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.22
-Build: 2026-06-04-MI-AUTO-KM-001
+Version: 2.8.23
+Build: 2026-06-05-MI-AUTO-KM-FAST-001
 Fecha: 04/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
 - Se agrega botón “Mi auto” para chofer con service, correa dentada y cubiertas por km.
 - Se agrega vista “Vehículos” para admin con el mismo control por auto.
+- Optimización: Mi auto y Vehículos usan caché/localStorage y refresco en segundo plano para no trabar la app.
 - Aviso automático con ⚙️ cuando corresponde cambio por kilometraje.
 - No se modifica cierre semanal, 50/50, derivaciones ni acumulados financieros.
 -->
@@ -15,7 +16,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.22 · Build 2026-06-04-MI-AUTO-KM-001</title>
+<title>EXPLORA v2.8.23 · Build 2026-06-05-MI-AUTO-KM-FAST-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -356,7 +357,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.22</b> · Build 2026-06-04-MI-AUTO-KM-001</div>
+    <div class="build-version"><b>v2.8.23</b> · Build 2026-06-05-MI-AUTO-KM-FAST-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -369,7 +370,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.22</b> · 2026-06-04-MI-AUTO-KM-001</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.23</b> · 2026-06-05-MI-AUTO-KM-FAST-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -537,7 +538,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.22</b> · 2026-06-04-MI-AUTO-KM-001</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.23</b> · 2026-06-05-MI-AUTO-KM-FAST-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -700,6 +701,10 @@ let servicesLoaded = false;
 let deriveDriversLoadedAt = 0;
 let todayHistoryLoaded = false;
 let adminBaseLoadedAt = 0;
+let miAutoLoadedAt = 0;
+let adminVehiculosKmLoadedAt = 0;
+let adminVehiculosCache = [];
+let adminChoferesPorVehiculoCache = {};
 
 const $ = id => document.getElementById(id);
 function today(){
@@ -2998,19 +3003,13 @@ function renderEstadoMantenimiento(v, modo="chofer"){
   return html;
 }
 
-async function cargarMiAutoPanel(){
-  if(!currentVehicle || !currentVehicle.id){
+function renderMiAutoDesdeVehiculo(v){
+  if(!v || !v.id){
     if($("miAutoResumen")) $("miAutoResumen").innerHTML = "No hay vehículo asignado.";
     return;
   }
 
-  const snap = await getDoc(doc(db,"vehiculos",currentVehicle.id));
-  if(snap.exists()){
-    currentVehicle = {id:currentVehicle.id, ...snap.data()};
-    cacheSet("vehiculo_" + currentVehicle.id, snap.data());
-  }
-
-  const mant = getMantenimientoAuto(currentVehicle);
+  const mant = getMantenimientoAuto(v);
   Object.entries(MANTENIMIENTO_KM_CONFIG).forEach(([key,cfg])=>{
     const item = normalizarMantenimientoItem(mant[key], cfg);
     const input = $(cfg.input);
@@ -3018,10 +3017,44 @@ async function cargarMiAutoPanel(){
   });
 
   if($("miAutoResumen")){
-    $("miAutoResumen").innerHTML = `${currentVehicle.modelo || "Vehículo"} · Patente <b>${currentVehicle.id}</b>`;
+    $("miAutoResumen").innerHTML = `${v.modelo || "Vehículo"} · Patente <b>${v.id}</b>`;
   }
-  if($("miAutoEstado")) $("miAutoEstado").innerHTML = renderEstadoMantenimiento(currentVehicle,"chofer");
+  if($("miAutoEstado")) $("miAutoEstado").innerHTML = renderEstadoMantenimiento(v,"chofer");
   actualizarBadgeMiAuto();
+}
+
+async function cargarMiAutoPanel(force=false){
+  if(!currentVehicle || !currentVehicle.id){
+    if($("miAutoResumen")) $("miAutoResumen").innerHTML = "No hay vehículo asignado.";
+    return;
+  }
+
+  // Render inmediato desde memoria/caché para que el panel abra sin esperar Firestore.
+  const vehCache = cacheGet("vehiculo_" + currentVehicle.id, 24 * 60 * 60 * 1000);
+  if(vehCache){
+    currentVehicle = {id:currentVehicle.id, ...vehCache};
+  }
+  renderMiAutoDesdeVehiculo(currentVehicle);
+
+  // Si se abrió hace poco, no vuelve a pedir datos.
+  if(!force && miAutoLoadedAt && (Date.now() - miAutoLoadedAt) < 90 * 1000) return;
+
+  if($("miAutoResumen")){
+    $("miAutoResumen").insertAdjacentHTML("beforeend", ` <small style="color:#777">· sincronizando...</small>`);
+  }
+
+  try{
+    const snap = await withTimeout(getDoc(doc(db,"vehiculos",currentVehicle.id)), 2500, "Mi auto no respondió rápido. Se muestra caché local.");
+    if(snap.exists()){
+      currentVehicle = {id:currentVehicle.id, ...snap.data()};
+      cacheSet("vehiculo_" + currentVehicle.id, snap.data());
+      miAutoLoadedAt = Date.now();
+      renderMiAutoDesdeVehiculo(currentVehicle);
+    }
+  }catch(e){
+    console.warn("Mi auto usa caché local", e);
+    miAutoLoadedAt = Date.now();
+  }
 }
 
 window.guardarMiAutoKm = async function(){
@@ -3048,7 +3081,8 @@ window.guardarMiAutoKm = async function(){
   currentVehicle = {...currentVehicle, mantenimientoKm};
   cacheSet("vehiculo_" + currentVehicle.id, {...currentVehicle});
   msg($("miAutoMsg"),"Datos de Mi auto guardados. El administrador ya puede verlos.",true);
-  await cargarMiAutoPanel();
+  miAutoLoadedAt = Date.now();
+  renderMiAutoDesdeVehiculo(currentVehicle);
 }
 
 window.guardarFechaCambioMantenimiento = async function(vehiculoId, key, modo){
@@ -3097,27 +3131,23 @@ window.toggleAdminVehiculosKm = async function(){
   if(estabaOculto) await cargarAdminVehiculosKm(false);
 }
 
-async function cargarAdminVehiculosKm(force=false){
+function getAdminVehiculosKmSnapshotFromCache(){
+  const cached = cacheGet("admin_vehiculos_km_snapshot", 10 * 60 * 1000);
+  if(cached && Array.isArray(cached.vehiculos)) return cached;
+  if(adminVehiculosCache && adminVehiculosCache.length){
+    return {vehiculos:adminVehiculosCache, choferesPorVehiculo:adminChoferesPorVehiculoCache || {}};
+  }
+  return null;
+}
+
+function renderAdminVehiculosKm(snapshot){
   const panel = $("adminVehiculosKmPanel");
   if(!panel) return;
-  if(!force && panel.dataset.loaded === "1") return;
-  panel.innerHTML = `<div class="msg ok">Cargando vehículos...</div>`;
-
-  const [vehSnap, choferSnap] = await Promise.all([
-    withTimeout(getDocs(collection(db,"vehiculos")), 9000, "Tardó demasiado cargando vehículos."),
-    withTimeout(getDocs(collection(db,"choferes")), 9000, "Tardó demasiado cargando choferes.")
-  ]);
-
-  const choferesPorVehiculo = {};
-  choferSnap.forEach(d=>{
-    const c = d.data();
-    if(c.rol === "admin" || c.activo === false) return;
-    if(c.vehiculo) choferesPorVehiculo[c.vehiculo] = {id:d.id,...c};
-  });
-
+  const vehiculos = (snapshot && snapshot.vehiculos) || [];
+  const choferesPorVehiculo = (snapshot && snapshot.choferesPorVehiculo) || {};
   let html = "";
-  vehSnap.forEach(d=>{
-    const v = {id:d.id, ...d.data()};
+
+  vehiculos.forEach(v=>{
     const c = choferesPorVehiculo[v.id];
     const analisis = analizarMantenimientoVehiculo(v);
     const alerta = analisis.requiereAtencion ? `<span class="mi-auto-badge">⚙️</span>` : "";
@@ -3140,8 +3170,62 @@ async function cargarAdminVehiculosKm(force=false){
     `;
   });
 
-  panel.dataset.loaded = "1";
   panel.innerHTML = html || `<p class="note">Todavía no hay vehículos cargados.</p>`;
+}
+
+async function cargarAdminVehiculosKm(force=false){
+  const panel = $("adminVehiculosKmPanel");
+  if(!panel) return;
+
+  const cachedSnapshot = getAdminVehiculosKmSnapshotFromCache();
+  if(cachedSnapshot){
+    renderAdminVehiculosKm(cachedSnapshot);
+    panel.dataset.loaded = "1";
+  }else{
+    panel.innerHTML = `<div class="msg ok">Cargando vehículos...</div>`;
+  }
+
+  // Si ya cargó hace poco, no vuelve a consultar Firestore.
+  if(!force && adminVehiculosKmLoadedAt && (Date.now() - adminVehiculosKmLoadedAt) < 2 * 60 * 1000) return;
+  if(!force && cachedSnapshot){
+    // Refresco silencioso en segundo plano: no bloquea la pantalla.
+    setTimeout(()=>cargarAdminVehiculosKm(true).catch(e=>console.warn("No se pudo refrescar vehículos km", e)), 50);
+    return;
+  }
+
+  try{
+    let vehiculos = [];
+    let choferesPorVehiculo = {};
+
+    // Si loadAdmin ya cargó vehículos/choferes, reutiliza esos datos y evita doble consulta.
+    if(!force && adminVehiculosCache && adminVehiculosCache.length){
+      vehiculos = adminVehiculosCache;
+      choferesPorVehiculo = adminChoferesPorVehiculoCache || {};
+    }else{
+      const [vehSnap, choferSnap] = await Promise.all([
+        withTimeout(getDocs(collection(db,"vehiculos")), 4500, "Tardó demasiado cargando vehículos."),
+        withTimeout(getDocs(collection(db,"choferes")), 4500, "Tardó demasiado cargando choferes.")
+      ]);
+
+      vehSnap.forEach(d=>vehiculos.push({id:d.id, ...d.data()}));
+      choferSnap.forEach(d=>{
+        const c = d.data();
+        if(c.rol === "admin" || c.activo === false) return;
+        if(c.vehiculo) choferesPorVehiculo[c.vehiculo] = {id:d.id,...c};
+      });
+    }
+
+    adminVehiculosCache = vehiculos;
+    adminChoferesPorVehiculoCache = choferesPorVehiculo;
+    adminVehiculosKmLoadedAt = Date.now();
+    cacheSet("admin_vehiculos_km_snapshot", {vehiculos, choferesPorVehiculo});
+    renderAdminVehiculosKm({vehiculos, choferesPorVehiculo});
+    panel.dataset.loaded = "1";
+  }catch(e){
+    if(!cachedSnapshot){
+      panel.innerHTML = `<div class="msg err">No se pudo cargar vehículos: ${e.message}</div>`;
+    }
+  }
 }
 
 window.toggleDetalleVehiculoKm = function(idSafe){
@@ -3219,11 +3303,13 @@ async function cargarVehiculosAdminSimple(periodo){
   });
 
   let html = "";
+  const vehiculosAdminTemp = [];
   const selectMes = $("adminMesVehiculoSelect");
   if(selectMes) selectMes.innerHTML = "";
 
   vehSnap.forEach(d=>{
     const v = {id:d.id,...d.data()};
+    vehiculosAdminTemp.push(v);
     const c = choferesPorVehiculo[v.id] || null;
     const choferId = c ? c.id : "";
     const alertas = renderAlertasVehiculo(v,c);
@@ -3255,6 +3341,9 @@ async function cargarVehiculosAdminSimple(periodo){
     `;
   });
 
+  adminVehiculosCache = vehiculosAdminTemp;
+  adminChoferesPorVehiculoCache = choferesPorVehiculo;
+  cacheSet("admin_vehiculos_km_snapshot", {vehiculos:adminVehiculosCache, choferesPorVehiculo:adminChoferesPorVehiculoCache});
   $("adminVehiculosResumen").innerHTML = html || `<p class="note">Todavía no hay vehículos cargados.</p>`;
 }
 
