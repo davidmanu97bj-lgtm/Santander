@@ -2108,7 +2108,7 @@ async function cargarVehiculosAdminSimple(periodo){
         </div>
         ${alertas}
         <div class="admin-actions">
-          <button class="btn-gold" onclick="calcularSemanaVehiculoAdmin('${v.id}','${choferId}')">Calcular semana</button>
+          <button class="btn-gold" onclick="calcularSemanaVehiculoAdmin('${v.id}','${choferId}')">Ver 50/50 y pago</button>
         </div>
         <div id="adminCalc_${safeId(v.id)}"></div>
       </div>
@@ -2168,28 +2168,65 @@ window.calcularSemanaVehiculoAdmin = async function(vehiculoId, choferId){
 
 function renderResumenSemanalAdmin(vehiculoId,c,pago){
   const puedeCerrarHoy = puedeCerrarPeriodo(c.periodo);
-  const estadoPago = pago && pago.pagado ? `<div class="paid-box">✅ Pagado · ${pago.fechaPago || ""} ${pago.horaPago || ""}</div>` : "";
-  let accion = "";
+  const yaPagado = pago && pago.pagado === true;
+
+  let tituloDeuda = "";
+  let montoDeuda = 0;
+  let sentido = "";
+  let deudaClass = "pending-box";
 
   if(c.choferDebe > 0){
-    accion = puedeCerrarHoy
-      ? `<div class="pending-box">El chofer debe pasarte: ${money(c.choferDebe)}</div><button class="btn-gold" onclick="marcarPagoSemanalAdmin('${c.chofer}','${c.periodo.id}','chofer_a_david',${Math.round(c.choferDebe)})">Marcar pagado</button>`
-      : `<div class="pending-box">El chofer debe pasarte: ${money(c.choferDebe)}<br><small>El pago solo se marca el sábado de cierre (${c.periodo.closeDate}).</small></div>`;
+    tituloDeuda = "El chofer debe pasarte a vos";
+    montoDeuda = c.choferDebe;
+    sentido = "chofer_a_david";
   }else if(c.davidDebe > 0){
-    accion = puedeCerrarHoy
-      ? `<div class="pending-box">Vos debés transferir al chofer: ${money(c.davidDebe)}</div><button class="btn-gold" onclick="marcarPagoSemanalAdmin('${c.chofer}','${c.periodo.id}','david_a_chofer',${Math.round(c.davidDebe)})">Marcar pagado</button>`
-      : `<div class="pending-box">Vos debés transferir al chofer: ${money(c.davidDebe)}<br><small>El pago solo se marca el sábado de cierre (${c.periodo.closeDate}).</small></div>`;
+    tituloDeuda = "Vos debés pasarle al chofer";
+    montoDeuda = c.davidDebe;
+    sentido = "david_a_chofer";
   }else{
-    accion = `<div class="paid-box">✅ No hay diferencia pendiente.</div>`;
+    tituloDeuda = "Cierre equilibrado";
+    montoDeuda = 0;
+    sentido = "sin_diferencia";
+    deudaClass = "paid-box";
+  }
+
+  let pagoAccion = "";
+
+  if(yaPagado){
+    pagoAccion = `
+      <div class="paid-box">
+        ✅ Pago realizado<br>
+        <small>${pago.fechaPago || ""} ${pago.horaPago || ""} · Marcado por: ${pago.marcadoPor || ""}</small>
+      </div>
+    `;
+  }else if(sentido === "sin_diferencia"){
+    pagoAccion = `<div class="paid-box">✅ Sin pago pendiente</div>`;
+  }else if(puedeCerrarHoy){
+    pagoAccion = `
+      <button class="btn-gold" style="margin-top:10px" onclick="marcarPagoSemanalAdmin('${c.chofer}','${c.periodo.id}','${sentido}',${Math.round(montoDeuda)})">Marcar pagado</button>
+      <div class="note">Usá este botón cuando el dinero ya fue entregado/transferido. Después queda bloqueado como pago realizado.</div>
+    `;
+  }else{
+    pagoAccion = `
+      <button class="btn-dark" style="margin-top:10px" disabled>Marcar pagado disponible solo el sábado</button>
+      <div class="note">El pago solo se puede marcar el sábado de cierre (${c.periodo.closeDate}).</div>
+    `;
   }
 
   return `
     <div class="trip">
       <b>Semana ${c.periodo.start} al ${c.periodo.end}</b><br>
+      <small>Vehículo: ${vehiculoId}</small><br>
       <small>Recaudado: ${money(c.totalViajes)} · Gastos: ${money(c.totalGastos)}</small><br>
       <small>Efectivo chofer: ${money(c.efectivo)} · Transferencia/Tarjeta David: ${money(c.transferencia + c.tarjeta)}</small><br>
       <small>Neto 50/50: ${money(c.neto)} · Parte chofer: ${money(c.mitadChofer)} · Parte David: ${money(c.mitadDavid)}</small>
-      ${estadoPago || accion}
+
+      <div class="${deudaClass}" style="margin-top:10px">
+        <b>${tituloDeuda}</b><br>
+        <span style="font-size:22px">${money(montoDeuda)}</span>
+      </div>
+
+      ${pagoAccion}
     </div>
   `;
 }
