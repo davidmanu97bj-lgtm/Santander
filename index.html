@@ -1,9 +1,18 @@
 <!DOCTYPE html>
+<!--
+EXPLORA BUILD
+Version: 2.8.17
+Build: 2026-06-04-LOGIN-001
+Fecha: 04/06/2026
+Cambios:
+- Sesión persistente: el usuario queda logueado después de cerrar y abrir la app.
+- Identificador visible de versión para GitHub/cache.
+-->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA SEMANAL 50/50</title>
+<title>EXPLORA v2.8.17 · Build 2026-06-04-LOGIN-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -299,6 +308,15 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 .derivation-item small{color:var(--muted)}
 .derivation-item button{margin-top:10px;padding:11px;font-size:14px}
 
+.build-version{
+  text-align:center;
+  color:#777;
+  font-size:11px;
+  margin:8px 0 14px;
+  letter-spacing:.3px;
+}
+.build-version b{color:var(--gold);font-weight:700}
+
 </style>
 </head>
 <body>
@@ -308,6 +326,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
+    <div class="build-version"><b>v2.8.17</b> · Build 2026-06-04-LOGIN-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -320,7 +339,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div class="small-logo">EXPLORA</div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.17</b> · 2026-06-04-LOGIN-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -464,7 +483,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div class="small-logo">EXPLORA ADMIN</div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.17</b> · 2026-06-04-LOGIN-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -573,7 +592,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
 <script type="module">
 import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, addDoc,
   query, where, getDocs, serverTimestamp, onSnapshot, increment
@@ -590,6 +609,13 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+
+// Mantiene la sesión iniciada aunque se cierre Chrome/Safari o se apague la tablet.
+// Solo se borra si el usuario toca “Salir”, cambia la contraseña o limpia datos del navegador.
+setPersistence(auth, browserLocalPersistence).catch(e=>{
+  console.warn("No se pudo activar sesión persistente", e);
+});
+
 const db = getFirestore(app);
 
 let currentUserId = null;
