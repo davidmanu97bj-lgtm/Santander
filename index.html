@@ -1,18 +1,19 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.18
-Build: 2026-06-04-CIERRE-FAST-001
+Version: 2.8.19
+Build: 2026-06-04-ADMIN-5050-FAST-001
 Fecha: 04/06/2026
 Cambios:
 - Sesión persistente: el usuario queda logueado después de cerrar y abrir la app.
-- Identificador visible de versión para GitHub/cache.
+- Cierre semanal ultra rápido por acumulados.
+- Admin Vehículos y choferes: Ver 50/50 y pago optimizado con caché y acumulados.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.18 · Build 2026-06-04-CIERRE-FAST-001</title>
+<title>EXPLORA v2.8.19 · Build 2026-06-04-ADMIN-5050-FAST-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -326,7 +327,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.18</b> · Build 2026-06-04-CIERRE-FAST-001</div>
+    <div class="build-version"><b>v2.8.19</b> · Build 2026-06-04-ADMIN-5050-FAST-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -506,7 +507,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
     <div class="card">
       <h3>Vehículos y choferes</h3>
-      <p class="note">Tocá “Calcular semana” en cada vehículo para ver recaudación, gastos, diferencia 50/50 y pago pendiente. Así el admin no se sobrecarga.</p>
+      <p class="note">Tocá “Ver 50/50 y pago”. Ahora abre con caché y acumulados semanales para evitar lecturas pesadas.</p>
       <div id="adminVehiculosResumen">Cargando vehículos...</div>
     </div>
 
@@ -2851,14 +2852,61 @@ window.calcularSemanaVehiculoAdmin = async function(vehiculoId, choferId){
     return;
   }
 
-  box.innerHTML = `<div class="msg ok">Calculando semana...</div>`;
+  const periodo = getPeriodoTrabajoActual(today());
+  const cacheKey = `admin_5050_${choferId}_${periodo.id}`;
+  const cacheLocal = cacheGet(cacheKey, 10 * 60 * 1000);
+
+  // Apertura inmediata: si ya se calculó una vez, muestra el resultado al instante
+  // y sincroniza silenciosamente contra Firebase.
+  if(cacheLocal){
+    box.innerHTML = renderResumenSemanalAdmin(vehiculoId, cacheLocal.cierre, cacheLocal.pago) +
+      `<div class="msg ok">Mostrado desde caché. Actualizando...</div>`;
+  }else{
+    box.innerHTML = `<div class="msg ok">Abriendo 50/50 rápido...</div>`;
+  }
+
   try{
-    const periodo = getPeriodoTrabajoActual(today());
-    const c = await calcularCierreSemanalLiviano(choferId, periodo);
-    const pago = await getEstadoPagoSemanal(choferId, periodo.id);
+    const c = await withTimeout(
+      calcularCierreSemanalAdminUltraRapido(choferId, periodo),
+      3200,
+      "El 50/50 rápido no respondió. Si ves datos en pantalla, son los últimos guardados. Si no, reconstruí el acumulado."
+    );
+    const pago = c.pagoSemanal || null;
+    cacheSet(cacheKey, {cierre:c, pago});
     box.innerHTML = renderResumenSemanalAdmin(vehiculoId, c, pago);
   }catch(e){
-    box.innerHTML = `<div class="msg err">No se pudo calcular la semana: ${e.message}</div>`;
+    if(cacheLocal){
+      box.innerHTML = renderResumenSemanalAdmin(vehiculoId, cacheLocal.cierre, cacheLocal.pago) +
+        `<div class="msg err">No se pudo actualizar ahora: ${e.message}</div>`;
+    }else{
+      box.innerHTML = `
+        <div class="msg err">No se pudo abrir rápido: ${e.message}</div>
+        <button class="btn-gold" style="margin-top:10px" onclick="reconstruirSemanaVehiculoAdmin('${vehiculoId}','${choferId}')">Reconstruir acumulado de esta semana</button>
+        <div class="note">Usalo solo si esta semana fue cargada antes de los acumulados rápidos.</div>
+      `;
+    }
+  }
+}
+
+async function calcularCierreSemanalAdminUltraRapido(choferId, periodo){
+  // Usa el mismo motor rápido del cierre del chofer: 1 doc de acumulado + pago + premio.
+  // No lee viajes/gastos históricos.
+  return await calcularCierreSemanalUltraRapido(choferId, periodo);
+}
+
+window.reconstruirSemanaVehiculoAdmin = async function(vehiculoId, choferId){
+  const box = $("adminCalc_" + safeId(vehiculoId));
+  if(!box) return;
+  const periodo = getPeriodoTrabajoActual(today());
+  box.innerHTML = `<div class="msg ok">Reconstruyendo acumulado... Esto puede tardar solo esta vez.</div>`;
+  try{
+    const c = await withTimeout(calcularCierreSemanalLiviano(choferId, periodo), 15000, "La reconstrucción tardó demasiado. Revisá internet y probá otra vez.");
+    c.pagoSemanal = await getEstadoPagoSemanal(choferId, periodo.id);
+    const pago = c.pagoSemanal || null;
+    cacheSet(`admin_5050_${choferId}_${periodo.id}`, {cierre:c, pago});
+    box.innerHTML = renderResumenSemanalAdmin(vehiculoId, c, pago);
+  }catch(e){
+    box.innerHTML = `<div class="msg err">No se pudo reconstruir: ${e.message}</div>`;
   }
 }
 
