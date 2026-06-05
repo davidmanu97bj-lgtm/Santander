@@ -533,9 +533,9 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 <div id="cierreSemanalModal" class="modal hidden">
   <div class="card">
     <h2>Cierre semanal pendiente</h2>
-    <p class="note">Si hay cierre semanal pendiente, esta pantalla aparece automáticamente y bloquea la app hasta confirmar.</p>
+    <p class="note">Si hay cierre semanal pendiente, esta pantalla aparece para revisar el período. Si no hay diferencia, igual tenés que confirmar para iniciar la nueva semana.</p>
     <div id="cierreSemanalResumen"></div>
-    <button id="confirmarCierreSemanalBtn" class="btn-gold" onclick="confirmarCierreSemanal()">Confirmar cierre semanal</button>
+    <button id="confirmarCierreSemanalBtn" class="btn-gold" onclick="confirmarCierreSemanal()">Confirmar cierre e iniciar nueva semana</button>
     <div id="cierreSemanalMsg"></div>
   </div>
 </div>
@@ -1277,8 +1277,8 @@ function renderCierreSemanal(c){
   const pagoHtml = yaPagado
     ? `<div class="paid-box" style="margin-top:10px">✅ Pago marcado como realizado<br><small>${pago.fechaPago || ""} ${pago.horaPago || ""} · ${pago.marcadoPor || ""}</small></div>`
     : (c.choferDebe > 0 || c.davidDebe > 0)
-      ? `<button id="btnPagoChofer" class="btn-gold" style="margin-top:10px" onclick="marcarPagoSemanalChofer()">Marcar pagado</button><div class="note">Usá este botón cuando el dinero ya fue entregado/transferido y quedan al día.</div>`
-      : "";
+      ? `<button id="btnPagoChofer" class="btn-gold" style="margin-top:10px" onclick="marcarPagoSemanalChofer()">Marcar pagado</button><div class="note">Usá este botón cuando el dinero ya fue entregado/transferido y quedan al día. El cierre igual se confirma con el botón de abajo.</div>`
+      : `<div class="paid-box" style="margin-top:10px">✅ Sin pago pendiente<br><small>Están equilibrados. Tocá “Confirmar cierre e iniciar nueva semana” para cerrar el período.</small></div>`;
 
   $("cierreSemanalResumen").innerHTML = `
     <div class="trip"><b>Período de trabajo</b><br><small>${c.periodo.start} al ${c.periodo.end}</small><br><small>Cierre obligatorio: ${c.periodo.closeDate}</small></div>
@@ -1310,6 +1310,17 @@ window.confirmarCierreSemanal = async function(){
   try{
     const c = cierreSemanalPendiente;
     const cierreId = `${currentUserId}_${c.periodo.id}`;
+    const sinDiferencia = Number(c.choferDebe || 0) <= 0 && Number(c.davidDebe || 0) <= 0;
+    const pagoAutomaticoSinDiferencia = sinDiferencia ? {
+      chofer: currentUserId,
+      periodoId: c.periodo.id,
+      sentido: "sin_diferencia",
+      monto: 0,
+      pagado: true,
+      marcadoPor: "sistema",
+      fechaPago: today(),
+      horaPago: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})
+    } : null;
 
     await setDoc(doc(db,"cierres_semanales",cierreId),{
       fechaConfirmacion: today(),
@@ -1339,10 +1350,17 @@ window.confirmarCierreSemanal = async function(){
       diferenciaFinal: c.diferenciaFinal,
       choferDebe: c.choferDebe,
       davidDebe: c.davidDebe,
-      pagoSemanal: c.pagoSemanal || null,
+      pagoSemanal: c.pagoSemanal || pagoAutomaticoSinDiferencia || null,
       confirmado: true,
       creado: serverTimestamp()
     });
+
+    if(pagoAutomaticoSinDiferencia){
+      await setDoc(doc(db,"pagos_semanales",`${currentUserId}_${c.periodo.id}`),{
+        ...pagoAutomaticoSinDiferencia,
+        actualizado: serverTimestamp()
+      });
+    }
 
     const proximoPeriodo = getPeriodoSiguiente(c.periodo);
 
@@ -1366,7 +1384,7 @@ window.confirmarCierreSemanal = async function(){
   }finally{
     if(btn){
       btn.disabled = false;
-      btn.textContent = "Confirmar cierre semanal";
+      btn.textContent = "Confirmar cierre e iniciar nueva semana";
     }
   }
 }
