@@ -576,7 +576,7 @@ import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, addDoc,
-  query, where, getDocs, serverTimestamp, onSnapshot
+  query, where, getDocs, serverTimestamp, onSnapshot, increment
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -615,6 +615,134 @@ function today(){
   return `${y}-${m}-${day}`;
 }
 const money = n => "$" + Number(n || 0).toLocaleString("es-AR");
+
+function getMesDesdeFecha(fechaStr = today()){
+  return String(fechaStr || today()).slice(0,7);
+}
+
+function campoPago(pago){
+  if(pago === "transferencia") return "transferencia";
+  if(pago === "tarjeta") return "tarjeta";
+  return "efectivo";
+}
+
+async function actualizarAcumuladosViaje(viaje){
+  const monto = Number(viaje.monto || 0);
+  if(!viaje || !viaje.chofer || !viaje.vehiculo || !monto) return;
+
+  const pago = campoPago(viaje.pago);
+  const fecha = viaje.fecha || today();
+  const mes = getMesDesdeFecha(fecha);
+  const periodoId = viaje.periodoId || getPeriodoTrabajoActual(fecha).id;
+  const periodoInicio = viaje.periodoInicio || (periodoId.split("_")[0] || "");
+  const periodoFin = viaje.periodoFin || (periodoId.split("_")[1] || "");
+
+  await Promise.all([
+    setDoc(doc(db,"acumulados_semanales",`${viaje.chofer}_${periodoId}`),{
+      chofer: viaje.chofer,
+      vehiculo: viaje.vehiculo,
+      periodoId,
+      periodoInicio,
+      periodoFin,
+      totalViajes: increment(monto),
+      cantidadViajes: increment(1),
+      [pago]: increment(monto),
+      actualizado: serverTimestamp()
+    },{merge:true}),
+    setDoc(doc(db,"acumulados_mensuales",`${viaje.vehiculo}_${mes}`),{
+      vehiculo: viaje.vehiculo,
+      mes,
+      totalViajes: increment(monto),
+      cantidadViajes: increment(1),
+      [pago]: increment(monto),
+      actualizado: serverTimestamp()
+    },{merge:true})
+  ]);
+}
+
+async function actualizarAcumuladosGasto(gasto){
+  const monto = Number(gasto.monto || 0);
+  if(!gasto || !gasto.chofer || !gasto.vehiculo || !monto) return;
+
+  const fecha = gasto.fecha || today();
+  const mes = getMesDesdeFecha(fecha);
+  const periodoId = gasto.periodoId || getPeriodoTrabajoActual(fecha).id;
+  const periodoInicio = gasto.periodoInicio || (periodoId.split("_")[0] || "");
+  const periodoFin = gasto.periodoFin || (periodoId.split("_")[1] || "");
+
+  await Promise.all([
+    setDoc(doc(db,"acumulados_semanales",`${gasto.chofer}_${periodoId}`),{
+      chofer: gasto.chofer,
+      vehiculo: gasto.vehiculo,
+      periodoId,
+      periodoInicio,
+      periodoFin,
+      totalGastos: increment(monto),
+      cantidadGastos: increment(1),
+      actualizado: serverTimestamp()
+    },{merge:true}),
+    setDoc(doc(db,"acumulados_mensuales",`${gasto.vehiculo}_${mes}`),{
+      vehiculo: gasto.vehiculo,
+      mes,
+      totalGastos: increment(monto),
+      cantidadGastos: increment(1),
+      actualizado: serverTimestamp()
+    },{merge:true})
+  ]);
+}
+
+
+async function actualizarAcumuladoDerivacionAceptada(origen, periodoId, periodoInicio="", periodoFin=""){
+  if(!origen || !periodoId) return;
+  await setDoc(doc(db,"acumulados_semanales",`${origen}_${periodoId}`),{
+    chofer: origen,
+    periodoId,
+    periodoInicio,
+    periodoFin,
+    derivaciones: increment(1),
+    actualizado: serverTimestamp()
+  },{merge:true});
+}
+
+async function getAcumuladoSemanalChofer(chofer, periodo){
+  try{
+    const snap = await getDoc(doc(db,"acumulados_semanales",`${chofer}_${periodo.id}`));
+    return snap.exists() ? snap.data() : null;
+  }catch(e){
+    console.warn("No se pudo leer acumulado semanal", e);
+    return null;
+  }
+}
+
+function cierreDesdeAcumulado(chofer, periodo, acumulado, ganador, premioSemanal){
+  const totalViajes = Number(acumulado.totalViajes || 0);
+  const efectivo = Number(acumulado.efectivo || 0);
+  const transferencia = Number(acumulado.transferencia || 0);
+  const tarjeta = Number(acumulado.tarjeta || 0);
+  const cantidadViajes = Number(acumulado.cantidadViajes || 0);
+  const totalGastos = Number(acumulado.totalGastos || 0);
+  const cantidadGastos = Number(acumulado.cantidadGastos || 0);
+  const neto = totalViajes - totalGastos;
+  const mitadChofer = neto / 2;
+  const mitadDavid = neto / 2;
+  const efectivoNetoChofer = efectivo - totalGastos;
+  const diferenciaBase = efectivoNetoChofer - mitadChofer;
+  const esGanador = ganador && ganador.id === chofer;
+  const premioAplicado = esGanador ? Number(premioSemanal || 0) : 0;
+  const diferenciaFinal = diferenciaBase - premioAplicado;
+
+  return {
+    periodo, chofer, totalViajes, efectivo, transferencia, tarjeta, cantidadViajes,
+    totalGastos, cantidadGastos, neto, mitadChofer, mitadDavid, efectivoNetoChofer,
+    ganadorSemana: ganador ? ganador.nombre : "",
+    ganadorId: ganador ? ganador.id : "",
+    premioSemanal: Number(premioSemanal || 0), premioAplicado, esGanador,
+    diferenciaBase, diferenciaFinal,
+    choferDebe: diferenciaFinal > 0 ? diferenciaFinal : 0,
+    davidDebe: diferenciaFinal < 0 ? Math.abs(diferenciaFinal) : 0
+  };
+}
+
 
 function msg(el, text, ok=false){
   el.innerHTML = `<div class="msg ${ok?'ok':'err'}">${text}</div>`;
@@ -922,7 +1050,7 @@ window.saveTrip = async function(){
 
   const periodoOperativo = await getPeriodoOperativoChofer(currentUserId);
 
-  await addDoc(collection(db,"viajes"),{
+  const viaje = {
     fecha: today(),
     hora: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
     chofer: currentUserId,
@@ -937,7 +1065,10 @@ window.saveTrip = async function(){
     monto: charged,
     pago: $("paymentMethod").value,
     creado: serverTimestamp()
-  });
+  };
+
+  await addDoc(collection(db,"viajes"),viaje);
+  await actualizarAcumuladosViaje(viaje);
   await updateDoc(doc(db,"choferes",currentUserId),{
     ultimaActividad: new Date().toLocaleString("es-AR")
   });
@@ -1152,50 +1283,57 @@ async function calcularRankingSemanalLiviano(periodo = getPeriodoTrabajoActual(t
     stats[d.id] = {id:d.id,nombre:c.nombre || d.id,viajes:0,derivaciones:0,facturacion:0,porcentaje:0};
   });
 
-  // Trae viajes por fecha y también por periodoId para incluir servicios cargados después del cierre en el mismo día.
-  const viajesMap = new Map();
-  const viajesSnapFecha = await withTimeout(getDocs(query(
-    collection(db,"viajes"),
-    where("fecha",">=",periodo.start),
-    where("fecha","<=",periodo.end)
-  )), 9000, "El ranking tardó demasiado cargando viajes.");
-  viajesSnapFecha.forEach(d=>viajesMap.set(d.id,d.data()));
-
+  // Ranking rápido: lee solo acumulados de la semana, no toda la colección viajes.
+  let usoAcumulados = false;
   try{
-    const viajesSnapPeriodo = await withTimeout(getDocs(query(
-      collection(db,"viajes"),
+    const acumSnap = await withTimeout(getDocs(query(
+      collection(db,"acumulados_semanales"),
       where("periodoId","==",periodo.id)
-    )), 9000, "El ranking tardó demasiado cargando viajes por período.");
-    viajesSnapPeriodo.forEach(d=>viajesMap.set(d.id,d.data()));
-  }catch(e){
-    console.warn("Viajes por periodoId no disponibles todavía", e);
-  }
+    )), 6000, "El ranking tardó demasiado cargando acumulados.");
 
-  viajesMap.forEach(v=>{
-    if(!perteneceAlPeriodo(v, periodo)) return;
-    if(stats[v.chofer]){
-      stats[v.chofer].viajes += 1;
-      stats[v.chofer].facturacion += Number(v.monto || 0);
-    }
-  });
-
-  try{
-    const derivSnap = await withTimeout(getDocs(query(
-      collection(db,"derivaciones"),
-      where("fecha",">=",periodo.start),
-      where("fecha","<=",periodo.end)
-    )), 9000, "El ranking tardó demasiado cargando derivaciones.");
-
-    derivSnap.forEach(d=>{
-      const x = d.data();
-      // Solo suma como derivación para ranking cuando el receptor aceptó con OK.
-      // Pendiente / ignorada / rechazada no computa.
-      if(x.estado !== "aceptado") return;
-      if(x.periodoId && x.periodoId !== periodo.id) return;
-      if(stats[x.origen]) stats[x.origen].derivaciones += 1;
+    acumSnap.forEach(d=>{
+      const a = d.data();
+      const choferId = a.chofer || String(d.id).split("_")[0];
+      if(!stats[choferId]) return;
+      stats[choferId].viajes = Number(a.cantidadViajes || 0);
+      stats[choferId].facturacion = Number(a.totalViajes || 0);
+      stats[choferId].derivaciones = Number(a.derivaciones || 0);
+      usoAcumulados = true;
     });
   }catch(e){
-    console.warn("No se pudieron cargar derivaciones para ranking", e);
+    console.warn("Ranking por acumulados no disponible; se usa respaldo", e);
+  }
+
+  if(!usoAcumulados){
+    // Respaldo para semanas viejas sin acumulados.
+    const viajesSnap = await withTimeout(getDocs(query(
+      collection(db,"viajes"),
+      where("periodoId","==",periodo.id)
+    )), 9000, "El ranking tardó demasiado cargando viajes.");
+
+    viajesSnap.forEach(d=>{
+      const v = d.data();
+      if(!perteneceAlPeriodo(v, periodo)) return;
+      if(stats[v.chofer]){
+        stats[v.chofer].viajes += 1;
+        stats[v.chofer].facturacion += Number(v.monto || 0);
+      }
+    });
+
+    try{
+      const derivSnap = await withTimeout(getDocs(query(
+        collection(db,"derivaciones"),
+        where("periodoId","==",periodo.id)
+      )), 9000, "El ranking tardó demasiado cargando derivaciones.");
+
+      derivSnap.forEach(d=>{
+        const x = d.data();
+        if(x.estado !== "aceptado") return;
+        if(stats[x.origen]) stats[x.origen].derivaciones += 1;
+      });
+    }catch(e){
+      console.warn("No se pudieron cargar derivaciones para ranking", e);
+    }
   }
 
   const arr = Object.values(stats);
@@ -1267,46 +1405,6 @@ window.openRankingPanel = async function(){
 }
 
 async function calcularCierreSemanalLiviano(chofer, periodo){
-  // Evita el índice compuesto: consulta solo por chofer y filtra fecha en JavaScript.
-  // Es mucho más rápido que leer toda la colección completa.
-  const viajesSnap = await withTimeout(getDocs(query(
-    collection(db,"viajes"),
-    where("chofer","==",chofer)
-  )), 9000, "El cierre tardó demasiado cargando viajes.");
-
-  const gastosSnap = await withTimeout(getDocs(query(
-    collection(db,"gastos"),
-    where("chofer","==",chofer)
-  )), 9000, "El cierre tardó demasiado cargando gastos.");
-
-  let totalViajes = 0, efectivo = 0, transferencia = 0, tarjeta = 0, cantidadViajes = 0;
-  viajesSnap.forEach(d=>{
-    const v = d.data();
-    if(!perteneceAlPeriodo(v, periodo)) return;
-
-    const monto = Number(v.monto || 0);
-    totalViajes += monto;
-    cantidadViajes++;
-    if(v.pago === "efectivo") efectivo += monto;
-    if(v.pago === "transferencia") transferencia += monto;
-    if(v.pago === "tarjeta") tarjeta += monto;
-  });
-
-  let totalGastos = 0, cantidadGastos = 0;
-  gastosSnap.forEach(d=>{
-    const g = d.data();
-    if(!perteneceAlPeriodo(g, periodo)) return;
-
-    totalGastos += Number(g.monto || 0);
-    cantidadGastos++;
-  });
-
-  const neto = totalViajes - totalGastos;
-  const mitadChofer = neto / 2;
-  const mitadDavid = neto / 2;
-  const efectivoNetoChofer = efectivo - totalGastos;
-  const diferenciaBase = efectivoNetoChofer - mitadChofer;
-
   let ganador = null;
   try{
     const rankingData = await calcularRankingSemanalLiviano(periodo);
@@ -1316,20 +1414,64 @@ async function calcularCierreSemanalLiviano(chofer, periodo){
   }
 
   const premioSemanal = await getPremioSemana(periodo);
-  const esGanador = ganador && ganador.id === chofer;
-  const premioAplicado = esGanador ? premioSemanal : 0;
-  const diferenciaFinal = diferenciaBase - premioAplicado;
 
-  return {
-    periodo, chofer, totalViajes, efectivo, transferencia, tarjeta, cantidadViajes,
-    totalGastos, cantidadGastos, neto, mitadChofer, mitadDavid, efectivoNetoChofer,
-    ganadorSemana: ganador ? ganador.nombre : "",
-    ganadorId: ganador ? ganador.id : "",
-    premioSemanal, premioAplicado, esGanador,
-    diferenciaBase, diferenciaFinal,
-    choferDebe: diferenciaFinal > 0 ? diferenciaFinal : 0,
-    davidDebe: diferenciaFinal < 0 ? Math.abs(diferenciaFinal) : 0
-  };
+  try{
+    const acumuladoSnap = await withTimeout(
+      getDoc(doc(db,"acumulados_semanales",`${chofer}_${periodo.id}`)),
+      5000,
+      "El acumulado semanal tardó demasiado en cargar."
+    );
+
+    if(acumuladoSnap.exists()){
+      return cierreDesdeAcumulado(chofer, periodo, acumuladoSnap.data(), ganador, premioSemanal);
+    }
+  }catch(e){
+    console.warn("No se pudo leer acumulado semanal; se usa cálculo de respaldo", e);
+  }
+
+  // Respaldo para semanas viejas cargadas antes de esta optimización.
+  // Solo se usa si todavía no existe el acumulado semanal.
+  const viajesSnap = await withTimeout(getDocs(query(
+    collection(db,"viajes"),
+    where("chofer","==",chofer),
+    where("periodoId","==",periodo.id)
+  )), 9000, "El cierre tardó demasiado cargando viajes.");
+
+  const gastosSnap = await withTimeout(getDocs(query(
+    collection(db,"gastos"),
+    where("chofer","==",chofer),
+    where("periodoId","==",periodo.id)
+  )), 9000, "El cierre tardó demasiado cargando gastos.");
+
+  const acumulado = {totalViajes:0, efectivo:0, transferencia:0, tarjeta:0, cantidadViajes:0, totalGastos:0, cantidadGastos:0};
+
+  viajesSnap.forEach(d=>{
+    const v = d.data();
+    if(!perteneceAlPeriodo(v, periodo)) return;
+    const monto = Number(v.monto || 0);
+    acumulado.totalViajes += monto;
+    acumulado.cantidadViajes += 1;
+    acumulado[campoPago(v.pago)] += monto;
+  });
+
+  gastosSnap.forEach(d=>{
+    const g = d.data();
+    if(!perteneceAlPeriodo(g, periodo)) return;
+    acumulado.totalGastos += Number(g.monto || 0);
+    acumulado.cantidadGastos += 1;
+  });
+
+  await setDoc(doc(db,"acumulados_semanales",`${chofer}_${periodo.id}`),{
+    chofer,
+    periodoId: periodo.id,
+    periodoInicio: periodo.start,
+    periodoFin: periodo.end,
+    ...acumulado,
+    reconstruido: true,
+    actualizado: serverTimestamp()
+  },{merge:true});
+
+  return cierreDesdeAcumulado(chofer, periodo, acumulado, ganador, premioSemanal);
 }
 
 function renderCierreSemanal(c){
@@ -1551,27 +1693,41 @@ async function checkCierreSemanalAutomatico(){
 }
 
 async function loadTodayTrips(){
-  // En la pantalla principal mostramos la semana activa del chofer.
-  // Esto permite que, al confirmar cierre el sábado, Viajes/Facturación vuelvan a 0
-  // aunque el mismo día ya existan servicios de la semana cerrada.
+  // Pantalla principal rápida: total semanal desde acumulado + historial solo de hoy.
   const periodoOperativo = await getPeriodoOperativoChofer(currentUserId);
-  const snap = await getDocs(collection(db,"viajes"));
-  let total = 0, count = 0, html = "";
   const hoy = today();
+  let total = 0, count = 0, html = "";
 
-  snap.forEach(d=>{
-    const v = d.data();
-    if(v.chofer !== currentUserId) return;
-    if(!perteneceAlPeriodo(v, periodoOperativo)) return;
+  const acumulado = await getAcumuladoSemanalChofer(currentUserId, periodoOperativo);
+  if(acumulado){
+    total = Number(acumulado.totalViajes || 0);
+    count = Number(acumulado.cantidadViajes || 0);
+  }
 
-    total += Number(v.monto || 0);
-    count++;
+  try{
+    const snapHoy = await withTimeout(getDocs(query(
+      collection(db,"viajes"),
+      where("chofer","==",currentUserId),
+      where("fecha","==",hoy)
+    )), 6000, "El historial de hoy tardó demasiado.");
 
-    // El historial visible sigue priorizando lo cargado hoy dentro de la semana activa.
-    if(v.fecha === hoy){
+    let totalRespaldo = 0, countRespaldo = 0;
+    snapHoy.forEach(d=>{
+      const v = d.data();
+      if(!perteneceAlPeriodo(v, periodoOperativo)) return;
+      totalRespaldo += Number(v.monto || 0);
+      countRespaldo++;
       html += `<div class="trip"><b>${v.servicioNombre}</b><br><small>${v.hora} · ${v.tipo} · ${v.pago}</small><br><b style="color:var(--gold)">${money(v.monto)}</b></div>`;
+    });
+
+    // Para instalaciones nuevas, si todavía no llegó el acumulado, mostramos al menos lo de hoy.
+    if(!acumulado){
+      total = totalRespaldo;
+      count = countRespaldo;
     }
-  });
+  }catch(e){
+    html = `<div class="msg err">No se pudo cargar historial de hoy: ${e.message}</div>`;
+  }
 
   $("todayTrips").textContent = count;
   $("todayTotal").textContent = money(total);
@@ -1633,7 +1789,8 @@ async function loadDerivationInbox(){
   try{
     const snap = await getDocs(query(
       collection(db,"derivaciones"),
-      where("destino","==",currentUserId)
+      where("destino","==",currentUserId),
+      where("estado","==","pendiente")
     ));
     renderDerivationInboxFromDocs(Array.from(snap.docs));
   }catch(e){
@@ -1655,7 +1812,7 @@ function startDerivationInboxPolling(){
 
   try{
     derivationUnsubscribe = onSnapshot(
-      query(collection(db,"derivaciones"), where("destino","==",currentUserId)),
+      query(collection(db,"derivaciones"), where("destino","==",currentUserId), where("estado","==","pendiente")),
       snap=>renderDerivationInboxFromDocs(Array.from(snap.docs)),
       err=>{
         const box = $("derivationInbox");
@@ -1705,7 +1862,9 @@ window.aceptarDerivacion = async function(derivacionId){
     const viajeId = `derivacion_${derivacionId}`;
 
     // ID fijo por derivación: si el usuario toca OK dos veces o recarga, no se duplica.
-    await setDoc(doc(db,"viajes",viajeId),{
+    const viajeRef = doc(db,"viajes",viajeId);
+    const viajeExistente = await getDoc(viajeRef);
+    const viaje = {
       fecha: today(),
       hora: horaAceptado,
       chofer: currentUserId,
@@ -1723,7 +1882,12 @@ window.aceptarDerivacion = async function(derivacionId){
       derivacion: true,
       derivacionId,
       creado: serverTimestamp()
-    });
+    };
+
+    await setDoc(viajeRef,viaje);
+    if(!viajeExistente.exists()){
+      await actualizarAcumuladosViaje(viaje);
+    }
 
     await updateDoc(derivRef,{
       estado:"aceptado",
@@ -1739,6 +1903,10 @@ window.aceptarDerivacion = async function(derivacionId){
       periodoDestinoAceptadoId: periodoOperativo.id,
       actualizado: serverTimestamp()
     });
+
+    if(!viajeExistente.exists()){
+      await actualizarAcumuladoDerivacionAceptada(x.origen, x.periodoOrigenId || x.periodoId || periodoOperativo.id, x.periodoInicio || "", x.periodoFin || "");
+    }
 
     cierreSemanalCache = null;
     await loadDerivationInbox();
@@ -1954,7 +2122,7 @@ window.saveExpense = async function(){
 
   const periodoOperativo = await getPeriodoOperativoChofer(currentUserId);
 
-  await addDoc(collection(db,"gastos"),{
+  const gasto = {
     fecha: today(),
     hora: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
     chofer: currentUserId,
@@ -1966,7 +2134,10 @@ window.saveExpense = async function(){
     monto,
     detalle,
     creado: serverTimestamp()
-  });
+  };
+
+  await addDoc(collection(db,"gastos"),gasto);
+  await actualizarAcumuladosGasto(gasto);
 
   await updateDoc(doc(db,"choferes",currentUserId),{
     ultimaActividad: new Date().toLocaleString("es-AR")
@@ -2553,34 +2724,61 @@ window.calcularResumenMensualAdmin = async function(){
   const vehiculo = $("adminMesVehiculoSelect").value;
   const box = $("adminMensualResultado");
   if(!vehiculo) return msg(box,"Seleccione un vehículo.");
-  box.innerHTML = `<div class="msg ok">Calculando resumen mensual...</div>`;
+  box.innerHTML = `<div class="msg ok">Cargando resumen mensual rápido...</div>`;
 
   try{
     const start = `${mes}-01`;
     const end = addDays(addDays(start, 32).slice(0,8) + "01", -1);
+    const acumuladoId = `${vehiculo}_${mes}`;
+    const acumuladoSnap = await withTimeout(
+      getDoc(doc(db,"acumulados_mensuales",acumuladoId)),
+      5000,
+      "Tardó demasiado cargando acumulado mensual."
+    );
 
-    const [viajesSnap,gastosSnap] = await Promise.all([
-      withTimeout(getDocs(query(collection(db,"viajes"), where("vehiculo","==",vehiculo))), 9000, "Tardó demasiado cargando viajes del mes."),
-      withTimeout(getDocs(query(collection(db,"gastos"), where("vehiculo","==",vehiculo))), 9000, "Tardó demasiado cargando gastos del mes.")
-    ]);
+    let totalViajes=0, cantidadViajes=0, efectivo=0, transferencia=0, tarjeta=0, totalGastos=0, cantidadGastos=0;
 
-    let totalViajes=0, cantidadViajes=0, efectivo=0, transferencia=0, tarjeta=0;
-    viajesSnap.forEach(d=>{
-      const v=d.data(); const fecha=v.fecha || "";
-      if(fecha < start || fecha > end) return;
-      const monto=Number(v.monto || 0);
-      totalViajes += monto; cantidadViajes++;
-      if(v.pago === "efectivo") efectivo += monto;
-      if(v.pago === "transferencia") transferencia += monto;
-      if(v.pago === "tarjeta") tarjeta += monto;
-    });
+    if(acumuladoSnap.exists()){
+      const a = acumuladoSnap.data();
+      totalViajes = Number(a.totalViajes || 0);
+      cantidadViajes = Number(a.cantidadViajes || 0);
+      efectivo = Number(a.efectivo || 0);
+      transferencia = Number(a.transferencia || 0);
+      tarjeta = Number(a.tarjeta || 0);
+      totalGastos = Number(a.totalGastos || 0);
+      cantidadGastos = Number(a.cantidadGastos || 0);
+    }else{
+      // Respaldo para meses viejos sin acumulados: se calcula una vez y queda guardado.
+      box.innerHTML = `<div class="msg ok">Este mes no tenía acumulado. Lo estoy reconstruyendo una sola vez...</div>`;
+      const [viajesSnap,gastosSnap] = await Promise.all([
+        withTimeout(getDocs(query(collection(db,"viajes"), where("fecha",">=",start), where("fecha","<=",end))), 9000, "Tardó demasiado cargando viajes del mes."),
+        withTimeout(getDocs(query(collection(db,"gastos"), where("fecha",">=",start), where("fecha","<=",end))), 9000, "Tardó demasiado cargando gastos del mes.")
+      ]);
 
-    let totalGastos=0, cantidadGastos=0;
-    gastosSnap.forEach(d=>{
-      const g=d.data(); const fecha=g.fecha || "";
-      if(fecha < start || fecha > end) return;
-      totalGastos += Number(g.monto || 0); cantidadGastos++;
-    });
+      viajesSnap.forEach(d=>{
+        const v=d.data(); const fecha=v.fecha || "";
+        if(v.vehiculo !== vehiculo) return;
+        if(fecha < start || fecha > end) return;
+        const monto=Number(v.monto || 0);
+        totalViajes += monto; cantidadViajes++;
+        if(v.pago === "efectivo") efectivo += monto;
+        if(v.pago === "transferencia") transferencia += monto;
+        if(v.pago === "tarjeta") tarjeta += monto;
+      });
+
+      gastosSnap.forEach(d=>{
+        const g=d.data(); const fecha=g.fecha || "";
+        if(g.vehiculo !== vehiculo) return;
+        if(fecha < start || fecha > end) return;
+        totalGastos += Number(g.monto || 0); cantidadGastos++;
+      });
+
+      await setDoc(doc(db,"acumulados_mensuales",acumuladoId),{
+        vehiculo, mes, totalViajes, cantidadViajes, efectivo, transferencia, tarjeta, totalGastos, cantidadGastos,
+        reconstruido:true,
+        actualizado:serverTimestamp()
+      },{merge:true});
+    }
 
     const neto = totalViajes - totalGastos;
 
@@ -2604,127 +2802,6 @@ window.calcularResumenMensualAdmin = async function(){
     box.innerHTML = `<div class="msg err">No se pudo calcular el mes: ${e.message}</div>`;
   }
 }
-
-
-function normalizarUsuarioExplora(value){
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g,"")
-    .replace(/[^a-z0-9._-]/g,"");
-}
-
-window.crearChoferVehiculoAdmin = async function(){
-  const box = $("nuevoChoferMsg");
-  const nombre = String($("nuevoChoferNombre").value || "").trim();
-  const usuario = normalizarUsuarioExplora($("nuevoChoferUsuario").value);
-  const pass = String($("nuevoChoferPass").value || "").trim();
-  const patente = String($("nuevoVehiculoPatente").value || "").trim().toUpperCase().replace(/\s+/g,"");
-  const modelo = String($("nuevoVehiculoModelo").value || "").trim();
-  const kmActual = Number($("nuevoVehiculoKm").value || 0);
-  const aceiteUltimoKm = Number($("nuevoVehiculoAceite").value || 0);
-
-  if(!nombre) return msg(box,"Ingrese el nombre del chofer.");
-  if(!usuario) return msg(box,"Ingrese un usuario válido, sin espacios ni acentos.");
-  if(pass.length < 6) return msg(box,"La contraseña debe tener mínimo 6 caracteres.");
-  if(!patente) return msg(box,"Ingrese la patente / ID del vehículo.");
-  if(!modelo) return msg(box,"Ingrese el modelo del vehículo.");
-
-  const btns = Array.from(document.querySelectorAll('button'));
-  btns.forEach(b=>{ if((b.textContent || '').includes('Crear chofer')) b.disabled = true; });
-  msg(box,"Creando usuario en Firebase y guardando datos...",true);
-
-  let secondaryApp = null;
-
-  try{
-    // Se usa una app secundaria para crear el usuario sin cerrar la sesión del admin actual.
-    secondaryApp = initializeApp(firebaseConfig, "crearUsuario_" + Date.now());
-    const secondaryAuth = getAuth(secondaryApp);
-
-    await createUserWithEmailAndPassword(secondaryAuth, `${usuario}@explora.local`, pass);
-    await signOut(secondaryAuth).catch(()=>{});
-
-    await setDoc(doc(db,"vehiculos",patente),{
-      modelo,
-      chofer: usuario,
-      kmActual: kmActual || 0,
-      aceiteUltimoKm: aceiteUltimoKm || 0,
-      activo: true,
-      creadoPor: currentUserId || "admin",
-      actualizado: serverTimestamp()
-    }, { merge:true });
-
-    await setDoc(doc(db,"choferes",usuario),{
-      nombre,
-      rol:"chofer",
-      vehiculo: patente,
-      estado:"disponible",
-      activo:true,
-      usuario,
-      email:`${usuario}@explora.local`,
-      creadoPor: currentUserId || "admin",
-      ultimaActividad:"sin registro",
-      actualizado: serverTimestamp()
-    }, { merge:true });
-
-    msg(box,`Chofer creado correctamente.<br><b>Usuario:</b> ${usuario}<br><b>Contraseña:</b> ${pass}<br><b>Vehículo:</b> ${patente}`,true);
-
-    ["nuevoChoferNombre","nuevoChoferUsuario","nuevoChoferPass","nuevoVehiculoPatente","nuevoVehiculoModelo","nuevoVehiculoKm","nuevoVehiculoAceite"].forEach(id=>{ if($(id)) $(id).value=""; });
-    await loadAdmin();
-
-  }catch(e){
-    let texto = e.message || String(e);
-    if(String(e.code || "").includes("email-already-in-use")) texto = "Ese usuario ya existe en Firebase Authentication. Probá con otro usuario o usá el mismo documento del chofer existente.";
-    if(String(e.code || "").includes("operation-not-allowed")) texto = "Firebase Authentication no permite crear usuarios con email/contraseña. Activá Email/Password en Firebase Console > Authentication > Sign-in method.";
-    msg(box,"No se pudo crear el chofer: " + texto);
-  }finally{
-    if(secondaryApp) await deleteApp(secondaryApp).catch(()=>{});
-    btns.forEach(b=>{ if((b.textContent || '').includes('Crear chofer')) b.disabled = false; });
-  }
-}
-
-const choferesDemoAEliminar = ["marcelo","joel","rodolfo","fede","lucio","ezequiel","flor","demo1","demo2","demo3","demo4","demo5"];
-const vehiculosDemoAEliminar = ["AG456CD","AH789EF","AI234GH","AJ567IJ","AK890KL","AL321MN","AM654OP","DEMO001","DEMO002","DEMO003"];
-
-window.eliminarChoferesDemoAdmin = async function(){
-  const confirmar = confirm("Esto elimina de Firestore los choferes/vehículos demo conocidos. No elimina usuarios de Firebase Authentication. ¿Continuar?");
-  if(!confirmar) return;
-
-  const box = $("adminToolsMsg") || $("adminMsg");
-  msg(box,"Eliminando registros demo...",true);
-
-  try{
-    for(const id of choferesDemoAEliminar){
-      await deleteDoc(doc(db,"choferes",id)).catch(()=>{});
-    }
-    for(const id of vehiculosDemoAEliminar){
-      await deleteDoc(doc(db,"vehiculos",id)).catch(()=>{});
-    }
-    msg(box,"Choferes y vehículos demo eliminados de Firestore. Si creaste usuarios demo en Authentication, elimínalos una sola vez desde Firebase Console.",true);
-    await loadAdmin();
-  }catch(e){
-    msg(box,"No se pudieron eliminar demos: " + e.message);
-  }
-}
-
-const serviciosExplora = [
-  { id:"salida_out_igr", nombre:"Salida-Out IGR", precio:25000 },
-  { id:"local", nombre:"Local", precio:20000 },
-  { id:"minas_de_wanda", nombre:"Minas de Wanda", precio:70000 },
-  { id:"cataratas_arg", nombre:"Cataratas ARG", precio:50000 },
-  { id:"cataratas_br", nombre:"Cataratas BR", precio:70000 },
-  { id:"brasil_in_out", nombre:"Brasil In-Out", precio:40000 },
-  { id:"igr_in_out", nombre:"IGR In-Out", precio:25000 },
-  { id:"tour_brasil", nombre:"Tour Brasil", precio:80000 },
-  { id:"salida_brasil_por_igr", nombre:"Salida a Brasil por IGR", precio:30000 },
-  { id:"salida_paraguay_por_igr", nombre:"Salida a Paraguay por IGR", precio:35000 },
-  { id:"tour_compras_cde", nombre:"Tour de compras CDE", precio:80000 },
-  { id:"puerto_libertad", nombre:"Puerto Libertad", precio:45000 },
-  { id:"puerto_wanda", nombre:"Puerto Wanda", precio:70000 },
-  { id:"puerto_esperanza", nombre:"Puerto Esperanza", precio:55000 },
-  { id:"eldorado", nombre:"Eldorado", precio:120000 }
-];
 
 window.instalarServiciosExplora = async function(){
   try{
