@@ -536,6 +536,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
     <p class="note">Si hay cierre semanal pendiente, esta pantalla aparece para revisar el período. Si no hay diferencia, igual tenés que confirmar para iniciar la nueva semana.</p>
     <div id="cierreSemanalResumen"></div>
     <button id="confirmarCierreSemanalBtn" class="btn-gold" onclick="confirmarCierreSemanal()">Confirmar cierre e iniciar nueva semana</button>
+    <button id="volverAppCierreBtn" class="btn-dark hidden" style="margin-top:10px" onclick="cerrarCierreSemanalModal()">Volver a la app</button>
     <div id="cierreSemanalMsg"></div>
   </div>
 </div>
@@ -955,9 +956,10 @@ window.closeDay = async function(){
   await new Promise(resolve => setTimeout(resolve, 80));
 
   try{
-    // Se usa el período operativo del chofer.
-    // Si el sábado confirma cierre a las 13:01, un viaje de 13:03
-    // ya pertenece a la semana activa siguiente.
+    // IMPORTANTE:
+    // Se usa el período operativo del chofer, no solamente la fecha calendario.
+    // Así, si el sábado confirma cierre a las 13:01, el viaje de las 13:03
+    // ya se guarda y se muestra en la semana activa siguiente.
     const periodo = await getPeriodoOperativoChofer(currentUserId);
     const cacheKey = `${currentUserId}_${periodo.id}`;
 
@@ -1031,6 +1033,17 @@ function daysBetween(a,b){
 
 function isSaturday(dateStr){
   return parseLocalDate(dateStr).getDay() === 6;
+}
+
+function puedeCerrarPeriodo(periodo, dateStr = today()){
+  return !!(periodo && isSaturday(dateStr) && periodo.closeDate === dateStr);
+}
+
+window.cerrarCierreSemanalModal = function(){
+  const modal = $("cierreSemanalModal");
+  if(modal) modal.classList.add("hidden");
+  const box = $("cierreSemanalMsg");
+  if(box) box.innerHTML = "";
 }
 
 function getPeriodoTrabajoActual(dateStr = today()){
@@ -1296,6 +1309,7 @@ async function calcularCierreSemanalLiviano(chofer, periodo){
 function renderCierreSemanal(c){
   const pago = c.pagoSemanal || null;
   const yaPagado = pago && pago.pagado === true;
+  const puedeCerrarHoy = puedeCerrarPeriodo(c.periodo);
 
   const resultado = c.choferDebe > 0
     ? `<div class="msg err"><b>El chofer debe depositar a David:</b><br>${money(c.choferDebe)}</div>`
@@ -1303,11 +1317,19 @@ function renderCierreSemanal(c){
       ? `<div class="msg ok"><b>David debe transferir al chofer:</b><br>${money(c.davidDebe)}</div>`
       : `<div class="msg ok"><b>Cierre equilibrado:</b><br>No hay diferencia.</div>`;
 
-  const pagoHtml = yaPagado
-    ? `<div class="paid-box" style="margin-top:10px">✅ Pago marcado como realizado<br><small>${pago.fechaPago || ""} ${pago.horaPago || ""} · ${pago.marcadoPor || ""}</small></div>`
-    : (c.choferDebe > 0 || c.davidDebe > 0)
-      ? `<button id="btnPagoChofer" class="btn-gold" style="margin-top:10px" onclick="marcarPagoSemanalChofer()">Marcar pagado</button><div class="note">Usá este botón cuando el dinero ya fue entregado/transferido y quedan al día. El cierre igual se confirma con el botón de abajo.</div>`
-      : `<div class="paid-box" style="margin-top:10px">✅ Sin pago pendiente<br><small>Están equilibrados. Tocá “Confirmar cierre e iniciar nueva semana” para cerrar el período.</small></div>`;
+  let pagoHtml = "";
+
+  if(yaPagado){
+    pagoHtml = `<div class="paid-box" style="margin-top:10px">✅ Pago marcado como realizado<br><small>${pago.fechaPago || ""} ${pago.horaPago || ""} · ${pago.marcadoPor || ""}</small></div>`;
+  }else if(c.choferDebe > 0 || c.davidDebe > 0){
+    if(puedeCerrarHoy){
+      pagoHtml = `<button id="btnPagoChofer" class="btn-gold" style="margin-top:10px" onclick="marcarPagoSemanalChofer()">Marcar pagado</button><div class="note">Usá este botón solo cuando el dinero ya fue entregado/transferido. El cierre se confirma con el botón de abajo.</div>`;
+    }else{
+      pagoHtml = `<div class="pending-box" style="margin-top:10px">Pago pendiente. Solo se puede marcar como pagado el sábado de cierre (${c.periodo ? c.periodo.closeDate : ""}).</div>`;
+    }
+  }else{
+    pagoHtml = `<div class="paid-box" style="margin-top:10px">✅ Sin pago pendiente<br><small>Están equilibrados.${puedeCerrarHoy ? ' Tocá “Confirmar cierre e iniciar nueva semana” para cerrar el período.' : ' El cierre se habilita el sábado.'}</small></div>`;
+  }
 
   $("cierreSemanalResumen").innerHTML = `
     <div class="trip"><b>Período de trabajo</b><br><small>${c.periodo.start} al ${c.periodo.end}</small><br><small>Cierre obligatorio: ${c.periodo.closeDate}</small></div>
@@ -1321,16 +1343,31 @@ function renderCierreSemanal(c){
   `;
 
   const cierreBtn = $("confirmarCierreSemanalBtn");
-  const puedeCerrarHoy = isSaturday(today()) && c.periodo && c.periodo.closeDate === today();
+  const volverBtn = $("volverAppCierreBtn");
+  const msgBox = $("cierreSemanalMsg");
 
   if(cierreBtn){
     if(puedeCerrarHoy){
       cierreBtn.disabled = false;
       cierreBtn.textContent = "Confirmar cierre e iniciar nueva semana";
+      cierreBtn.classList.remove("hidden");
     }else{
       cierreBtn.disabled = true;
       cierreBtn.textContent = `Cierre disponible el sábado ${c.periodo ? c.periodo.closeDate : ""}`;
+      cierreBtn.classList.remove("hidden");
     }
+  }
+
+  if(volverBtn){
+    if(puedeCerrarHoy){
+      volverBtn.classList.add("hidden");
+    }else{
+      volverBtn.classList.remove("hidden");
+    }
+  }
+
+  if(msgBox && !puedeCerrarHoy){
+    msgBox.innerHTML = `<div class="msg ok">Todavía no es día de cierre. Tocá “Volver a la app” para seguir cargando servicios normalmente.</div>`;
   }
 }
 
@@ -1352,7 +1389,7 @@ window.confirmarCierreSemanal = async function(){
   try{
     const c = cierreSemanalPendiente;
 
-    if(!isSaturday(today()) || !c.periodo || c.periodo.closeDate !== today()){
+    if(!puedeCerrarPeriodo(c.periodo)){
       msg($("cierreSemanalMsg"), `Este período no se puede cerrar todavía. El cierre corresponde al sábado ${c.periodo ? c.periodo.closeDate : ""}.`);
       renderCierreSemanal(c);
       return;
@@ -2130,12 +2167,21 @@ window.calcularSemanaVehiculoAdmin = async function(vehiculoId, choferId){
 }
 
 function renderResumenSemanalAdmin(vehiculoId,c,pago){
+  const puedeCerrarHoy = puedeCerrarPeriodo(c.periodo);
   const estadoPago = pago && pago.pagado ? `<div class="paid-box">✅ Pagado · ${pago.fechaPago || ""} ${pago.horaPago || ""}</div>` : "";
-  const accion = c.choferDebe > 0
-    ? `<div class="pending-box">El chofer debe pasarte: ${money(c.choferDebe)}</div><button class="btn-gold" onclick="marcarPagoSemanalAdmin('${c.chofer}','${c.periodo.id}','chofer_a_david',${Math.round(c.choferDebe)})">Marcar pagado</button>`
-    : c.davidDebe > 0
+  let accion = "";
+
+  if(c.choferDebe > 0){
+    accion = puedeCerrarHoy
+      ? `<div class="pending-box">El chofer debe pasarte: ${money(c.choferDebe)}</div><button class="btn-gold" onclick="marcarPagoSemanalAdmin('${c.chofer}','${c.periodo.id}','chofer_a_david',${Math.round(c.choferDebe)})">Marcar pagado</button>`
+      : `<div class="pending-box">El chofer debe pasarte: ${money(c.choferDebe)}<br><small>El pago solo se marca el sábado de cierre (${c.periodo.closeDate}).</small></div>`;
+  }else if(c.davidDebe > 0){
+    accion = puedeCerrarHoy
       ? `<div class="pending-box">Vos debés transferir al chofer: ${money(c.davidDebe)}</div><button class="btn-gold" onclick="marcarPagoSemanalAdmin('${c.chofer}','${c.periodo.id}','david_a_chofer',${Math.round(c.davidDebe)})">Marcar pagado</button>`
-      : `<div class="paid-box">✅ No hay diferencia pendiente.</div>`;
+      : `<div class="pending-box">Vos debés transferir al chofer: ${money(c.davidDebe)}<br><small>El pago solo se marca el sábado de cierre (${c.periodo.closeDate}).</small></div>`;
+  }else{
+    accion = `<div class="paid-box">✅ No hay diferencia pendiente.</div>`;
+  }
 
   return `
     <div class="trip">
@@ -2156,6 +2202,13 @@ async function getEstadoPagoSemanal(chofer, periodoId){
 }
 
 window.marcarPagoSemanalAdmin = async function(chofer, periodoId, sentido, monto){
+  const parts = String(periodoId || "").split("_");
+  const periodo = parts.length === 2 ? { id: periodoId, start: parts[0], end: parts[1], closeDate: parts[1] } : null;
+  if(!puedeCerrarPeriodo(periodo)){
+    alert(`El pago solo se puede marcar el sábado de cierre${periodo ? " (" + periodo.closeDate + ")" : ""}.`);
+    return;
+  }
+
   const buttons = Array.from(document.querySelectorAll('button'));
   buttons.forEach(b=>{
     if((b.textContent || '').includes('Marcar pagado')) b.disabled = true;
@@ -2186,6 +2239,13 @@ window.marcarPagoSemanalChofer = async function(){
   }
 
   const c = cierreSemanalPendiente;
+
+  if(!puedeCerrarPeriodo(c.periodo)){
+    msg($("cierreSemanalMsg"), `El pago solo se puede marcar el sábado de cierre (${c.periodo ? c.periodo.closeDate : ""}).`);
+    renderCierreSemanal(c);
+    return;
+  }
+
   const sentido = c.choferDebe > 0 ? "chofer_a_david" : c.davidDebe > 0 ? "david_a_chofer" : "sin_diferencia";
   const monto = c.choferDebe > 0 ? c.choferDebe : c.davidDebe;
 
