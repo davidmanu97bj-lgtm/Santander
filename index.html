@@ -418,12 +418,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <label>Monto cobrado</label>
       <input id="deriveAmount" type="number" inputmode="numeric" />
 
-      <label>Forma de pago</label>
-      <select id="derivePaymentMethod">
-        <option value="efectivo">Efectivo</option>
-        <option value="transferencia">Transferencia</option>
-        <option value="tarjeta">Tarjeta</option>
-      </select>
+      <div class="single-trip-note">💳 La forma de pago la confirma el chofer receptor al tocar OK. Así no se perjudica si el pasajero cambia de efectivo a transferencia o tarjeta.</div>
 
       <button class="btn-gold" onclick="saveDerivation()">Derivar servicio</button>
       <div id="deriveMsg"></div>
@@ -581,7 +576,7 @@ import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, addDoc,
-  query, where, getDocs, serverTimestamp
+  query, where, getDocs, serverTimestamp, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -609,6 +604,7 @@ let cierreSemanalCargando = false;
 let cierreSemanalCache = null;
 let derivationInboxTimer = null;
 let derivationInboxSignature = "";
+let derivationUnsubscribe = null;
 
 const $ = id => document.getElementById(id);
 function today(){
@@ -648,7 +644,7 @@ window.login = async function(){
   }
 }
 
-window.logout = async function(){ await signOut(auth); location.reload(); }
+window.logout = async function(){ if(derivationUnsubscribe) derivationUnsubscribe(); await signOut(auth); location.reload(); }
 
 onAuthStateChanged(auth, async (firebaseUser)=>{
   if(!firebaseUser) return;
@@ -1582,6 +1578,53 @@ async function loadTodayTrips(){
   $("historyList").innerHTML = html || `<p class="note">Todavía no hay servicios cargados hoy en la semana activa.</p>`;
 }
 
+async function renderDerivationInboxFromDocs(docs){
+  const box = $("derivationInbox");
+  const list = $("derivationInboxList");
+  if(!box || !list || !currentUserId) return;
+
+  const pendientes = [];
+  docs.forEach(d=>{
+    const x = d.data ? d.data() : d;
+    const id = d.id || x.id;
+    if(x.destino !== currentUserId) return;
+    if(x.estado !== "pendiente") return;
+    pendientes.push({id, ...x});
+  });
+
+  pendientes.sort((a,b)=>String((b.fecha || "") + " " + (b.hora || "")).localeCompare(String((a.fecha || "") + " " + (a.hora || ""))));
+
+  const signature = pendientes.map(x=>`${x.id}:${x.estado}:${x.monto || 0}`).join("|");
+  if(signature === derivationInboxSignature && list.innerHTML) return;
+  derivationInboxSignature = signature;
+
+  if(!pendientes.length){
+    box.classList.add("hidden");
+    list.innerHTML = "";
+    return;
+  }
+
+  box.classList.remove("hidden");
+  list.innerHTML = pendientes.slice(0,10).map(x=>`
+    <div class="derivation-item">
+      <b>${x.servicioNombre || "Servicio derivado"}</b><br>
+      <small>De: ${x.origen || "otro chofer"} · ${x.hora || ""} · ${x.tipo || ""}</small><br>
+      <b style="color:var(--gold)">${money(x.monto || 0)}</b>
+      <div class="note" style="margin-top:6px">Este viaje todavía no está facturado. Elegí la forma de pago real y tocá OK para cargarlo como viaje.</div>
+      <label style="margin-top:10px;display:block">Forma de pago real</label>
+      <select id="pagoDerivacion_${x.id}">
+        <option value="efectivo">Efectivo</option>
+        <option value="transferencia">Transferencia</option>
+        <option value="tarjeta">Tarjeta</option>
+      </select>
+      <div class="row" style="margin-top:10px">
+        <button class="btn-gold" onclick="aceptarDerivacion('${x.id}')">OK</button>
+        <button class="btn-red" onclick="ignorarDerivacion('${x.id}')">Ignorar</button>
+      </div>
+    </div>
+  `).join("");
+}
+
 async function loadDerivationInbox(){
   const box = $("derivationInbox");
   const list = $("derivationInboxList");
@@ -1592,40 +1635,7 @@ async function loadDerivationInbox(){
       collection(db,"derivaciones"),
       where("destino","==",currentUserId)
     ));
-
-    const pendientes = [];
-    snap.forEach(d=>{
-      const x = d.data();
-      // Nueva regla: solo se muestran derivaciones pendientes de respuesta.
-      // No se carga ningún viaje hasta que el receptor toque OK.
-      if(x.estado !== "pendiente") return;
-      pendientes.push({id:d.id, ...x});
-    });
-
-    pendientes.sort((a,b)=>String((b.fecha || "") + " " + (b.hora || "")).localeCompare(String((a.fecha || "") + " " + (a.hora || ""))));
-
-    const signature = pendientes.map(x=>`${x.id}:${x.estado}:${x.monto || 0}`).join("|");
-    derivationInboxSignature = signature;
-
-    if(!pendientes.length){
-      box.classList.add("hidden");
-      list.innerHTML = "";
-      return;
-    }
-
-    box.classList.remove("hidden");
-    list.innerHTML = pendientes.slice(0,10).map(x=>`
-      <div class="derivation-item">
-        <b>${x.servicioNombre || "Servicio derivado"}</b><br>
-        <small>De: ${x.origen || "otro chofer"} · ${x.hora || ""} · ${x.tipo || ""} · ${x.pago || ""}</small><br>
-        <b style="color:var(--gold)">${money(x.monto || 0)}</b>
-        <div class="note" style="margin-top:6px">Este viaje todavía no está facturado. Solo se cargará si tocás OK.</div>
-        <div class="row" style="margin-top:10px">
-          <button class="btn-gold" onclick="aceptarDerivacion('${x.id}')">OK</button>
-          <button class="btn-red" onclick="ignorarDerivacion('${x.id}')">Ignorar</button>
-        </div>
-      </div>
-    `).join("");
+    renderDerivationInboxFromDocs(Array.from(snap.docs));
   }catch(e){
     box.classList.remove("hidden");
     list.innerHTML = `<div class="msg err">No se pudieron cargar servicios recibidos: ${e.message}</div>`;
@@ -1633,12 +1643,33 @@ async function loadDerivationInbox(){
 }
 
 function startDerivationInboxPolling(){
+  // Antes esto hacía consultas cada 12 segundos y volvía lenta la app.
+  // Ahora queda en tiempo real con onSnapshot y solo escucha las derivaciones del chofer actual.
   if(derivationInboxTimer) clearInterval(derivationInboxTimer);
-  derivationInboxTimer = setInterval(()=>{
-    if(currentUserId && currentProfile && currentProfile.rol !== "admin"){
-      loadDerivationInbox();
-    }
-  }, 12000);
+  derivationInboxTimer = null;
+  if(derivationUnsubscribe){
+    derivationUnsubscribe();
+    derivationUnsubscribe = null;
+  }
+  if(!currentUserId || !currentProfile || currentProfile.rol === "admin") return;
+
+  try{
+    derivationUnsubscribe = onSnapshot(
+      query(collection(db,"derivaciones"), where("destino","==",currentUserId)),
+      snap=>renderDerivationInboxFromDocs(Array.from(snap.docs)),
+      err=>{
+        const box = $("derivationInbox");
+        const list = $("derivationInboxList");
+        if(box && list){
+          box.classList.remove("hidden");
+          list.innerHTML = `<div class="msg err">No se pudieron escuchar derivaciones: ${err.message}</div>`;
+        }
+      }
+    );
+  }catch(e){
+    console.warn("No se pudo iniciar escucha de derivaciones", e);
+    loadDerivationInbox();
+  }
 }
 
 window.aceptarDerivacion = async function(derivacionId){
@@ -1655,18 +1686,28 @@ window.aceptarDerivacion = async function(derivacionId){
       alert("Esta derivación no corresponde a tu usuario.");
       return;
     }
+    if(x.estado === "aceptado" && x.viajeId){
+      alert("Esta derivación ya fue aceptada.");
+      await loadDerivationInbox();
+      await loadTodayTrips();
+      return;
+    }
     if(x.estado !== "pendiente"){
       alert("Esta derivación ya fue respondida.");
       await loadDerivationInbox();
       return;
     }
 
+    const pagoSelect = $("pagoDerivacion_" + derivacionId);
+    const pagoReal = pagoSelect ? pagoSelect.value : "efectivo";
     const periodoOperativo = await getPeriodoOperativoChofer(currentUserId);
     const horaAceptado = new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"});
+    const viajeId = `derivacion_${derivacionId}`;
 
-    const viajeRef = await addDoc(collection(db,"viajes"),{
+    // ID fijo por derivación: si el usuario toca OK dos veces o recarga, no se duplica.
+    await setDoc(doc(db,"viajes",viajeId),{
       fecha: today(),
-      hora: x.hora || horaAceptado,
+      hora: horaAceptado,
       chofer: currentUserId,
       vehiculo: x.vehiculoDestino || (currentVehicle ? currentVehicle.id : ""),
       periodoId: periodoOperativo.id,
@@ -1677,7 +1718,7 @@ window.aceptarDerivacion = async function(derivacionId){
       tipo: x.tipo || "Derivado",
       tarifaMinima: Number(x.tarifaMinima || 0),
       monto: Number(x.monto || 0),
-      pago: x.pago || "efectivo",
+      pago: pagoReal,
       derivadoPor: x.origen || "",
       derivacion: true,
       derivacionId,
@@ -1686,9 +1727,10 @@ window.aceptarDerivacion = async function(derivacionId){
 
     await updateDoc(derivRef,{
       estado:"aceptado",
-      viajeId: viajeRef.id,
+      viajeId,
       facturadoA: currentUserId,
       facturacionUnica: true,
+      pagoConfirmadoPorReceptor: pagoReal,
       puntosOrigen: 1,
       puntosDestino: 0,
       vistoPor: currentUserId,
@@ -1701,7 +1743,7 @@ window.aceptarDerivacion = async function(derivacionId){
     cierreSemanalCache = null;
     await loadDerivationInbox();
     await loadTodayTrips();
-    alert("Derivación aceptada. Se cargó como viaje automáticamente.");
+    alert("Derivación aceptada. Se cargó como viaje con forma de pago: " + pagoReal + ".");
   }catch(e){
     alert("No se pudo aceptar la derivación: " + e.message);
   }
@@ -1863,7 +1905,8 @@ window.saveDerivation = async function(){
       tipo: tipoTexto,
       tarifaMinima: min,
       monto: charged,
-      pago: $("derivePaymentMethod").value,
+      pago: "pendiente_receptor",
+      pagoLoDefine: "receptor",
       estado: "pendiente",
       facturadoA: "",
       facturacionUnica: true,
