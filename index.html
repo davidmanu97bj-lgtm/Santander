@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.23
-Build: 2026-06-05-MI-AUTO-KM-FAST-001
+Version: 2.8.24
+Build: 2026-06-05-CREAR-CHOFER-FIX-001
 Fecha: 04/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
@@ -16,7 +16,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.23 · Build 2026-06-05-MI-AUTO-KM-FAST-001</title>
+<title>EXPLORA v2.8.24 · Build 2026-06-05-CREAR-CHOFER-FIX-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -357,7 +357,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.23</b> · Build 2026-06-05-MI-AUTO-KM-FAST-001</div>
+    <div class="build-version"><b>v2.8.24</b> · Build 2026-06-05-CREAR-CHOFER-FIX-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -370,7 +370,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.23</b> · 2026-06-05-MI-AUTO-KM-FAST-001</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.24</b> · 2026-06-05-CREAR-CHOFER-FIX-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -538,7 +538,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.23</b> · 2026-06-05-MI-AUTO-KM-FAST-001</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.24</b> · 2026-06-05-CREAR-CHOFER-FIX-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -3757,6 +3757,107 @@ window.instalarServiciosExplora = async function(){
     msg($("adminToolsMsg") || $("adminMsg"), "Error instalando servicios: " + e.message);
   }
 }
+
+
+
+// ===== ADMIN: CREAR CHOFER Y VEHÍCULO =====
+// Restaurado en v2.8.24. Usa una app secundaria para crear el usuario
+// sin cerrar la sesión del administrador actual.
+function normalizarUsuarioExplora(value){
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^a-z0-9._-]/g,"");
+}
+
+window.crearChoferVehiculoAdmin = async function(){
+  const box = $("nuevoChoferMsg");
+  const nombre = String($("nuevoChoferNombre")?.value || "").trim();
+  const usuario = normalizarUsuarioExplora($("nuevoChoferUsuario")?.value || "");
+  const pass = String($("nuevoChoferPass")?.value || "").trim();
+  const patente = String($("nuevoVehiculoPatente")?.value || "").trim().toUpperCase().replace(/\s+/g,"");
+  const modelo = String($("nuevoVehiculoModelo")?.value || "").trim();
+  const kmActual = Number($("nuevoVehiculoKm")?.value || 0);
+  const aceiteUltimoKm = Number($("nuevoVehiculoAceite")?.value || 0);
+
+  if(!box) return alert("No se encontró el panel de alta de chofer.");
+  if(!nombre) return msg(box,"Ingrese el nombre del chofer.");
+  if(!usuario) return msg(box,"Ingrese un usuario válido, sin espacios ni acentos.");
+  if(pass.length < 6) return msg(box,"La contraseña debe tener mínimo 6 caracteres.");
+  if(!patente) return msg(box,"Ingrese la patente / ID del vehículo.");
+  if(!modelo) return msg(box,"Ingrese el modelo del vehículo.");
+
+  const btn = Array.from(document.querySelectorAll('button')).find(b=>(b.textContent || '').includes('Crear chofer'));
+  if(btn){
+    btn.disabled = true;
+    btn.textContent = "Creando...";
+  }
+  msg(box,"Creando usuario en Firebase y guardando vehículo...",true);
+
+  let secondaryApp = null;
+
+  try{
+    secondaryApp = initializeApp(firebaseConfig, "crearUsuario_" + Date.now());
+    const secondaryAuth = getAuth(secondaryApp);
+
+    await createUserWithEmailAndPassword(secondaryAuth, `${usuario}@explora.local`, pass);
+    await signOut(secondaryAuth).catch(()=>{});
+
+    const vehiculoData = {
+      modelo,
+      chofer: usuario,
+      kmActual: kmActual || 0,
+      aceiteUltimoKm: aceiteUltimoKm || 0,
+      activo: true,
+      creadoPor: currentUserId || "admin",
+      actualizado: serverTimestamp()
+    };
+
+    await setDoc(doc(db,"vehiculos",patente), vehiculoData, { merge:true });
+
+    await setDoc(doc(db,"choferes",usuario),{
+      nombre,
+      rol:"chofer",
+      vehiculo: patente,
+      estado:"disponible",
+      activo:true,
+      usuario,
+      email:`${usuario}@explora.local`,
+      creadoPor: currentUserId || "admin",
+      ultimaActividad:"sin registro",
+      actualizado: serverTimestamp()
+    }, { merge:true });
+
+    cacheSet("vehiculo_" + patente, vehiculoData);
+    adminBaseLoadedAt = 0;
+
+    msg(box,`Chofer creado correctamente.<br><b>Usuario:</b> ${usuario}<br><b>Contraseña:</b> ${pass}<br><b>Vehículo:</b> ${patente}`,true);
+
+    ["nuevoChoferNombre","nuevoChoferUsuario","nuevoChoferPass","nuevoVehiculoPatente","nuevoVehiculoModelo","nuevoVehiculoKm","nuevoVehiculoAceite"].forEach(id=>{
+      const el = $(id);
+      if(el) el.value = "";
+    });
+
+    if(typeof loadAdmin === "function"){
+      loadAdmin().catch(e=>console.warn("No se pudo refrescar admin después del alta", e));
+    }
+  }catch(e){
+    let texto = e.message || String(e);
+    const code = String(e.code || "");
+    if(code.includes("email-already-in-use")) texto = "Ese usuario ya existe. Probá con otro usuario o revisá si el chofer ya fue creado.";
+    if(code.includes("operation-not-allowed")) texto = "Firebase Authentication no permite Email/Password. Activá Email/Password en Firebase Console > Authentication > Sign-in method.";
+    if(code.includes("weak-password")) texto = "La contraseña es muy débil. Usá mínimo 6 caracteres.";
+    msg(box,"No se pudo crear el chofer: " + texto);
+  }finally{
+    if(secondaryApp) await deleteApp(secondaryApp).catch(()=>{});
+    if(btn){
+      btn.disabled = false;
+      btn.textContent = "Crear chofer y vehículo";
+    }
+  }
+};
 
 </script>
 
