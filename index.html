@@ -748,7 +748,16 @@ async function loadServices(){
   updateDerivePrice();
 }
 async function checkKmToday(){
-  const kmId = `${currentVehicle.id}_${today()}`;
+  if(!currentVehicle || !currentUserId){
+    kmTodaySaved = false;
+    return;
+  }
+
+  // El km se controla por PERÍODO ACTIVO, no solo por día.
+  // Así, si el sábado se confirma cierre y empieza una nueva semana,
+  // el sistema vuelve a pedir km aunque sea el mismo sábado.
+  const periodoOperativo = await getPeriodoOperativoChofer(currentUserId);
+  const kmId = `${currentVehicle.id}_${periodoOperativo.id}`;
   const snap = await getDoc(doc(db,"kilometrajes",kmId));
   kmTodaySaved = snap.exists();
 }
@@ -775,29 +784,50 @@ window.openNewService = async function(){
 }
 
 window.saveDailyKm = async function(){
+  const btn = document.querySelector('#kmModal button');
   const km = Number($("kmInput").value);
   if(!currentVehicle) return msg($("kmMsg"),"No hay vehículo asignado.");
+
   const lastKm = Number(currentVehicle.kmActual || 0);
   if(!km || km < lastKm) return msg($("kmMsg"),`El km no puede ser menor al último registrado (${lastKm}).`);
 
-  const kmId = `${currentVehicle.id}_${today()}`;
-  await setDoc(doc(db,"kilometrajes",kmId),{
-    fecha: today(),
-    chofer: currentUserId,
-    vehiculo: currentVehicle.id,
-    periodoId: periodoOperativo.id,
-    periodoInicio: periodoOperativo.start,
-    periodoFin: periodoOperativo.end,
-    kmAnterior: lastKm,
-    kmActual: km,
-    diferencia: km - lastKm,
-    creado: serverTimestamp()
-  });
-  await updateDoc(doc(db,"vehiculos",currentVehicle.id),{kmActual:km});
-  currentVehicle.kmActual = km;
-  kmTodaySaved = true;
-  $("kmModal").classList.add("hidden");
-  showPanel("servicePanel");
+  if(btn){
+    btn.disabled = true;
+    btn.textContent = "Guardando km...";
+  }
+
+  try{
+    const periodoOperativo = await getPeriodoOperativoChofer(currentUserId);
+    const kmId = `${currentVehicle.id}_${periodoOperativo.id}`;
+
+    await setDoc(doc(db,"kilometrajes",kmId),{
+      fecha: today(),
+      chofer: currentUserId,
+      vehiculo: currentVehicle.id,
+      periodoId: periodoOperativo.id,
+      periodoInicio: periodoOperativo.start,
+      periodoFin: periodoOperativo.end,
+      kmAnterior: lastKm,
+      kmActual: km,
+      diferencia: km - lastKm,
+      creado: serverTimestamp()
+    });
+
+    await updateDoc(doc(db,"vehiculos",currentVehicle.id),{kmActual:km});
+    currentVehicle.kmActual = km;
+    kmTodaySaved = true;
+    $("kmInput").value = "";
+    $("kmMsg").innerHTML = "";
+    $("kmModal").classList.add("hidden");
+    showPanel("servicePanel");
+  }catch(e){
+    msg($("kmMsg"),"No se pudo guardar el km: " + e.message);
+  }finally{
+    if(btn){
+      btn.disabled = false;
+      btn.textContent = "Guardar km";
+    }
+  }
 }
 
 window.showPanel = function(id){
@@ -873,6 +903,9 @@ window.saveTrip = async function(){
     hora: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
     chofer: currentUserId,
     vehiculo: currentVehicle.id,
+    periodoId: periodoOperativo.id,
+    periodoInicio: periodoOperativo.start,
+    periodoFin: periodoOperativo.end,
     servicioId: service.id,
     servicioNombre: service.nombre,
     tipo: tramoUnico ? "Tramo único" : (type === "solo_ida" ? "Solo ida" : "Ida y vuelta"),
@@ -922,7 +955,10 @@ window.closeDay = async function(){
   await new Promise(resolve => setTimeout(resolve, 80));
 
   try{
-    const periodo = getPeriodoCierrePendiente() || getPeriodoTrabajoActual();
+    // Se usa el período operativo del chofer.
+    // Si el sábado confirma cierre a las 13:01, un viaje de 13:03
+    // ya pertenece a la semana activa siguiente.
+    const periodo = await getPeriodoOperativoChofer(currentUserId);
     const cacheKey = `${currentUserId}_${periodo.id}`;
 
     if(cierreSemanalCache && cierreSemanalCache.key === cacheKey){
@@ -940,6 +976,7 @@ window.closeDay = async function(){
     if(!cierreSemanalPendiente.pagoSemanal){
       cierreSemanalPendiente.pagoSemanal = await getEstadoPagoSemanal(currentUserId, periodo.id);
     }
+
     renderCierreSemanal(cierreSemanalPendiente);
   }catch(e){
     if(resumen){
@@ -1009,18 +1046,10 @@ function getPeriodoTrabajoActual(dateStr = today()){
 }
 
 function getPeriodoCierrePendiente(dateStr = today()){
-  const actual = getPeriodoTrabajoActual(dateStr);
-
-  // El sábado se cierra la semana actual.
-  if(isSaturday(dateStr)){
-    return actual;
-  }
-
-  // De domingo a viernes, si quedó una semana anterior sin confirmar, se exige cerrar esa anterior.
-  const start = addDays(actual.start, -7);
-  const end = addDays(actual.start, -1);
-  const closeDate = end;
-  return {start,end,closeDate,id:`${start}_${end}`};
+  // Regla solicitada: el cierre semanal corresponde al SÁBADO.
+  // De domingo a viernes no se fuerza cierre automático; solo se puede ver la semana en curso.
+  if(!isSaturday(dateStr)) return null;
+  return getPeriodoTrabajoActual(dateStr);
 }
 
 function getPeriodoSiguiente(periodo){
@@ -1290,6 +1319,19 @@ function renderCierreSemanal(c){
     ${resultado}
     ${pagoHtml}
   `;
+
+  const cierreBtn = $("confirmarCierreSemanalBtn");
+  const puedeCerrarHoy = isSaturday(today()) && c.periodo && c.periodo.closeDate === today();
+
+  if(cierreBtn){
+    if(puedeCerrarHoy){
+      cierreBtn.disabled = false;
+      cierreBtn.textContent = "Confirmar cierre e iniciar nueva semana";
+    }else{
+      cierreBtn.disabled = true;
+      cierreBtn.textContent = `Cierre disponible el sábado ${c.periodo ? c.periodo.closeDate : ""}`;
+    }
+  }
 }
 
 
@@ -1309,6 +1351,12 @@ window.confirmarCierreSemanal = async function(){
 
   try{
     const c = cierreSemanalPendiente;
+
+    if(!isSaturday(today()) || !c.periodo || c.periodo.closeDate !== today()){
+      msg($("cierreSemanalMsg"), `Este período no se puede cerrar todavía. El cierre corresponde al sábado ${c.periodo ? c.periodo.closeDate : ""}.`);
+      renderCierreSemanal(c);
+      return;
+    }
     const cierreId = `${currentUserId}_${c.periodo.id}`;
     const sinDiferencia = Number(c.choferDebe || 0) <= 0 && Number(c.davidDebe || 0) <= 0;
     const pagoAutomaticoSinDiferencia = sinDiferencia ? {
@@ -1375,16 +1423,38 @@ window.confirmarCierreSemanal = async function(){
       ultimaActividad: new Date().toLocaleString("es-AR")
     });
 
+    // Actualizamos el perfil local para que la pantalla pase inmediatamente a la semana nueva.
+    currentProfile = {
+      ...(currentProfile || {}),
+      ultimoCierreSemanal: c.periodo.id,
+      periodoActivoId: proximoPeriodo.id,
+      periodoActivoInicio: proximoPeriodo.start,
+      periodoActivoFin: proximoPeriodo.end,
+      periodoActivoCierre: proximoPeriodo.closeDate,
+      periodoActivoCalendario: CALENDARIO_CIERRE,
+      periodoActivoDesde: today()
+    };
+
     cierreSemanalPendiente = null;
     cierreSemanalCache = null;
+    kmTodaySaved = false;
     $("cierreSemanalModal").classList.add("hidden");
-    alert("Cierre semanal confirmado correctamente.");
+    await loadTodayTrips();
+    alert("Cierre semanal confirmado correctamente. La nueva semana ya está iniciada.");
   }catch(e){
     msg($("cierreSemanalMsg"),"No se pudo confirmar el cierre: " + e.message);
   }finally{
     if(btn){
-      btn.disabled = false;
-      btn.textContent = "Confirmar cierre e iniciar nueva semana";
+      const cActual = cierreSemanalPendiente;
+      const puedeCerrar = cActual && cActual.periodo && isSaturday(today()) && cActual.periodo.closeDate === today();
+
+      if(cActual && !puedeCerrar){
+        btn.disabled = true;
+        btn.textContent = `Cierre disponible el sábado ${cActual.periodo.closeDate}`;
+      }else{
+        btn.disabled = false;
+        btn.textContent = "Confirmar cierre e iniciar nueva semana";
+      }
     }
   }
 }
@@ -1418,23 +1488,32 @@ async function checkCierreSemanalAutomatico(){
 }
 
 async function loadTodayTrips(){
-  // Sin índice compuesto: filtramos por fecha y chofer en JavaScript.
+  // En la pantalla principal mostramos la semana activa del chofer.
+  // Esto permite que, al confirmar cierre el sábado, Viajes/Facturación vuelvan a 0
+  // aunque el mismo día ya existan servicios de la semana cerrada.
+  const periodoOperativo = await getPeriodoOperativoChofer(currentUserId);
   const snap = await getDocs(collection(db,"viajes"));
   let total = 0, count = 0, html = "";
   const hoy = today();
 
   snap.forEach(d=>{
     const v = d.data();
-    if(v.fecha !== hoy || v.chofer !== currentUserId) return;
+    if(v.chofer !== currentUserId) return;
+    if(!perteneceAlPeriodo(v, periodoOperativo)) return;
 
-    total += Number(v.monto || 0); count++;
-    html += `<div class="trip"><b>${v.servicioNombre}</b><br><small>${v.hora} · ${v.tipo} · ${v.pago}</small><br><b style="color:var(--gold)">${money(v.monto)}</b></div>`;
+    total += Number(v.monto || 0);
+    count++;
+
+    // El historial visible sigue priorizando lo cargado hoy dentro de la semana activa.
+    if(v.fecha === hoy){
+      html += `<div class="trip"><b>${v.servicioNombre}</b><br><small>${v.hora} · ${v.tipo} · ${v.pago}</small><br><b style="color:var(--gold)">${money(v.monto)}</b></div>`;
+    }
   });
+
   $("todayTrips").textContent = count;
   $("todayTotal").textContent = money(total);
-  $("historyList").innerHTML = html || `<p class="note">Todavía no hay servicios cargados hoy.</p>`;
+  $("historyList").innerHTML = html || `<p class="note">Todavía no hay servicios cargados hoy en la semana activa.</p>`;
 }
-
 
 async function loadDeriveDrivers(){
   const select = $("deriveDriverSelect");
