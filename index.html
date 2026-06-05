@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.17
-Build: 2026-06-04-LOGIN-001
+Version: 2.8.18
+Build: 2026-06-04-CIERRE-FAST-001
 Fecha: 04/06/2026
 Cambios:
 - Sesión persistente: el usuario queda logueado después de cerrar y abrir la app.
@@ -12,7 +12,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.17 · Build 2026-06-04-LOGIN-001</title>
+<title>EXPLORA v2.8.18 · Build 2026-06-04-CIERRE-FAST-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -326,7 +326,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.17</b> · Build 2026-06-04-LOGIN-001</div>
+    <div class="build-version"><b>v2.8.18</b> · Build 2026-06-04-CIERRE-FAST-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -339,7 +339,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.17</b> · 2026-06-04-LOGIN-001</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.18</b> · 2026-06-04-CIERRE-FAST-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -483,7 +483,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.17</b> · 2026-06-04-LOGIN-001</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.18</b> · 2026-06-04-CIERRE-FAST-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -1244,47 +1244,49 @@ window.closeDay = async function(){
 
   if(btn){
     btn.disabled = true;
-    btn.innerHTML = '<span class="icon">⏳</span><strong>Cargando cierre...</strong>';
+    btn.innerHTML = '<span class="icon">⏳</span><strong>Abriendo cierre...</strong>';
   }
 
   if(modal){
     modal.classList.remove("hidden");
     modal.scrollTop = 0;
   }
-  if(resumen){
-    resumen.innerHTML = `<div class="msg ok">Calculando cierre semanal... Esperá unos segundos.</div>`;
-  }
-
-  await new Promise(resolve => setTimeout(resolve, 80));
 
   try{
-    // IMPORTANTE:
-    // Se usa el período operativo del chofer, no solamente la fecha calendario.
-    // Así, si el sábado confirma cierre a las 13:01, el viaje de las 13:03
-    // ya se guarda y se muestra en la semana activa siguiente.
     const periodo = await getPeriodoOperativoChofer(currentUserId);
     const cacheKey = `${currentUserId}_${periodo.id}`;
+    const cacheLocal = cacheGet(`cierre_sem_${cacheKey}`, 10 * 60 * 1000);
 
+    // Render inmediato desde memoria/localStorage: evita la pantalla congelada.
     if(cierreSemanalCache && cierreSemanalCache.key === cacheKey){
       cierreSemanalPendiente = cierreSemanalCache.data;
-    }else{
-      cierreSemanalPendiente = await withTimeout(
-        calcularCierreSemanalLiviano(currentUserId, periodo),
-        12000,
-        "El cierre tardó demasiado en cargar. Revisá internet y tocá Ver cierre semanal otra vez."
-      );
-      cierreSemanalPendiente.pagoSemanal = await getEstadoPagoSemanal(currentUserId, periodo.id);
-      cierreSemanalCache = { key: cacheKey, data: cierreSemanalPendiente };
+      renderCierreSemanal(cierreSemanalPendiente);
+    }else if(cacheLocal){
+      cierreSemanalPendiente = cacheLocal;
+      cierreSemanalCache = {key:cacheKey, data:cacheLocal};
+      renderCierreSemanal(cacheLocal);
+      if(resumen){
+        resumen.insertAdjacentHTML("afterbegin", `<div class="msg ok">Cierre abierto desde caché. Actualizando datos...</div>`);
+      }
+    }else if(resumen){
+      resumen.innerHTML = `<div class="msg ok">Abriendo cierre rápido...</div>`;
     }
 
-    if(!cierreSemanalPendiente.pagoSemanal){
-      cierreSemanalPendiente.pagoSemanal = await getEstadoPagoSemanal(currentUserId, periodo.id);
-    }
+    // Carga real ultra liviana: acumulado + pago + premio. Sin leer viajes/gastos completos.
+    cierreSemanalPendiente = await withTimeout(
+      calcularCierreSemanalUltraRapido(currentUserId, periodo),
+      4500,
+      "El cierre rápido no pudo sincronizar. Si ya ves datos en pantalla, podés usarlos; si no, tocá reconstruir acumulado."
+    );
 
+    cierreSemanalCache = { key: cacheKey, data: cierreSemanalPendiente };
+    cacheSet(`cierre_sem_${cacheKey}`, cierreSemanalPendiente);
     renderCierreSemanal(cierreSemanalPendiente);
   }catch(e){
-    if(resumen){
-      resumen.innerHTML = `<div class="msg err">No se pudo calcular cierre: ${e.message}</div>`;
+    if(resumen && !cierreSemanalPendiente){
+      resumen.innerHTML = `<div class="msg err">No se pudo abrir cierre: ${e.message}</div><button id="reconstruirCierreBtn" class="btn-gold" style="margin-top:10px" onclick="reconstruirCierreSemanal()">Reconstruir acumulado</button><div class="note">Usalo solo si esta semana fue cargada antes de los acumulados rápidos.</div>`;
+    }else if($("cierreSemanalMsg")){
+      msg($("cierreSemanalMsg"), e.message);
     }
   }finally{
     cierreSemanalCargando = false;
@@ -1557,6 +1559,104 @@ window.openRankingPanel = async function(){
     }
   }catch(e){
     $("driverRankingList").innerHTML = `<div class="msg err">No se pudo calcular ranking: ${e.message}</div>`;
+  }
+}
+
+
+async function getGanadorSemanalRapido(periodo){
+  const key = `ganador_sem_${periodo.id}`;
+  const cached = cacheGet(key, 10 * 60 * 1000);
+
+  try{
+    const acumSnap = await withTimeout(getDocs(query(
+      collection(db,"acumulados_semanales"),
+      where("periodoId","==",periodo.id)
+    )), 1800, "Ranking semanal no disponible rápido.");
+
+    let arr = [];
+    acumSnap.forEach(d=>{
+      const a = d.data();
+      const id = a.chofer || String(d.id).split("_")[0];
+      arr.push({
+        id,
+        nombre: a.nombre || id,
+        viajes: Number(a.cantidadViajes || 0),
+        derivaciones: Number(a.derivaciones || 0),
+        facturacion: Number(a.totalViajes || 0),
+        porcentaje: 0
+      });
+    });
+
+    if(!arr.length) return cached || null;
+
+    const maxViajes = Math.max(1,...arr.map(x=>x.viajes));
+    const maxDeriv = Math.max(1,...arr.map(x=>x.derivaciones));
+    const maxFact = Math.max(1,...arr.map(x=>x.facturacion));
+    arr.forEach(x=>{
+      x.porcentaje = Math.round((((x.viajes/maxViajes)*0.40)+((x.derivaciones/maxDeriv)*0.30)+((x.facturacion/maxFact)*0.30))*100);
+    });
+    arr.sort((a,b)=>b.porcentaje-a.porcentaje || b.facturacion-a.facturacion || b.viajes-a.viajes);
+
+    const ganador = arr[0] || null;
+    if(ganador) cacheSet(key, ganador);
+    return ganador;
+  }catch(e){
+    console.warn("Ganador rápido no disponible; uso caché", e);
+    return cached || null;
+  }
+}
+
+async function calcularCierreSemanalUltraRapido(chofer, periodo){
+  const acumKey = `acum_sem_${chofer}_${periodo.id}`;
+  const acumuladoCached = cacheGet(acumKey, 60 * 60 * 1000);
+
+  const acumuladoPromise = getDoc(doc(db,"acumulados_semanales",`${chofer}_${periodo.id}`));
+  const premioPromise = getPremioSemana(periodo);
+  const pagoPromise = getEstadoPagoSemanal(chofer, periodo.id);
+  const ganadorPromise = getGanadorSemanalRapido(periodo);
+
+  let acumulado = acumuladoCached || null;
+  try{
+    const acumuladoSnap = await withTimeout(acumuladoPromise, 2500, "El acumulado semanal no respondió rápido.");
+    if(acumuladoSnap.exists()){
+      acumulado = acumuladoSnap.data();
+      cacheSet(acumKey, acumulado);
+    }
+  }catch(e){
+    console.warn("Se usa acumulado de caché", e);
+  }
+
+  if(!acumulado){
+    throw new Error("Este período todavía no tiene acumulado rápido. Tocá ‘Reconstruir acumulado’ una sola vez para semanas viejas.");
+  }
+
+  const [premioSemanal, pagoSemanal, ganador] = await Promise.all([
+    premioPromise.catch(()=>0),
+    pagoPromise.catch(()=>null),
+    ganadorPromise.catch(()=>null)
+  ]);
+
+  const cierre = cierreDesdeAcumulado(chofer, periodo, acumulado, ganador, premioSemanal);
+  cierre.pagoSemanal = pagoSemanal;
+  return cierre;
+}
+
+window.reconstruirCierreSemanal = async function(){
+  const btn = $("reconstruirCierreBtn");
+  const resumen = $("cierreSemanalResumen");
+  if(btn){ btn.disabled = true; btn.textContent = "Reconstruyendo..."; }
+  try{
+    const periodo = await getPeriodoOperativoChofer(currentUserId);
+    const cierre = await withTimeout(calcularCierreSemanalLiviano(currentUserId, periodo), 15000, "La reconstrucción tardó demasiado. Revisá internet y probá otra vez.");
+    cierre.pagoSemanal = await getEstadoPagoSemanal(currentUserId, periodo.id);
+    cierreSemanalPendiente = cierre;
+    cierreSemanalCache = {key:`${currentUserId}_${periodo.id}`, data:cierre};
+    cacheSet(`cierre_sem_${currentUserId}_${periodo.id}`, cierre);
+    renderCierreSemanal(cierre);
+  }catch(e){
+    if(resumen) resumen.innerHTML = `<div class="msg err">No se pudo reconstruir: ${e.message}</div>`;
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = "Reconstruir acumulado"; }
   }
 }
 
