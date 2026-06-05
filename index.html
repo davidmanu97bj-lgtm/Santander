@@ -605,6 +605,11 @@ let cierreSemanalCache = null;
 let derivationInboxTimer = null;
 let derivationInboxSignature = "";
 let derivationUnsubscribe = null;
+let periodoOperativoCache = null;
+let servicesLoaded = false;
+let deriveDriversLoadedAt = 0;
+let todayHistoryLoaded = false;
+let adminBaseLoadedAt = 0;
 
 const $ = id => document.getElementById(id);
 function today(){
@@ -615,6 +620,20 @@ function today(){
   return `${y}-${m}-${day}`;
 }
 const money = n => "$" + Number(n || 0).toLocaleString("es-AR");
+
+const CACHE_PREFIX = "explora_fast_v3_";
+function cacheSet(key, value){
+  try{ localStorage.setItem(CACHE_PREFIX + key, JSON.stringify({t:Date.now(),v:value})); }catch(e){}
+}
+function cacheGet(key, maxAgeMs=86400000){
+  try{
+    const raw = localStorage.getItem(CACHE_PREFIX + key);
+    if(!raw) return null;
+    const obj = JSON.parse(raw);
+    if(!obj || !obj.t || (Date.now() - obj.t) > maxAgeMs) return null;
+    return obj.v;
+  }catch(e){ return null; }
+}
 
 function getMesDesdeFecha(fechaStr = today()){
   return String(fechaStr || today()).slice(0,7);
@@ -658,6 +677,18 @@ async function actualizarAcumuladosViaje(viaje){
       actualizado: serverTimestamp()
     },{merge:true})
   ]);
+
+  const cacheKey = `acum_sem_${viaje.chofer}_${periodoId}`;
+  const cached = cacheGet(cacheKey, 60 * 60 * 1000) || {};
+  cached.totalViajes = Number(cached.totalViajes || 0) + monto;
+  cached.cantidadViajes = Number(cached.cantidadViajes || 0) + 1;
+  cached[pago] = Number(cached[pago] || 0) + monto;
+  cached.chofer = viaje.chofer;
+  cached.vehiculo = viaje.vehiculo;
+  cached.periodoId = periodoId;
+  cached.periodoInicio = periodoInicio;
+  cached.periodoFin = periodoFin;
+  cacheSet(cacheKey, cached);
 }
 
 async function actualizarAcumuladosGasto(gasto){
@@ -689,6 +720,17 @@ async function actualizarAcumuladosGasto(gasto){
       actualizado: serverTimestamp()
     },{merge:true})
   ]);
+
+  const cacheKey = `acum_sem_${gasto.chofer}_${periodoId}`;
+  const cached = cacheGet(cacheKey, 60 * 60 * 1000) || {};
+  cached.totalGastos = Number(cached.totalGastos || 0) + monto;
+  cached.cantidadGastos = Number(cached.cantidadGastos || 0) + 1;
+  cached.chofer = gasto.chofer;
+  cached.vehiculo = gasto.vehiculo;
+  cached.periodoId = periodoId;
+  cached.periodoInicio = periodoInicio;
+  cached.periodoFin = periodoFin;
+  cacheSet(cacheKey, cached);
 }
 
 
@@ -705,12 +747,18 @@ async function actualizarAcumuladoDerivacionAceptada(origen, periodoId, periodoI
 }
 
 async function getAcumuladoSemanalChofer(chofer, periodo){
+  const key = `acum_sem_${chofer}_${periodo.id}`;
+  const cached = cacheGet(key, 10 * 60 * 1000);
   try{
-    const snap = await getDoc(doc(db,"acumulados_semanales",`${chofer}_${periodo.id}`));
-    return snap.exists() ? snap.data() : null;
+    const snap = await withTimeout(getDoc(doc(db,"acumulados_semanales",`${chofer}_${periodo.id}`)), 3500, "El acumulado tardó demasiado.");
+    if(snap.exists()){
+      cacheSet(key, snap.data());
+      return snap.data();
+    }
+    return cached || null;
   }catch(e){
-    console.warn("No se pudo leer acumulado semanal", e);
-    return null;
+    console.warn("No se pudo leer acumulado semanal; uso caché si existe", e);
+    return cached || null;
   }
 }
 
@@ -818,7 +866,9 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
 
     if(currentProfile.rol === "admin"){
       $("adminView").classList.remove("hidden");
-      await loadAdmin();
+      if($("adminVehiculosResumen")) $("adminVehiculosResumen").innerHTML = `<p class="note">Panel abierto. Tocá “Actualizar administrador” si necesitás refrescar datos.</p>`;
+      if($("adminGanadorSemana")) $("adminGanadorSemana").innerHTML = `<p class="note">Premio y ganador se cargan bajo demanda para abrir más rápido.</p>`;
+      setTimeout(()=>loadAdmin().catch(e=>msg($("adminMsg"),"Error cargando administrador: " + e.message)), 250);
     }else{
       $("driverView").classList.remove("hidden");
       await loadDriver();
@@ -832,28 +882,53 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
 async function loadDriver(){
   $("driverName").textContent = currentProfile.nombre || currentUserId;
   setStatusButton(currentProfile.estado || "disponible");
-  await updateDoc(doc(db,"choferes",currentUserId),{
+  $("todayTrips").textContent = "...";
+  $("todayTotal").textContent = "...";
+  if($("historyList")) $("historyList").innerHTML = `<p class="note">Tocá Historial hoy para cargar el detalle.</p>`;
+
+  // No bloquea la apertura de la app por escribir última actividad.
+  updateDoc(doc(db,"choferes",currentUserId),{
     ultimaActividad: new Date().toLocaleString("es-AR")
-  });
+  }).catch(e=>console.warn("No se pudo actualizar actividad", e));
+
+  // Período desde el perfil ya leído: evita otra lectura al iniciar.
+  periodoOperativoCache = getPeriodoOperativoDesdePerfil(currentProfile);
 
   const vehicleId = currentProfile.vehiculo;
-  const vSnap = await getDoc(doc(db,"vehiculos",vehicleId));
-  if(vSnap.exists()){
-    currentVehicle = { id: vehicleId, ...vSnap.data() };
+  const vehCache = cacheGet("vehiculo_" + vehicleId, 6 * 60 * 60 * 1000);
+  if(vehCache){
+    currentVehicle = { id: vehicleId, ...vehCache };
     $("vehicleInfo").innerHTML = `${currentVehicle.modelo || "Vehículo"}<br>Patente: <b>${vehicleId}</b>`;
     $("lastKmText").textContent = currentVehicle.kmActual || 0;
   }else{
-    $("vehicleInfo").innerHTML = `Vehículo no encontrado: <b>${vehicleId}</b>`;
+    $("vehicleInfo").innerHTML = `Cargando vehículo...<br>Patente: <b>${vehicleId}</b>`;
   }
 
-  await loadServices();
-  await loadDeriveDrivers();
-  await checkKmToday();
-  await loadTodayTrips();
-  await loadDerivationInbox();
+  // Carga rápida visible. El resto queda bajo demanda para no trabar tablets lentas.
+  loadTodayTrips().catch(e=>{
+    console.warn("No se pudo cargar acumulado inicial", e);
+    $("todayTrips").textContent = "0";
+    $("todayTotal").textContent = money(0);
+  });
+
+  // El vehículo se refresca en segundo plano. No bloquea la pantalla principal.
+  getDoc(doc(db,"vehiculos",vehicleId)).then(vSnap=>{
+    if(vSnap.exists()){
+      currentVehicle = { id: vehicleId, ...vSnap.data() };
+      cacheSet("vehiculo_" + vehicleId, vSnap.data());
+      $("vehicleInfo").innerHTML = `${currentVehicle.modelo || "Vehículo"}<br>Patente: <b>${vehicleId}</b>`;
+      $("lastKmText").textContent = currentVehicle.kmActual || 0;
+    }else{
+      $("vehicleInfo").innerHTML = `Vehículo no encontrado: <b>${vehicleId}</b>`;
+    }
+  }).catch(e=>{
+    if(!vehCache) $("vehicleInfo").innerHTML = `<span style="color:#fecaca">No se pudo cargar vehículo: ${e.message}</span>`;
+  });
+
   startDerivationInboxPolling();
 
-  await checkCierreSemanalAutomatico();
+  // El cierre automático se revisa luego de abrir, sin bloquear la entrada.
+  setTimeout(()=>checkCierreSemanalAutomatico().catch(e=>console.warn("Cierre automático diferido", e)), 1200);
 }
 
 function setStatusButton(status){
@@ -878,15 +953,41 @@ window.toggleStatus = async function(){
   });
 }
 
-async function loadServices(){
-  const q = query(collection(db,"servicios"), where("activo","==",true));
-  const snap = await getDocs(q);
-  services = [];
-  snap.forEach(d=>services.push({id:d.id,...d.data()}));
-  services.sort((a,b)=>String(a.nombre || "").localeCompare(String(b.nombre || ""), "es"));
+async function loadServices(force=false){
+  if(servicesLoaded && services.length && !force) return;
 
-  const selects = [$('serviceSelect'), $('deriveServiceSelect')].filter(Boolean);
+  const cached = cacheGet("servicios_activos", 24 * 60 * 60 * 1000);
+  if(cached && cached.length && !servicesLoaded){
+    services = cached;
+    servicesLoaded = true;
+    fillServiceSelects();
+  }
+
+  // Si ya hay servicios en caché, refresca en segundo plano y no frena la pantalla.
+  const refresh = async ()=>{
+    const q = query(collection(db,"servicios"), where("activo","==",true));
+    const snap = await withTimeout(getDocs(q), 6000, "Los servicios tardaron demasiado en cargar.");
+    const fresh = [];
+    snap.forEach(d=>fresh.push({id:d.id,...d.data()}));
+    fresh.sort((a,b)=>String(a.nombre || "").localeCompare(String(b.nombre || ""), "es"));
+    services = fresh;
+    servicesLoaded = true;
+    cacheSet("servicios_activos", services);
+    fillServiceSelects();
+  };
+
+  if(servicesLoaded && !force){
+    refresh().catch(e=>console.warn("No se pudieron refrescar servicios", e));
+    return;
+  }
+
+  await refresh();
+}
+
+function fillServiceSelects(){
+  const selects = [$("serviceSelect"), $("deriveServiceSelect")].filter(Boolean);
   selects.forEach(select=>{
+    const current = select.value;
     select.innerHTML = "";
     services.forEach(s=>{
       const opt = document.createElement("option");
@@ -894,8 +995,8 @@ async function loadServices(){
       opt.textContent = s.nombre;
       select.appendChild(opt);
     });
+    if(current && services.some(s=>s.id === current)) select.value = current;
   });
-
   updateServicePrice();
   updateDerivePrice();
 }
@@ -921,6 +1022,7 @@ window.openNewService = async function(){
       return;
     }
 
+    await loadServices();
     await checkKmToday();
 
     if(!kmTodaySaved){
@@ -990,6 +1092,16 @@ window.showPanel = function(id){
 
   const target = $(id);
   if(target) target.classList.remove("hidden");
+
+  // Carga bajo demanda: estas pantallas ya no frenan el login.
+  if(id === "derivePanel"){
+    Promise.all([loadServices(), loadDeriveDrivers()]).catch(e=>msg($("deriveMsg"),"No se pudo preparar derivación: " + e.message));
+  }
+  if(id === "historyPanel"){
+    loadHistoryToday(false).catch(e=>{
+      if($("historyList")) $("historyList").innerHTML = `<div class="msg err">No se pudo cargar historial: ${e.message}</div>`;
+    });
+  }
 }
 
 
@@ -1067,16 +1179,26 @@ window.saveTrip = async function(){
     creado: serverTimestamp()
   };
 
-  await addDoc(collection(db,"viajes"),viaje);
-  await actualizarAcumuladosViaje(viaje);
-  await updateDoc(doc(db,"choferes",currentUserId),{
+  await Promise.all([
+    addDoc(collection(db,"viajes"),viaje),
+    actualizarAcumuladosViaje(viaje)
+  ]);
+
+  updateDoc(doc(db,"choferes",currentUserId),{
     ultimaActividad: new Date().toLocaleString("es-AR")
-  });
+  }).catch(e=>console.warn("No se pudo actualizar actividad", e));
 
   cierreSemanalCache = null;
+  todayHistoryLoaded = false;
   msg($("serviceMsg"),"Servicio guardado correctamente.",true);
-  await loadTodayTrips();
-  setTimeout(()=>{$("servicePanel").classList.add("hidden");$("serviceMsg").innerHTML="";},900);
+
+  // Actualización inmediata en pantalla sin esperar otra lectura.
+  const oldCount = Number(String($("todayTrips").textContent || "0").replace(/\D/g,"")) || 0;
+  const oldTotal = Number(String($("todayTotal").textContent || "0").replace(/\D/g,"")) || 0;
+  $("todayTrips").textContent = oldCount + 1;
+  $("todayTotal").textContent = money(oldTotal + charged);
+
+  setTimeout(()=>{$("servicePanel").classList.add("hidden");$("serviceMsg").innerHTML="";},700);
 }
 
 
@@ -1235,32 +1357,40 @@ function perteneceAlPeriodo(data, periodo){
   return fecha >= periodo.start && fecha <= periodo.end;
 }
 
+function getPeriodoOperativoDesdePerfil(c){
+  if(
+    c &&
+    c.periodoActivoCalendario === CALENDARIO_CIERRE &&
+    c.periodoActivoId &&
+    c.periodoActivoInicio &&
+    c.periodoActivoFin
+  ){
+    return {
+      id: c.periodoActivoId,
+      start: c.periodoActivoInicio,
+      end: c.periodoActivoFin,
+      closeDate: c.periodoActivoCierre || c.periodoActivoFin
+    };
+  }
+  return getPeriodoTrabajoActual(today());
+}
+
 async function getPeriodoOperativoChofer(choferId){
+  if(choferId === currentUserId && periodoOperativoCache) return periodoOperativoCache;
+
   try{
     const snap = await getDoc(doc(db,"choferes",choferId));
     if(snap.exists()){
-      const c = snap.data();
-
-      // Solo se respeta el período activo si fue generado con el calendario nuevo de cierre sábado.
-      // Esto evita arrastrar períodos viejos de versiones anteriores.
-      if(
-        c.periodoActivoCalendario === CALENDARIO_CIERRE &&
-        c.periodoActivoId &&
-        c.periodoActivoInicio &&
-        c.periodoActivoFin
-      ){
-        return {
-          id: c.periodoActivoId,
-          start: c.periodoActivoInicio,
-          end: c.periodoActivoFin,
-          closeDate: c.periodoActivoCierre || c.periodoActivoFin
-        };
-      }
+      const periodo = getPeriodoOperativoDesdePerfil(snap.data());
+      if(choferId === currentUserId) periodoOperativoCache = periodo;
+      return periodo;
     }
   }catch(e){
     console.warn("No se pudo leer período activo del chofer", e);
   }
-  return getPeriodoTrabajoActual(today());
+  const fallback = getPeriodoTrabajoActual(today());
+  if(choferId === currentUserId) periodoOperativoCache = fallback;
+  return fallback;
 }
 
 async function getPremioSemana(periodo){
@@ -1693,10 +1823,15 @@ async function checkCierreSemanalAutomatico(){
 }
 
 async function loadTodayTrips(){
-  // Pantalla principal rápida: total semanal desde acumulado + historial solo de hoy.
+  // Pantalla principal ultra rápida: muestra caché instantánea y refresca 1 documento.
   const periodoOperativo = await getPeriodoOperativoChofer(currentUserId);
-  const hoy = today();
-  let total = 0, count = 0, html = "";
+  let total = 0, count = 0;
+  const cacheKey = `acum_sem_${currentUserId}_${periodoOperativo.id}`;
+  const cached = cacheGet(cacheKey, 60 * 60 * 1000);
+  if(cached){
+    $("todayTrips").textContent = Number(cached.cantidadViajes || 0);
+    $("todayTotal").textContent = money(cached.totalViajes || 0);
+  }
 
   const acumulado = await getAcumuladoSemanalChofer(currentUserId, periodoOperativo);
   if(acumulado){
@@ -1704,34 +1839,34 @@ async function loadTodayTrips(){
     count = Number(acumulado.cantidadViajes || 0);
   }
 
-  try{
-    const snapHoy = await withTimeout(getDocs(query(
-      collection(db,"viajes"),
-      where("chofer","==",currentUserId),
-      where("fecha","==",hoy)
-    )), 6000, "El historial de hoy tardó demasiado.");
-
-    let totalRespaldo = 0, countRespaldo = 0;
-    snapHoy.forEach(d=>{
-      const v = d.data();
-      if(!perteneceAlPeriodo(v, periodoOperativo)) return;
-      totalRespaldo += Number(v.monto || 0);
-      countRespaldo++;
-      html += `<div class="trip"><b>${v.servicioNombre}</b><br><small>${v.hora} · ${v.tipo} · ${v.pago}</small><br><b style="color:var(--gold)">${money(v.monto)}</b></div>`;
-    });
-
-    // Para instalaciones nuevas, si todavía no llegó el acumulado, mostramos al menos lo de hoy.
-    if(!acumulado){
-      total = totalRespaldo;
-      count = countRespaldo;
-    }
-  }catch(e){
-    html = `<div class="msg err">No se pudo cargar historial de hoy: ${e.message}</div>`;
-  }
-
   $("todayTrips").textContent = count;
   $("todayTotal").textContent = money(total);
-  $("historyList").innerHTML = html || `<p class="note">Todavía no hay servicios cargados hoy en la semana activa.</p>`;
+
+  if(!todayHistoryLoaded && $("historyList")){
+    $("historyList").innerHTML = `<p class="note">Tocá Historial hoy para ver el detalle. La pantalla principal carga solo el acumulado para ir más rápido.</p>`;
+  }
+}
+
+async function loadHistoryToday(force=false){
+  if(todayHistoryLoaded && !force) return;
+  const periodoOperativo = await getPeriodoOperativoChofer(currentUserId);
+  const hoy = today();
+  let html = "";
+
+  const snapHoy = await withTimeout(getDocs(query(
+    collection(db,"viajes"),
+    where("chofer","==",currentUserId),
+    where("fecha","==",hoy)
+  )), 6000, "El historial de hoy tardó demasiado.");
+
+  snapHoy.forEach(d=>{
+    const v = d.data();
+    if(!perteneceAlPeriodo(v, periodoOperativo)) return;
+    html += `<div class="trip"><b>${v.servicioNombre}</b><br><small>${v.hora} · ${v.tipo} · ${v.pago}</small><br><b style="color:var(--gold)">${money(v.monto)}</b></div>`;
+  });
+
+  todayHistoryLoaded = true;
+  if($("historyList")) $("historyList").innerHTML = html || `<p class="note">Todavía no hay servicios cargados hoy en la semana activa.</p>`;
 }
 
 async function renderDerivationInboxFromDocs(docs){
@@ -1909,8 +2044,15 @@ window.aceptarDerivacion = async function(derivacionId){
     }
 
     cierreSemanalCache = null;
-    await loadDerivationInbox();
-    await loadTodayTrips();
+    todayHistoryLoaded = false;
+
+    if(!viajeExistente.exists()){
+      const oldCount = Number(String($("todayTrips").textContent || "0").replace(/\D/g,"")) || 0;
+      const oldTotal = Number(String($("todayTotal").textContent || "0").replace(/\D/g,"")) || 0;
+      $("todayTrips").textContent = oldCount + 1;
+      $("todayTotal").textContent = money(oldTotal + Number(viaje.monto || 0));
+    }
+
     alert("Derivación aceptada. Se cargó como viaje con forma de pago: " + pagoReal + ".");
   }catch(e){
     alert("No se pudo aceptar la derivación: " + e.message);
@@ -1954,17 +2096,41 @@ window.ignorarDerivacion = async function(derivacionId){
   }
 }
 
-async function loadDeriveDrivers(){
+async function loadDeriveDrivers(force=false){
   const select = $("deriveDriverSelect");
   if(!select) return;
 
-  const snap = await getDocs(collection(db,"choferes"));
+  const ahora = Date.now();
+  if(!force && deriveDriversLoadedAt && (ahora - deriveDriversLoadedAt) < 120000 && select.options.length) return;
+
+  const cached = cacheGet("choferes_disponibles", 2 * 60 * 1000);
+  if(cached && cached.length && !force){
+    fillDeriveDriversSelect(cached);
+    deriveDriversLoadedAt = ahora;
+    getDocs(collection(db,"choferes")).then(snap=>{
+      const arr = [];
+      snap.forEach(d=>arr.push({id:d.id,...d.data()}));
+      cacheSet("choferes_disponibles", arr);
+      fillDeriveDriversSelect(arr);
+    }).catch(e=>console.warn("No se pudieron refrescar choferes", e));
+    return;
+  }
+
+  const snap = await withTimeout(getDocs(collection(db,"choferes")), 6000, "Los choferes tardaron demasiado en cargar.");
+  const arr = [];
+  snap.forEach(d=>arr.push({id:d.id,...d.data()}));
+  cacheSet("choferes_disponibles", arr);
+  fillDeriveDriversSelect(arr);
+  deriveDriversLoadedAt = ahora;
+}
+
+function fillDeriveDriversSelect(arr){
+  const select = $("deriveDriverSelect");
+  if(!select) return;
   select.innerHTML = "";
 
-  snap.forEach(d=>{
-    const c = d.data();
-    const id = d.id;
-
+  arr.forEach(c=>{
+    const id = c.id;
     if(c.rol === "admin") return;
     if(id === currentUserId) return;
     if(c.activo === false) return;
@@ -2089,12 +2255,11 @@ window.saveDerivation = async function(){
 
     cierreSemanalCache = null;
     msg($("deriveMsg"),"Derivación enviada. Se cargará como viaje solo si el receptor toca OK.",true);
-    await loadTodayTrips();
 
     setTimeout(()=>{
       $("derivePanel").classList.add("hidden");
       $("deriveMsg").innerHTML="";
-    },900);
+    },700);
   }catch(e){
     msg($("deriveMsg"),"No se pudo derivar el servicio: " + e.message);
   }finally{
@@ -2416,15 +2581,16 @@ async function loadGastosAdmin(){
 
 async function loadAdmin(){
   const adminMsg = $("adminMsg");
-  if(adminMsg) msg(adminMsg,"Actualizando administrador...",true);
+  if(adminMsg) msg(adminMsg,"Actualizando administrador rápido...",true);
 
   const periodo = getPeriodoTrabajoActual(today());
   if($("adminPeriodoSemana")) $("adminPeriodoSemana").textContent = `Semana: ${periodo.start} al ${periodo.end} · Cierre: ${periodo.closeDate}`;
   if($("adminMesInput")) $("adminMesInput").value = today().slice(0,7);
 
   try{
-    await cargarPremioAdmin(periodo);
-    await cargarVehiculosAdminSimple(periodo);
+    // Carga en paralelo y sin calcular ranking pesado al entrar.
+    await Promise.all([cargarPremioAdmin(periodo), cargarVehiculosAdminSimple(periodo)]);
+    adminBaseLoadedAt = Date.now();
     if(adminMsg) msg(adminMsg,"Administrador actualizado.",true);
   }catch(e){
     if(adminMsg) msg(adminMsg,"Error cargando administrador: " + e.message);
@@ -2437,14 +2603,12 @@ async function cargarPremioAdmin(periodo){
     const premio = await getPremioSemana(periodo);
     if($("adminPremioInput")) $("adminPremioInput").value = premio || "";
 
-    let rankingData = null;
-    try{ rankingData = await calcularRankingSemanalLiviano(periodo); }catch(e){ console.warn("Ranking admin no disponible", e); }
-    const ganador = rankingData && rankingData.ranking ? rankingData.ranking[0] : null;
-
     if($("adminGanadorSemana")){
-      $("adminGanadorSemana").innerHTML = ganador
-        ? `<h3>🏆 Ganador actual</h3><b>${ganador.nombre}</b><br><small>${ganador.porcentaje}% · Premio: ${money(premio)}</small>`
-        : `<h3>🏆 Ganador actual</h3><small>Todavía no hay datos suficientes.</small>`;
+      $("adminGanadorSemana").innerHTML = `
+        <h3>🏆 Ganador actual</h3>
+        <small>Para mantener rápido el administrador, el ganador se calcula solo al tocar Ranking desde chofer o al calcular semana.</small><br>
+        <small>Premio configurado: ${money(premio)}</small>
+      `;
     }
   }catch(e){
     if($("adminGanadorSemana")) $("adminGanadorSemana").innerHTML = `<div class="msg err">No se pudo cargar premio: ${e.message}</div>`;
