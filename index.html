@@ -13,7 +13,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.19 · Build 2026-06-04-ADMIN-5050-FAST-001</title>
+<title>EXPLORA v2.8.20 · Build 2026-06-04-5050-VERIFICADO-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -661,6 +661,9 @@ function cacheGet(key, maxAgeMs=86400000){
     return obj.v;
   }catch(e){ return null; }
 }
+function cacheRemove(key){
+  try{ localStorage.removeItem(CACHE_PREFIX + key); }catch(e){}
+}
 
 function getMesDesdeFecha(fechaStr = today()){
   return String(fechaStr || today()).slice(0,7);
@@ -804,7 +807,14 @@ function cierreDesdeAcumulado(chofer, periodo, acumulado, ganador, premioSemanal
   const diferenciaBase = efectivoNetoChofer - mitadChofer;
   const esGanador = ganador && ganador.id === chofer;
   const premioAplicado = esGanador ? Number(premioSemanal || 0) : 0;
-  const diferenciaFinal = diferenciaBase - premioAplicado;
+
+  // Motor único 50/50 para chofer y administrador.
+  // Regla: si el chofer quedó con más efectivo del que le corresponde, paga a David.
+  // Si quedó con menos efectivo del que le corresponde, David paga al chofer.
+  // Se redondea para evitar diferencias visuales por decimales y nunca se muestran ambos sentidos a la vez.
+  const diferenciaFinal = Math.round((diferenciaBase - premioAplicado) * 100) / 100;
+  const choferDebe = diferenciaFinal > 0 ? diferenciaFinal : 0;
+  const davidDebe = diferenciaFinal < 0 ? Math.abs(diferenciaFinal) : 0;
 
   return {
     periodo, chofer, totalViajes, efectivo, transferencia, tarjeta, cantidadViajes,
@@ -812,9 +822,7 @@ function cierreDesdeAcumulado(chofer, periodo, acumulado, ganador, premioSemanal
     ganadorSemana: ganador ? ganador.nombre : "",
     ganadorId: ganador ? ganador.id : "",
     premioSemanal: Number(premioSemanal || 0), premioAplicado, esGanador,
-    diferenciaBase, diferenciaFinal,
-    choferDebe: diferenciaFinal > 0 ? diferenciaFinal : 0,
-    davidDebe: diferenciaFinal < 0 ? Math.abs(diferenciaFinal) : 0
+    diferenciaBase, diferenciaFinal, choferDebe, davidDebe
   };
 }
 
@@ -2852,7 +2860,9 @@ window.calcularSemanaVehiculoAdmin = async function(vehiculoId, choferId){
     return;
   }
 
-  const periodo = getPeriodoTrabajoActual(today());
+  // Admin y chofer deben mirar exactamente el mismo período operativo.
+  // Esto evita diferencias después de confirmar cierre un sábado o si el chofer ya pasó a una nueva semana activa.
+  const periodo = await getPeriodoOperativoChofer(choferId);
   const cacheKey = `admin_5050_${choferId}_${periodo.id}`;
   const cacheLocal = cacheGet(cacheKey, 10 * 60 * 1000);
 
@@ -2897,7 +2907,7 @@ async function calcularCierreSemanalAdminUltraRapido(choferId, periodo){
 window.reconstruirSemanaVehiculoAdmin = async function(vehiculoId, choferId){
   const box = $("adminCalc_" + safeId(vehiculoId));
   if(!box) return;
-  const periodo = getPeriodoTrabajoActual(today());
+  const periodo = await getPeriodoOperativoChofer(choferId);
   box.innerHTML = `<div class="msg ok">Reconstruyendo acumulado... Esto puede tardar solo esta vez.</div>`;
   try{
     const c = await withTimeout(calcularCierreSemanalLiviano(choferId, periodo), 15000, "La reconstrucción tardó demasiado. Revisá internet y probá otra vez.");
@@ -3006,6 +3016,8 @@ window.marcarPagoSemanalAdmin = async function(chofer, periodoId, sentido, monto
     horaPago:new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
     actualizado:serverTimestamp()
   });
+  cacheRemove(`admin_5050_${chofer}_${periodoId}`);
+  cacheRemove(`cierre_sem_${chofer}_${periodoId}`);
   alert("Pago marcado como pagado.");
   await loadAdmin();
 }
