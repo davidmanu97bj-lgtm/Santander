@@ -1192,6 +1192,9 @@ async function calcularRankingSemanalLiviano(periodo = getPeriodoTrabajoActual(t
 
     derivSnap.forEach(d=>{
       const x = d.data();
+      // Solo suma como derivación para ranking cuando el receptor aceptó con OK.
+      // Pendiente / ignorada / rechazada no computa.
+      if(x.estado !== "aceptado") return;
       if(x.periodoId && x.periodoId !== periodo.id) return;
       if(stats[x.origen]) stats[x.origen].derivaciones += 1;
     });
@@ -1593,14 +1596,15 @@ async function loadDerivationInbox(){
     const pendientes = [];
     snap.forEach(d=>{
       const x = d.data();
-      if(x.estado !== "derivado") return;
+      // Nueva regla: solo se muestran derivaciones pendientes de respuesta.
+      // No se carga ningún viaje hasta que el receptor toque OK.
+      if(x.estado !== "pendiente") return;
       pendientes.push({id:d.id, ...x});
     });
 
     pendientes.sort((a,b)=>String((b.fecha || "") + " " + (b.hora || "")).localeCompare(String((a.fecha || "") + " " + (a.hora || ""))));
 
     const signature = pendientes.map(x=>`${x.id}:${x.estado}:${x.monto || 0}`).join("|");
-    const cambio = signature !== derivationInboxSignature;
     derivationInboxSignature = signature;
 
     if(!pendientes.length){
@@ -1615,14 +1619,13 @@ async function loadDerivationInbox(){
         <b>${x.servicioNombre || "Servicio derivado"}</b><br>
         <small>De: ${x.origen || "otro chofer"} · ${x.hora || ""} · ${x.tipo || ""} · ${x.pago || ""}</small><br>
         <b style="color:var(--gold)">${money(x.monto || 0)}</b>
-        <div class="note" style="margin-top:6px">Este viaje ya está facturado únicamente a tu usuario. No se duplica en quien lo derivó.</div>
-        <button class="btn-gold" onclick="marcarDerivacionRecibida('${x.id}')">Marcar como recibido</button>
+        <div class="note" style="margin-top:6px">Este viaje todavía no está facturado. Solo se cargará si tocás OK.</div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn-gold" onclick="aceptarDerivacion('${x.id}')">OK</button>
+          <button class="btn-red" onclick="ignorarDerivacion('${x.id}')">Ignorar</button>
+        </div>
       </div>
     `).join("");
-
-    if(cambio){
-      await loadTodayTrips();
-    }
   }catch(e){
     box.classList.remove("hidden");
     list.innerHTML = `<div class="msg err">No se pudieron cargar servicios recibidos: ${e.message}</div>`;
@@ -1638,19 +1641,106 @@ function startDerivationInboxPolling(){
   }, 12000);
 }
 
-window.marcarDerivacionRecibida = async function(derivacionId){
+window.aceptarDerivacion = async function(derivacionId){
   try{
-    await updateDoc(doc(db,"derivaciones",derivacionId),{
-      estado:"recibido",
+    const derivRef = doc(db,"derivaciones",derivacionId);
+    const snap = await getDoc(derivRef);
+    if(!snap.exists()){
+      alert("La derivación ya no existe.");
+      return;
+    }
+
+    const x = snap.data();
+    if(x.destino !== currentUserId){
+      alert("Esta derivación no corresponde a tu usuario.");
+      return;
+    }
+    if(x.estado !== "pendiente"){
+      alert("Esta derivación ya fue respondida.");
+      await loadDerivationInbox();
+      return;
+    }
+
+    const periodoOperativo = await getPeriodoOperativoChofer(currentUserId);
+    const horaAceptado = new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"});
+
+    const viajeRef = await addDoc(collection(db,"viajes"),{
+      fecha: today(),
+      hora: x.hora || horaAceptado,
+      chofer: currentUserId,
+      vehiculo: x.vehiculoDestino || (currentVehicle ? currentVehicle.id : ""),
+      periodoId: periodoOperativo.id,
+      periodoInicio: periodoOperativo.start,
+      periodoFin: periodoOperativo.end,
+      servicioId: x.servicioId || "",
+      servicioNombre: x.servicioNombre || "Servicio derivado",
+      tipo: x.tipo || "Derivado",
+      tarifaMinima: Number(x.tarifaMinima || 0),
+      monto: Number(x.monto || 0),
+      pago: x.pago || "efectivo",
+      derivadoPor: x.origen || "",
+      derivacion: true,
+      derivacionId,
+      creado: serverTimestamp()
+    });
+
+    await updateDoc(derivRef,{
+      estado:"aceptado",
+      viajeId: viajeRef.id,
+      facturadoA: currentUserId,
+      facturacionUnica: true,
+      puntosOrigen: 1,
+      puntosDestino: 0,
       vistoPor: currentUserId,
-      fechaRecibido: today(),
-      horaRecibido: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
+      fechaAceptado: today(),
+      horaAceptado,
+      periodoDestinoAceptadoId: periodoOperativo.id,
       actualizado: serverTimestamp()
     });
+
+    cierreSemanalCache = null;
     await loadDerivationInbox();
     await loadTodayTrips();
+    alert("Derivación aceptada. Se cargó como viaje automáticamente.");
   }catch(e){
-    alert("No se pudo marcar como recibido: " + e.message);
+    alert("No se pudo aceptar la derivación: " + e.message);
+  }
+}
+
+window.ignorarDerivacion = async function(derivacionId){
+  try{
+    const derivRef = doc(db,"derivaciones",derivacionId);
+    const snap = await getDoc(derivRef);
+    if(!snap.exists()){
+      alert("La derivación ya no existe.");
+      return;
+    }
+
+    const x = snap.data();
+    if(x.destino !== currentUserId){
+      alert("Esta derivación no corresponde a tu usuario.");
+      return;
+    }
+    if(x.estado !== "pendiente"){
+      alert("Esta derivación ya fue respondida.");
+      await loadDerivationInbox();
+      return;
+    }
+
+    await updateDoc(derivRef,{
+      estado:"rechazado",
+      rechazadoPor: currentUserId,
+      fechaRechazo: today(),
+      horaRechazo: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
+      puntosOrigen: 0,
+      puntosDestino: 0,
+      actualizado: serverTimestamp()
+    });
+
+    await loadDerivationInbox();
+    alert("Derivación ignorada. No se cargó ningún viaje ni ranking.");
+  }catch(e){
+    alert("No se pudo ignorar la derivación: " + e.message);
   }
 }
 
@@ -1756,27 +1846,8 @@ window.saveDerivation = async function(){
     const periodoDestino = await getPeriodoOperativoChofer(destino);
 
     // IMPORTANTE:
-    // La derivación se guarda como aviso para el receptor, pero la facturación se crea
-    // UNA SOLA VEZ en viajes y queda asignada únicamente al chofer destino.
-    const viajeRef = await addDoc(collection(db,"viajes"),{
-      fecha: today(),
-      hora,
-      chofer: destino,
-      vehiculo: vehiculoDestino,
-      periodoId: periodoDestino.id,
-      periodoInicio: periodoDestino.start,
-      periodoFin: periodoDestino.end,
-      servicioId: service.id,
-      servicioNombre: service.nombre,
-      tipo: tipoTexto,
-      tarifaMinima: min,
-      monto: charged,
-      pago: $("derivePaymentMethod").value,
-      derivadoPor: currentUserId,
-      derivacion: true,
-      creado: serverTimestamp()
-    });
-
+    // La derivación queda PENDIENTE. No se crea viaje todavía.
+    // La facturación se carga una sola vez, únicamente si el receptor toca OK.
     await addDoc(collection(db,"derivaciones"),{
       fecha: today(),
       hora,
@@ -1785,7 +1856,6 @@ window.saveDerivation = async function(){
       periodoId: periodoOrigen.id,
       periodoOrigenId: periodoOrigen.id,
       periodoDestinoId: periodoDestino.id,
-      viajeId: viajeRef.id,
       vehiculoOrigen: currentVehicle ? currentVehicle.id : "",
       vehiculoDestino,
       servicioId: service.id,
@@ -1794,10 +1864,10 @@ window.saveDerivation = async function(){
       tarifaMinima: min,
       monto: charged,
       pago: $("derivePaymentMethod").value,
-      estado: "derivado",
-      facturadoA: destino,
+      estado: "pendiente",
+      facturadoA: "",
       facturacionUnica: true,
-      puntosOrigen: 1,
+      puntosOrigen: 0,
       puntosDestino: 0,
       creado: serverTimestamp()
     });
@@ -1807,7 +1877,7 @@ window.saveDerivation = async function(){
     });
 
     cierreSemanalCache = null;
-    msg($("deriveMsg"),"Servicio derivado correctamente. La facturación quedó solo para el chofer receptor.",true);
+    msg($("deriveMsg"),"Derivación enviada. Se cargará como viaje solo si el receptor toca OK.",true);
     await loadTodayTrips();
 
     setTimeout(()=>{
