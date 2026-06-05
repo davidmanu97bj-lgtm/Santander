@@ -2,18 +2,19 @@
 <!--
 EXPLORA BUILD
 Version: 2.8.21
-Build: 2026-06-04-ADMIN-REDISENO-ACUMULADOS-001
+Build: 2026-06-04-ACUMULADOS-VERIFICADOS-001
 Fecha: 04/06/2026
 Cambios:
-- Admin reordenado tipo dashboard: resumen, accesos rápidos y vehículos compactos.
-- Verificación/reparación manual de acumulados semanales contra viajes y gastos reales.
-- Se mantiene cierre semanal y 50/50 ultra rápido por acumulados.
+- Base estable tomada desde index(12).html.
+- Verificación y reparación de acumulados semanales contra viajes/gastos reales.
+- Verificación y reparación de acumulados mensuales contra viajes/gastos reales.
+- Cierre semanal y 50/50 pueden reconstruir acumulados aunque el documento ya exista.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.21 · ADMIN REDISEÑO + ACUMULADOS</title>
+<title>EXPLORA v2.8.21 · Build 2026-06-04-ACUMULADOS-VERIFICADOS-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -318,38 +319,6 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 }
 .build-version b{color:var(--gold);font-weight:700}
 
-
-/* ===== ADMIN REDISEÑO v2.8.21 ===== */
-.admin-shell{display:flex;gap:14px;align-items:flex-start}
-.admin-menu{position:sticky;top:12px;min-width:152px;background:#101010;border:1px solid #2b2b2b;border-radius:20px;padding:10px;display:flex;flex-direction:column;gap:8px}
-.admin-menu button{font-size:13px;padding:11px 9px;text-align:left;background:#151515;color:#ddd;border:1px solid #2b2b2b}
-.admin-menu button.active,.admin-menu button:hover{background:var(--gold);color:#0b0b0b}
-.admin-main{flex:1;min-width:0}
-.admin-dashboard-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
-.admin-kpi{background:#111;border:1px solid #292929;border-radius:18px;padding:14px}
-.admin-kpi span{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
-.admin-kpi b{font-size:20px}
-.admin-quick{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.admin-quick button{padding:13px;font-size:14px}
-.admin-section{scroll-margin-top:12px}
-.admin-table-head,.admin-driver-row{display:grid;grid-template-columns:1.15fr .9fr .75fr .85fr .9fr;gap:8px;align-items:center}
-.admin-table-head{color:var(--muted);font-size:11px;text-transform:uppercase;border-bottom:1px solid #262626;padding:8px 6px}
-.admin-driver-row{background:#121212;border:1px solid #292929;border-radius:16px;padding:12px;margin:9px 0}
-.admin-driver-row small{color:var(--muted)}
-.admin-driver-row button{padding:10px;font-size:13px}
-.admin-inline-alert{font-size:12px;color:#fbbf24;margin-top:4px}
-.accum-check-box{background:rgba(59,130,246,.10);border:1px solid rgba(59,130,246,.35);border-radius:16px;padding:12px;margin-top:10px}
-@media(max-width:760px){
-  .app{max-width:560px}
-  .admin-shell{display:block}
-  .admin-menu{position:static;display:grid;grid-template-columns:1fr 1fr;margin-bottom:12px}
-  .admin-dashboard-grid{grid-template-columns:1fr 1fr}
-  .admin-table-head{display:none}
-  .admin-driver-row{display:block}
-  .admin-driver-row>div{margin:7px 0}
-}
-@media(min-width:900px){.app:has(#adminView:not(.hidden)){max-width:1180px}}
-
 </style>
 </head>
 <body>
@@ -359,7 +328,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.19</b> · Build 2026-06-04-ADMIN-5050-FAST-001</div>
+    <div class="build-version"><b>v2.8.21</b> · Build 2026-06-04-ACUMULADOS-VERIFICADOS-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -372,7 +341,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.18</b> · 2026-06-04-CIERRE-FAST-001</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.21</b> · 2026-06-04-ACUMULADOS-VERIFICADOS-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -516,69 +485,45 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.21</b> · 2026-06-04-ADMIN-REDISENO-ACUMULADOS-001</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.21</b> · 2026-06-04-ACUMULADOS-VERIFICADOS-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
-    <div class="admin-shell">
-      <aside class="admin-menu">
-        <button onclick="adminGo('adminDashboard')">🏠 Dashboard</button>
-        <button onclick="adminGo('adminVehiculosSection')">🚗 Vehículos</button>
-        <button onclick="adminGo('adminPremioSection')">🏆 Premio</button>
-        <button onclick="adminGo('adminMensualSection')">📅 Mensual</button>
-        <button onclick="adminGo('adminAltaSection')">➕ Alta</button>
-        <button onclick="adminGo('adminHerramientasSection')">🛠 Herramientas</button>
-      </aside>
+    <div class="card">
+      <h2>Panel Administrador</h2>
+      <p class="note">Vista liviana: premio semanal, vehículos, choferes, 50/50, pagos y alertas. El ranking queda solo para los choferes.</p>
+      <button class="btn-dark" onclick="loadAdmin()">Actualizar administrador</button>
+      <div id="adminMsg"></div>
+    </div>
 
-      <main class="admin-main">
-        <div id="adminDashboard" class="card admin-section">
-          <h2>Dashboard administrador</h2>
-          <p class="note">Vista rápida para saber cómo está la operación sin entrar a cada chofer.</p>
-          <div class="admin-dashboard-grid">
-            <div class="admin-kpi"><span>Choferes activos</span><b id="adminKpiChoferes">0</b></div>
-            <div class="admin-kpi"><span>Vehículos</span><b id="adminKpiVehiculos">0</b></div>
-            <div class="admin-kpi"><span>En servicio</span><b id="adminKpiServicio">0</b></div>
-            <div class="admin-kpi"><span>Pagos pendientes</span><b id="adminKpiPendientes">-</b></div>
-          </div>
-          <div class="admin-quick">
-            <button class="btn-gold" onclick="loadAdmin()">Actualizar admin</button>
-            <button class="btn-dark" onclick="verificarAcumuladosAdmin()">Verificar acumulados</button>
-            <button class="btn-dark" onclick="adminGo('adminVehiculosSection')">Ver vehículos</button>
-            <button class="btn-dark" onclick="adminGo('adminMensualSection')">Facturación mensual</button>
-          </div>
-          <div id="adminMsg"></div>
-          <div id="adminAcumuladosMsg"></div>
-        </div>
+    <div class="card">
+      <h3>Premio semanal</h3>
+      <p id="adminPeriodoSemana" class="note">Cargando período...</p>
+      <div id="adminGanadorSemana" class="leader-card">Cargando ganador...</div>
+      <label>Valor del premio para el ganador</label>
+      <input id="adminPremioInput" type="number" inputmode="numeric" placeholder="Ej: 50000" />
+      <button class="btn-gold" onclick="guardarPremioSemanalAdmin()">Guardar premio semanal</button>
+      <div id="adminPremioMsg"></div>
+    </div>
 
-        <div id="adminVehiculosSection" class="card admin-section">
-          <h3>Vehículos y choferes</h3>
-          <p class="note">Lista compacta: ves estado y entrás al 50/50 solo cuando lo necesitás.</p>
-          <input id="adminBuscarInput" placeholder="Buscar chofer o patente" oninput="filtrarVehiculosAdmin()" />
-          <div id="adminVehiculosResumen">Cargando vehículos...</div>
-        </div>
+    <div class="card">
+      <h3>Vehículos y choferes</h3>
+      <p class="note">Tocá “Ver 50/50 y pago”. Ahora abre con caché y acumulados semanales para evitar lecturas pesadas.</p>
+      <div id="adminVehiculosResumen">Cargando vehículos...</div>
+    </div>
 
-        <div id="adminPremioSection" class="card admin-section">
-          <h3>Premio semanal</h3>
-          <p id="adminPeriodoSemana" class="note">Cargando período...</p>
-          <div id="adminGanadorSemana" class="leader-card">Cargando ganador...</div>
-          <label>Valor del premio para el ganador</label>
-          <input id="adminPremioInput" type="number" inputmode="numeric" placeholder="Ej: 50000" />
-          <button class="btn-gold" onclick="guardarPremioSemanalAdmin()">Guardar premio semanal</button>
-          <div id="adminPremioMsg"></div>
-        </div>
+    <div class="card">
+      <h3>Resumen mensual por auto</h3>
+      <p class="note">Se carga solo cuando lo pedís. Sirve para revisar cuánto facturó y gastó cada auto por mes sin hacer lento el administrador.</p>
+      <label>Mes</label>
+      <input id="adminMesInput" type="month" />
+      <label>Vehículo</label>
+      <select id="adminMesVehiculoSelect"></select>
+      <button class="btn-gold" onclick="calcularResumenMensualAdmin()">Ver resumen mensual</button>
+      <div id="adminMensualResultado"></div>
+    </div>
 
-        <div id="adminMensualSection" class="card admin-section">
-          <h3>Resumen mensual por auto</h3>
-          <p class="note">Se carga solo cuando lo pedís. Sirve para revisar cuánto facturó y gastó cada auto por mes.</p>
-          <label>Mes</label>
-          <input id="adminMesInput" type="month" />
-          <label>Vehículo</label>
-          <select id="adminMesVehiculoSelect"></select>
-          <button class="btn-gold" onclick="calcularResumenMensualAdmin()">Ver resumen mensual</button>
-          <div id="adminMensualResultado"></div>
-        </div>
-
-        <div id="adminAltaSection" class="card admin-section">
+    <div class="card">
       <h3>Alta de chofer y vehículo</h3>
       <p class="note">Crea el usuario real en Firebase Authentication y también guarda el chofer y el vehículo en Firestore. El usuario entra con el nombre sin @.</p>
 
@@ -613,14 +558,12 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div id="nuevoChoferMsg"></div>
     </div>
 
-    <div id="adminHerramientasSection" class="card admin-section">
+    <div class="card">
       <h3>Herramientas</h3>
       <button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios EXPLORA</button>
+      <button class="btn-dark" style="margin-top:10px" onclick="verificarYRepararAcumuladosAdmin()">Verificar / reparar acumulados actuales</button>
       <button class="btn-red" style="margin-top:10px" onclick="eliminarChoferesDemoAdmin()">Eliminar choferes demo anteriores</button>
-      <button class="btn-dark" style="margin-top:10px" onclick="verificarAcumuladosAdmin()">Verificar / reparar acumulados semanales</button>
       <div id="adminToolsMsg"></div>
-    </div>
-      </main>
     </div>
   </section>
 
@@ -885,6 +828,159 @@ function cierreDesdeAcumulado(chofer, periodo, acumulado, ganador, premioSemanal
   };
 }
 
+
+
+async function recalcularAcumuladoSemanalChofer(chofer, periodo, opciones={}){
+  if(!chofer || !periodo) throw new Error("Falta chofer o período para recalcular acumulado semanal.");
+
+  const viajesSnap = await withTimeout(getDocs(query(
+    collection(db,"viajes"),
+    where("chofer","==",chofer)
+  )), opciones.timeoutViajes || 15000, "Tardó demasiado leyendo viajes reales de la semana.");
+
+  const gastosSnap = await withTimeout(getDocs(query(
+    collection(db,"gastos"),
+    where("chofer","==",chofer)
+  )), opciones.timeoutGastos || 15000, "Tardó demasiado leyendo gastos reales de la semana.");
+
+  const acumulado = {
+    chofer,
+    vehiculo: "",
+    periodoId: periodo.id,
+    periodoInicio: periodo.start,
+    periodoFin: periodo.end,
+    efectivo: 0,
+    transferencia: 0,
+    tarjeta: 0,
+    totalViajes: 0,
+    cantidadViajes: 0,
+    totalGastos: 0,
+    cantidadGastos: 0,
+    derivaciones: 0
+  };
+
+  viajesSnap.forEach(d=>{
+    const v = d.data();
+    if(!perteneceAlPeriodo(v, periodo)) return;
+    const monto = Number(v.monto || 0);
+    acumulado.totalViajes += monto;
+    acumulado.cantidadViajes += 1;
+    acumulado[campoPago(v.pago)] += monto;
+    if(!acumulado.vehiculo && v.vehiculo) acumulado.vehiculo = v.vehiculo;
+  });
+
+  gastosSnap.forEach(d=>{
+    const g = d.data();
+    if(!perteneceAlPeriodo(g, periodo)) return;
+    acumulado.totalGastos += Number(g.monto || 0);
+    acumulado.cantidadGastos += 1;
+    if(!acumulado.vehiculo && g.vehiculo) acumulado.vehiculo = g.vehiculo;
+  });
+
+  try{
+    const derivSnap = await withTimeout(getDocs(query(
+      collection(db,"derivaciones"),
+      where("origen","==",chofer)
+    )), opciones.timeoutDerivaciones || 10000, "Tardó demasiado leyendo derivaciones reales de la semana.");
+
+    derivSnap.forEach(d=>{
+      const x = d.data();
+      if(x.estado !== "aceptado") return;
+      if(x.periodoId && x.periodoId !== periodo.id) return;
+      if(!x.periodoId){
+        const fecha = x.fecha || "";
+        if(fecha < periodo.start || fecha > periodo.end) return;
+      }
+      acumulado.derivaciones += 1;
+    });
+  }catch(e){
+    console.warn("No se pudieron verificar derivaciones para acumulado semanal", e);
+  }
+
+  if(!acumulado.vehiculo){
+    try{
+      const cSnap = await getDoc(doc(db,"choferes",chofer));
+      if(cSnap.exists()) acumulado.vehiculo = cSnap.data().vehiculo || "";
+    }catch(e){}
+  }
+
+  await setDoc(doc(db,"acumulados_semanales",`${chofer}_${periodo.id}`),{
+    ...acumulado,
+    verificado:true,
+    reparado:true,
+    fuente:"viajes_gastos_reales",
+    actualizado: serverTimestamp()
+  });
+
+  cacheSet(`acum_sem_${chofer}_${periodo.id}`, acumulado);
+  cacheRemove(`cierre_sem_${chofer}_${periodo.id}`);
+  cacheRemove(`admin_5050_${chofer}_${periodo.id}`);
+
+  return acumulado;
+}
+
+async function recalcularAcumuladoMensualVehiculo(vehiculo, mes, opciones={}){
+  if(!vehiculo || !mes) throw new Error("Falta vehículo o mes para recalcular acumulado mensual.");
+  const start = `${mes}-01`;
+  const end = addDays(addDays(start, 32).slice(0,8) + "01", -1);
+
+  const [viajesSnap, gastosSnap] = await Promise.all([
+    withTimeout(getDocs(query(collection(db,"viajes"), where("fecha",">=",start), where("fecha","<=",end))), opciones.timeoutViajes || 15000, "Tardó demasiado leyendo viajes reales del mes."),
+    withTimeout(getDocs(query(collection(db,"gastos"), where("fecha",">=",start), where("fecha","<=",end))), opciones.timeoutGastos || 15000, "Tardó demasiado leyendo gastos reales del mes.")
+  ]);
+
+  const acumulado = {
+    vehiculo,
+    mes,
+    efectivo: 0,
+    transferencia: 0,
+    tarjeta: 0,
+    totalViajes: 0,
+    cantidadViajes: 0,
+    totalGastos: 0,
+    cantidadGastos: 0
+  };
+
+  viajesSnap.forEach(d=>{
+    const v = d.data();
+    const fecha = v.fecha || "";
+    if(v.vehiculo !== vehiculo) return;
+    if(fecha < start || fecha > end) return;
+    const monto = Number(v.monto || 0);
+    acumulado.totalViajes += monto;
+    acumulado.cantidadViajes += 1;
+    acumulado[campoPago(v.pago)] += monto;
+  });
+
+  gastosSnap.forEach(d=>{
+    const g = d.data();
+    const fecha = g.fecha || "";
+    if(g.vehiculo !== vehiculo) return;
+    if(fecha < start || fecha > end) return;
+    acumulado.totalGastos += Number(g.monto || 0);
+    acumulado.cantidadGastos += 1;
+  });
+
+  await setDoc(doc(db,"acumulados_mensuales",`${vehiculo}_${mes}`),{
+    ...acumulado,
+    verificado:true,
+    reparado:true,
+    fuente:"viajes_gastos_reales",
+    actualizado: serverTimestamp()
+  });
+
+  await setDoc(doc(db,"resumenes_mensuales",`${vehiculo}_${mes}`),{
+    vehiculo,
+    mes,
+    inicio:start,
+    fin:end,
+    ...acumulado,
+    neto: acumulado.totalViajes - acumulado.totalGastos,
+    actualizado: serverTimestamp()
+  },{merge:true});
+
+  return acumulado;
+}
 
 function msg(el, text, ok=false){
   el.innerHTML = `<div class="msg ${ok?'ok':'err'}">${text}</div>`;
@@ -1715,7 +1811,7 @@ window.reconstruirCierreSemanal = async function(){
   if(btn){ btn.disabled = true; btn.textContent = "Reconstruyendo..."; }
   try{
     const periodo = await getPeriodoOperativoChofer(currentUserId);
-    const cierre = await withTimeout(calcularCierreSemanalLiviano(currentUserId, periodo), 15000, "La reconstrucción tardó demasiado. Revisá internet y probá otra vez.");
+    const cierre = await withTimeout(calcularCierreSemanalLiviano(currentUserId, periodo, true), 15000, "La reconstrucción tardó demasiado. Revisá internet y probá otra vez.");
     cierre.pagoSemanal = await getEstadoPagoSemanal(currentUserId, periodo.id);
     cierreSemanalPendiente = cierre;
     cierreSemanalCache = {key:`${currentUserId}_${periodo.id}`, data:cierre};
@@ -1728,7 +1824,7 @@ window.reconstruirCierreSemanal = async function(){
   }
 }
 
-async function calcularCierreSemanalLiviano(chofer, periodo){
+async function calcularCierreSemanalLiviano(chofer, periodo, forceRebuild=false){
   let ganador = null;
   try{
     const rankingData = await calcularRankingSemanalLiviano(periodo);
@@ -1739,62 +1835,25 @@ async function calcularCierreSemanalLiviano(chofer, periodo){
 
   const premioSemanal = await getPremioSemana(periodo);
 
-  try{
-    const acumuladoSnap = await withTimeout(
-      getDoc(doc(db,"acumulados_semanales",`${chofer}_${periodo.id}`)),
-      5000,
-      "El acumulado semanal tardó demasiado en cargar."
-    );
+  if(!forceRebuild){
+    try{
+      const acumuladoSnap = await withTimeout(
+        getDoc(doc(db,"acumulados_semanales",`${chofer}_${periodo.id}`)),
+        5000,
+        "El acumulado semanal tardó demasiado en cargar."
+      );
 
-    if(acumuladoSnap.exists()){
-      return cierreDesdeAcumulado(chofer, periodo, acumuladoSnap.data(), ganador, premioSemanal);
+      if(acumuladoSnap.exists()){
+        return cierreDesdeAcumulado(chofer, periodo, acumuladoSnap.data(), ganador, premioSemanal);
+      }
+    }catch(e){
+      console.warn("No se pudo leer acumulado semanal; se usa cálculo de respaldo", e);
     }
-  }catch(e){
-    console.warn("No se pudo leer acumulado semanal; se usa cálculo de respaldo", e);
   }
 
-  // Respaldo para semanas viejas cargadas antes de esta optimización.
-  // Solo se usa si todavía no existe el acumulado semanal.
-  const viajesSnap = await withTimeout(getDocs(query(
-    collection(db,"viajes"),
-    where("chofer","==",chofer),
-    where("periodoId","==",periodo.id)
-  )), 9000, "El cierre tardó demasiado cargando viajes.");
-
-  const gastosSnap = await withTimeout(getDocs(query(
-    collection(db,"gastos"),
-    where("chofer","==",chofer),
-    where("periodoId","==",periodo.id)
-  )), 9000, "El cierre tardó demasiado cargando gastos.");
-
-  const acumulado = {totalViajes:0, efectivo:0, transferencia:0, tarjeta:0, cantidadViajes:0, totalGastos:0, cantidadGastos:0};
-
-  viajesSnap.forEach(d=>{
-    const v = d.data();
-    if(!perteneceAlPeriodo(v, periodo)) return;
-    const monto = Number(v.monto || 0);
-    acumulado.totalViajes += monto;
-    acumulado.cantidadViajes += 1;
-    acumulado[campoPago(v.pago)] += monto;
-  });
-
-  gastosSnap.forEach(d=>{
-    const g = d.data();
-    if(!perteneceAlPeriodo(g, periodo)) return;
-    acumulado.totalGastos += Number(g.monto || 0);
-    acumulado.cantidadGastos += 1;
-  });
-
-  await setDoc(doc(db,"acumulados_semanales",`${chofer}_${periodo.id}`),{
-    chofer,
-    periodoId: periodo.id,
-    periodoInicio: periodo.start,
-    periodoFin: periodo.end,
-    ...acumulado,
-    reconstruido: true,
-    actualizado: serverTimestamp()
-  },{merge:true});
-
+  // Reparación real: recalcula desde viajes, gastos y derivaciones reales.
+  // Se usa si falta el acumulado o si el usuario/admin fuerza reconstrucción.
+  const acumulado = await recalcularAcumuladoSemanalChofer(chofer, periodo);
   return cierreDesdeAcumulado(chofer, periodo, acumulado, ganador, premioSemanal);
 }
 
@@ -2773,105 +2832,9 @@ async function loadGastosAdmin(){
 }
 
 
-
-async function reconstruirAcumuladoSemanalExacto(choferId, periodo){
-  const acumuladoRef = doc(db,"acumulados_semanales",`${choferId}_${periodo.id}`);
-  const [acumSnap, viajesSnap, gastosSnap] = await Promise.all([
-    getDoc(acumuladoRef),
-    getDocs(query(collection(db,"viajes"), where("chofer","==",choferId))),
-    getDocs(query(collection(db,"gastos"), where("chofer","==",choferId)))
-  ]);
-
-  const real = {
-    chofer: choferId,
-    vehiculo: "",
-    periodoId: periodo.id,
-    periodoInicio: periodo.start,
-    periodoFin: periodo.end,
-    totalViajes: 0,
-    efectivo: 0,
-    transferencia: 0,
-    tarjeta: 0,
-    cantidadViajes: 0,
-    totalGastos: 0,
-    cantidadGastos: 0,
-    verificadoPorAdmin: true,
-    verificadoFecha: today(),
-    actualizado: serverTimestamp()
-  };
-
-  viajesSnap.forEach(d=>{
-    const v = d.data();
-    if(!perteneceAlPeriodo(v, periodo)) return;
-    const monto = Number(v.monto || 0);
-    real.totalViajes += monto;
-    real.cantidadViajes += 1;
-    real[campoPago(v.pago)] += monto;
-    if(v.vehiculo) real.vehiculo = v.vehiculo;
-  });
-
-  gastosSnap.forEach(d=>{
-    const g = d.data();
-    if(!perteneceAlPeriodo(g, periodo)) return;
-    real.totalGastos += Number(g.monto || 0);
-    real.cantidadGastos += 1;
-    if(g.vehiculo && !real.vehiculo) real.vehiculo = g.vehiculo;
-  });
-
-  const antes = acumSnap.exists() ? acumSnap.data() : {};
-  const campos = ["totalViajes","efectivo","transferencia","tarjeta","cantidadViajes","totalGastos","cantidadGastos"];
-  const diferencias = campos.filter(k=>Number(antes[k] || 0) !== Number(real[k] || 0));
-
-  await setDoc(acumuladoRef, real, {merge:false});
-  cacheSet(`acum_sem_${choferId}_${periodo.id}`, real);
-  cacheRemove(`cierre_sem_${choferId}_${periodo.id}`);
-  cacheRemove(`admin_5050_${choferId}_${periodo.id}`);
-
-  return {choferId, diferencias, antes, real};
-}
-
-window.verificarAcumuladosAdmin = async function(){
-  const box = $('adminAcumuladosMsg') || $('adminToolsMsg') || $('adminMsg');
-  const periodo = getPeriodoTrabajoActual(today());
-  if(box) box.innerHTML = `<div class="accum-check-box">Verificando acumulados contra viajes y gastos reales de la semana ${periodo.start} al ${periodo.end}...</div>`;
-
-  try{
-    const choferSnap = await withTimeout(getDocs(collection(db,"choferes")), 9000, "Tardó demasiado cargando choferes.");
-    const choferes = [];
-    choferSnap.forEach(d=>{
-      const c = d.data();
-      if(c.rol === "admin") return;
-      if(c.activo === false) return;
-      choferes.push({id:d.id,...c});
-    });
-
-    let corregidos = 0;
-    let sinCambios = 0;
-    let html = `<div class="accum-check-box"><b>Resultado de verificación</b><br><small>Semana ${periodo.start} al ${periodo.end}</small>`;
-
-    for(const c of choferes){
-      const periodoChofer = await getPeriodoOperativoChofer(c.id);
-      const r = await reconstruirAcumuladoSemanalExacto(c.id, periodoChofer);
-      if(r.diferencias.length){
-        corregidos++;
-        html += `<div class="pending-box">⚠️ ${c.nombre || c.id}: acumulado corregido (${r.diferencias.join(", ")})</div>`;
-      }else{
-        sinCambios++;
-        html += `<div class="paid-box">✅ ${c.nombre || c.id}: acumulado correcto</div>`;
-      }
-    }
-
-    html += `<div class="msg ok">Verificación terminada. Correctos: ${sinCambios}. Corregidos: ${corregidos}.</div></div>`;
-    if(box) box.innerHTML = html;
-    await loadAdmin();
-  }catch(e){
-    if(box) box.innerHTML = `<div class="msg err">No se pudo verificar acumulados: ${e.message}</div>`;
-  }
-}
-
 async function loadAdmin(){
   const adminMsg = $("adminMsg");
-  if(adminMsg) msg(adminMsg,"Actualizando dashboard administrador...",true);
+  if(adminMsg) msg(adminMsg,"Actualizando administrador rápido...",true);
 
   const periodo = getPeriodoTrabajoActual(today());
   if($("adminPeriodoSemana")) $("adminPeriodoSemana").textContent = `Semana: ${periodo.start} al ${periodo.end} · Cierre: ${periodo.closeDate}`;
@@ -2881,7 +2844,7 @@ async function loadAdmin(){
     // Carga en paralelo y sin calcular ranking pesado al entrar.
     await Promise.all([cargarPremioAdmin(periodo), cargarVehiculosAdminSimple(periodo)]);
     adminBaseLoadedAt = Date.now();
-    if(adminMsg) msg(adminMsg,"Dashboard actualizado.",true);
+    if(adminMsg) msg(adminMsg,"Administrador actualizado.",true);
   }catch(e){
     if(adminMsg) msg(adminMsg,"Error cargando administrador: " + e.message);
     if($("adminVehiculosResumen")) $("adminVehiculosResumen").innerHTML = `<div class="msg err">No se pudo cargar el administrador: ${e.message}</div>`;
@@ -2929,23 +2892,16 @@ async function cargarVehiculosAdminSimple(periodo){
   ]);
 
   const choferesPorVehiculo = {};
-  let choferesActivos = 0;
-  let enServicio = 0;
-
+  const choferesPorId = {};
   choferSnap.forEach(d=>{
     const c = d.data();
     if(c.rol === "admin") return;
     if(c.activo === false) return;
-    choferesActivos++;
-    if(c.estado === "servicio") enServicio++;
+    choferesPorId[d.id] = {id:d.id,...c};
     if(c.vehiculo) choferesPorVehiculo[c.vehiculo] = {id:d.id,...c};
   });
 
-  if($('adminKpiChoferes')) $('adminKpiChoferes').textContent = choferesActivos;
-  if($('adminKpiVehiculos')) $('adminKpiVehiculos').textContent = vehSnap.size;
-  if($('adminKpiServicio')) $('adminKpiServicio').textContent = enServicio;
-
-  let html = `<div class="admin-table-head"><div>Chofer</div><div>Vehículo</div><div>Estado</div><div>Alertas</div><div>Acción</div></div>`;
+  let html = "";
   const selectMes = $("adminMesVehiculoSelect");
   if(selectMes) selectMes.innerHTML = "";
 
@@ -2953,8 +2909,7 @@ async function cargarVehiculosAdminSimple(periodo){
     const v = {id:d.id,...d.data()};
     const c = choferesPorVehiculo[v.id] || null;
     const choferId = c ? c.id : "";
-    const alertasTexto = getAlertasVehiculo(v,c);
-    const alertaCompacta = alertasTexto.length ? `<div class="admin-inline-alert">${alertasTexto.slice(0,2).join("<br>")}</div>` : `<small>Sin alertas</small>`;
+    const alertas = renderAlertasVehiculo(v,c);
 
     if(selectMes){
       const opt = document.createElement("option");
@@ -2963,46 +2918,42 @@ async function cargarVehiculosAdminSimple(periodo){
       selectMes.appendChild(opt);
     }
 
-    const estadoTxt = c ? (c.estado === "servicio" ? "En servicio" : c.estado === "disponible" ? "Disponible" : (c.estado || "Sin estado")) : "Sin chofer";
-    const pillClass = c && c.estado === "servicio" ? "pill-red" : c && c.estado === "disponible" ? "pill-green" : "pill-gray";
-    const search = `${v.id} ${v.modelo || ''} ${c ? (c.nombre || c.id) : ''} ${choferId}`.replace(/"/g,'');
-
     html += `
-      <div class="admin-driver-row" id="adminVehicle_${safeId(v.id)}" data-search="${search}">
-        <div><b>${c ? (c.nombre || c.id) : "Sin chofer"}</b><br><small>${choferId || "No asignado"}</small></div>
-        <div><b>${v.id}</b><br><small>${v.modelo || "Vehículo"}</small></div>
-        <div><span class="pill ${pillClass}">${estadoTxt}</span></div>
-        <div>${alertaCompacta}</div>
-        <div><button class="btn-gold" onclick="calcularSemanaVehiculoAdmin('${v.id}','${choferId}')">Ver 50/50 y pago</button></div>
-        <div id="adminCalc_${safeId(v.id)}" style="grid-column:1/-1"></div>
+      <div class="vehicle-card" id="adminVehicle_${safeId(v.id)}">
+        <div class="admin-vehicle-head">
+          <div>
+            <b>${v.id}</b><br>
+            <small>${v.modelo || "Vehículo"}</small><br>
+            <small>Chofer: <b>${c ? (c.nombre || c.id) : "sin asignar"}</b></small><br>
+            <small>Estado: ${c ? (c.estado || "sin estado") : "sin chofer"}</small>
+          </div>
+          <span class="pill ${c && c.estado === "servicio" ? "pill-red" : c && c.estado === "disponible" ? "pill-green" : "pill-gray"}">${c ? (c.estado === "servicio" ? "En servicio" : c.estado === "disponible" ? "Disponible" : "Inactivo") : "Sin chofer"}</span>
+        </div>
+        ${alertas}
+        <div class="admin-actions">
+          <button class="btn-gold" onclick="calcularSemanaVehiculoAdmin('${v.id}','${choferId}')">Ver 50/50 y pago</button>
+        </div>
+        <div id="adminCalc_${safeId(v.id)}"></div>
       </div>
     `;
   });
 
   $("adminVehiculosResumen").innerHTML = html || `<p class="note">Todavía no hay vehículos cargados.</p>`;
-  await actualizarKpiPagosPendientesAdmin(periodo);
 }
 
-async function actualizarKpiPagosPendientesAdmin(periodo){
-  try{
-    const pagosSnap = await getDocs(query(collection(db,"pagos_semanales"), where("periodoId","==",periodo.id)));
-    const pagados = new Set();
-    pagosSnap.forEach(d=>{ const p=d.data(); if(p.pagado) pagados.add(p.chofer); });
-    // KPI liviano: no calcula montos, solo deja claro que se debe entrar al 50/50 para detalle.
-    if($('adminKpiPendientes')) $('adminKpiPendientes').textContent = `${pagados.size} pagados`;
-  }catch(e){ if($('adminKpiPendientes')) $('adminKpiPendientes').textContent = "Ver 50/50"; }
-}
+function safeId(value){ return String(value || "").replace(/[^a-zA-Z0-9_-]/g,"_"); }
 
-function getAlertasVehiculo(v,c){
+function renderAlertasVehiculo(v,c){
   const alertas = [];
   const kmActual = Number(v.kmActual || 0);
   const aceiteUltimoKm = Number(v.aceiteUltimoKm || 0);
   if(aceiteUltimoKm){
     const proximoAceite = aceiteUltimoKm + 10000;
     const faltan = proximoAceite - kmActual;
-    if(faltan <= 0) alertas.push(`Aceite vencido. Próximo: ${proximoAceite.toLocaleString("es-AR")} km`);
-    else if(faltan <= 1000) alertas.push(`Aceite próximo: faltan ${faltan.toLocaleString("es-AR")} km`);
+    if(faltan <= 0) alertas.push(`⚠️ Aceite vencido. Próximo: ${proximoAceite.toLocaleString("es-AR")} km`);
+    else if(faltan <= 1000) alertas.push(`⚠️ Aceite próximo: faltan ${faltan.toLocaleString("es-AR")} km`);
   }
+
   const camposFecha = [
     ["seguroVence","Seguro"],["vtvVence","VTV"],["licenciaVence","Licencia"],["patenteVence","Patente"],["canonVence","Canon"],
     ["vencimientoSeguro","Seguro"],["vencimientoVtv","VTV"],["vencimientoLicencia","Licencia"]
@@ -3011,16 +2962,12 @@ function getAlertasVehiculo(v,c){
     const val = v[campo] || (c ? c[campo] : "");
     if(!val) return;
     const dias = daysBetween(today(), String(val).slice(0,10));
-    if(dias < 0) alertas.push(`${nombre} vencido hace ${Math.abs(dias)} días`);
-    else if(dias <= 30) alertas.push(`${nombre} vence en ${dias} días`);
+    if(dias < 0) alertas.push(`⚠️ ${nombre} vencido hace ${Math.abs(dias)} días`);
+    else if(dias <= 30) alertas.push(`⚠️ ${nombre} vence en ${dias} días`);
   });
-  return alertas;
-}
 
-function renderAlertasVehiculo(v,c){
-  const alertas = getAlertasVehiculo(v,c);
   if(!alertas.length) return `<div class="paid-box">✅ Sin vencimientos próximos cargados</div>`;
-  return alertas.map(a=>`<div class="alert-soft">⚠️ ${a}</div>`).join("");
+  return alertas.map(a=>`<div class="alert-soft">${a}</div>`).join("");
 }
 
 window.calcularSemanaVehiculoAdmin = async function(vehiculoId, choferId){
@@ -3081,7 +3028,7 @@ window.reconstruirSemanaVehiculoAdmin = async function(vehiculoId, choferId){
   const periodo = await getPeriodoOperativoChofer(choferId);
   box.innerHTML = `<div class="msg ok">Reconstruyendo acumulado... Esto puede tardar solo esta vez.</div>`;
   try{
-    const c = await withTimeout(calcularCierreSemanalLiviano(choferId, periodo), 15000, "La reconstrucción tardó demasiado. Revisá internet y probá otra vez.");
+    const c = await withTimeout(calcularCierreSemanalLiviano(choferId, periodo, true), 15000, "La reconstrucción tardó demasiado. Revisá internet y probá otra vez.");
     c.pagoSemanal = await getEstadoPagoSemanal(choferId, periodo.id);
     const pago = c.pagoSemanal || null;
     cacheSet(`admin_5050_${choferId}_${periodo.id}`, {cierre:c, pago});
@@ -3237,6 +3184,63 @@ window.marcarPagoSemanalChofer = async function(){
       btn.textContent = "Marcar pagado";
     }
     msg($("cierreSemanalMsg"),"No se pudo marcar pagado: " + e.message);
+  }
+}
+
+
+window.verificarYRepararAcumuladosAdmin = async function(){
+  const box = $("adminToolsMsg");
+  const periodo = getPeriodoTrabajoActual(today());
+  const mes = today().slice(0,7);
+  if(box) box.innerHTML = `<div class="msg ok">Verificando acumulados de la semana ${periodo.start} al ${periodo.end} y del mes ${mes}...</div>`;
+
+  try{
+    const choferesSnap = await getDocs(collection(db,"choferes"));
+    const vehiculosSnap = await getDocs(collection(db,"vehiculos"));
+
+    const choferes = [];
+    choferesSnap.forEach(d=>{
+      const c = d.data();
+      if(c.rol === "admin") return;
+      if(c.activo === false) return;
+      choferes.push({id:d.id, ...c});
+    });
+
+    const vehiculos = [];
+    vehiculosSnap.forEach(d=>vehiculos.push({id:d.id, ...d.data()}));
+
+    let html = `<div class="msg ok">Reparando acumulados reales...</div>`;
+    if(box) box.innerHTML = html;
+
+    let semanales = 0;
+    let mensuales = 0;
+
+    for(const c of choferes){
+      const periodoChofer = await getPeriodoOperativoChofer(c.id);
+      const a = await recalcularAcumuladoSemanalChofer(c.id, periodoChofer);
+      semanales++;
+      html += `<div class="trip"><b>${c.nombre || c.id}</b><br><small>Semana: ${periodoChofer.start} al ${periodoChofer.end}</small><br><small>Viajes: ${a.cantidadViajes} · Gastos: ${a.cantidadGastos}</small><br><b style="color:var(--gold)">${money(a.totalViajes)}</b> · Gastos ${money(a.totalGastos)}</div>`;
+      if(box) box.innerHTML = html;
+      await new Promise(resolve=>setTimeout(resolve, 40));
+    }
+
+    for(const v of vehiculos){
+      const a = await recalcularAcumuladoMensualVehiculo(v.id, mes);
+      mensuales++;
+      html += `<div class="trip"><b>${v.modelo || v.id}</b><br><small>Mes: ${mes} · Patente: ${v.id}</small><br><small>Viajes: ${a.cantidadViajes} · Gastos: ${a.cantidadGastos}</small><br><b style="color:var(--gold)">${money(a.totalViajes)}</b> · Gastos ${money(a.totalGastos)}</div>`;
+      if(box) box.innerHTML = html;
+      await new Promise(resolve=>setTimeout(resolve, 40));
+    }
+
+    if(box){
+      box.innerHTML = `<div class="msg ok"><b>Acumulados verificados y reparados.</b><br>Semanas reparadas: ${semanales}<br>Meses por vehículo reparados: ${mensuales}<br>Ahora el cierre, 50/50 y mensual vuelven a leer estos valores corregidos.</div>` + html;
+    }
+
+    cierreSemanalCache = null;
+    adminBaseLoadedAt = 0;
+    cacheRemove("servicios_activos");
+  }catch(e){
+    if(box) box.innerHTML = `<div class="msg err">No se pudieron reparar acumulados: ${e.message}</div>`;
   }
 }
 
