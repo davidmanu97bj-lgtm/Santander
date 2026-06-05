@@ -1,20 +1,21 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.21
-Build: 2026-06-04-ACUMULADOS-VERIFICADOS-001
+Version: 2.8.22
+Build: 2026-06-04-MI-AUTO-KM-001
 Fecha: 04/06/2026
 Cambios:
-- Base estable tomada desde index(12).html.
-- Verificación y reparación de acumulados semanales contra viajes/gastos reales.
-- Verificación y reparación de acumulados mensuales contra viajes/gastos reales.
-- Cierre semanal y 50/50 pueden reconstruir acumulados aunque el documento ya exista.
+- Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
+- Se agrega botón “Mi auto” para chofer con service, correa dentada y cubiertas por km.
+- Se agrega vista “Vehículos” para admin con el mismo control por auto.
+- Aviso automático con ⚙️ cuando corresponde cambio por kilometraje.
+- No se modifica cierre semanal, 50/50, derivaciones ni acumulados financieros.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.21 · Build 2026-06-04-ACUMULADOS-VERIFICADOS-001</title>
+<title>EXPLORA v2.8.22 · Build 2026-06-04-MI-AUTO-KM-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -319,6 +320,33 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 }
 .build-version b{color:var(--gold);font-weight:700}
 
+.mi-auto-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-left:6px;
+  padding:3px 7px;
+  border-radius:999px;
+  background:rgba(245,158,11,.16);
+  border:1px solid rgba(245,158,11,.38);
+  color:#fbbf24;
+  font-size:12px;
+  font-weight:900;
+}
+.maintenance-row{
+  background:#121212;
+  border:1px solid #292929;
+  border-radius:16px;
+  padding:14px;
+  margin:10px 0;
+}
+.maintenance-row h4{margin:0 0 8px;color:#f3d77a}
+.maintenance-row small{color:var(--muted)}
+.maintenance-ok{border-color:rgba(34,197,94,.32)}
+.maintenance-warn{border-color:rgba(245,158,11,.55);background:rgba(245,158,11,.08)}
+.maintenance-due{border-color:rgba(239,68,68,.58);background:rgba(239,68,68,.08)}
+.admin-vehicle-maintenance{margin-top:10px}
+
 </style>
 </head>
 <body>
@@ -328,7 +356,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.21</b> · Build 2026-06-04-ACUMULADOS-VERIFICADOS-001</div>
+    <div class="build-version"><b>v2.8.22</b> · Build 2026-06-04-MI-AUTO-KM-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -341,7 +369,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.21</b> · 2026-06-04-ACUMULADOS-VERIFICADOS-001</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.22</b> · 2026-06-04-MI-AUTO-KM-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -377,6 +405,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <button id="btnCargarGasto" class="bigbtn" type="button" onclick="showPanel('expensePanel')"><span class="icon">💸</span><strong>Cargar gasto</strong></button>
       <button id="btnRanking" class="bigbtn" type="button" onclick="openRankingPanel()"><span class="icon">🏆</span><strong>Ranking</strong></button>
       <button id="btnHistorialHoy" class="bigbtn" type="button" onclick="showPanel('historyPanel')"><span class="icon">📋</span><strong>Historial hoy</strong></button>
+      <button id="btnMiAuto" class="bigbtn" type="button" onclick="showPanel('miAutoPanel')"><span class="icon">🚗</span><strong>Mi auto <span id="miAutoBadge" class="mi-auto-badge hidden">⚙️</span></strong></button>
       <button id="btnCerrarDia" class="bigbtn" type="button" onclick="closeDay()"><span class="icon">✅</span><strong>Ver cierre semanal</strong></button>
     </div>
 
@@ -477,6 +506,29 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div id="driverRankingList">Cargando ranking...</div>
     </div>
 
+
+    <div id="miAutoPanel" class="card hidden">
+      <h3>🚗 Mi auto <span id="miAutoPanelBadge" class="mi-auto-badge hidden">⚙️ Atención</span></h3>
+      <p class="note">Cargá el kilometraje del último cambio. La app calcula automáticamente cuándo vuelve a tocar y avisa cuando el km actual llega al cambio.</p>
+      <div id="miAutoResumen" class="note">Cargando datos del auto...</div>
+
+      <label>Service en km</label>
+      <input id="miAutoServiceKm" type="number" inputmode="numeric" placeholder="Km del último service" />
+      <div class="price-note">Próximo service automático cada 10.000 km.</div>
+
+      <label>Correa dentada en km</label>
+      <input id="miAutoCorreaKm" type="number" inputmode="numeric" placeholder="Km del último cambio de correa" />
+      <div class="price-note">Próximo cambio automático cada 60.000 km.</div>
+
+      <label>Cubiertas en km</label>
+      <input id="miAutoCubiertasKm" type="number" inputmode="numeric" placeholder="Km del último cambio de cubiertas" />
+      <div class="price-note">Próximo cambio automático cada 40.000 km.</div>
+
+      <button class="btn-gold" onclick="guardarMiAutoKm()">Guardar Mi auto</button>
+      <div id="miAutoMsg"></div>
+      <div id="miAutoEstado"></div>
+    </div>
+
     <div id="historyPanel" class="card hidden">
       <h3>Historial de hoy</h3>
       <div id="historyList"></div>
@@ -485,7 +537,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.21</b> · 2026-06-04-ACUMULADOS-VERIFICADOS-001</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.22</b> · 2026-06-04-MI-AUTO-KM-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -494,6 +546,15 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <p class="note">Vista liviana: premio semanal, vehículos, choferes, 50/50, pagos y alertas. El ranking queda solo para los choferes.</p>
       <button class="btn-dark" onclick="loadAdmin()">Actualizar administrador</button>
       <div id="adminMsg"></div>
+    </div>
+
+
+
+    <div class="card">
+      <h3>Vehículos</h3>
+      <p class="note">Control por km cargado desde “Mi auto” de cada chofer. Muestra service, correa dentada y cubiertas, con aviso cuando ya corresponde cambio.</p>
+      <button class="btn-gold" onclick="toggleAdminVehiculosKm()">🚗 Ver vehículos</button>
+      <div id="adminVehiculosKmPanel" class="hidden"></div>
     </div>
 
     <div class="card">
@@ -1090,6 +1151,7 @@ async function loadDriver(){
     currentVehicle = { id: vehicleId, ...vehCache };
     $("vehicleInfo").innerHTML = `${currentVehicle.modelo || "Vehículo"}<br>Patente: <b>${vehicleId}</b>`;
     $("lastKmText").textContent = currentVehicle.kmActual || 0;
+    actualizarBadgeMiAuto();
   }else{
     $("vehicleInfo").innerHTML = `Cargando vehículo...<br>Patente: <b>${vehicleId}</b>`;
   }
@@ -1108,6 +1170,7 @@ async function loadDriver(){
       cacheSet("vehiculo_" + vehicleId, vSnap.data());
       $("vehicleInfo").innerHTML = `${currentVehicle.modelo || "Vehículo"}<br>Patente: <b>${vehicleId}</b>`;
       $("lastKmText").textContent = currentVehicle.kmActual || 0;
+      actualizarBadgeMiAuto();
     }else{
       $("vehicleInfo").innerHTML = `Vehículo no encontrado: <b>${vehicleId}</b>`;
     }
@@ -1275,7 +1338,7 @@ window.saveDailyKm = async function(){
 }
 
 window.showPanel = function(id){
-  ["servicePanel","derivePanel","expensePanel","rankingPanel","historyPanel"].forEach(p=>{
+  ["servicePanel","derivePanel","expensePanel","rankingPanel","historyPanel","miAutoPanel"].forEach(p=>{
     const panel = $(p);
     if(panel) panel.classList.add("hidden");
   });
@@ -1290,6 +1353,11 @@ window.showPanel = function(id){
   if(id === "historyPanel"){
     loadHistoryToday(false).catch(e=>{
       if($("historyList")) $("historyList").innerHTML = `<div class="msg err">No se pudo cargar historial: ${e.message}</div>`;
+    });
+  }
+  if(id === "miAutoPanel"){
+    cargarMiAutoPanel().catch(e=>{
+      if($("miAutoMsg")) msg($("miAutoMsg"), "No se pudo cargar Mi auto: " + e.message);
     });
   }
 }
@@ -2832,6 +2900,255 @@ async function loadGastosAdmin(){
 }
 
 
+
+// ===== EXPLORA: MI AUTO POR KILOMETRAJE =====
+const MANTENIMIENTO_KM_CONFIG = {
+  service: {label:"Service", input:"miAutoServiceKm", intervalo:10000},
+  correa: {label:"Correa dentada", input:"miAutoCorreaKm", intervalo:60000},
+  cubiertas: {label:"Cubiertas", input:"miAutoCubiertasKm", intervalo:40000}
+};
+
+function getMantenimientoAuto(v){
+  return (v && v.mantenimientoKm) ? v.mantenimientoKm : {};
+}
+
+function normalizarMantenimientoItem(item, cfg){
+  const ultimoKm = Number((item && item.ultimoKm) || 0);
+  const intervalo = Number((item && item.intervalo) || cfg.intervalo || 0);
+  const proximoKm = ultimoKm && intervalo ? ultimoKm + intervalo : 0;
+  return {
+    ultimoKm,
+    intervalo,
+    proximoKm,
+    ultimaFechaCambio: item && item.ultimaFechaCambio ? item.ultimaFechaCambio : ""
+  };
+}
+
+function analizarMantenimientoVehiculo(v){
+  const kmActual = Number((v && v.kmActual) || 0);
+  const mant = getMantenimientoAuto(v);
+  const items = {};
+  let vencidos = 0;
+  let proximos = 0;
+
+  Object.entries(MANTENIMIENTO_KM_CONFIG).forEach(([key,cfg])=>{
+    const item = normalizarMantenimientoItem(mant[key], cfg);
+    const faltan = item.proximoKm ? item.proximoKm - kmActual : null;
+    let estado = "sin_datos";
+    if(item.proximoKm){
+      if(faltan <= 0){ estado = "vencido"; vencidos++; }
+      else if(faltan <= 1000){ estado = "proximo"; proximos++; }
+      else estado = "ok";
+    }
+    items[key] = {...item, faltan, estado, label:cfg.label};
+  });
+
+  return {kmActual, items, requiereAtencion: vencidos > 0 || proximos > 0, vencidos, proximos};
+}
+
+function actualizarBadgeMiAuto(){
+  const badge = $("miAutoBadge");
+  const panelBadge = $("miAutoPanelBadge");
+  if(!badge && !panelBadge) return;
+  const analisis = analizarMantenimientoVehiculo(currentVehicle || {});
+  const mostrar = analisis.requiereAtencion;
+  [badge,panelBadge].forEach(b=>{
+    if(!b) return;
+    b.classList.toggle("hidden", !mostrar);
+  });
+}
+
+function renderEstadoMantenimiento(v, modo="chofer"){
+  const analisis = analizarMantenimientoVehiculo(v || {});
+  const mant = getMantenimientoAuto(v || {});
+  let html = `<div class="trip"><b>Km actual del auto</b><br><b style="color:var(--gold)">${Number(analisis.kmActual || 0).toLocaleString("es-AR")} km</b></div>`;
+
+  Object.entries(MANTENIMIENTO_KM_CONFIG).forEach(([key,cfg])=>{
+    const it = analisis.items[key];
+    const clase = it.estado === "vencido" ? "maintenance-due" : it.estado === "proximo" ? "maintenance-warn" : "maintenance-ok";
+    const estadoTxt = it.estado === "sin_datos"
+      ? "Sin datos cargados"
+      : it.estado === "vencido"
+        ? `⚙️ CAMBIO PENDIENTE · excedido ${Math.abs(it.faltan).toLocaleString("es-AR")} km`
+        : it.estado === "proximo"
+          ? `⚙️ Próximo cambio · faltan ${Number(it.faltan || 0).toLocaleString("es-AR")} km`
+          : `✅ Correcto · faltan ${Number(it.faltan || 0).toLocaleString("es-AR")} km`;
+
+    html += `
+      <div class="maintenance-row ${clase}">
+        <h4>${cfg.label}</h4>
+        <small>Último cambio: ${it.ultimoKm ? it.ultimoKm.toLocaleString("es-AR") + " km" : "sin cargar"}</small><br>
+        <small>Próximo cambio: ${it.proximoKm ? it.proximoKm.toLocaleString("es-AR") + " km" : "sin calcular"}</small><br>
+        <small>${estadoTxt}</small>
+        ${it.ultimaFechaCambio ? `<br><small>Última fecha guardada: ${it.ultimaFechaCambio}</small>` : ""}
+        ${it.estado === "vencido" ? `
+          <div style="margin-top:10px">
+            <label>Fecha nueva de cambio</label>
+            <input id="${modo}_${safeId((v && v.id) || "actual")}_${key}_fecha" type="date" />
+            <button class="btn-gold" onclick="guardarFechaCambioMantenimiento('${(v && v.id) || ""}','${key}','${modo}')">Guardar cambio realizado</button>
+          </div>
+        ` : ""}
+      </div>
+    `;
+  });
+
+  if(analisis.requiereAtencion){
+    html = `<div class="alert-soft">⚙️ Este auto tiene mantenimiento próximo o pendiente.</div>` + html;
+  }
+  return html;
+}
+
+async function cargarMiAutoPanel(){
+  if(!currentVehicle || !currentVehicle.id){
+    if($("miAutoResumen")) $("miAutoResumen").innerHTML = "No hay vehículo asignado.";
+    return;
+  }
+
+  const snap = await getDoc(doc(db,"vehiculos",currentVehicle.id));
+  if(snap.exists()){
+    currentVehicle = {id:currentVehicle.id, ...snap.data()};
+    cacheSet("vehiculo_" + currentVehicle.id, snap.data());
+  }
+
+  const mant = getMantenimientoAuto(currentVehicle);
+  Object.entries(MANTENIMIENTO_KM_CONFIG).forEach(([key,cfg])=>{
+    const item = normalizarMantenimientoItem(mant[key], cfg);
+    const input = $(cfg.input);
+    if(input) input.value = item.ultimoKm || "";
+  });
+
+  if($("miAutoResumen")){
+    $("miAutoResumen").innerHTML = `${currentVehicle.modelo || "Vehículo"} · Patente <b>${currentVehicle.id}</b>`;
+  }
+  if($("miAutoEstado")) $("miAutoEstado").innerHTML = renderEstadoMantenimiento(currentVehicle,"chofer");
+  actualizarBadgeMiAuto();
+}
+
+window.guardarMiAutoKm = async function(){
+  if(!currentVehicle || !currentVehicle.id) return msg($("miAutoMsg"),"No hay vehículo asignado.");
+
+  const mantenimientoKm = {...getMantenimientoAuto(currentVehicle)};
+  Object.entries(MANTENIMIENTO_KM_CONFIG).forEach(([key,cfg])=>{
+    const input = $(cfg.input);
+    const ultimoKm = Number(input ? input.value : 0) || 0;
+    mantenimientoKm[key] = normalizarMantenimientoItem({
+      ...(mantenimientoKm[key] || {}),
+      ultimoKm,
+      intervalo: cfg.intervalo
+    }, cfg);
+  });
+
+  await updateDoc(doc(db,"vehiculos",currentVehicle.id),{
+    mantenimientoKm,
+    mantenimientoActualizadoPor: currentUserId,
+    mantenimientoActualizadoFecha: today(),
+    mantenimientoActualizadoHora: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})
+  });
+
+  currentVehicle = {...currentVehicle, mantenimientoKm};
+  cacheSet("vehiculo_" + currentVehicle.id, {...currentVehicle});
+  msg($("miAutoMsg"),"Datos de Mi auto guardados. El administrador ya puede verlos.",true);
+  await cargarMiAutoPanel();
+}
+
+window.guardarFechaCambioMantenimiento = async function(vehiculoId, key, modo){
+  const vehId = vehiculoId || (currentVehicle ? currentVehicle.id : "");
+  if(!vehId) return;
+  const inputId = `${modo}_${safeId(vehId)}_${key}_fecha`;
+  const fecha = $(inputId) ? $(inputId).value : "";
+  if(!fecha){ alert("Colocá la fecha nueva de cambio."); return; }
+
+  const snap = await getDoc(doc(db,"vehiculos",vehId));
+  if(!snap.exists()){ alert("Vehículo no encontrado."); return; }
+
+  const v = {id:vehId, ...snap.data()};
+  const cfg = MANTENIMIENTO_KM_CONFIG[key];
+  if(!cfg) return;
+  const kmActual = Number(v.kmActual || 0);
+  const mantenimientoKm = {...getMantenimientoAuto(v)};
+  mantenimientoKm[key] = normalizarMantenimientoItem({
+    ultimoKm: kmActual,
+    intervalo: cfg.intervalo,
+    ultimaFechaCambio: fecha
+  }, cfg);
+
+  await updateDoc(doc(db,"vehiculos",vehId),{
+    mantenimientoKm,
+    mantenimientoActualizadoPor: currentUserId,
+    mantenimientoActualizadoFecha: today(),
+    mantenimientoActualizadoHora: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})
+  });
+
+  if(currentVehicle && currentVehicle.id === vehId){
+    currentVehicle = {...currentVehicle, mantenimientoKm};
+    cacheSet("vehiculo_" + vehId, {...currentVehicle});
+    await cargarMiAutoPanel();
+  }
+
+  if(modo === "admin") await cargarAdminVehiculosKm(true);
+  alert("Cambio guardado correctamente. El próximo km quedó recalculado.");
+}
+
+window.toggleAdminVehiculosKm = async function(){
+  const panel = $("adminVehiculosKmPanel");
+  if(!panel) return;
+  const estabaOculto = panel.classList.contains("hidden");
+  panel.classList.toggle("hidden", !estabaOculto);
+  if(estabaOculto) await cargarAdminVehiculosKm(false);
+}
+
+async function cargarAdminVehiculosKm(force=false){
+  const panel = $("adminVehiculosKmPanel");
+  if(!panel) return;
+  if(!force && panel.dataset.loaded === "1") return;
+  panel.innerHTML = `<div class="msg ok">Cargando vehículos...</div>`;
+
+  const [vehSnap, choferSnap] = await Promise.all([
+    withTimeout(getDocs(collection(db,"vehiculos")), 9000, "Tardó demasiado cargando vehículos."),
+    withTimeout(getDocs(collection(db,"choferes")), 9000, "Tardó demasiado cargando choferes.")
+  ]);
+
+  const choferesPorVehiculo = {};
+  choferSnap.forEach(d=>{
+    const c = d.data();
+    if(c.rol === "admin" || c.activo === false) return;
+    if(c.vehiculo) choferesPorVehiculo[c.vehiculo] = {id:d.id,...c};
+  });
+
+  let html = "";
+  vehSnap.forEach(d=>{
+    const v = {id:d.id, ...d.data()};
+    const c = choferesPorVehiculo[v.id];
+    const analisis = analizarMantenimientoVehiculo(v);
+    const alerta = analisis.requiereAtencion ? `<span class="mi-auto-badge">⚙️</span>` : "";
+    html += `
+      <div class="vehicle-card">
+        <div class="admin-vehicle-head">
+          <div>
+            <b>${v.id} ${alerta}</b><br>
+            <small>${v.modelo || "Vehículo"}</small><br>
+            <small>Chofer: <b>${c ? (c.nombre || c.id) : "sin asignar"}</b></small><br>
+            <small>Km actual: ${Number(v.kmActual || 0).toLocaleString("es-AR")} km</small>
+          </div>
+          <span class="pill ${analisis.requiereAtencion ? "pill-red" : "pill-green"}">${analisis.requiereAtencion ? "Revisar" : "OK"}</span>
+        </div>
+        <button class="btn-dark" style="margin-top:10px" onclick="toggleDetalleVehiculoKm('${safeId(v.id)}')">Ver Mi auto</button>
+        <div id="detalleKm_${safeId(v.id)}" class="admin-vehicle-maintenance hidden">
+          ${renderEstadoMantenimiento(v,"admin")}
+        </div>
+      </div>
+    `;
+  });
+
+  panel.dataset.loaded = "1";
+  panel.innerHTML = html || `<p class="note">Todavía no hay vehículos cargados.</p>`;
+}
+
+window.toggleDetalleVehiculoKm = function(idSafe){
+  const box = $("detalleKm_" + idSafe);
+  if(box) box.classList.toggle("hidden");
+}
+
 async function loadAdmin(){
   const adminMsg = $("adminMsg");
   if(adminMsg) msg(adminMsg,"Actualizando administrador rápido...",true);
@@ -2965,6 +3282,12 @@ function renderAlertasVehiculo(v,c){
     if(dias < 0) alertas.push(`⚠️ ${nombre} vencido hace ${Math.abs(dias)} días`);
     else if(dias <= 30) alertas.push(`⚠️ ${nombre} vence en ${dias} días`);
   });
+
+  try{
+    const mant = analizarMantenimientoVehiculo(v);
+    if(mant.vencidos > 0) alertas.push(`⚙️ Mi auto: ${mant.vencidos} cambio/s pendiente/s por km`);
+    else if(mant.proximos > 0) alertas.push(`⚙️ Mi auto: ${mant.proximos} cambio/s próximo/s por km`);
+  }catch(e){}
 
   if(!alertas.length) return `<div class="paid-box">✅ Sin vencimientos próximos cargados</div>`;
   return alertas.map(a=>`<div class="alert-soft">${a}</div>`).join("");
