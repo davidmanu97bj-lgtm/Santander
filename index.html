@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.40
-Build: 2026-06-06-VALIDACION-FIX-001
+Version: 2.8.44
+Build: 2026-06-06-SIMULADOR-SEMANAS-ADMIN-001
 Fecha: 05/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
@@ -32,7 +32,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.40 · Build 2026-06-06-VALIDACION-FIX-001</title>
+<title>EXPLORA v2.8.44 · Build 2026-06-06-SIMULADOR-SEMANAS-ADMIN-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -375,6 +375,25 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 .ranking-bonus-box .bonus-money{color:#f3d77a;font-weight:900;margin-top:5px}
 .ranking-bonus-box small{color:var(--muted)}
 
+.admin-sim-box{
+  background:rgba(59,130,246,.10);
+  border:1px solid rgba(59,130,246,.35);
+  border-radius:16px;
+  padding:14px;
+  margin:10px 0;
+}
+.admin-sim-box b{color:#bfdbfe}
+.sim-banner{
+  background:rgba(245,158,11,.16);
+  border:1px solid rgba(245,158,11,.42);
+  color:#fbbf24;
+  padding:10px;
+  border-radius:14px;
+  font-size:13px;
+  margin:8px 0 12px;
+  font-weight:800;
+}
+
 .cierre-pendiente-banner{
   background:rgba(239,68,68,.12);
   border:1px solid rgba(239,68,68,.42);
@@ -473,7 +492,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.40</b> · Build 2026-06-06-VALIDACION-FIX-001</div>
+    <div class="build-version"><b>v2.8.44</b> · Build 2026-06-06-SIMULADOR-SEMANAS-ADMIN-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -486,7 +505,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.40</b> · VALIDACION-FIX-001</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.42</b> · CIERRE-AUTO-SIN-BOTON-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -532,7 +551,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <button id="btnHistorialHoy" class="bigbtn" type="button" onclick="showPanel('historyPanel')"><span class="icon">📋</span><strong>Historial hoy</strong></button>
       <button id="btnMiAuto" class="bigbtn" type="button" onclick="showPanel('miAutoPanel')"><span class="icon">🚗</span><strong>Mi auto <span id="miAutoBadge" class="mi-auto-badge hidden">⚙️</span></strong></button>
       <button id="btnComprobantes" class="bigbtn" type="button" onclick="showPanel('comprobantesPanel')"><span class="icon">📎</span><strong>Comprobantes</strong></button>
-      <button id="btnCerrarDia" class="bigbtn" type="button" onclick="closeDay()"><span class="icon">✅</span><strong>Ver cierre semanal</strong></button>
+      <button id="btnActualizarPagina" class="bigbtn" type="button" onclick="refrescarPagina()"><span class="icon">🔄</span><strong>Actualizar página</strong></button>
     </div>
 
     <div id="servicePanel" class="card hidden">
@@ -669,7 +688,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.40</b> · VALIDACION-FIX-001</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.42</b> · CIERRE-AUTO-SIN-BOTON-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -767,6 +786,23 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
     </div>
 
     <div class="card">
+      <h3>🧪 Simulador de semanas</h3>
+      <p class="note">Solo afecta a este administrador en este navegador. No cambia la fecha real del teléfono, no afecta a los choferes y sirve para probar cierres, ranking, bono y comprobantes.</p>
+      <div id="adminSimBanner" class="sim-banner hidden"></div>
+      <div class="admin-sim-box">
+        <b>Fecha usada por Admin:</b> <span id="adminSimFecha">Fecha real</span><br>
+        <small id="adminSimDetalle" class="note">Sin simulación activa.</small>
+      </div>
+      <div class="row">
+        <button class="btn-dark" onclick="simularSemanaAdmin(1)">+1 semana</button>
+        <button class="btn-dark" onclick="simularSemanaAdmin(2)">+2 semanas</button>
+      </div>
+      <button class="btn-dark" style="margin-top:10px" onclick="simularSemanaAdmin(-1)">-1 semana</button>
+      <button class="btn-gold" style="margin-top:10px" onclick="volverFechaRealAdmin()">Volver a fecha real</button>
+      <button class="btn-dark" style="margin-top:10px" onclick="refrescarPagina()">🔄 Actualizar página</button>
+    </div>
+
+    <div class="card">
       <h3>Herramientas</h3>
       <button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios EXPLORA</button>
       <button class="btn-dark" style="margin-top:10px" onclick="verificarYRepararAcumuladosAdmin()">Verificar / reparar acumulados actuales</button>
@@ -781,7 +817,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 <div id="cierreSemanalModal" class="modal hidden">
   <div class="card">
     <h2>Cierre semanal pendiente</h2>
-    <p class="note">Si hay cierre semanal pendiente, esta pantalla aparece para revisar el período. Si no hay diferencia, igual tenés que confirmar para iniciar la nueva semana.</p>
+    <p class="note">Esta pantalla aparece automáticamente en el día de cierre semanal. Podés revisar el período, subir/consultar comprobantes y confirmar para iniciar la nueva semana.</p>
     <div id="cierreSemanalResumen"></div>
     <button id="confirmarCierreSemanalBtn" class="btn-gold" onclick="confirmarCierreSemanal()">Confirmar cierre e iniciar nueva semana</button>
     <button id="volverAppCierreBtn" class="btn-dark hidden" style="margin-top:10px" onclick="cerrarCierreSemanalModal()">Volver a la app</button>
@@ -855,14 +891,148 @@ let adminVehiculosCache = [];
 let adminChoferesPorVehiculoCache = {};
 
 const $ = id => document.getElementById(id);
-function today(){
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2,"0");
-  const day = String(d.getDate()).padStart(2,"0");
-  return `${y}-${m}-${day}`;
+let trustedTodayValue = null;
+let trustedTodaySource = "device";
+let adminSimulationWeeks = Number(localStorage.getItem("explora_admin_sim_weeks") || 0);
+
+function addDaysToDateStringSafe(dateStr, days){
+  try{
+    const [y,m,d] = String(dateStr).split("-").map(Number);
+    const dt = new Date(y, (m || 1) - 1, d || 1);
+    dt.setDate(dt.getDate() + Number(days || 0));
+    const yy = dt.getFullYear();
+    const mm = String(dt.getMonth() + 1).padStart(2,"0");
+    const dd = String(dt.getDate()).padStart(2,"0");
+    return `${yy}-${mm}-${dd}`;
+  }catch(e){
+    return dateStr;
+  }
 }
+
+function formatDateArgentina(date){
+  try{
+    const parts = new Intl.DateTimeFormat("en-CA",{
+      timeZone:"America/Argentina/Buenos_Aires",
+      year:"numeric", month:"2-digit", day:"2-digit"
+    }).formatToParts(date).reduce((a,p)=>{a[p.type]=p.value; return a;},{});
+    return `${parts.year}-${parts.month}-${parts.day}`;
+  }catch(e){
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2,"0");
+    const day = String(date.getDate()).padStart(2,"0");
+    return `${y}-${m}-${day}`;
+  }
+}
+
+function today(){
+  // Usa fecha confiable sincronizada con Firebase cuando está disponible.
+  // Esto evita cierres/ranking en semanas futuras si el teléfono tiene la fecha cambiada.
+  // Solo Admin puede simular semanas, y la simulación queda limitada a este navegador.
+  const base = trustedTodayValue || formatDateArgentina(new Date());
+  if(currentProfile && currentProfile.rol === "admin" && adminSimulationWeeks){
+    return addDaysToDateStringSafe(base, adminSimulationWeeks * 7);
+  }
+  return base;
+}
+
+async function syncTrustedToday(){
+  const localDay = formatDateArgentina(new Date());
+  try{
+    const cache = cacheGet("trusted_today", 10 * 60 * 1000);
+    if(cache && cache.fecha){
+      trustedTodayValue = cache.fecha;
+      trustedTodaySource = cache.source || "server-cache";
+    }
+  }catch(e){}
+
+  try{
+    if(!currentUserId) return today();
+    const ref = doc(db,"sistema_fecha", currentUserId);
+    await setDoc(ref,{
+      serverNow: serverTimestamp(),
+      localDay,
+      usuario: currentUserId,
+      actualizado: serverTimestamp()
+    },{merge:true});
+
+    let snap = await getDoc(ref);
+    let data = snap.exists() ? snap.data() : null;
+    if(!data || !data.serverNow || !data.serverNow.toDate){
+      await new Promise(r=>setTimeout(r,350));
+      snap = await getDoc(ref);
+      data = snap.exists() ? snap.data() : null;
+    }
+
+    if(data && data.serverNow && data.serverNow.toDate){
+      const serverDay = formatDateArgentina(data.serverNow.toDate());
+      trustedTodayValue = serverDay;
+      trustedTodaySource = serverDay === localDay ? "server" : "server-diff-local";
+      cacheSet("trusted_today",{fecha:serverDay, source:trustedTodaySource, localDay},10 * 60 * 1000);
+      if(serverDay !== localDay){
+        console.warn("Fecha del teléfono diferente a Firebase", {localDay, serverDay});
+      }
+      return serverDay;
+    }
+  }catch(e){
+    console.warn("No se pudo sincronizar fecha con Firebase; uso fecha local/caché", e);
+  }
+  return today();
+}
+
 const money = n => "$" + Number(n || 0).toLocaleString("es-AR");
+
+window.refrescarPagina = function(){
+  // Refresca la app sin cerrar sesión. Al volver a cargar se re-chequean
+  // cierres y comprobantes pendientes, pero no bloquea la operación del chofer.
+  window.location.reload();
+};
+
+function updateAdminSimulationUI(){
+  const base = trustedTodayValue || formatDateArgentina(new Date());
+  const fechaSimulada = today();
+  const banner = $("adminSimBanner");
+  const fecha = $("adminSimFecha");
+  const detalle = $("adminSimDetalle");
+
+  if(fecha) fecha.textContent = adminSimulationWeeks ? fechaSimulada : base;
+  if(detalle){
+    detalle.textContent = adminSimulationWeeks
+      ? `Simulación activa: ${adminSimulationWeeks > 0 ? "+" : ""}${adminSimulationWeeks} semana(s). Fecha real/servidor: ${base}.`
+      : "Sin simulación activa. Admin usa la fecha real/servidor.";
+  }
+  if(banner){
+    if(adminSimulationWeeks){
+      banner.classList.remove("hidden");
+      banner.textContent = `🧪 MODO SIMULACIÓN ADMIN: ${adminSimulationWeeks > 0 ? "+" : ""}${adminSimulationWeeks} semana(s) · Fecha simulada ${fechaSimulada}`;
+    }else{
+      banner.classList.add("hidden");
+      banner.textContent = "";
+    }
+  }
+}
+
+window.simularSemanaAdmin = function(delta){
+  if(!currentProfile || currentProfile.rol !== "admin") return;
+  adminSimulationWeeks = Math.max(-8, Math.min(8, Number(adminSimulationWeeks || 0) + Number(delta || 0)));
+  localStorage.setItem("explora_admin_sim_weeks", String(adminSimulationWeeks));
+  periodoOperativoCache = null;
+  cierreSemanalCache = null;
+  cacheRemove("ranking_global_fast");
+  updateAdminSimulationUI();
+  if($("adminMsg")) msg($("adminMsg"), `Simulación de semanas actualizada. Fecha usada por Admin: ${today()}.`, true);
+  setTimeout(()=>loadAdmin().catch(e=>console.warn("No se pudo refrescar admin con simulación", e)), 50);
+};
+
+window.volverFechaRealAdmin = function(){
+  adminSimulationWeeks = 0;
+  localStorage.removeItem("explora_admin_sim_weeks");
+  periodoOperativoCache = null;
+  cierreSemanalCache = null;
+  cacheRemove("ranking_global_fast");
+  updateAdminSimulationUI();
+  if($("adminMsg")) msg($("adminMsg"), "Simulación desactivada. Admin volvió a fecha real/servidor.", true);
+  setTimeout(()=>loadAdmin().catch(e=>console.warn("No se pudo refrescar admin al volver a fecha real", e)), 50);
+};
 
 function parseNumeroArg(value){
   const raw = String(value ?? "").trim();
@@ -1273,6 +1443,7 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
   currentUserId = username;
 
   try{
+    await syncTrustedToday();
     let snap = await getDoc(doc(db, "choferes", username));
 
     if(!snap.exists()){
@@ -1310,6 +1481,7 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
       $("adminView").classList.remove("hidden");
       if($("adminVehiculosResumen")) $("adminVehiculosResumen").innerHTML = `<p class="note">Panel abierto. Tocá “Actualizar administrador” si necesitás refrescar datos.</p>`;
       if($("adminGanadorSemana")) $("adminGanadorSemana").innerHTML = `<p class="note">Premio y ganador se cargan bajo demanda para abrir más rápido.</p>`;
+      updateAdminSimulationUI();
       setTimeout(()=>loadAdmin().catch(e=>msg($("adminMsg"),"Error cargando administrador: " + e.message)), 250);
     }else{
       $("driverView").classList.remove("hidden");
@@ -1370,6 +1542,10 @@ async function loadDriver(){
   });
 
   startDerivationInboxPolling();
+
+  // Al iniciar o refrescar, vuelve a mostrar avisos de cierre/comprobantes pendientes.
+  // Es bajo demanda y liviano: no bloquea el menú ni las funciones del chofer.
+  setTimeout(()=>checkPagosPendientesChoferAutomatico().catch(e=>console.warn("Comprobantes pendientes diferidos", e)), 650);
 
   // Precarga servicios en segundo plano para que “Nuevo servicio” abra casi inmediato.
   setTimeout(()=>loadServices().catch(e=>console.warn("Precarga de servicios diferida", e)), 500);
@@ -1858,7 +2034,7 @@ window.closeDay = async function(){
     cierreSemanalCargando = false;
     if(btn){
       btn.disabled = false;
-      btn.innerHTML = '<span class="icon">✅</span><strong>Ver cierre semanal</strong>';
+      btn.innerHTML = '<span class="icon">✅</span><strong>Cierre semanal</strong>';
     }
   }
 }
@@ -3034,7 +3210,7 @@ async function checkCierreSemanalAutomatico(){
   $("cierreSemanalResumen").innerHTML = "Calculando cierre semanal pendiente...";
 
   try{
-    cierreSemanalPendiente = await withTimeout(calcularCierreSemanalLiviano(currentUserId, periodo), 12000, "El cierre automático tardó demasiado. Tocá Ver cierre semanal para reintentar.");
+    cierreSemanalPendiente = await withTimeout(calcularCierreSemanalLiviano(currentUserId, periodo), 12000, "El cierre automático tardó demasiado. Tocá “Actualizar página” para reintentar.");
 
     if(cierreSemanalPendiente.cantidadViajes === 0 && cierreSemanalPendiente.cantidadGastos === 0){
       cierreSemanalPendiente = null;
