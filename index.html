@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.45
-Build: 2026-06-06-SIMULADOR-SEMANAS-GLOBAL-COMPROBANTES-001
+Version: 2.8.46
+Build: 2026-06-06-VALIDACION-MANTENIMIENTO-COMPROBANTES-001
 Fecha: 05/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
@@ -16,6 +16,8 @@ Cambios:
 - Se mejora el texto visible de servicios con íconos: 🛬 🇦🇷 🇧🇷 🇵🇾 para lectura rápida.
 - Formato automático con punto en campos numéricos: 30.000 en lugar de 30000, sin afectar cálculos internos.
 - Reasignación segura de vehículo: al asignar un auto existente a otro chofer conserva Mi auto, km y mantenimiento.
+- Cierre automático corregido: detecta cierres pendientes aunque el período activo haya quedado atrasado.
+- Admin: botón para reiniciar facturación/ranking semanal de todos los choferes a cero.
 - Comprobantes obligatorios para pagos semanales: solo carga quien debe pagar, con imagen comprimida y carga bajo demanda.
 - Cierre semanal flexible: permite avanzar con pago pendiente, mantiene alerta, suspende bono a las 24 h si el chofer no sube comprobante.
 - Ranking conserva posiciones, marca suspendidos del bono y asigna el bono al siguiente elegible.
@@ -32,7 +34,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.45 · Build 2026-06-06-SIMULADOR-SEMANAS-GLOBAL-COMPROBANTES-001</title>
+<title>EXPLORA v2.8.46 · Build 2026-06-06-VALIDACION-MANTENIMIENTO-COMPROBANTES-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -492,7 +494,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.45</b> · Build 2026-06-06-SIMULADOR-SEMANAS-GLOBAL-COMPROBANTES-001</div>
+    <div class="build-version"><b>v2.8.46</b> · Build 2026-06-06-VALIDACION-MANTENIMIENTO-COMPROBANTES-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -532,8 +534,8 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
     </div>
 
     <div class="row">
-      <div class="metric"><span>Viajes hoy</span><strong id="todayTrips">0</strong></div>
-      <div class="metric"><span>Facturación</span><strong id="todayTotal">$0</strong></div>
+      <div class="metric"><span>Viajes semana</span><strong id="todayTrips">0</strong></div>
+      <div class="metric"><span>Facturación semana</span><strong id="todayTotal">$0</strong></div>
     </div>
 
     <div id="derivationInbox" class="derivation-inbox hidden">
@@ -806,6 +808,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <h3>Herramientas</h3>
       <button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios EXPLORA</button>
       <button class="btn-dark" style="margin-top:10px" onclick="verificarYRepararAcumuladosAdmin()">Verificar / reparar acumulados actuales</button>
+      <button class="btn-red" style="margin-top:10px" onclick="reiniciarFacturacionSemanalAdmin()">Reiniciar facturación/ranking semanal a 0</button>
       <button class="btn-red" style="margin-top:10px" onclick="eliminarChoferesDemoAdmin()">Eliminar choferes demo anteriores</button>
       <div id="adminToolsMsg"></div>
     </div>
@@ -2793,7 +2796,7 @@ function renderPagosPendientesChofer(items){
           <small>Debés transferir a David: <b>${money(p.monto)}</b></small><br>
           <small>${suspendido ? '🚫 Ya estás suspendido del bono semanal hasta la próxima semana por no subir el comprobante.' : 'Si no realizás el pago hoy, mañana serás suspendido del bono semanal.'}</small>
           <div style="margin-top:10px">
-            <input id="compPendChofer_${safeId(p.id)}" class="file-input" type="file" accept="image/*" capture="environment" />
+            <input id="compPendChofer_${safeId(p.id)}" class="file-input" type="file" accept="image/*,.jpg,.jpeg,.png,.webp" />
             <button class="btn-gold" style="margin-top:8px" onclick="subirComprobantePendienteChofer('${p.periodoId}', ${Math.round(Number(p.monto || 0))}, 'compPendChofer_${safeId(p.id)}')">Subir comprobante</button>
           </div>
         </div>`;
@@ -3266,8 +3269,34 @@ window.confirmarCierreSemanal = async function(){
   }
 }
 
+function getPeriodoCierreAutomaticoChofer(){
+  const fechaActual = today();
+
+  // 1) Si el chofer quedó con un período activo atrasado y aún no lo cerró,
+  // ese cierre debe volver a aparecer aunque ya no sea sábado. Esto evita que
+  // por cambios de fecha/pruebas el cierre pendiente quede oculto.
+  if(currentProfile && currentProfile.periodoActivoId && currentProfile.periodoActivoInicio && currentProfile.periodoActivoFin){
+    const guardado = {
+      id: currentProfile.periodoActivoId,
+      start: currentProfile.periodoActivoInicio,
+      end: currentProfile.periodoActivoFin,
+      closeDate: currentProfile.periodoActivoCierre || currentProfile.periodoActivoFin
+    };
+    const yaCerrado = currentProfile.ultimoCierreSemanal === guardado.id;
+    const periodoVencido = guardado.end < fechaActual;
+    const periodoMuyFuturo = guardado.start > addDays(fechaActual, 7);
+
+    if(periodoVencido && !yaCerrado && !periodoMuyFuturo){
+      return guardado;
+    }
+  }
+
+  // 2) Cierre normal: aparece automáticamente el sábado de cierre.
+  return getPeriodoCierrePendiente(fechaActual);
+}
+
 async function checkCierreSemanalAutomatico(){
-  const periodo = getPeriodoCierrePendiente();
+  const periodo = getPeriodoCierreAutomaticoChofer();
   if(!periodo) return;
 
   const cierreId = `${currentUserId}_${periodo.id}`;
@@ -4212,7 +4241,7 @@ window.guardarMiAutoKm = async function(){
   const mantenimientoKm = {...getMantenimientoAuto(currentVehicle)};
   Object.entries(MANTENIMIENTO_KM_CONFIG).forEach(([key,cfg])=>{
     const input = $(cfg.input);
-    const ultimoKm = Number(input ? input.value : 0) || 0;
+    const ultimoKm = parseNumeroArg(input ? input.value : 0) || 0;
     mantenimientoKm[key] = normalizarMantenimientoItem({
       ...(mantenimientoKm[key] || {}),
       ultimoKm,
@@ -5092,6 +5121,72 @@ window.crearChoferVehiculoAdmin = async function(){
 
 // ===== EXPLORA v2.8.40: VALIDACIÓN DE FUNCIONES GLOBALES =====
 // Estas asignaciones evitan errores de botones inline dentro de <script type="module">.
+
+window.reiniciarFacturacionSemanalAdmin = async function(){
+  if(!currentProfile || currentProfile.rol !== "admin") return;
+
+  const confirmar = confirm("¿Reiniciar facturación/ranking semanal de TODOS los choferes a $0?\n\nNo borra viajes históricos, vehículos, Mi Auto ni comprobantes. Solo reinicia los acumulados de la semana actual para arrancar en cero.");
+  if(!confirmar) return;
+
+  const btnMsg = $("adminToolsMsg");
+  if(btnMsg) msg(btnMsg,"Reiniciando facturación semanal...",true);
+
+  try{
+    const periodo = getPeriodoTrabajoActual(today());
+    const snap = await withTimeout(getDocs(collection(db,"choferes")), 12000, "Tardó demasiado leyendo choferes.");
+    const tareas = [];
+
+    snap.forEach(d=>{
+      const c = d.data() || {};
+      const id = d.id;
+      if(c.rol === "admin") return;
+
+      tareas.push(setDoc(doc(db,"acumulados_semanales",`${id}_${periodo.id}`),{
+        chofer:id,
+        vehiculo:c.vehiculo || "",
+        periodoId:periodo.id,
+        periodoInicio:periodo.start,
+        periodoFin:periodo.end,
+        efectivo:0,
+        transferencia:0,
+        tarjeta:0,
+        totalViajes:0,
+        cantidadViajes:0,
+        totalGastos:0,
+        cantidadGastos:0,
+        derivaciones:0,
+        reiniciadoPor:currentUserId || "admin",
+        reiniciadoFecha:today(),
+        reiniciadoHora:new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
+        actualizado:serverTimestamp()
+      },{merge:false}));
+
+      tareas.push(updateDoc(doc(db,"choferes",id),{
+        periodoActivoId:periodo.id,
+        periodoActivoInicio:periodo.start,
+        periodoActivoFin:periodo.end,
+        periodoActivoCierre:periodo.closeDate,
+        periodoActivoCalendario:CALENDARIO_CIERRE,
+        periodoActivoDesde:today(),
+        ultimaActividad:new Date().toLocaleString("es-AR")
+      }).catch(e=>console.warn("No se pudo actualizar período de chofer", id, e)));
+
+      cacheRemove(`acum_sem_${id}_${periodo.id}`);
+      cacheRemove(`cierre_sem_${id}_${periodo.id}`);
+      cacheRemove(`admin_5050_${id}_${periodo.id}`);
+    });
+
+    await Promise.all(tareas);
+    cacheRemove(`ranking_fast_${periodo.id}`);
+    cacheRemove("ranking_global_fast");
+
+    if(btnMsg) msg(btnMsg,`Facturación/ranking semanal reiniciados a $0 para ${snap.size} registros. Período activo: ${periodo.start} al ${periodo.end}.`,true);
+    await loadAdmin().catch(e=>console.warn("No se pudo refrescar admin tras reinicio", e));
+  }catch(e){
+    if(btnMsg) msg(btnMsg,"No se pudo reiniciar facturación semanal: " + e.message);
+  }
+}
+
 window.loadAdmin = loadAdmin;
 window.loadComprobantesChofer = loadComprobantesChofer;
 window.loadComprobantesAdmin = loadComprobantesAdmin;
