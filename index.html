@@ -11,6 +11,7 @@ Cambios:
 - Optimización: Mi auto y Vehículos usan caché/localStorage y refresco en segundo plano para no trabar la app.
 - Aviso automático con ⚙️ cuando corresponde cambio por kilometraje.
 - No se modifica cierre semanal, 50/50, derivaciones ni acumulados financieros.
+- Ranking verificado: al tocar Ranking compara acumulados con viajes reales de la semana activa.
 - Se mejora el texto visible de servicios con íconos: 🛬 🇦🇷 🇧🇷 🇵🇾 para lectura rápida.
 -->
 <html lang="es">
@@ -1783,13 +1784,15 @@ async function calcularRankingSemanalLiviano(periodo = getPeriodoTrabajoActual(t
     stats[d.id] = {id:d.id,nombre:c.nombre || d.id,viajes:0,derivaciones:0,facturacion:0,porcentaje:0};
   });
 
-  // Ranking rápido: lee solo acumulados de la semana, no toda la colección viajes.
-  let usoAcumulados = false;
+  // Ranking v2.8.30:
+  // 1) Primero lee acumulados semanales para abrir rápido.
+  // 2) Después verifica con viajes reales del período actual.
+  // Esto evita que el ranking quede congelado si algún acumulado no se actualizó.
   try{
     const acumSnap = await withTimeout(getDocs(query(
       collection(db,"acumulados_semanales"),
       where("periodoId","==",periodo.id)
-    )), 6000, "El ranking tardó demasiado cargando acumulados.");
+    )), 4500, "El ranking tardó demasiado cargando acumulados.");
 
     acumSnap.forEach(d=>{
       const a = d.data();
@@ -1798,42 +1801,57 @@ async function calcularRankingSemanalLiviano(periodo = getPeriodoTrabajoActual(t
       stats[choferId].viajes = Number(a.cantidadViajes || 0);
       stats[choferId].facturacion = Number(a.totalViajes || 0);
       stats[choferId].derivaciones = Number(a.derivaciones || 0);
-      usoAcumulados = true;
     });
   }catch(e){
-    console.warn("Ranking por acumulados no disponible; se usa respaldo", e);
+    console.warn("Ranking por acumulados no disponible; se verifica con viajes reales", e);
   }
 
-  if(!usoAcumulados){
-    // Respaldo para semanas viejas sin acumulados.
+  // Verificación real de la semana activa.
+  // Se ejecuta solo al tocar Ranking, no al iniciar la app, por eso no vuelve lenta la pantalla principal.
+  try{
     const viajesSnap = await withTimeout(getDocs(query(
       collection(db,"viajes"),
       where("periodoId","==",periodo.id)
-    )), 9000, "El ranking tardó demasiado cargando viajes.");
+    )), 7000, "El ranking tardó demasiado verificando viajes reales.");
 
+    const reales = {};
     viajesSnap.forEach(d=>{
       const v = d.data();
       if(!perteneceAlPeriodo(v, periodo)) return;
-      if(stats[v.chofer]){
-        stats[v.chofer].viajes += 1;
-        stats[v.chofer].facturacion += Number(v.monto || 0);
-      }
+      if(!stats[v.chofer]) return;
+      if(!reales[v.chofer]) reales[v.chofer] = {viajes:0,facturacion:0};
+      reales[v.chofer].viajes += 1;
+      reales[v.chofer].facturacion += Number(v.monto || 0);
     });
 
-    try{
-      const derivSnap = await withTimeout(getDocs(query(
-        collection(db,"derivaciones"),
-        where("periodoId","==",periodo.id)
-      )), 9000, "El ranking tardó demasiado cargando derivaciones.");
+    Object.keys(reales).forEach(choferId=>{
+      // Si hay diferencias, manda el dato real. Esto corrige el caso de chofer con viajes cargados
+      // pero acumulado viejo/caché no actualizado.
+      stats[choferId].viajes = reales[choferId].viajes;
+      stats[choferId].facturacion = reales[choferId].facturacion;
+    });
+  }catch(e){
+    console.warn("No se pudieron verificar viajes reales para ranking; se usa acumulado", e);
+  }
 
-      derivSnap.forEach(d=>{
-        const x = d.data();
-        if(x.estado !== "aceptado") return;
-        if(stats[x.origen]) stats[x.origen].derivaciones += 1;
-      });
-    }catch(e){
-      console.warn("No se pudieron cargar derivaciones para ranking", e);
-    }
+  try{
+    const derivSnap = await withTimeout(getDocs(query(
+      collection(db,"derivaciones"),
+      where("periodoId","==",periodo.id)
+    )), 5000, "El ranking tardó demasiado verificando derivaciones.");
+
+    const derivReales = {};
+    derivSnap.forEach(d=>{
+      const x = d.data();
+      if(x.estado !== "aceptado") return;
+      if(!stats[x.origen]) return;
+      derivReales[x.origen] = Number(derivReales[x.origen] || 0) + 1;
+    });
+    Object.keys(derivReales).forEach(choferId=>{
+      stats[choferId].derivaciones = derivReales[choferId];
+    });
+  }catch(e){
+    console.warn("No se pudieron verificar derivaciones reales para ranking; se usa acumulado", e);
   }
 
   const arr = Object.values(stats);
@@ -1887,7 +1905,8 @@ window.openRankingPanel = async function(){
   showPanel("rankingPanel");
   $("driverRankingList").innerHTML = "Calculando ranking...";
   try{
-    const data = await calcularRankingSemanalLiviano();
+    const periodoRanking = await getPeriodoOperativoChofer(currentUserId);
+    const data = await calcularRankingSemanalLiviano(periodoRanking);
     renderRankingLiviano(data,"driverRankingList");
 
     const lider = data.ranking[0];
