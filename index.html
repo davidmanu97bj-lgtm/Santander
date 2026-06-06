@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.34
-Build: 2026-06-06-RANKING-DERIVACIONES-PRIORIDAD-001
+Version: 2.8.35
+Build: 2026-06-06-RANKING-SERVICIO-ULTRA-FAST-001
 Fecha: 05/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
@@ -17,6 +17,8 @@ Cambios:
 - Formato automático con punto en campos numéricos: 30.000 en lugar de 30000, sin afectar cálculos internos.
 - Reasignación segura de vehículo: al asignar un auto existente a otro chofer conserva Mi auto, km y mantenimiento.
 - Ranking actualizado: 50% facturación, 20% viajes, 20% derivaciones, 10% actividad para incentivar derivar dentro de EXPLORA.
+- Optimización: Nuevo servicio abre desde caché/default y verifica km diario con cache local.
+- Optimización: Ranking abre desde cache/acumulados sin verificar viajes completos en cada apertura.
 - Se agrega “Ver reglas” con explicación del bono semanal y derivaciones.
 - En una derivación aceptada/completada suman ambos: origen por derivación y receptor por viaje/facturación.
 - Se aumenta el peso de derivaciones al 20% para evitar que servicios salgan fuera de EXPLORA.
@@ -25,7 +27,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.34 · Build 2026-06-06-RANKING-DERIVACIONES-PRIORIDAD-001</title>
+<title>EXPLORA v2.8.35 · Build 2026-06-06-RANKING-SERVICIO-ULTRA-FAST-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -401,7 +403,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.34</b> · Build 2026-06-06-RANKING-DERIVACIONES-PRIORIDAD-001</div>
+    <div class="build-version"><b>v2.8.35</b> · Build 2026-06-06-RANKING-SERVICIO-ULTRA-FAST-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -414,7 +416,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.34</b> · RANKING-DERIVACIONES-PRIORIDAD-001</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.35</b> · RANKING-SERVICIO-ULTRA-FAST-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -586,7 +588,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.34</b> · RANKING-DERIVACIONES-PRIORIDAD-001</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.35</b> · RANKING-SERVICIO-ULTRA-FAST-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -1278,6 +1280,9 @@ async function loadDriver(){
 
   startDerivationInboxPolling();
 
+  // Precarga servicios en segundo plano para que “Nuevo servicio” abra casi inmediato.
+  setTimeout(()=>loadServices().catch(e=>console.warn("Precarga de servicios diferida", e)), 500);
+
   // El cierre automático se revisa luego de abrir, sin bloquear la entrada.
   setTimeout(()=>checkCierreSemanalAutomatico().catch(e=>console.warn("Cierre automático diferido", e)), 1200);
 }
@@ -1305,30 +1310,45 @@ window.toggleStatus = async function(){
 }
 
 async function loadServices(force=false){
+  // ULTRA FAST: nunca bloquear “Nuevo servicio” si hay caché o tarifario local.
+  // 1) Usa servicios ya cargados en memoria.
+  // 2) Si no hay memoria, usa localStorage.
+  // 3) Si tampoco hay caché, usa el tarifario oficial embebido en el HTML.
+  // 4) Refresca Firestore en segundo plano.
   if(servicesLoaded && services.length && !force) return;
 
-  const cached = cacheGet("servicios_activos", 24 * 60 * 60 * 1000);
-  if(cached && cached.length && !servicesLoaded){
-    services = cached;
+  const aplicarLista = (lista)=>{
+    if(!Array.isArray(lista) || !lista.length) return false;
+    services = lista.map(s=>({ ...s }));
+    services.sort((a,b)=>(Number(a.orden || 9999) - Number(b.orden || 9999)) || String(a.nombre || "").localeCompare(String(b.nombre || ""), "es"));
     servicesLoaded = true;
     fillServiceSelects();
+    return true;
+  };
+
+  if(!force){
+    const cached = cacheGet("servicios_activos", 7 * 24 * 60 * 60 * 1000);
+    if(cached && cached.length){
+      aplicarLista(cached);
+    }else if(typeof serviciosExplora !== "undefined" && serviciosExplora.length){
+      // Fallback instantáneo: evita esperar Firestore si el teléfono está lento o sin señal.
+      aplicarLista(serviciosExplora.map(s=>({...s, activo:true})));
+      cacheSet("servicios_activos", services);
+    }
   }
 
-  // Si ya hay servicios en caché, refresca en segundo plano y no frena la pantalla.
   const refresh = async ()=>{
     const q = query(collection(db,"servicios"), where("activo","==",true));
-    const snap = await withTimeout(getDocs(q), 6000, "Los servicios tardaron demasiado en cargar.");
+    const snap = await withTimeout(getDocs(q), 4500, "Los servicios tardaron demasiado en cargar.");
     const fresh = [];
     snap.forEach(d=>fresh.push({id:d.id,...d.data()}));
-    fresh.sort((a,b)=>(Number(a.orden || 9999) - Number(b.orden || 9999)) || String(a.nombre || "").localeCompare(String(b.nombre || ""), "es"));
-    services = fresh;
-    servicesLoaded = true;
+    if(!fresh.length && typeof serviciosExplora !== "undefined") fresh.push(...serviciosExplora.map(s=>({...s, activo:true})));
+    aplicarLista(fresh);
     cacheSet("servicios_activos", services);
-    fillServiceSelects();
   };
 
   if(servicesLoaded && !force){
-    refresh().catch(e=>console.warn("No se pudieron refrescar servicios", e));
+    refresh().catch(e=>console.warn("No se pudieron refrescar servicios en segundo plano", e));
     return;
   }
 
@@ -1428,18 +1448,33 @@ function getKmDiarioId(){
   return `${currentVehicle.id}_${today()}`;
 }
 
+function getKmDiarioCacheKey(){
+  return currentVehicle ? `km_diario_ok_${currentVehicle.id}_${today()}` : "";
+}
+
 async function checkKmToday(){
   if(!currentVehicle || !currentUserId){
     kmTodaySaved = false;
     return;
   }
 
-  // El km ahora es obligatorio DIARIO.
-  // Antes se pedía una vez por período semanal; eso permitía trabajar varios días sin actualizar tablero.
-  // El período sigue guardándose como dato informativo para cierres/reportes, pero el ID del control es vehículo + fecha.
+  // ULTRA FAST: si hoy ya se guardó km en este dispositivo, no hace lectura remota.
+  const cacheKey = getKmDiarioCacheKey();
+  const localOk = cacheKey ? cacheGet(cacheKey, 20 * 60 * 60 * 1000) : null;
+  if(localOk && localOk.ok){
+    kmTodaySaved = true;
+    return;
+  }
+
   const kmId = getKmDiarioId();
-  const snap = await getDoc(doc(db,"kilometrajes",kmId));
-  kmTodaySaved = snap.exists();
+  try{
+    const snap = await withTimeout(getDoc(doc(db,"kilometrajes",kmId)), 1800, "El control de km tardó demasiado.");
+    kmTodaySaved = snap.exists();
+    if(kmTodaySaved && cacheKey) cacheSet(cacheKey,{ok:true,fecha:today(),vehiculo:currentVehicle.id});
+  }catch(e){
+    console.warn("No se pudo verificar km diario rápido", e);
+    kmTodaySaved = false;
+  }
 }
 
 window.openNewService = async function(){
@@ -1449,7 +1484,10 @@ window.openNewService = async function(){
       return;
     }
 
+    // Servicios: carga instantánea con caché/default; Firestore refresca en segundo plano.
     await loadServices();
+
+    // KM diario: usa caché local si ya fue cargado hoy; evita lectura remota cada vez que toca Nuevo servicio.
     await checkKmToday();
 
     if(!kmTodaySaved){
@@ -1502,6 +1540,9 @@ window.saveDailyKm = async function(){
     await updateDoc(doc(db,"vehiculos",currentVehicle.id),{kmActual:km});
     currentVehicle.kmActual = km;
     kmTodaySaved = true;
+    const kmCacheKey = getKmDiarioCacheKey();
+    if(kmCacheKey) cacheSet(kmCacheKey,{ok:true,fecha:today(),vehiculo:currentVehicle.id,km});
+    cacheSet("vehiculo_" + currentVehicle.id, currentVehicle);
     $("kmInput").value = "";
     $("kmMsg").innerHTML = "";
     $("kmModal").classList.add("hidden");
@@ -1859,26 +1900,62 @@ async function getPremioSemana(periodo){
   }
 }
 
-async function calcularRankingSemanalLiviano(periodo = getPeriodoTrabajoActual(today())){
-  const stats = {};
+async function getChoferesRankingActivosRapido(){
+  const cached = cacheGet("ranking_choferes_activos", 10 * 60 * 1000);
+  if(cached && Array.isArray(cached) && cached.length){
+    // refresco no bloqueante
+    getDocs(collection(db,"choferes")).then(snap=>{
+      const arr=[];
+      snap.forEach(d=>{
+        const c=d.data();
+        if(c.rol === "admin" || c.activo === false) return;
+        arr.push({id:d.id,nombre:c.nombre || d.id});
+      });
+      if(arr.length) cacheSet("ranking_choferes_activos", arr);
+    }).catch(()=>{});
+    return cached;
+  }
 
-  const choferesSnap = await getDocs(collection(db,"choferes"));
-  choferesSnap.forEach(d=>{
-    const c = d.data();
-    if(c.rol === "admin") return;
-    if(c.activo === false) return;
-    stats[d.id] = {id:d.id,nombre:c.nombre || d.id,viajes:0,derivaciones:0,facturacion:0,porcentaje:0};
+  const snap = await withTimeout(getDocs(collection(db,"choferes")), 3000, "El ranking tardó cargando choferes.");
+  const arr=[];
+  snap.forEach(d=>{
+    const c=d.data();
+    if(c.rol === "admin" || c.activo === false) return;
+    arr.push({id:d.id,nombre:c.nombre || d.id});
+  });
+  cacheSet("ranking_choferes_activos", arr);
+  return arr;
+}
+
+function calcularPorcentajeRanking(arr){
+  arr.forEach(x=>{
+    x.actividad = (Number(x.viajes || 0) > 0 || Number(x.derivaciones || 0) > 0 || Number(x.facturacion || 0) > 0) ? 1 : 0;
+  });
+  const maxViajes = Math.max(1,...arr.map(x=>Number(x.viajes || 0)));
+  const maxDeriv = Math.max(1,...arr.map(x=>Number(x.derivaciones || 0)));
+  const maxFact = Math.max(1,...arr.map(x=>Number(x.facturacion || 0)));
+  const maxActividad = Math.max(1,...arr.map(x=>Number(x.actividad || 0)));
+
+  arr.forEach(x=>{
+    x.porcentaje = Math.round((((Number(x.facturacion || 0)/maxFact)*0.50)+((Number(x.viajes || 0)/maxViajes)*0.20)+((Number(x.derivaciones || 0)/maxDeriv)*0.20)+((Number(x.actividad || 0)/maxActividad)*0.10))*100);
+  });
+  arr.sort((a,b)=>b.porcentaje-a.porcentaje || b.facturacion-a.facturacion || b.derivaciones-a.derivaciones || b.viajes-a.viajes);
+  return arr;
+}
+
+async function calcularRankingSemanalLiviano(periodo = getPeriodoTrabajoActual(today())){
+  const cacheKey = `ranking_fast_${periodo.id}`;
+  const choferes = await getChoferesRankingActivosRapido();
+  const stats = {};
+  choferes.forEach(c=>{
+    stats[c.id] = {id:c.id,nombre:c.nombre || c.id,viajes:0,derivaciones:0,facturacion:0,porcentaje:0,actividad:0};
   });
 
-  // Ranking v2.8.30:
-  // 1) Primero lee acumulados semanales para abrir rápido.
-  // 2) Después verifica con viajes reales del período actual.
-  // Esto evita que el ranking quede congelado si algún acumulado no se actualizó.
   try{
     const acumSnap = await withTimeout(getDocs(query(
       collection(db,"acumulados_semanales"),
       where("periodoId","==",periodo.id)
-    )), 4500, "El ranking tardó demasiado cargando acumulados.");
+    )), 2500, "El ranking tardó cargando acumulados.");
 
     acumSnap.forEach(d=>{
       const a = d.data();
@@ -1889,73 +1966,15 @@ async function calcularRankingSemanalLiviano(periodo = getPeriodoTrabajoActual(t
       stats[choferId].derivaciones = Number(a.derivaciones || 0);
     });
   }catch(e){
-    console.warn("Ranking por acumulados no disponible; se verifica con viajes reales", e);
+    console.warn("Ranking por acumulados no disponible; uso caché si existe", e);
+    const cached = cacheGet(cacheKey, 30 * 60 * 1000);
+    if(cached && cached.ranking) return cached;
   }
 
-  // Verificación real de la semana activa.
-  // Se ejecuta solo al tocar Ranking, no al iniciar la app, por eso no vuelve lenta la pantalla principal.
-  try{
-    const viajesSnap = await withTimeout(getDocs(query(
-      collection(db,"viajes"),
-      where("periodoId","==",periodo.id)
-    )), 7000, "El ranking tardó demasiado verificando viajes reales.");
-
-    const reales = {};
-    viajesSnap.forEach(d=>{
-      const v = d.data();
-      if(!perteneceAlPeriodo(v, periodo)) return;
-      if(!stats[v.chofer]) return;
-      if(!reales[v.chofer]) reales[v.chofer] = {viajes:0,facturacion:0};
-      reales[v.chofer].viajes += 1;
-      reales[v.chofer].facturacion += Number(v.monto || 0);
-    });
-
-    Object.keys(reales).forEach(choferId=>{
-      // Si hay diferencias, manda el dato real. Esto corrige el caso de chofer con viajes cargados
-      // pero acumulado viejo/caché no actualizado.
-      stats[choferId].viajes = reales[choferId].viajes;
-      stats[choferId].facturacion = reales[choferId].facturacion;
-    });
-  }catch(e){
-    console.warn("No se pudieron verificar viajes reales para ranking; se usa acumulado", e);
-  }
-
-  try{
-    const derivSnap = await withTimeout(getDocs(query(
-      collection(db,"derivaciones"),
-      where("periodoId","==",periodo.id)
-    )), 5000, "El ranking tardó demasiado verificando derivaciones.");
-
-    const derivReales = {};
-    derivSnap.forEach(d=>{
-      const x = d.data();
-      if(x.estado !== "aceptado") return;
-      if(!stats[x.origen]) return;
-      derivReales[x.origen] = Number(derivReales[x.origen] || 0) + 1;
-    });
-    Object.keys(derivReales).forEach(choferId=>{
-      stats[choferId].derivaciones = derivReales[choferId];
-    });
-  }catch(e){
-    console.warn("No se pudieron verificar derivaciones reales para ranking; se usa acumulado", e);
-  }
-
-  const arr = Object.values(stats);
-  arr.forEach(x=>{
-    x.actividad = (Number(x.viajes || 0) > 0 || Number(x.derivaciones || 0) > 0 || Number(x.facturacion || 0) > 0) ? 1 : 0;
-  });
-  const maxViajes = Math.max(1,...arr.map(x=>x.viajes));
-  const maxDeriv = Math.max(1,...arr.map(x=>x.derivaciones));
-  const maxFact = Math.max(1,...arr.map(x=>x.facturacion));
-  const maxActividad = Math.max(1,...arr.map(x=>x.actividad));
-
-  arr.forEach(x=>{
-    // Ranking EXPLORA: prioriza facturación y premia fuerte las derivaciones para que los viajes queden dentro de la red.
-    x.porcentaje = Math.round((((x.facturacion/maxFact)*0.50)+((x.viajes/maxViajes)*0.20)+((x.derivaciones/maxDeriv)*0.20)+((x.actividad/maxActividad)*0.10))*100);
-  });
-
-  arr.sort((a,b)=>b.porcentaje-a.porcentaje || b.facturacion-a.facturacion || b.viajes-a.viajes);
-  return {periodo,ranking:arr};
+  const arr = calcularPorcentajeRanking(Object.values(stats));
+  const data = {periodo, ranking: arr, actualizado: Date.now(), modo:"acumulados_fast"};
+  cacheSet(cacheKey, data);
+  return data;
 }
 
 
@@ -2054,9 +2073,23 @@ function renderDriverLeaderBonus(data, lider, yo, yoIndex){
 
 window.openRankingPanel = async function(){
   showPanel("rankingPanel");
-  $("driverRankingList").innerHTML = "Calculando ranking...";
   try{
     const periodoRanking = await getPeriodoOperativoChofer(currentUserId);
+    const cacheKey = `ranking_fast_${periodoRanking.id}`;
+    const cached = cacheGet(cacheKey, 30 * 60 * 1000);
+
+    if(cached && cached.ranking){
+      renderRankingLiviano(cached,"driverRankingList");
+      const liderCache = cached.ranking[0];
+      const yoIndexCache = cached.ranking.findIndex(x=>x.id === currentUserId);
+      const yoCache = yoIndexCache >= 0 ? cached.ranking[yoIndexCache] : null;
+      if(liderCache) renderDriverLeaderBonus(cached, liderCache, yoCache, yoIndexCache);
+      const box = $("driverRankingList");
+      if(box) box.insertAdjacentHTML("afterbegin", `<div class="msg ok">Ranking abierto rápido. Actualizando en segundo plano...</div>`);
+    }else{
+      $("driverRankingList").innerHTML = "Calculando ranking rápido...";
+    }
+
     const data = await calcularRankingSemanalLiviano(periodoRanking);
     renderRankingLiviano(data,"driverRankingList");
 
