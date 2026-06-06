@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.59
-Build: 2026-06-06-ESTABLE-CIERRE-PENDIENTE-POST-SABADO-002
+Version: 2.8.60
+Build: 2026-06-06-ESTABLE-CIERRE-ACEPTACION-GLOBAL-003
 Fecha: 06/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
@@ -33,12 +33,13 @@ Cambios:
 - Limpieza técnica final: versiones visibles unificadas, función duplicada eliminada, cierre manual viejo removido, sin botones antiguos ocultos y limpieza automática de caché antiguo.
 - Corrección: cierre semanal pendiente ahora se detecta aunque el chofer abra la app domingo/lunes o días posteriores.
 - Corrección: Ranking semanal visible ahora usa período global activo único para todos los choferes; el cierre pendiente queda separado para no mostrar semanas distintas por perfil.
+- Corrección: si existe un cierre semanal pero el chofer no lo aceptó, sigue apareciendo como pendiente para todos los choferes.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.59 · Build 2026-06-06-ESTABLE-CIERRE-PENDIENTE-POST-SABADO-002</title>
+<title>EXPLORA v2.8.60 · Build 2026-06-06-ESTABLE-CIERRE-ACEPTACION-GLOBAL-003</title>
 <style>
 :root{
   --bg:#080808;
@@ -498,7 +499,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.59</b> · Build 2026-06-06-ESTABLE-CIERRE-PENDIENTE-POST-SABADO-002</div>
+    <div class="build-version"><b>v2.8.60</b> · Build 2026-06-06-ESTABLE-CIERRE-ACEPTACION-GLOBAL-003</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -511,7 +512,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.59</b> · ESTABLE-CIERRE-PENDIENTE-POST-SABADO-002</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.60</b> · ESTABLE-CIERRE-ACEPTACION-GLOBAL-003</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -694,7 +695,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.59</b> · ESTABLE-CIERRE-PENDIENTE-POST-SABADO-002</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.60</b> · ESTABLE-CIERRE-ACEPTACION-GLOBAL-003</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -2165,19 +2166,26 @@ function periodoCerradoYaVencido(periodo, dateStr = today()){
   return periodo.closeDate === dateStr && afterSaturday0001(dateStr);
 }
 
+function cierreSemanalAceptadoPorChofer(data){
+  // Un cierre solo deja de estar pendiente cuando el chofer lo aceptó explícitamente.
+  // Si el documento existe pero falta aceptadoPorChofer:true, debe seguir apareciendo.
+  // Esto evita que Ariel, Marcelo, David o cualquier chofer salten el cierre por un
+  // cierre creado parcialmente, por comprobante pendiente o por caché vieja.
+  return !!(data && data.aceptadoPorChofer === true);
+}
+
 async function getPeriodoCierrePendienteNoConfirmado(choferId=currentUserId, dateStr=today()){
-  // Detecta cierres pendientes aunque el chofer no haya abierto la app el sábado.
-  // Revisa semanas ya vencidas desde la más reciente hacia atrás, con límite corto
-  // para mantener la app rápida en teléfonos/tablets de bajos recursos.
+  // Detecta cierres pendientes para TODOS los choferes con la misma regla:
+  // revisar semanas vencidas desde la más reciente hacia atrás y mostrar la primera
+  // que no tenga cierre aceptado por el chofer.
   if(!choferId) return null;
 
-  const cacheKey = `periodo_cierre_pendiente_${choferId}_${dateStr}`;
-  const cached = cacheGet(cacheKey, 90 * 1000);
+  const cacheKey = `periodo_cierre_pendiente_v2_${choferId}_${dateStr}`;
+  const cached = cacheGet(cacheKey, 45 * 1000);
   if(cached && cached.periodoId){
     const p = periodoDesdeIdPago(cached.periodoId);
     if(p && periodoCerradoYaVencido(p, dateStr)) return p;
   }
-  if(cached && cached.sinPendiente) return null;
 
   let cursor = periodoAnterior(getPeriodoTrabajoActual(dateStr));
   for(let i=0; i<8; i++){
@@ -2185,10 +2193,11 @@ async function getPeriodoCierrePendienteNoConfirmado(choferId=currentUserId, dat
       cursor = periodoAnterior(cursor);
       continue;
     }
+
     const cierreId = `${choferId}_${cursor.id}`;
     try{
-      const snap = await withTimeout(getDoc(doc(db,"cierres_semanales",cierreId)), 1800, "verificación de cierre pendiente");
-      if(!snap.exists()){
+      const snap = await withTimeout(getDoc(doc(db,"cierres_semanales",cierreId)), 2200, "verificación de cierre pendiente");
+      if(!snap.exists() || !cierreSemanalAceptadoPorChofer(snap.data())){
         cacheSet(cacheKey, {periodoId:cursor.id});
         return cursor;
       }
@@ -2196,10 +2205,10 @@ async function getPeriodoCierrePendienteNoConfirmado(choferId=currentUserId, dat
       console.warn("No se pudo verificar cierre pendiente anterior", e);
       return null;
     }
+
     cursor = periodoAnterior(cursor);
   }
 
-  cacheSet(cacheKey, {sinPendiente:true});
   return null;
 }
 
