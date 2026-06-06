@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.38
-Build: 2026-06-06-COMPROBANTES-PAGOS-001
+Version: 2.8.40
+Build: 2026-06-06-VALIDACION-FIX-001
 Fecha: 05/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
@@ -17,6 +17,8 @@ Cambios:
 - Formato automático con punto en campos numéricos: 30.000 en lugar de 30000, sin afectar cálculos internos.
 - Reasignación segura de vehículo: al asignar un auto existente a otro chofer conserva Mi auto, km y mantenimiento.
 - Comprobantes obligatorios para pagos semanales: solo carga quien debe pagar, con imagen comprimida y carga bajo demanda.
+- Cierre semanal flexible: permite avanzar con pago pendiente, mantiene alerta, suspende bono a las 24 h si el chofer no sube comprobante.
+- Ranking conserva posiciones, marca suspendidos del bono y asigna el bono al siguiente elegible.
 - Corrección período semanal: si un chofer queda con una semana futura por pruebas o error, se reajusta automáticamente a la semana real sin romper cierres confirmados.
 - Ranking actualizado: 50% facturación, 20% viajes, 20% derivaciones, 10% actividad para incentivar derivar dentro de EXPLORA.
 - Optimización: Nuevo servicio abre desde caché/default y verifica km diario con cache local.
@@ -30,7 +32,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.38 · Build 2026-06-06-COMPROBANTES-PAGOS-001</title>
+<title>EXPLORA v2.8.40 · Build 2026-06-06-VALIDACION-FIX-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -373,6 +375,48 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 .ranking-bonus-box .bonus-money{color:#f3d77a;font-weight:900;margin-top:5px}
 .ranking-bonus-box small{color:var(--muted)}
 
+.cierre-pendiente-banner{
+  background:rgba(239,68,68,.12);
+  border:1px solid rgba(239,68,68,.42);
+  color:#fecaca;
+  border-radius:18px;
+  padding:14px;
+  margin:14px 0;
+}
+.cierre-pendiente-banner.ok{
+  background:rgba(34,197,94,.12);
+  border-color:rgba(34,197,94,.42);
+  color:#86efac;
+}
+.cierre-pendiente-banner.warn{
+  background:rgba(245,158,11,.12);
+  border-color:rgba(245,158,11,.42);
+  color:#fbbf24;
+}
+.ranking-suspended{
+  border-color:rgba(239,68,68,.62)!important;
+  background:rgba(239,68,68,.08)!important;
+}
+.bonus-winner-box{
+  background:rgba(34,197,94,.13);
+  border:1px solid rgba(34,197,94,.38);
+  border-radius:14px;
+  padding:10px;
+  margin-top:10px;
+  color:#86efac;
+}
+.suspended-badge{
+  display:inline-flex;
+  margin-top:7px;
+  padding:5px 8px;
+  border-radius:999px;
+  background:rgba(239,68,68,.16);
+  border:1px solid rgba(239,68,68,.42);
+  color:#fecaca;
+  font-size:12px;
+  font-weight:900;
+}
+
 .ranking-rules-toggle{
   margin-top:10px;
   padding:10px 12px;
@@ -429,7 +473,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.38</b> · Build 2026-06-06-COMPROBANTES-PAGOS-001</div>
+    <div class="build-version"><b>v2.8.40</b> · Build 2026-06-06-VALIDACION-FIX-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -442,7 +486,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.38</b> · COMPROBANTES-PAGOS-001</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.40</b> · VALIDACION-FIX-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -477,6 +521,8 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <h3>📥 Servicios recibidos</h3>
       <div id="derivationInboxList"></div>
     </div>
+
+    <div id="cierrePagoPendienteAlert" class="hidden"></div>
 
     <div class="grid">
       <button id="btnNuevoServicio" class="bigbtn" type="button" onclick="openNewService()"><span class="icon">🚕</span><strong>Nuevo servicio</strong></button>
@@ -623,7 +669,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.38</b> · COMPROBANTES-PAGOS-001</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.40</b> · VALIDACION-FIX-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -2085,6 +2131,10 @@ async function calcularRankingSemanalLiviano(periodo = getPeriodoTrabajoActual(t
     console.warn("Ranking: derivaciones reales no disponibles", e);
     return {};
   });
+  const suspensionesPromise = getSuspensionesBono(periodo).catch(e=>{
+    console.warn("Ranking: suspensiones no disponibles", e);
+    return {};
+  });
 
   try{
     const acumSnap = await withTimeout(getDocs(query(
@@ -2114,8 +2164,15 @@ async function calcularRankingSemanalLiviano(periodo = getPeriodoTrabajoActual(t
     stats[choferId].derivaciones = Math.max(Number(stats[choferId].derivaciones || 0), Number(derivacionesReales[choferId] || 0));
   });
 
+  const suspensionesBono = await suspensionesPromise;
   const arr = calcularPorcentajeRanking(Object.values(stats));
-  const data = {periodo, ranking: arr, actualizado: Date.now(), modo:"acumulados_derivaciones_fast"};
+  arr.forEach(x=>{
+    const susp = suspensionesBono && suspensionesBono[x.id];
+    x.suspendidoBono = !!susp;
+    x.motivoSuspension = susp ? susp.motivo : "";
+  });
+  const ganadorBono = arr.find(x=>!x.suspendidoBono) || null;
+  const data = {periodo, ranking: arr, ganadorBono, actualizado: Date.now(), modo:"acumulados_derivaciones_fast"};
   cacheSet(cacheKey, data);
   return data;
 }
@@ -2138,12 +2195,14 @@ function renderRankingLiviano(data,targetId){
   }
 
   const lider = data.ranking[0];
+  const ganadorBono = data.ganadorBono || data.ranking.find(x=>!x.suspendidoBono) || null;
 
   let html = `
     <div class="leader-card">
-      <h3>🏆 Líder semanal</h3>
-      <b>${lider.nombre}</b><br>
-      <small>${lider.porcentaje}% · ${data.periodo.start} al ${data.periodo.end}</small><br>
+      <h3>🏆 Ranking semanal</h3>
+      <b>Líder por puntos: ${lider.nombre}</b><br>
+      <small>${lider.porcentaje}% · ${data.periodo.start} al ${data.periodo.end}</small>
+      ${ganadorBono ? `<div class="bonus-winner-box">👑 Ganador provisional del bono: <b>${ganadorBono.nombre}</b><br><small>${money(50000)} · solo choferes elegibles</small></div>` : `<div class="pending-box">No hay chofer elegible para el bono por ahora.</div>`}
       <button class="ranking-rules-toggle" type="button" onclick="toggleRankingRules(this)">📖 Ver reglas</button>
       <div class="ranking-rules-box hidden">
         <b>🏆 Cómo funciona el ranking</b><br>
@@ -2156,6 +2215,7 @@ function renderRankingLiviano(data,targetId){
         </ul>
         <br><b>💰 Bono semanal:</b> el chofer que finaliza primero en el cierre semanal recibe ${money(50000)}.
         <br><br><b>🔄 Derivaciones:</b> cuando una derivación es aceptada y completada, el chofer que deriva suma puntos importantes por mantener el viaje dentro de EXPLORA; el chofer que realiza el viaje suma viaje y facturación. Las derivaciones rechazadas o ignoradas no suman.
+        <br><br><b>📎 Comprobantes:</b> si el chofer debe transferir a David y no sube comprobante dentro de las 24 h posteriores al cierre, sigue apareciendo en el ranking pero queda marcado como no elegible para el bono de esa semana.
         <br><br><b>⚠️ Empates:</b> gana quien tenga mayor facturación. Si persiste el empate, gana quien tenga más viajes.
       </div>
     </div>
@@ -2163,10 +2223,11 @@ function renderRankingLiviano(data,targetId){
 
   data.ranking.forEach((r,i)=>{
     html += `
-      <div class="ranking-row">
+      <div class="ranking-row ${r.suspendidoBono ? 'ranking-suspended' : ''}">
         <b>${i+1}. ${r.nombre}</b><br>
         <small>Facturación: ${money(r.facturacion)} · Viajes: ${r.viajes} · Derivaciones: ${r.derivaciones}</small><br>
         <b style="color:var(--gold)">${r.porcentaje}%</b>
+        ${r.suspendidoBono ? `<div class="suspended-badge">🚫 No elegible para bono semanal · ${r.motivoSuspension || 'comprobante pendiente'}</div>` : ""}
         <div class="progress"><span style="width:${Math.min(100,r.porcentaje)}%"></span></div>
       </div>
     `;
@@ -2180,26 +2241,40 @@ function renderDriverLeaderBonus(data, lider, yo, yoIndex){
   if(!target || !lider) return;
 
   const bono = money(50000);
-  if(yo && lider.id === currentUserId){
+  const ganadorBono = data.ganadorBono || (data.ranking || []).find(x=>!x.suspendidoBono) || null;
+
+  if(yo && yo.suspendidoBono){
     target.innerHTML = `
       <div class="ranking-bonus-box">
-        <b>👑 Vas primero</b><br>
+        <b>🚫 No elegible para bono semanal</b><br>
         <div class="bonus-money">💰 Bono semanal: ${bono}</div>
-        <small>Liderás el ranking de esta semana · ${yo.porcentaje}%</small>
+        <small>Motivo: ${yo.motivoSuspension || 'comprobante pendiente'}.</small><br>
+        <small>Tus viajes y facturación siguen registrándose normalmente.</small>
+      </div>
+    `;
+    return;
+  }
+
+  if(yo && ganadorBono && ganadorBono.id === currentUserId){
+    target.innerHTML = `
+      <div class="ranking-bonus-box">
+        <b>👑 Vas ganando el bono</b><br>
+        <div class="bonus-money">💰 Bono semanal: ${bono}</div>
+        <small>Puesto por puntos: ${yoIndex + 1}° · ${yo.porcentaje}%</small>
       </div>
     `;
     return;
   }
 
   if(yo){
-    const diferenciaFacturacion = Math.max(0, Number(lider.facturacion || 0) - Number(yo.facturacion || 0));
-    const medalla = yoIndex === 1 ? "🥈" : (yoIndex === 2 ? "🥉" : "🏁");
+    const diferenciaFacturacion = Math.max(0, Number((ganadorBono || lider).facturacion || 0) - Number(yo.facturacion || 0));
+    const medalla = yoIndex === 0 ? "🥇" : yoIndex === 1 ? "🥈" : (yoIndex === 2 ? "🥉" : "🏁");
     target.innerHTML = `
       <div class="ranking-bonus-box">
         <b>${medalla} Vas ${yoIndex + 1}°</b><br>
         <div class="bonus-money">💰 Bono semanal: ${bono}</div>
-        <small>Líder: ${lider.nombre} · ${lider.porcentaje}%</small><br>
-        <small>${diferenciaFacturacion > 0 ? `Diferencia estimada de facturación con el líder: ${money(diferenciaFacturacion)}.` : "Estás muy cerca del líder."}</small>
+        <small>Ganador provisional del bono: ${ganadorBono ? ganadorBono.nombre : 'sin elegible'}.</small><br>
+        <small>${diferenciaFacturacion > 0 ? `Diferencia estimada de facturación: ${money(diferenciaFacturacion)}.` : "Estás muy cerca."}</small>
       </div>
     `;
     return;
@@ -2255,7 +2330,7 @@ async function getGanadorSemanalRapido(periodo){
 
   try{
     const data = await withTimeout(calcularRankingSemanalLiviano(periodo), 2800, "Ranking semanal no disponible rápido.");
-    const ganador = data && data.ranking ? data.ranking[0] : null;
+    const ganador = data && data.ganadorBono ? data.ganadorBono : (data && data.ranking ? data.ranking.find(x=>!x.suspendidoBono) : null);
     if(ganador) cacheSet(key, ganador);
     return ganador || cached || null;
   }catch(e){
@@ -2352,6 +2427,188 @@ async function calcularCierreSemanalLiviano(chofer, periodo, forceRebuild=false)
 }
 
 
+
+function periodoAnterior(periodo){
+  const end = addDays(periodo.start, -1);
+  const start = addDays(end, -6);
+  return {start,end,closeDate:end,id:`${start}_${end}`};
+}
+
+function pagoDesdeCierre(c){
+  if(!c || !c.periodo) return null;
+  let sentido = "sin_diferencia";
+  let monto = 0;
+  if(Number(c.choferDebe || 0) > 0){
+    sentido = "chofer_a_david";
+    monto = Number(c.choferDebe || 0);
+  }else if(Number(c.davidDebe || 0) > 0){
+    sentido = "david_a_chofer";
+    monto = Number(c.davidDebe || 0);
+  }
+  const proximo = getPeriodoSiguiente(c.periodo);
+  return {
+    chofer: c.chofer || currentUserId,
+    periodoId: c.periodo.id,
+    periodoInicio: c.periodo.start,
+    periodoFin: c.periodo.end,
+    cierreObligatorio: c.periodo.closeDate,
+    afectaPeriodoBonoId: proximo.id,
+    afectaPeriodoBonoInicio: proximo.start,
+    afectaPeriodoBonoFin: proximo.end,
+    suspenderDesde: addDays(c.periodo.closeDate, 1),
+    sentido,
+    monto:Number(monto || 0),
+    pagado: sentido === "sin_diferencia",
+    vistoPorChofer: false,
+    comprobanteObligatorio: sentido !== "sin_diferencia",
+    fuente:"cierre_semanal"
+  };
+}
+
+async function asegurarPagoSemanalPendiente(c){
+  const pagoBase = pagoDesdeCierre(c);
+  if(!pagoBase) return null;
+  const id = comprobanteId(pagoBase.chofer, pagoBase.periodoId);
+  const actual = await getEstadoPagoSemanal(pagoBase.chofer, pagoBase.periodoId);
+  if(actual && actual.pagado === true) return actual;
+  const data = {
+    ...pagoBase,
+    creadoFecha: actual && actual.creadoFecha ? actual.creadoFecha : today(),
+    creadoHora: actual && actual.creadoHora ? actual.creadoHora : new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
+    actualizado: serverTimestamp()
+  };
+  await setDoc(doc(db,"pagos_semanales",id), data, {merge:true});
+  return data;
+}
+
+function pagoPendienteSuspendido(pago, dateStr=today()){
+  if(!pago || pago.pagado === true) return false;
+  if(pago.sentido !== "chofer_a_david") return false;
+  const suspenderDesde = pago.suspenderDesde || addDays(String(pago.cierreObligatorio || pago.periodoFin || today()).slice(0,10), 1);
+  return dateStr >= suspenderDesde;
+}
+
+async function getSuspensionesBono(periodo){
+  const cacheKey = `ranking_suspensiones_bono_${periodo.id}`;
+  const cached = cacheGet(cacheKey, 2 * 60 * 1000);
+  try{
+    const snap = await withTimeout(getDocs(query(collection(db,"pagos_semanales"), where("afectaPeriodoBonoId","==",periodo.id))), 1400, "Suspensiones de bono tardaron.");
+    const map = {};
+    snap.forEach(d=>{
+      const p = d.data();
+      if(pagoPendienteSuspendido(p)){
+        map[p.chofer] = {motivo:"Comprobante de cierre pendiente", pagoId:d.id, monto:Number(p.monto || 0), periodoId:p.periodoId};
+      }
+    });
+    cacheSet(cacheKey, map);
+    return map;
+  }catch(e){
+    console.warn("No se pudieron leer suspensiones de bono", e);
+    return cached || {};
+  }
+}
+
+async function getPagosPendientesChofer(force=false){
+  if(!currentUserId) return [];
+  const cacheKey = "pagos_pendientes_chofer_" + currentUserId;
+  const cached = cacheGet(cacheKey, 2 * 60 * 1000);
+  if(cached && !force) return cached;
+  try{
+    const snap = await withTimeout(getDocs(query(collection(db,"pagos_semanales"), where("chofer","==",currentUserId))), 3500, "Pagos pendientes tardaron.");
+    const items = [];
+    snap.forEach(d=>{
+      const p = {id:d.id, ...d.data()};
+      const pendientePago = p.pagado !== true;
+      const davidPagoSinVisto = p.sentido === "david_a_chofer" && p.pagado === true && p.vistoPorChofer !== true;
+      if(pendientePago || davidPagoSinVisto) items.push(p);
+    });
+    items.sort((a,b)=>String(b.periodoId || "").localeCompare(String(a.periodoId || "")));
+    cacheSet(cacheKey, items);
+    return items;
+  }catch(e){
+    console.warn("No se pudieron cargar pagos pendientes del chofer", e);
+    return cached || [];
+  }
+}
+
+async function checkPagosPendientesChoferAutomatico(){
+  const box = $("cierrePagoPendienteAlert");
+  if(!box) return;
+  const items = await getPagosPendientesChofer(false);
+  renderPagosPendientesChofer(items);
+}
+
+function renderPagosPendientesChofer(items){
+  const box = $("cierrePagoPendienteAlert");
+  if(!box) return;
+  if(!items || !items.length){
+    box.className = "hidden";
+    box.innerHTML = "";
+    return;
+  }
+  const html = items.map(p=>{
+    const semana = String(p.periodoId || "").replace("_"," al ");
+    if(p.sentido === "chofer_a_david" && p.pagado !== true){
+      const suspendido = pagoPendienteSuspendido(p);
+      return `
+        <div class="cierre-pendiente-banner ${suspendido ? '' : 'warn'}">
+          <b>📎 Cierre semanal pendiente</b><br>
+          <small>Semana: ${semana}</small><br>
+          <small>Debés transferir a David: <b>${money(p.monto)}</b></small><br>
+          <small>${suspendido ? '🚫 Ya estás suspendido del bono semanal hasta la próxima semana por no subir el comprobante.' : 'Si no realizás el pago hoy, mañana serás suspendido del bono semanal.'}</small>
+          <div style="margin-top:10px">
+            <input id="compPendChofer_${safeId(p.id)}" class="file-input" type="file" accept="image/*" capture="environment" />
+            <button class="btn-gold" style="margin-top:8px" onclick="subirComprobantePendienteChofer('${p.periodoId}', ${Math.round(Number(p.monto || 0))}, 'compPendChofer_${safeId(p.id)}')">Subir comprobante</button>
+          </div>
+        </div>`;
+    }
+    if(p.sentido === "david_a_chofer" && p.pagado !== true){
+      return `
+        <div class="cierre-pendiente-banner warn">
+          <b>📎 David aún no me pagó</b><br>
+          <small>Semana: ${semana}</small><br>
+          <small>Monto pendiente: <b>${money(p.monto)}</b></small><br>
+          <small>Podés seguir trabajando normalmente. No afecta tu bono porque el pago depende de David.</small>
+        </div>`;
+    }
+    if(p.sentido === "david_a_chofer" && p.pagado === true && p.vistoPorChofer !== true){
+      return `
+        <div class="cierre-pendiente-banner ok">
+          <b>✅ David ya me pagó</b><br>
+          <small>Semana: ${semana} · Monto: <b>${money(p.monto)}</b></small>
+          ${comprobanteLinkHtml(p)}
+          <button class="btn-gold" style="margin-top:8px" onclick="confirmarPagoDavidVisto('${p.id}')">Guardar y ocultar aviso</button>
+        </div>`;
+    }
+    return "";
+  }).join("");
+  box.className = "";
+  box.innerHTML = html;
+}
+
+window.subirComprobantePendienteChofer = async function(periodoId, monto, inputId){
+  const file = $(inputId) && $(inputId).files[0];
+  try{
+    await subirComprobantePago({chofer:currentUserId, periodoId, sentido:"chofer_a_david", monto, file, marcadoPor:"chofer"});
+    cacheRemove("pagos_pendientes_chofer_" + currentUserId);
+    cacheRemove("comprobantes_chofer_" + currentUserId);
+    await checkPagosPendientesChoferAutomatico();
+    alert("Comprobante cargado correctamente.");
+  }catch(e){
+    alert("No se pudo subir el comprobante: " + e.message);
+  }
+}
+
+window.confirmarPagoDavidVisto = async function(pagoId){
+  try{
+    await setDoc(doc(db,"pagos_semanales",pagoId),{vistoPorChofer:true, vistoFecha:today(), vistoHora:new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}), actualizado:serverTimestamp()},{merge:true});
+    cacheRemove("pagos_pendientes_chofer_" + currentUserId);
+    await checkPagosPendientesChoferAutomatico();
+  }catch(e){
+    alert("No se pudo guardar la confirmación: " + e.message);
+  }
+}
+
 function comprobanteId(chofer, periodoId){
   return `${chofer}_${periodoId}`;
 }
@@ -2416,6 +2673,7 @@ async function subirComprobantePago({chofer, periodoId, sentido, monto, file, ma
     monto:Number(monto || 0),
     pagado:true,
     marcadoPor,
+    vistoPorChofer: sentido === "david_a_chofer" ? false : true,
     fechaPago:data.fecha,
     horaPago:data.hora,
     comprobanteUrl:url,
@@ -2493,14 +2751,10 @@ async function loadComprobantesChofer(force=false){
   const cached = cacheGet(cacheKey, 10 * 60 * 1000);
   if(cached && !force){ renderComprobantesLista(box, cached, true); return; }
   box.innerHTML = `<div class="msg ok">Cargando comprobantes...</div>`;
-  const snap = await withTimeout(getDocs(query(collection(db,"comprobantes_pagos"), where("chofer","==",currentUserId))), 4500, "Los comprobantes tardaron demasiado.");
+  const snap = await withTimeout(getDocs(query(collection(db,"pagos_semanales"), where("chofer","==",currentUserId))), 4500, "Los comprobantes tardaron demasiado.");
   const items = [];
-  snap.forEach(d=>{
-    const x = d.data();
-    if(x.marcadoPor !== "chofer") return;
-    items.push({id:d.id,...x});
-  });
-  items.sort((a,b)=>String(b.periodoId || "").localeCompare(String(a.periodoId || "")) || String(b.fecha || "").localeCompare(String(a.fecha || "")));
+  snap.forEach(d=>items.push({id:d.id,...d.data()}));
+  items.sort((a,b)=>String(b.periodoId || "").localeCompare(String(a.periodoId || "")) || String(b.fechaPago || b.creadoFecha || "").localeCompare(String(a.fechaPago || a.creadoFecha || "")));
   cacheSet(cacheKey, items);
   renderComprobantesLista(box, items, true);
 }
@@ -2512,31 +2766,47 @@ async function loadComprobantesAdmin(force=false){
   const cached = cacheGet(cacheKey, 10 * 60 * 1000);
   if(cached && !force){ renderComprobantesLista(box, cached, false); return; }
   box.innerHTML = `<div class="msg ok">Cargando comprobantes...</div>`;
-  const snap = await withTimeout(getDocs(collection(db,"comprobantes_pagos")), 6000, "Los comprobantes tardaron demasiado.");
+  const snap = await withTimeout(getDocs(collection(db,"pagos_semanales")), 6000, "Los comprobantes tardaron demasiado.");
   const items = [];
   snap.forEach(d=>items.push({id:d.id,...d.data()}));
-  items.sort((a,b)=>String(b.periodoId || "").localeCompare(String(a.periodoId || "")) || String(b.fecha || "").localeCompare(String(a.fecha || "")));
-  const limited = items.slice(0,60);
+  items.sort((a,b)=>String(b.periodoId || "").localeCompare(String(a.periodoId || "")) || String(b.fechaPago || b.creadoFecha || "").localeCompare(String(a.fechaPago || a.creadoFecha || "")));
+  const limited = items.slice(0,80);
   cacheSet(cacheKey, limited);
   renderComprobantesLista(box, limited, false);
 }
 
 function renderComprobantesLista(box, items, soloPropios){
   if(!items || !items.length){
-    box.innerHTML = `<div class="paid-box">No hay comprobantes cargados.</div>`;
+    box.innerHTML = `<div class="paid-box">No hay comprobantes cargados ni pagos pendientes.</div>`;
     return;
   }
   box.innerHTML = items.map(x=>{
     const sentidoTxt = x.sentido === "chofer_a_david" ? "Chofer → David" : x.sentido === "david_a_chofer" ? "David → Chofer" : "Sin diferencia";
     const url = x.url || x.comprobanteUrl || "";
+    const semana = String(x.periodoId || "").replace("_"," al ");
+    const estado = x.pagado === true ? "✅ Pagado" : "⏳ Pendiente";
+    let accion = "";
+    if(!soloPropios && x.sentido === "david_a_chofer" && x.pagado !== true){
+      const inputId = `compAdminLista_${safeId(x.id)}`;
+      accion = uploadComprobanteHtml({
+        inputId,
+        buttonText:"Subir comprobante de David",
+        onClick:`subirComprobantePagoAdmin('${x.chofer}','${x.periodoId}','david_a_chofer',${Math.round(Number(x.monto || 0))},'${inputId}')`,
+        nota:"David debe pagar este cierre. Subí la foto comprimida para marcarlo como pagado."
+      });
+    }else if(url){
+      accion = `<button class="btn-dark" style="margin-top:10px" onclick="window.open('${url}','_blank')">Ver foto</button>`;
+    }else if(x.sentido === "chofer_a_david" && x.pagado !== true){
+      accion = `<div class="pending-box" style="margin-top:10px">Pendiente de comprobante del chofer.${pagoPendienteSuspendido(x) ? '<br>🚫 Suspendido del bono semanal.' : ''}</div>`;
+    }
     return `
       <div class="comprobante-box">
-        <b>${sentidoTxt}</b><br>
+        <b>${sentidoTxt} · ${estado}</b><br>
         <small>Chofer: ${x.chofer || ""}</small><br>
-        <small>Semana: ${String(x.periodoId || "").replace("_"," al ")}</small><br>
-        <small>Monto: ${money(x.monto)} · Subido por: ${x.marcadoPor || ""}</small><br>
-        <small>${x.fecha || ""} ${x.hora || ""}</small>
-        ${url ? `<button class="btn-dark" style="margin-top:10px" onclick="window.open('${url}','_blank')">Ver foto</button>` : `<div class="msg err">Sin imagen disponible</div>`}
+        <small>Semana: ${semana}</small><br>
+        <small>Monto: ${money(x.monto)} · ${x.marcadoPor ? 'Subido por: ' + x.marcadoPor : 'Sin comprobante cargado'}</small><br>
+        <small>${x.fechaPago || x.creadoFecha || ""} ${x.horaPago || x.creadoHora || ""}</small>
+        ${accion}
       </div>
     `;
   }).join("");
@@ -2546,6 +2816,10 @@ function renderCierreSemanal(c){
   const pago = c.pagoSemanal || null;
   const yaPagado = pago && pago.pagado === true;
   const puedeCerrarHoy = puedeCerrarPeriodo(c.periodo);
+
+  if((Number(c.choferDebe || 0) > 0 || Number(c.davidDebe || 0) > 0) && !(c.pagoSemanal && c.pagoSemanal.pagado === true)){
+    asegurarPagoSemanalPendiente(c).catch(e=>console.warn("No se pudo guardar pago pendiente", e));
+  }
 
   const resultado = c.choferDebe > 0
     ? `<div class="msg err"><b>El chofer debe depositar a David:</b><br>${money(c.choferDebe)}</div>`
@@ -2564,10 +2838,10 @@ function renderCierreSemanal(c){
           inputId:"comprobantePagoChoferInput",
           buttonText:"Subir comprobante y marcar pagado",
           onClick:"subirComprobantePagoChofer()",
-          nota:"Como el chofer debe transferir a David, el comprobante lo carga obligatoriamente el chofer."
-        });
+          nota:"Como el chofer debe transferir a David, el comprobante lo carga el chofer. Puede avanzar, pero si no sube comprobante dentro de 24 h queda suspendido del bono semanal."
+        }) + `<div class="pending-box" style="margin-top:10px">⚠️ Podés confirmar y seguir operando, pero si no realizás el pago hoy, mañana serás suspendido del bono semanal.</div>`;
       }else{
-        pagoHtml = `<div class="pending-box" style="margin-top:10px">📎 David debe cargar el comprobante desde Admin → Comprobantes / Vehículos y choferes. El chofer no carga comprobante en este caso.</div>`;
+        pagoHtml = `<div class="pending-box" style="margin-top:10px">📎 David aún no cargó el comprobante. Podés confirmar y seguir operando normalmente; esto no afecta tu bono porque el pago depende de David.</div>`;
       }
     }else{
       pagoHtml = `<div class="pending-box" style="margin-top:10px">Pago pendiente. El comprobante se carga el sábado de cierre (${c.periodo ? c.periodo.closeDate : ""}).</div>`;
@@ -2593,9 +2867,8 @@ function renderCierreSemanal(c){
 
   if(cierreBtn){
     if(puedeCerrarHoy){
-      const requiereComprobante = (Number(c.choferDebe || 0) > 0 || Number(c.davidDebe || 0) > 0) && !(c.pagoSemanal && c.pagoSemanal.pagado === true);
-      cierreBtn.disabled = requiereComprobante;
-      cierreBtn.textContent = requiereComprobante ? "Falta comprobante obligatorio" : "Confirmar cierre e iniciar nueva semana";
+      cierreBtn.disabled = false;
+      cierreBtn.textContent = "Guardar cierre e iniciar nueva semana";
       cierreBtn.classList.remove("hidden");
     }else{
       cierreBtn.disabled = true;
@@ -2642,9 +2915,7 @@ window.confirmarCierreSemanal = async function(){
     }
     const requiereComprobante = (Number(c.choferDebe || 0) > 0 || Number(c.davidDebe || 0) > 0) && !(c.pagoSemanal && c.pagoSemanal.pagado === true);
     if(requiereComprobante){
-      msg($("cierreSemanalMsg"), "Antes de confirmar el cierre hay que cargar el comprobante obligatorio.");
-      renderCierreSemanal(c);
-      return;
+      c.pagoSemanal = await asegurarPagoSemanalPendiente(c);
     }
     const cierreId = `${currentUserId}_${c.periodo.id}`;
     const sinDiferencia = Number(c.choferDebe || 0) <= 0 && Number(c.davidDebe || 0) <= 0;
@@ -2688,6 +2959,7 @@ window.confirmarCierreSemanal = async function(){
       choferDebe: c.choferDebe,
       davidDebe: c.davidDebe,
       pagoSemanal: c.pagoSemanal || pagoAutomaticoSinDiferencia || null,
+      pagoPendiente: !!(c.pagoSemanal && c.pagoSemanal.pagado !== true),
       confirmado: true,
       creado: serverTimestamp()
     });
@@ -2730,7 +3002,8 @@ window.confirmarCierreSemanal = async function(){
     kmTodaySaved = false;
     $("cierreSemanalModal").classList.add("hidden");
     await loadTodayTrips();
-    alert("Cierre semanal confirmado correctamente. La nueva semana ya está iniciada.");
+    await checkPagosPendientesChoferAutomatico().catch(()=>{});
+    alert("Cierre semanal guardado correctamente. La nueva semana ya está iniciada.");
   }catch(e){
     msg($("cierreSemanalMsg"),"No se pudo confirmar el cierre: " + e.message);
   }finally{
@@ -4119,23 +4392,18 @@ function renderResumenSemanalAdmin(vehiculoId,c,pago){
     `;
   }else if(sentido === "sin_diferencia"){
     pagoAccion = `<div class="paid-box">✅ Sin pago pendiente</div>`;
-  }else if(puedeCerrarHoy){
-    if(sentido === "david_a_chofer"){
-      const inputId = `compAdmin_${safeId(c.chofer)}_${safeId(c.periodo.id)}`;
-      pagoAccion = uploadComprobanteHtml({
-        inputId,
-        buttonText:"Subir comprobante y marcar pagado",
-        onClick:`subirComprobantePagoAdmin('${c.chofer}','${c.periodo.id}','${sentido}',${Math.round(montoDeuda)},'${inputId}')`,
-        nota:"Como David debe pagarle al chofer, el comprobante lo carga obligatoriamente el administrador."
-      });
-    }else{
-      pagoAccion = `<div class="pending-box">📎 El chofer debe cargar el comprobante desde su app. Esta opción no aparece en Admin porque el pagador es el chofer.</div>`;
-    }
+  }else if(sentido === "david_a_chofer"){
+    const inputId = `compAdmin_${safeId(c.chofer)}_${safeId(c.periodo.id)}`;
+    pagoAccion = uploadComprobanteHtml({
+      inputId,
+      buttonText:"Subir comprobante y marcar pagado",
+      onClick:`subirComprobantePagoAdmin('${c.chofer}','${c.periodo.id}','${sentido}',${Math.round(montoDeuda)},'${inputId}')`,
+      nota:"Como David debe pagarle al chofer, el comprobante lo carga obligatoriamente el administrador."
+    });
+  }else if(sentido === "chofer_a_david"){
+    pagoAccion = `<div class="pending-box">📎 El chofer debe cargar el comprobante desde su app. Puede seguir operando, pero a las 24 h queda suspendido del bono semanal si no lo sube.</div>`;
   }else{
-    pagoAccion = `
-      <button class="btn-dark" style="margin-top:10px" disabled>Comprobante disponible solo el sábado</button>
-      <div class="note">El comprobante solo se carga el sábado de cierre (${c.periodo.closeDate}).</div>
-    `;
+    pagoAccion = `<div class="paid-box">✅ Sin pago pendiente</div>`;
   }
 
   return `
@@ -4577,6 +4845,44 @@ window.crearChoferVehiculoAdmin = async function(){
   }
 };
 
+
+// ===== EXPLORA v2.8.40: VALIDACIÓN DE FUNCIONES GLOBALES =====
+// Estas asignaciones evitan errores de botones inline dentro de <script type="module">.
+window.loadAdmin = loadAdmin;
+window.loadComprobantesChofer = loadComprobantesChofer;
+window.loadComprobantesAdmin = loadComprobantesAdmin;
+
+window.eliminarChoferesDemoAdmin = async function(){
+  const box = $("adminToolsMsg");
+  const ok = confirm("¿Eliminar choferes demo anteriores? Esta acción solo borra registros marcados como demo o IDs que empiecen con demo/prueba/test.");
+  if(!ok) return;
+  try{
+    if(box) msg(box,"Buscando choferes demo...",true);
+    const snap = await getDocs(collection(db,"choferes"));
+    const borrados = [];
+    const tareas = [];
+    snap.forEach(d=>{
+      const data = d.data() || {};
+      const id = String(d.id || "").toLowerCase();
+      const nombre = String(data.nombre || "").toLowerCase();
+      const esDemo = data.demo === true || id.startsWith("demo") || id.startsWith("prueba") || id.startsWith("test") || nombre.includes("demo") || nombre.includes("prueba");
+      if(esDemo && data.rol !== "admin"){
+        borrados.push(d.id);
+        tareas.push(deleteDoc(doc(db,"choferes",d.id)));
+      }
+    });
+    if(!tareas.length){
+      if(box) msg(box,"No se encontraron choferes demo para eliminar.",true);
+      return;
+    }
+    await Promise.all(tareas);
+    if(box) msg(box,`Choferes demo eliminados: ${borrados.join(", ")}`,true);
+    if(typeof loadAdmin === "function") loadAdmin().catch(()=>{});
+  }catch(e){
+    if(box) msg(box,"No se pudieron eliminar choferes demo: " + e.message);
+  }
+};
+
 </script>
 
 <script>
@@ -4589,6 +4895,44 @@ setTimeout(function(){
     });
   }
 }, 1500);
+
+// ===== EXPLORA v2.8.40: VALIDACIÓN DE FUNCIONES GLOBALES =====
+// Estas asignaciones evitan errores de botones inline dentro de <script type="module">.
+window.loadAdmin = loadAdmin;
+window.loadComprobantesChofer = loadComprobantesChofer;
+window.loadComprobantesAdmin = loadComprobantesAdmin;
+
+window.eliminarChoferesDemoAdmin = async function(){
+  const box = $("adminToolsMsg");
+  const ok = confirm("¿Eliminar choferes demo anteriores? Esta acción solo borra registros marcados como demo o IDs que empiecen con demo/prueba/test.");
+  if(!ok) return;
+  try{
+    if(box) msg(box,"Buscando choferes demo...",true);
+    const snap = await getDocs(collection(db,"choferes"));
+    const borrados = [];
+    const tareas = [];
+    snap.forEach(d=>{
+      const data = d.data() || {};
+      const id = String(d.id || "").toLowerCase();
+      const nombre = String(data.nombre || "").toLowerCase();
+      const esDemo = data.demo === true || id.startsWith("demo") || id.startsWith("prueba") || id.startsWith("test") || nombre.includes("demo") || nombre.includes("prueba");
+      if(esDemo && data.rol !== "admin"){
+        borrados.push(d.id);
+        tareas.push(deleteDoc(doc(db,"choferes",d.id)));
+      }
+    });
+    if(!tareas.length){
+      if(box) msg(box,"No se encontraron choferes demo para eliminar.",true);
+      return;
+    }
+    await Promise.all(tareas);
+    if(box) msg(box,`Choferes demo eliminados: ${borrados.join(", ")}`,true);
+    if(typeof loadAdmin === "function") loadAdmin().catch(()=>{});
+  }catch(e){
+    if(box) msg(box,"No se pudieron eliminar choferes demo: " + e.message);
+  }
+};
+
 </script>
 
 </body>
