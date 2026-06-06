@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.24
-Build: 2026-06-05-CREAR-CHOFER-FIX-001
-Fecha: 04/06/2026
+Version: 2.8.25
+Build: 2026-06-05-KM-DIARIO-SCROLL-001
+Fecha: 05/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
 - Se agrega botón “Mi auto” para chofer con service, correa dentada y cubiertas por km.
@@ -16,7 +16,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.24 · Build 2026-06-05-CREAR-CHOFER-FIX-001</title>
+<title>EXPLORA v2.8.25 · Build 2026-06-05-KM-DIARIO-SCROLL-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -357,7 +357,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.24</b> · Build 2026-06-05-CREAR-CHOFER-FIX-001</div>
+    <div class="build-version"><b>v2.8.25</b> · Build 2026-06-05-KM-DIARIO-SCROLL-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -370,7 +370,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.24</b> · 2026-06-05-CREAR-CHOFER-FIX-001</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.25</b> · 2026-06-05-KM-DIARIO-SCROLL-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -538,7 +538,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.24</b> · 2026-06-05-CREAR-CHOFER-FIX-001</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.25</b> · 2026-06-05-KM-DIARIO-SCROLL-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -1258,17 +1258,33 @@ function fillServiceSelects(){
   updateServicePrice();
   updateDerivePrice();
 }
+function scrollToOpenedPanel(target){
+  if(!target) return;
+  // Espera a que el navegador pinte el panel visible. Es liviano y evita que el usuario tenga que bajar manualmente.
+  setTimeout(()=>{
+    try{
+      target.scrollIntoView({behavior:"smooth", block:"start"});
+    }catch(e){
+      try{ target.scrollIntoView(true); }catch(_){}
+    }
+  }, 80);
+}
+
+function getKmDiarioId(){
+  if(!currentVehicle) return "";
+  return `${currentVehicle.id}_${today()}`;
+}
+
 async function checkKmToday(){
   if(!currentVehicle || !currentUserId){
     kmTodaySaved = false;
     return;
   }
 
-  // El km se controla por PERÍODO ACTIVO, no solo por día.
-  // Así, si el sábado se confirma cierre y empieza una nueva semana,
-  // el sistema vuelve a pedir km aunque sea el mismo sábado.
-  const periodoOperativo = await getPeriodoOperativoChofer(currentUserId);
-  const kmId = `${currentVehicle.id}_${periodoOperativo.id}`;
+  // El km ahora es obligatorio DIARIO.
+  // Antes se pedía una vez por período semanal; eso permitía trabajar varios días sin actualizar tablero.
+  // El período sigue guardándose como dato informativo para cierres/reportes, pero el ID del control es vehículo + fecha.
+  const kmId = getKmDiarioId();
   const snap = await getDoc(doc(db,"kilometrajes",kmId));
   kmTodaySaved = snap.exists();
 }
@@ -1285,6 +1301,9 @@ window.openNewService = async function(){
 
     if(!kmTodaySaved){
       $("kmModal").classList.remove("hidden");
+      setTimeout(()=>{
+        try{ $("kmInput").focus(); }catch(e){}
+      },120);
       return;
     }
 
@@ -1310,7 +1329,7 @@ window.saveDailyKm = async function(){
 
   try{
     const periodoOperativo = await getPeriodoOperativoChofer(currentUserId);
-    const kmId = `${currentVehicle.id}_${periodoOperativo.id}`;
+    const kmId = getKmDiarioId();
 
     await setDoc(doc(db,"kilometrajes",kmId),{
       fecha: today(),
@@ -1322,8 +1341,10 @@ window.saveDailyKm = async function(){
       kmAnterior: lastKm,
       kmActual: km,
       diferencia: km - lastKm,
+      tipoControl: "diario",
+      actualizado: serverTimestamp(),
       creado: serverTimestamp()
-    });
+    },{merge:true});
 
     await updateDoc(doc(db,"vehiculos",currentVehicle.id),{kmActual:km});
     currentVehicle.kmActual = km;
@@ -1349,7 +1370,10 @@ window.showPanel = function(id){
   });
 
   const target = $(id);
-  if(target) target.classList.remove("hidden");
+  if(target){
+    target.classList.remove("hidden");
+    scrollToOpenedPanel(target);
+  }
 
   // Carga bajo demanda: estas pantallas ya no frenan el login.
   if(id === "derivePanel"){
