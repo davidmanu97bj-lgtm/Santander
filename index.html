@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.46
-Build: 2026-06-06-VALIDACION-MANTENIMIENTO-COMPROBANTES-001
+Version: 2.8.53
+Build: 2026-06-06-CIERRE-LIMPIO-MOTOR-UNICO-001
 Fecha: 05/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
@@ -24,6 +24,7 @@ Cambios:
 - Cierre semanal flexible: permite avanzar con pago pendiente, mantiene alerta, suspende bono a las 24 h si el chofer no sube comprobante.
 - Ranking conserva posiciones, marca suspendidos del bono y asigna el bono al siguiente elegible.
 - Corrección período semanal: si un chofer queda con una semana futura por pruebas o error, se reajusta automáticamente a la semana real sin romper cierres confirmados.
+- Limpieza visual de cierres/comprobantes: solo se muestra un aviso activo válido por chofer; los períodos de prueba o duplicados quedan fuera del cartel principal.
 - Ranking actualizado: 50% facturación, 20% viajes, 20% derivaciones, 10% actividad para incentivar derivar dentro de EXPLORA.
 - Optimización: Nuevo servicio abre desde caché/default y verifica km diario con cache local.
 - Optimización: Ranking abre desde cache/acumulados sin verificar viajes completos en cada apertura.
@@ -36,7 +37,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.46 · Build 2026-06-06-VALIDACION-MANTENIMIENTO-COMPROBANTES-001</title>
+<title>EXPLORA v2.8.53 · Build 2026-06-06-CIERRE-LIMPIO-MOTOR-UNICO-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -496,7 +497,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.46</b> · Build 2026-06-06-VALIDACION-MANTENIMIENTO-COMPROBANTES-001</div>
+    <div class="build-version"><b>v2.8.53</b> · Build 2026-06-06-CIERRE-LIMPIO-MOTOR-UNICO-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -509,7 +510,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.42</b> · CIERRE-AUTO-SIN-BOTON-001</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.53</b> · CIERRE-LIMPIO-MOTOR-UNICO-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -692,7 +693,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.42</b> · CIERRE-AUTO-SIN-BOTON-001</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.53</b> · CIERRE-LIMPIO-MOTOR-UNICO-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -810,6 +811,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <h3>Herramientas</h3>
       <button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios EXPLORA</button>
       <button class="btn-dark" style="margin-top:10px" onclick="verificarYRepararAcumuladosAdmin()">Verificar / reparar acumulados actuales</button>
+      <button class="btn-dark" style="margin-top:10px" onclick="limpiarAvisosCierrePruebaAdmin()">Limpiar avisos duplicados de cierre</button>
       <button class="btn-red" style="margin-top:10px" onclick="eliminarChoferesDemoAdmin()">Eliminar choferes demo anteriores</button>
       <div id="adminToolsMsg"></div>
     </div>
@@ -2207,6 +2209,63 @@ function getPeriodoTrabajoActual(dateStr = fechaOperativaActual()){
   return {start,end,closeDate,id:`${start}_${end}`};
 }
 
+
+function periodoEsSemanaExploraValida(periodo){
+  if(!periodo) return false;
+  const start = String(periodo.start || periodo.periodoInicio || "").slice(0,10);
+  const end = String(periodo.end || periodo.periodoFin || "").slice(0,10);
+  const closeDate = String(periodo.closeDate || periodo.cierreObligatorio || "").slice(0,10);
+  if(!start || !end) return false;
+  if(!isSaturday(start)) return false;
+  if(daysBetween(start,end) !== 6) return false;
+  if(closeDate && closeDate !== addDays(end,1)) return false;
+  return true;
+}
+
+function periodoDesdePagoSemanal(p){
+  const pid = String(p && p.periodoId || "");
+  let start = String(p && p.periodoInicio || "").slice(0,10);
+  let end = String(p && p.periodoFin || "").slice(0,10);
+  if((!start || !end) && pid.includes("_")){
+    const parts = pid.split("_");
+    start = start || String(parts[0] || "").slice(0,10);
+    end = end || String(parts[1] || "").slice(0,10);
+  }
+  const closeDate = String(p && (p.cierreObligatorio || p.periodoCierre) || (end ? addDays(end,1) : "")).slice(0,10);
+  return {start,end,closeDate,id:start && end ? `${start}_${end}` : pid};
+}
+
+function pagoSemanalTienePeriodoValido(p){
+  const periodo = periodoDesdePagoSemanal(p);
+  return !!(periodo.id && periodoEsSemanaExploraValida(periodo));
+}
+
+function semanaTextoPago(p){
+  const periodo = periodoDesdePagoSemanal(p);
+  return periodo.start && periodo.end ? `${periodo.start} al ${periodioFixEnd(periodo.end)}` : String(p && p.periodoId || "").replace("_"," al ");
+}
+
+function periodoFixEnd(end){ return end; }
+
+function filtrarAvisosActivosChofer(items){
+  const validos = (items || [])
+    .filter(p=>p && p.ocultarAviso !== true && pagoSemanalTienePeriodoValido(p))
+    .filter(p=>{
+      const pendientePago = p.pagado !== true;
+      const davidPagoSinVisto = p.sentido === "david_a_chofer" && p.pagado === true && p.vistoPorChofer !== true;
+      return pendientePago || davidPagoSinVisto;
+    })
+    .sort((a,b)=>String(b.periodoId || "").localeCompare(String(a.periodoId || "")));
+
+  if(!validos.length) return [];
+
+  // Cartel principal: nunca muestra varios cierres a la vez.
+  // Si hay deuda del chofer, tiene prioridad. Si no, se muestra el último pago de David pendiente de visto.
+  const deudaChofer = validos.find(p=>p.sentido === "chofer_a_david" && p.pagado !== true);
+  if(deudaChofer) return [deudaChofer];
+  return [validos[0]];
+}
+
 function getPeriodoCierrePendiente(dateStr = fechaOperativaActual()){
   // Cierre automático exacto EXPLORA:
   // todos los sábados desde 00:01 se cierra la semana anterior
@@ -2790,25 +2849,27 @@ async function getPagosPendientesChofer(force=false){
   if(!currentUserId) return [];
   const cacheKey = "pagos_pendientes_chofer_" + currentUserId;
   const cached = cacheGet(cacheKey, 2 * 60 * 1000);
-  if(cached && !force) return cached;
+  if(cached && !force) return filtrarAvisosActivosChofer(cached);
   try{
     const snap = await withTimeout(getDocs(query(collection(db,"pagos_semanales"), where("chofer","==",currentUserId))), 3500, "Pagos pendientes tardaron.");
     const items = [];
     snap.forEach(d=>{
       const p = {id:d.id, ...d.data()};
+      // Evita que cierres de prueba, semanas viejas mal generadas o duplicados aparezcan en la pantalla principal.
+      if(p.ocultarAviso === true) return;
+      if(!pagoSemanalTienePeriodoValido(p)) return;
       const pendientePago = p.pagado !== true;
       const davidPagoSinVisto = p.sentido === "david_a_chofer" && p.pagado === true && p.vistoPorChofer !== true;
       if(pendientePago || davidPagoSinVisto) items.push(p);
     });
     items.sort((a,b)=>String(b.periodoId || "").localeCompare(String(a.periodoId || "")));
     cacheSet(cacheKey, items);
-    return items;
+    return filtrarAvisosActivosChofer(items);
   }catch(e){
     console.warn("No se pudieron cargar pagos pendientes del chofer", e);
-    return cached || [];
+    return filtrarAvisosActivosChofer(cached || []);
   }
 }
-
 async function checkPagosPendientesChoferAutomatico(){
   const box = $("cierrePagoPendienteAlert");
   if(!box) return;
@@ -2825,7 +2886,7 @@ function renderPagosPendientesChofer(items){
     return;
   }
   const html = items.map(p=>{
-    const semana = String(p.periodoId || "").replace("_"," al ");
+    const semana = semanaTextoPago(p);
     if(p.sentido === "chofer_a_david" && p.pagado !== true){
       const suspendido = pagoPendienteSuspendido(p);
       return `
@@ -2860,6 +2921,11 @@ function renderPagosPendientesChofer(items){
     }
     return "";
   }).join("");
+  if(!html.trim()){
+    box.className = "hidden";
+    box.innerHTML = "";
+    return;
+  }
   box.className = "";
   box.innerHTML = html;
 }
@@ -3069,7 +3135,7 @@ function renderComprobantesLista(box, items, soloPropios){
   box.innerHTML = items.map(x=>{
     const sentidoTxt = x.sentido === "chofer_a_david" ? "Chofer → David" : x.sentido === "david_a_chofer" ? "David → Chofer" : "Sin diferencia";
     const url = x.url || x.comprobanteUrl || "";
-    const semana = String(x.periodoId || "").replace("_"," al ");
+    const semana = semanaTextoPago(x);
     const estado = x.pagado === true ? "✅ Pagado" : "⏳ Pendiente";
     let accion = "";
     if(!soloPropios && x.sentido === "david_a_chofer" && x.pagado !== true){
@@ -4733,6 +4799,64 @@ window.marcarPagoSemanalChofer = async function(){
   alert("Ahora el pago requiere comprobante. Usá ‘Subir comprobante y marcar pagado’. ");
 }
 
+
+
+window.limpiarAvisosCierrePruebaAdmin = async function(){
+  const box = $("adminToolsMsg") || $("adminMsg");
+  if(box) box.innerHTML = `<div class="msg ok">Revisando avisos de cierre duplicados o con períodos inválidos...</div>`;
+  try{
+    const snap = await withTimeout(getDocs(collection(db,"pagos_semanales")), 9000, "La limpieza tardó demasiado.");
+    const porChofer = {};
+    const invalidos = [];
+    snap.forEach(d=>{
+      const p = {id:d.id, ...d.data()};
+      if(!pagoSemanalTienePeriodoValido(p)){
+        invalidos.push(p);
+        return;
+      }
+      const pendientePago = p.pagado !== true;
+      const davidPagoSinVisto = p.sentido === "david_a_chofer" && p.pagado === true && p.vistoPorChofer !== true;
+      if(!(pendientePago || davidPagoSinVisto)) return;
+      const chofer = p.chofer || "sin_chofer";
+      if(!porChofer[chofer]) porChofer[chofer] = [];
+      porChofer[chofer].push(p);
+    });
+
+    const cambios = [];
+    invalidos.forEach(p=>cambios.push(setDoc(doc(db,"pagos_semanales",p.id),{
+      archivado:true,
+      ocultarAviso:true,
+      motivoArchivo:"Periodo semanal inválido o generado por prueba",
+      actualizado:serverTimestamp()
+    },{merge:true})));
+
+    Object.values(porChofer).forEach(arr=>{
+      const activos = filtrarAvisosActivosChofer(arr);
+      const activoId = activos[0] && activos[0].id;
+      arr.forEach(p=>{
+        if(p.id !== activoId){
+          cambios.push(setDoc(doc(db,"pagos_semanales",p.id),{
+            ocultarAviso:true,
+            motivoArchivo:"Aviso duplicado; se conserva en historial",
+            actualizado:serverTimestamp()
+          },{merge:true}));
+        }else{
+          cambios.push(setDoc(doc(db,"pagos_semanales",p.id),{
+            ocultarAviso:false,
+            actualizado:serverTimestamp()
+          },{merge:true}));
+        }
+      });
+    });
+
+    await Promise.all(cambios);
+    cacheRemove("comprobantes_admin_recientes");
+    cacheRemove("ranking_global_fast");
+    if(box) box.innerHTML = `<div class="msg ok">Limpieza realizada. Avisos inválidos: ${invalidos.length}. Avisos duplicados archivados: ${Math.max(0,cambios.length-invalidos.length)}.</div>`;
+  }catch(e){
+    if(box) box.innerHTML = `<div class="msg err">No se pudo limpiar: ${e.message}</div>`;
+  }
+}
 
 window.verificarYRepararAcumuladosAdmin = async function(){
   const box = $("adminToolsMsg");
