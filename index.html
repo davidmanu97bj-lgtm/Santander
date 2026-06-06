@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.28
-Build: 2026-06-06-ENCABEZADOS-SIN-TIPO-001
+Version: 2.8.29
+Build: 2026-06-06-MEDIA-TARIFA-ARG-001
 Fecha: 05/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
@@ -17,7 +17,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.28 · Build 2026-06-06-ENCABEZADOS-SIN-TIPO-001</title>
+<title>EXPLORA v2.8.29 · Build 2026-06-06-MEDIA-TARIFA-ARG-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -358,7 +358,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.28</b> · Build 2026-06-06-ENCABEZADOS-SIN-TIPO-001</div>
+    <div class="build-version"><b>v2.8.29</b> · Build 2026-06-06-MEDIA-TARIFA-ARG-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -371,7 +371,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.28</b> · ENCABEZADOS-SIN-TIPO-001</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.29</b> · MEDIA-TARIFA-ARG-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -445,7 +445,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
     <div id="derivePanel" class="card hidden">
       <h3>Derivar servicio</h3>
-      <div class="single-trip-note">Tarifa mínima obligatoria: el receptor puede cobrar más, pero nunca menos. El tipo de servicio se define desde el servicio seleccionado.</div>
+      <div class="single-trip-note">Tarifa mínima obligatoria: el receptor puede cobrar más, pero nunca menos. En algunos servicios locales de Argentina se permite cargar el 50% como mínimo. El tipo de servicio se define desde el servicio seleccionado.</div>
 
       <label>Chofer receptor</label>
       <select id="deriveDriverSelect"></select>
@@ -537,7 +537,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.28</b> · ENCABEZADOS-SIN-TIPO-001</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.29</b> · MEDIA-TARIFA-ARG-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -1473,6 +1473,37 @@ function isTramoUnico(serviceId){
   return serviciosTramoUnico.includes(serviceId);
 }
 
+// Servicios de Argentina que pueden cargarse como mínimo al 50%
+// porque muchas veces el chofer solo deja al pasajero y no realiza la vuelta.
+// El precio publicado en Admin sigue siendo la tarifa completa; la validación mínima usa esta regla.
+const serviciosArgentinaMediaMinima = new Set([
+  "hito_tres_fronteras",
+  "guira_oga",
+  "la_aripuca",
+  "icebar",
+  "catamaran",
+  "selva_iryapu",
+  "la_feirinha",
+  "duty_free"
+]);
+
+function admiteMediaTarifaArgentina(service){
+  return !!(service && service.categoria === "Argentina" && serviciosArgentinaMediaMinima.has(service.id));
+}
+
+function tarifaMinimaPermitida(service){
+  const precio = Number(service && service.precio || 0);
+  return admiteMediaTarifaArgentina(service) ? Math.round(precio / 2) : precio;
+}
+
+function textoReglaTarifa(service){
+  if(!service) return "Tarifa mínima obligatoria";
+  if(admiteMediaTarifaArgentina(service)){
+    return `Tarifa completa: ${money(service.precio)} · mínimo permitido: ${money(tarifaMinimaPermitida(service))}`;
+  }
+  return `Tarifa mínima obligatoria: ${money(tarifaMinimaPermitida(service))}`;
+}
+
 window.updateServicePrice = function(){
   const service = services.find(s=>s.id === $("serviceSelect").value);
   if(!service) return;
@@ -1482,16 +1513,18 @@ window.updateServicePrice = function(){
   if($("tripTypeWrap")) $("tripTypeWrap").classList.add("hidden");
   if($("singleTripNote")) $("singleTripNote").classList.add("hidden");
 
-  const min = Number(service.precio || 0);
+  const min = tarifaMinimaPermitida(service);
 
   $("minPrice").value = money(min);
   $("chargedAmount").value = min;
+  const priceNote = $("servicePanel") ? $("servicePanel").querySelector(".price-note") : null;
+  if(priceNote) priceNote.textContent = textoReglaTarifa(service);
 }
 
 window.saveTrip = async function(){
   const service = services.find(s=>s.id === $("serviceSelect").value);
   if(!service) return msg($("serviceMsg"),"Seleccione un servicio.");
-  const min = Number(service.precio || 0);
+  const min = tarifaMinimaPermitida(service);
   const charged = Number($("chargedAmount").value);
   if(charged < min) return msg($("serviceMsg"),`El monto no puede ser menor a ${money(min)}.`);
 
@@ -2559,10 +2592,12 @@ window.updateDerivePrice = function(){
   if($("deriveTripTypeWrap")) $("deriveTripTypeWrap").classList.add("hidden");
   if($("deriveSingleTripNote")) $("deriveSingleTripNote").classList.add("hidden");
 
-  const min = Number(service.precio || 0);
+  const min = tarifaMinimaPermitida(service);
 
   $("deriveMinPrice").value = money(min);
   $("deriveAmount").value = min;
+  const priceNote = $("derivePanel") ? $("derivePanel").querySelector(".price-note") : null;
+  if(priceNote) priceNote.textContent = textoReglaTarifa(service);
 }
 
 window.saveDerivation = async function(){
@@ -2591,7 +2626,7 @@ window.saveDerivation = async function(){
     const destinoData = destinoSnap.data();
     const vehiculoDestino = destinoData.vehiculo || "";
 
-    const min = Number(service.precio || 0);
+    const min = tarifaMinimaPermitida(service);
 
     const charged = Number($("deriveAmount").value);
 
@@ -2896,7 +2931,8 @@ async function loadTarifasAdmin(){
     html += `
       <div class="tarifa-row">
         <b>${s.orden ? `${s.orden}. ` : ""}${s.nombre}</b><br>
-        <small>${s.categoria || "Sin categoría"}</small>
+        <small>${s.categoria || "Sin categoría"}</small><br>
+        <small>${admiteMediaTarifaArgentina(s) ? `Mínimo permitido al chofer: ${money(tarifaMinimaPermitida(s))} (50%)` : `Mínimo permitido al chofer: ${money(Number(s.precio || 0))}`}</small>
         <div class="tarifa-actions" style="margin-top:8px">
           <input id="tarifa_${id}" type="number" inputmode="numeric" value="${Number(s.precio || 0)}">
           <button class="btn-gold" onclick="actualizarTarifa('${id}')">Guardar</button>
@@ -3850,7 +3886,7 @@ const serviciosExplora = [
   {id:"itaipu_paraguay", nombre:"Itaipú Paraguay", precio:100000, categoria:"Paraguay", orden:33}
 ];
 
-const SERVICIOS_BUILD = "2026-06-06-ENCABEZADOS-SIN-TIPO-001";
+const SERVICIOS_BUILD = "2026-06-06-MEDIA-TARIFA-ARG-001";
 
 async function aplicarServiciosExplora({mostrarMensaje=false}={}){
   const idsOficiales = new Set(serviciosExplora.map(s=>s.id));
