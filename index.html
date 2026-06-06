@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.29
-Build: 2026-06-06-MEDIA-TARIFA-ARG-001
+Version: 2.8.30
+Build: 2026-06-06-RANKING-BONO-50000-001
 Fecha: 05/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
@@ -12,13 +12,14 @@ Cambios:
 - Aviso automático con ⚙️ cuando corresponde cambio por kilometraje.
 - No se modifica cierre semanal, 50/50, derivaciones ni acumulados financieros.
 - Ranking verificado: al tocar Ranking compara acumulados con viajes reales de la semana activa.
+- Bono semanal visible de $50.000 en Ranking para motivar al chofer.
 - Se mejora el texto visible de servicios con íconos: 🛬 🇦🇷 🇧🇷 🇵🇾 para lectura rápida.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.29 · Build 2026-06-06-MEDIA-TARIFA-ARG-001</title>
+<title>EXPLORA v2.8.30 · Build 2026-06-06-RANKING-BONO-50000-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -350,6 +351,17 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 .maintenance-due{border-color:rgba(239,68,68,.58);background:rgba(239,68,68,.08)}
 .admin-vehicle-maintenance{margin-top:10px}
 
+.ranking-bonus-box{
+  background:linear-gradient(180deg,rgba(212,175,55,.20),rgba(212,175,55,.07));
+  border:1px solid rgba(212,175,55,.42);
+  border-radius:18px;
+  padding:14px;
+  margin-top:10px;
+}
+.ranking-bonus-box b{font-size:18px}
+.ranking-bonus-box .bonus-money{color:#f3d77a;font-weight:900;margin-top:5px}
+.ranking-bonus-box small{color:var(--muted)}
+
 </style>
 </head>
 <body>
@@ -359,7 +371,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.29</b> · Build 2026-06-06-MEDIA-TARIFA-ARG-001</div>
+    <div class="build-version"><b>v2.8.30</b> · Build 2026-06-06-RANKING-BONO-50000-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -372,7 +384,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.29</b> · MEDIA-TARIFA-ARG-001</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.30</b> · RANKING-BONO-50000-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -389,7 +401,13 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
     <div id="driverLeaderCard" class="leader-card">
       <h3>🏆 Ranking semanal</h3>
-      <div id="driverLeaderContent">Tocá Ranking para actualizar posiciones.</div>
+      <div id="driverLeaderContent">
+        <div class="ranking-bonus-box">
+          <b>🏆 Ranking semanal</b><br>
+          <div class="bonus-money">💰 Bono semanal: $50.000</div>
+          <small>Tocá Ranking para actualizar tu posición.</small>
+        </div>
+      </div>
     </div>
 
     <div class="row">
@@ -538,7 +556,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.29</b> · MEDIA-TARIFA-ARG-001</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.30</b> · RANKING-BONO-50000-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -1901,6 +1919,45 @@ function renderRankingLiviano(data,targetId){
   target.innerHTML = html;
 }
 
+function renderDriverLeaderBonus(data, lider, yo, yoIndex){
+  const target = $("driverLeaderContent");
+  if(!target || !lider) return;
+
+  const bono = money(50000);
+  if(yo && lider.id === currentUserId){
+    target.innerHTML = `
+      <div class="ranking-bonus-box">
+        <b>👑 Vas primero</b><br>
+        <div class="bonus-money">💰 Bono semanal: ${bono}</div>
+        <small>Liderás el ranking de esta semana · ${yo.porcentaje}%</small>
+      </div>
+    `;
+    return;
+  }
+
+  if(yo){
+    const viajesFaltan = Math.max(0, Number(lider.viajes || 0) - Number(yo.viajes || 0) + 1);
+    const medalla = yoIndex === 1 ? "🥈" : (yoIndex === 2 ? "🥉" : "🏁");
+    target.innerHTML = `
+      <div class="ranking-bonus-box">
+        <b>${medalla} Vas ${yoIndex + 1}°</b><br>
+        <div class="bonus-money">💰 Bono semanal: ${bono}</div>
+        <small>Líder: ${lider.nombre} · ${lider.porcentaje}%</small><br>
+        <small>${viajesFaltan > 0 ? `Te faltan ${viajesFaltan} viaje${viajesFaltan === 1 ? "" : "s"} para superar al líder.` : "Estás muy cerca del líder."}</small>
+      </div>
+    `;
+    return;
+  }
+
+  target.innerHTML = `
+    <div class="ranking-bonus-box">
+      <b>🏆 Ranking semanal</b><br>
+      <div class="bonus-money">💰 Bono semanal: ${bono}</div>
+      <small>Tocá Ranking para actualizar tu posición.</small>
+    </div>
+  `;
+}
+
 window.openRankingPanel = async function(){
   showPanel("rankingPanel");
   $("driverRankingList").innerHTML = "Calculando ranking...";
@@ -1913,10 +1970,8 @@ window.openRankingPanel = async function(){
     const yoIndex = data.ranking.findIndex(x=>x.id === currentUserId);
     const yo = yoIndex >= 0 ? data.ranking[yoIndex] : null;
 
-    if(lider && $("driverLeaderContent")){
-      $("driverLeaderContent").innerHTML = lider.id === currentUserId
-        ? `<b>VAS PRIMERO</b><br><small>${lider.porcentaje}%</small>`
-        : `<b>${lider.nombre}</b><br><small>${lider.porcentaje}%</small>${yo ? `<br><small>Vos: ${yo.porcentaje}% · Puesto ${yoIndex+1}</small>` : ""}`;
+    if(lider){
+      renderDriverLeaderBonus(data, lider, yo, yoIndex);
     }
   }catch(e){
     $("driverRankingList").innerHTML = `<div class="msg err">No se pudo calcular ranking: ${e.message}</div>`;
