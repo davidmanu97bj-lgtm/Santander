@@ -2,7 +2,7 @@
 <!--
 EXPLORA BUILD
 Version: 2.8.60
-Build: 2026-06-06-ESTABLE-CIERRE-ACEPTACION-GLOBAL-003
+Build: 2026-06-06-ESTABLE-CIERRE-RESOLVER-GLOBAL-004
 Fecha: 06/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
@@ -39,7 +39,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.60 · Build 2026-06-06-ESTABLE-CIERRE-ACEPTACION-GLOBAL-003</title>
+<title>EXPLORA v2.8.61 · Build 2026-06-06-ESTABLE-CIERRE-RESOLVER-GLOBAL-004</title>
 <style>
 :root{
   --bg:#080808;
@@ -499,7 +499,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.60</b> · Build 2026-06-06-ESTABLE-CIERRE-ACEPTACION-GLOBAL-003</div>
+    <div class="build-version"><b>v2.8.61</b> · Build 2026-06-06-ESTABLE-CIERRE-RESOLVER-GLOBAL-004</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -512,7 +512,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.60</b> · ESTABLE-CIERRE-ACEPTACION-GLOBAL-003</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.61</b> · ESTABLE-CIERRE-RESOLVER-GLOBAL-004</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -695,7 +695,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.60</b> · ESTABLE-CIERRE-ACEPTACION-GLOBAL-003</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.61</b> · ESTABLE-CIERRE-RESOLVER-GLOBAL-004</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -2400,6 +2400,8 @@ async function calcularRankingSemanalLiviano(periodo = getPeriodoTrabajoActual(t
     const susp = suspensionesBono && suspensionesBono[x.id];
     x.suspendidoBono = !!susp;
     x.motivoSuspension = susp ? susp.motivo : "";
+    x.periodoPendienteId = susp ? (susp.periodoId || "") : "";
+    x.pagoPendienteId = susp ? (susp.pagoId || "") : "";
   });
   const ganadorBono = arr.find(x=>!x.suspendidoBono) || null;
   const data = {periodo, ranking: arr, ganadorBono, actualizado: Date.now(), modo:"acumulados_derivaciones_fast"};
@@ -2480,6 +2482,7 @@ function renderDriverLeaderBonus(data, lider, yo, yoIndex){
         <div class="bonus-money">💰 Bono semanal: ${bono}</div>
         <small>Motivo: ${yo.motivoSuspension || 'comprobante pendiente'}.</small><br>
         <small>Tus viajes y facturación siguen registrándose normalmente.</small>
+        <button class="btn-gold" style="margin-top:10px" onclick="resolverCierrePendienteChofer('${yo.periodoPendienteId || ''}')">Resolver cierre pendiente</button>
       </div>
     `;
     return;
@@ -2627,7 +2630,7 @@ async function calcularCierreSemanalLiviano(chofer, periodo, forceRebuild=false)
   let ganador = null;
   try{
     const rankingData = await calcularRankingSemanalLiviano(periodo);
-    ganador = rankingData.ranking[0] || null;
+    ganador = rankingData.ganadorBono || (rankingData.ranking || []).find(x=>!x.suspendidoBono) || null;
   }catch(e){
     console.warn("Ranking no disponible para cierre", e);
   }
@@ -2807,6 +2810,7 @@ function renderPagosPendientesChofer(items){
           <small>Semana: ${semana}</small><br>
           <small>Debés transferir a David: <b>${money(p.monto)}</b></small><br>
           <small>${suspendido ? '🚫 Ya estás suspendido del bono semanal hasta la próxima semana por no subir el comprobante.' : 'Si no realizás el pago hoy, mañana serás suspendido del bono semanal.'}</small>
+          <button class="btn-dark" style="margin-top:10px" onclick="resolverCierrePendienteChofer('${p.periodoId || ''}')">Resolver cierre pendiente</button>
           <div style="margin-top:10px">
             <input id="compPendChofer_${safeId(p.id)}" class="file-input" type="file" accept="image/*,.jpg,.jpeg,.png,.webp" />
             <button class="btn-gold" style="margin-top:8px" onclick="subirComprobantePendienteChofer('${p.periodoId}', ${Math.round(Number(p.monto || 0))}, 'compPendChofer_${safeId(p.id)}')">Subir comprobante</button>
@@ -3270,6 +3274,51 @@ async function checkCierreSemanalAutomatico(){
   }
 }
 
+
+
+
+window.resolverCierrePendienteChofer = async function(periodoId=""){
+  if(!currentUserId) return;
+  const modal = $("cierreSemanalModal");
+  const resumen = $("cierreSemanalResumen");
+  const msgBox = $("cierreSemanalMsg");
+
+  if(modal) modal.classList.remove("hidden");
+  if(resumen) resumen.innerHTML = `<div class="msg ok">Cargando cierre pendiente...</div>`;
+  if(msgBox) msgBox.innerHTML = "";
+
+  try{
+    let periodo = periodoId ? periodoDesdeIdPago(periodoId) : null;
+    if(!periodo){
+      const pagos = await getPagosPendientesChofer(true).catch(()=>[]);
+      const pagoPendiente = (pagos || []).find(p=>p.sentido === "chofer_a_david" && p.pagado !== true) || (pagos || [])[0];
+      if(pagoPendiente && pagoPendiente.periodoId) periodo = periodoDesdeIdPago(pagoPendiente.periodoId);
+    }
+    if(!periodo) periodo = await getPeriodoCierrePendienteNoConfirmado(currentUserId).catch(()=>null);
+    if(!periodo) throw new Error("No hay cierre pendiente válido para resolver.");
+
+    let cierre;
+    try{
+      cierre = await withTimeout(calcularCierreSemanalUltraRapido(currentUserId, periodo), 6500, "El cierre rápido tardó demasiado.");
+    }catch(e){
+      console.warn("Cierre rápido no disponible; reconstruyo liviano", e);
+      cierre = await withTimeout(calcularCierreSemanalLiviano(currentUserId, periodo, true), 18000, "La reconstrucción del cierre tardó demasiado.");
+    }
+
+    cierre.pagoSemanal = await getEstadoPagoSemanal(currentUserId, periodo.id).catch(()=>null);
+    if(!cierre.pagoSemanal && (Number(cierre.choferDebe || 0) > 0 || Number(cierre.davidDebe || 0) > 0)){
+      cierre.pagoSemanal = await asegurarPagoSemanalPendiente(cierre).catch(()=>null);
+    }
+
+    cierreSemanalPendiente = cierre;
+    cierreSemanalCache = {key:`${currentUserId}_${periodo.id}`, data:cierre};
+    cacheSet(`cierre_sem_${currentUserId}_${periodo.id}`, cierre);
+    renderCierreSemanal(cierre);
+  }catch(e){
+    if(resumen) resumen.innerHTML = `<div class="msg err">No se pudo abrir el cierre pendiente: ${e.message}</div>`;
+    if(msgBox) msg(msgBox, "Revisá internet, tocá Actualizar página y probá de nuevo.");
+  }
+};
 
 async function loadTodayTrips(){
   // Pantalla principal ultra rápida: muestra caché instantánea y refresca 1 documento.
@@ -5067,7 +5116,7 @@ window.crearChoferVehiculoAdmin = async function(){
 };
 
 
-// ===== EXPLORA v2.8.57: FUNCIONES GLOBALES PARA BOTONES INLINE =====
+// ===== EXPLORA v2.8.61: FUNCIONES GLOBALES PARA BOTONES INLINE =====
 // Estas asignaciones evitan errores de botones inline dentro de <script type="module">.
 window.loadAdmin = loadAdmin;
 window.loadComprobantesChofer = loadComprobantesChofer;
