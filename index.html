@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.68
-Build: 2026-06-06-ADMIN-MOVIL-DASHBOARD-009
+Version: 2.8.71
+Build: 2026-06-06-ADMIN-RESET-OPERATIVO-013
 Fecha: 06/06/2026
 Cambios:
 - Reordenamiento visual Admin: 50/50, pagos y comprobantes unificados en Cierres semanales, con tarjetas más claras y detalle desplegable.
@@ -42,7 +42,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.67 · Build 2026-06-06-ADMIN-MOVIL-DASHBOARD-009</title>
+<title>EXPLORA v2.8.71 · Build 2026-06-06-ADMIN-RESET-OPERATIVO-013</title>
 <style>
 :root{
   --bg:#080808;
@@ -808,7 +808,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.70</b> · ADMIN-MOVIL-IMAGEN2-BOTONES-012</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.71</b> · ADMIN-RESET-OPERATIVO-013</div></div>
         </div>
         <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
       </div>
@@ -865,7 +865,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
       <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigSimulador')"><b>🧪 Simulador de semanas</b><span>›</span></button><div id="adminConfigSimulador" class="admin-config-content hidden"><p class="note">Afecta a Admin y choferes cuando actualizan la app. No cambia la fecha real del teléfono. Usalo solo para pruebas de cierres, ranking, bono y comprobantes.</p><div id="adminSimBanner" class="sim-banner hidden"></div><div class="admin-sim-box"><b>Fecha simulada global:</b> <span id="adminSimFecha">Fecha real</span><br><small id="adminSimDetalle" class="note">Sin simulación activa.</small></div><div class="row"><button class="btn-dark" onclick="simularSemanaAdmin(1)">+1 semana</button><button class="btn-dark" onclick="simularSemanaAdmin(2)">+2 semanas</button></div><button class="btn-dark" style="margin-top:10px" onclick="simularSemanaAdmin(-1)">-1 semana</button><button class="btn-gold" style="margin-top:10px" onclick="volverFechaRealAdmin()">Volver a fecha real</button><button class="btn-dark" style="margin-top:10px" onclick="refrescarPagina()">🔄 Actualizar página</button></div></div>
 
-      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigHerramientas')"><b>🛠️ Herramientas</b><span>›</span></button><div id="adminConfigHerramientas" class="admin-config-content hidden"><button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios EXPLORA</button><button class="btn-dark" style="margin-top:10px" onclick="verificarYRepararAcumuladosAdmin()">Verificar / reparar acumulados actuales</button><button class="btn-red" style="margin-top:10px" onclick="eliminarChoferesDemoAdmin()">Eliminar choferes demo anteriores</button><div id="adminToolsMsg"></div></div></div>
+      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigHerramientas')"><b>🛠️ Herramientas</b><span>›</span></button><div id="adminConfigHerramientas" class="admin-config-content hidden"><button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios EXPLORA</button><button class="btn-dark" style="margin-top:10px" onclick="verificarYRepararAcumuladosAdmin()">Verificar / reparar acumulados actuales</button><button class="btn-red" style="margin-top:10px" onclick="resetearDatosOperativosAdmin()">🧹 Preparar lanzamiento / resetear datos operativos</button><button class="btn-red" style="margin-top:10px" onclick="eliminarChoferesDemoAdmin()">Eliminar choferes demo anteriores</button><div id="adminToolsMsg"></div></div></div>
     </div>
 
     <div class="admin-bottom-nav"><button id="adminNavHome" class="active" onclick="adminShowSection('home')"><b>⌂</b>Inicio</button><button id="adminNavVehicles" onclick="adminShowSection('vehicles')"><b>🚗</b>Vehículos</button><button id="adminNavConfig" onclick="adminShowSection('config')"><b>⚙️</b>Configuración</button></div>
@@ -1603,6 +1603,56 @@ window.login = async function(){
 
 window.logout = async function(){ if(derivationUnsubscribe) derivationUnsubscribe(); await signOut(auth); location.reload(); }
 
+
+async function aplicarResetOperativoLocalSiCorresponde(){
+  // Si Admin hizo un reset de lanzamiento, cada dispositivo limpia su caché local
+  // al iniciar sesión. No borra choferes, vehículos, tarifas ni configuración.
+  try{
+    const snap = await withTimeout(getDoc(doc(db,"configuracion","reset_operativo")), 1800, "Reset operativo tardó demasiado.");
+    if(!snap.exists()) return;
+    const data = snap.data() || {};
+    const marca = String(data.marca || data.actualizadoTexto || "");
+    if(!marca) return;
+    const localKey = "explora_reset_operativo_marca";
+    if(localStorage.getItem(localKey) === marca) return;
+
+    const borrarExactos = [
+      "explora_global_sim_weeks",
+      "explora_global_sim_updated",
+      "explora_admin_sim_weeks"
+    ];
+    borrarExactos.forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
+
+    const prefijosOperativos = [
+      CACHE_PREFIX + "acum_sem_",
+      CACHE_PREFIX + "ranking_",
+      CACHE_PREFIX + "admin_",
+      CACHE_PREFIX + "today_",
+      CACHE_PREFIX + "comprobantes_",
+      CACHE_PREFIX + "cierres_",
+      CACHE_PREFIX + "derivaciones_",
+      CACHE_PREFIX + "trusted_today",
+      CACHE_PREFIX + "global_week_simulation"
+    ];
+    const keys = [];
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(k && prefijosOperativos.some(pref=>k.startsWith(pref))) keys.push(k);
+    }
+    keys.forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
+
+    periodoOperativoCache = null;
+    cierreSemanalCache = null;
+    derivationInboxSignature = "";
+    adminBaseLoadedAt = 0;
+    adminVehiculosKmLoadedAt = 0;
+    miAutoLoadedAt = 0;
+    localStorage.setItem(localKey, marca);
+  }catch(e){
+    console.warn("No se pudo aplicar reset operativo local", e);
+  }
+}
+
 onAuthStateChanged(auth, async (firebaseUser)=>{
   if(!firebaseUser) return;
 
@@ -1613,6 +1663,7 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
 
   try{
     await syncTrustedToday();
+    await aplicarResetOperativoLocalSiCorresponde();
     let snap = await getDoc(doc(db, "choferes", username));
 
     if(!snap.exists()){
@@ -5681,6 +5732,121 @@ window.crearChoferVehiculoAdmin = async function(){
 window.loadAdmin = loadAdmin;
 window.loadComprobantesChofer = loadComprobantesChofer;
 window.loadComprobantesAdmin = loadComprobantesAdmin;
+
+
+async function borrarColeccionCompleta(nombreColeccion, opciones={}){
+  const snap = await getDocs(collection(db, nombreColeccion));
+  const docs = [];
+  snap.forEach(d=>docs.push(d.id));
+  const batchSize = Number(opciones.batchSize || 20);
+  let borrados = 0;
+  for(let i=0;i<docs.length;i+=batchSize){
+    const lote = docs.slice(i, i + batchSize).map(id=>deleteDoc(doc(db, nombreColeccion, id)));
+    await Promise.all(lote);
+    borrados += lote.length;
+    if(typeof opciones.onProgress === "function") opciones.onProgress(nombreColeccion, borrados, docs.length);
+  }
+  return docs.length;
+}
+
+window.resetearDatosOperativosAdmin = async function(){
+  const box = $("adminToolsMsg");
+  if(!currentProfile || currentProfile.rol !== "admin"){
+    if(box) msg(box,"Solo Admin puede resetear datos operativos.");
+    return;
+  }
+
+  const aviso = "Esto deja la app lista para lanzamiento con datos operativos en 0.\n\nSe BORRA:\n- viajes\n- gastos\n- acumulados semanales y mensuales\n- cierres semanales\n- pagos/comprobantes\n- derivaciones\n- kilometrajes diarios\n- resúmenes mensuales\n\nNO se borra:\n- choferes\n- vehículos\n- tarifas/servicios\n- usuarios/login\n- premio semanal/configuración";
+  if(!confirm(aviso)) return;
+
+  const escrito = prompt('Para confirmar escribí exactamente: RESET');
+  if(escrito !== "RESET"){
+    if(box) msg(box,"Reset cancelado. No se borró nada.",true);
+    return;
+  }
+
+  const doble = confirm("Última confirmación: ¿dejar todos los datos operativos en 0 para lanzar la app?");
+  if(!doble) return;
+
+  const btn = Array.from(document.querySelectorAll('button')).find(b=>String(b.getAttribute('onclick') || '').includes('resetearDatosOperativosAdmin'));
+  if(btn){ btn.disabled = true; btn.textContent = "Reseteando datos..."; }
+
+  const coleccionesOperativas = [
+    "viajes",
+    "gastos",
+    "acumulados_semanales",
+    "acumulados_mensuales",
+    "cierres_semanales",
+    "pagos_semanales",
+    "comprobantes_pagos",
+    "derivaciones",
+    "kilometrajes",
+    "resumenes_mensuales"
+  ];
+
+  const resultado = {};
+  try{
+    if(box) msg(box,"Iniciando reset operativo seguro...",true);
+
+    for(const nombre of coleccionesOperativas){
+      if(box) msg(box,`Borrando ${nombre}...`,true);
+      const total = await borrarColeccionCompleta(nombre, {
+        batchSize: 20,
+        onProgress:(col,borrados,total)=>{
+          if(box && total > 20) msg(box,`Borrando ${col}: ${borrados}/${total}...`,true);
+        }
+      });
+      resultado[nombre] = total;
+    }
+
+    const choferesSnap = await getDocs(collection(db,"choferes"));
+    const resetChoferes = [];
+    choferesSnap.forEach(d=>{
+      const data = d.data() || {};
+      if(data.rol === "admin") return;
+      resetChoferes.push(updateDoc(doc(db,"choferes",d.id),{
+        estado:"disponible",
+        ultimoResetOperativo: today(),
+        actualizado: serverTimestamp()
+      }).catch(e=>console.warn("No se pudo actualizar chofer tras reset", d.id, e)));
+    });
+    await Promise.all(resetChoferes);
+
+    const marca = `${Date.now()}_${today()}`;
+    await setDoc(doc(db,"configuracion","reset_operativo"),{
+      marca,
+      fecha: today(),
+      realizadoPor: currentUserId || "admin",
+      actualizadoTexto: new Date().toLocaleString("es-AR"),
+      actualizado: serverTimestamp(),
+      colecciones: resultado
+    },{merge:true});
+
+    // Limpieza inmediata del dispositivo Admin actual.
+    const keys = [];
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(k && (k.startsWith(CACHE_PREFIX) || k.startsWith("explora_"))) keys.push(k);
+    }
+    keys.forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
+    localStorage.setItem("explora_reset_operativo_marca", marca);
+
+    periodoOperativoCache = null;
+    cierreSemanalCache = null;
+    adminBaseLoadedAt = 0;
+    adminVehiculosKmLoadedAt = 0;
+    adminVehiculosCache = [];
+    adminChoferesPorVehiculoCache = {};
+
+    const detalle = Object.entries(resultado).map(([k,v])=>`${k}: ${v}`).join("<br>");
+    if(box) msg(box,`✅ Reset operativo completo. La app queda lista para lanzamiento con datos en 0.<br><br>${detalle}<br><br><small>Choferes, vehículos, tarifas y usuarios se conservaron.</small>`,true);
+    setTimeout(()=>loadAdmin().catch(e=>console.warn("No se pudo refrescar Admin tras reset", e)), 300);
+  }catch(e){
+    if(box) msg(box,"No se pudo completar el reset operativo: " + (e.message || e));
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = "🧹 Preparar lanzamiento / resetear datos operativos"; }
+  }
+};
 
 window.eliminarChoferesDemoAdmin = async function(){
   const box = $("adminToolsMsg");
