@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.44
-Build: 2026-06-06-SIMULADOR-SEMANAS-ADMIN-001
+Version: 2.8.45
+Build: 2026-06-06-SIMULADOR-SEMANAS-GLOBAL-COMPROBANTES-001
 Fecha: 05/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
@@ -32,7 +32,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.44 · Build 2026-06-06-SIMULADOR-SEMANAS-ADMIN-001</title>
+<title>EXPLORA v2.8.45 · Build 2026-06-06-SIMULADOR-SEMANAS-GLOBAL-COMPROBANTES-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -492,7 +492,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.44</b> · Build 2026-06-06-SIMULADOR-SEMANAS-ADMIN-001</div>
+    <div class="build-version"><b>v2.8.45</b> · Build 2026-06-06-SIMULADOR-SEMANAS-GLOBAL-COMPROBANTES-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -787,10 +787,10 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
     <div class="card">
       <h3>🧪 Simulador de semanas</h3>
-      <p class="note">Solo afecta a este administrador en este navegador. No cambia la fecha real del teléfono, no afecta a los choferes y sirve para probar cierres, ranking, bono y comprobantes.</p>
+      <p class="note">Afecta a Admin y choferes cuando actualizan la app. No cambia la fecha real del teléfono. Usalo solo para pruebas de cierres, ranking, bono y comprobantes.</p>
       <div id="adminSimBanner" class="sim-banner hidden"></div>
       <div class="admin-sim-box">
-        <b>Fecha usada por Admin:</b> <span id="adminSimFecha">Fecha real</span><br>
+        <b>Fecha simulada global:</b> <span id="adminSimFecha">Fecha real</span><br>
         <small id="adminSimDetalle" class="note">Sin simulación activa.</small>
       </div>
       <div class="row">
@@ -894,6 +894,8 @@ const $ = id => document.getElementById(id);
 let trustedTodayValue = null;
 let trustedTodaySource = "device";
 let adminSimulationWeeks = Number(localStorage.getItem("explora_admin_sim_weeks") || 0);
+let globalSimulationWeeks = Number(localStorage.getItem("explora_global_sim_weeks") || adminSimulationWeeks || 0);
+let globalSimulationUpdatedAt = localStorage.getItem("explora_global_sim_updated") || "";
 
 function addDaysToDateStringSafe(dateStr, days){
   try{
@@ -927,12 +929,39 @@ function formatDateArgentina(date){
 function today(){
   // Usa fecha confiable sincronizada con Firebase cuando está disponible.
   // Esto evita cierres/ranking en semanas futuras si el teléfono tiene la fecha cambiada.
-  // Solo Admin puede simular semanas, y la simulación queda limitada a este navegador.
+  // El simulador de semanas es global y solo lo controla Admin; los choferes lo ven al refrescar.
   const base = trustedTodayValue || formatDateArgentina(new Date());
-  if(currentProfile && currentProfile.rol === "admin" && adminSimulationWeeks){
-    return addDaysToDateStringSafe(base, adminSimulationWeeks * 7);
+  const weeks = Number(globalSimulationWeeks || 0);
+  return weeks ? addDaysToDateStringSafe(base, weeks * 7) : base;
+}
+
+async function syncGlobalWeekSimulation(){
+  try{
+    const cached = cacheGet("global_week_simulation", 2 * 60 * 1000);
+    if(cached && typeof cached.weeks !== "undefined"){
+      globalSimulationWeeks = Number(cached.weeks || 0);
+      globalSimulationUpdatedAt = cached.updatedAt || "";
+      localStorage.setItem("explora_global_sim_weeks", String(globalSimulationWeeks));
+      if(globalSimulationUpdatedAt) localStorage.setItem("explora_global_sim_updated", globalSimulationUpdatedAt);
+    }
+  }catch(e){}
+
+  try{
+    const snap = await withTimeout(getDoc(doc(db,"configuracion","simulador_semanas_global")), 2500, "Simulador semanal tardó demasiado.");
+    if(snap.exists()){
+      const data = snap.data();
+      globalSimulationWeeks = data.activo ? Number(data.weeks || 0) : 0;
+      globalSimulationUpdatedAt = String(data.actualizadoTexto || data.updatedAt || "");
+    }else{
+      globalSimulationWeeks = 0;
+      globalSimulationUpdatedAt = "";
+    }
+    localStorage.setItem("explora_global_sim_weeks", String(globalSimulationWeeks));
+    if(globalSimulationUpdatedAt) localStorage.setItem("explora_global_sim_updated", globalSimulationUpdatedAt);
+    cacheSet("global_week_simulation", {weeks:globalSimulationWeeks, updatedAt:globalSimulationUpdatedAt}, 2 * 60 * 1000);
+  }catch(e){
+    console.warn("No se pudo leer simulador global; uso caché/local", e);
   }
-  return base;
 }
 
 async function syncTrustedToday(){
@@ -971,11 +1000,13 @@ async function syncTrustedToday(){
       if(serverDay !== localDay){
         console.warn("Fecha del teléfono diferente a Firebase", {localDay, serverDay});
       }
+      await syncGlobalWeekSimulation();
       return serverDay;
     }
   }catch(e){
     console.warn("No se pudo sincronizar fecha con Firebase; uso fecha local/caché", e);
   }
+  await syncGlobalWeekSimulation().catch(()=>{});
   return today();
 }
 
@@ -989,48 +1020,76 @@ window.refrescarPagina = function(){
 
 function updateAdminSimulationUI(){
   const base = trustedTodayValue || formatDateArgentina(new Date());
+  const weeks = Number(globalSimulationWeeks || 0);
   const fechaSimulada = today();
   const banner = $("adminSimBanner");
+  const driverBanner = $("driverSimBanner");
   const fecha = $("adminSimFecha");
   const detalle = $("adminSimDetalle");
 
-  if(fecha) fecha.textContent = adminSimulationWeeks ? fechaSimulada : base;
+  if(fecha) fecha.textContent = weeks ? fechaSimulada : base;
   if(detalle){
-    detalle.textContent = adminSimulationWeeks
-      ? `Simulación activa: ${adminSimulationWeeks > 0 ? "+" : ""}${adminSimulationWeeks} semana(s). Fecha real/servidor: ${base}.`
-      : "Sin simulación activa. Admin usa la fecha real/servidor.";
+    detalle.textContent = weeks
+      ? `Simulación global activa: ${weeks > 0 ? "+" : ""}${weeks} semana(s). Fecha real/servidor: ${base}. Afecta a choferes al refrescar.`
+      : "Sin simulación activa. Admin y choferes usan fecha real/servidor.";
   }
-  if(banner){
-    if(adminSimulationWeeks){
-      banner.classList.remove("hidden");
-      banner.textContent = `🧪 MODO SIMULACIÓN ADMIN: ${adminSimulationWeeks > 0 ? "+" : ""}${adminSimulationWeeks} semana(s) · Fecha simulada ${fechaSimulada}`;
-    }else{
-      banner.classList.add("hidden");
-      banner.textContent = "";
-    }
-  }
+  const txt = weeks ? `🧪 MODO SIMULACIÓN GLOBAL: ${weeks > 0 ? "+" : ""}${weeks} semana(s) · Fecha simulada ${fechaSimulada}` : "";
+  [banner, driverBanner].forEach(el=>{
+    if(!el) return;
+    if(weeks){ el.classList.remove("hidden"); el.textContent = txt; }
+    else { el.classList.add("hidden"); el.textContent = ""; }
+  });
 }
 
-window.simularSemanaAdmin = function(delta){
+window.simularSemanaAdmin = async function(delta){
   if(!currentProfile || currentProfile.rol !== "admin") return;
-  adminSimulationWeeks = Math.max(-8, Math.min(8, Number(adminSimulationWeeks || 0) + Number(delta || 0)));
-  localStorage.setItem("explora_admin_sim_weeks", String(adminSimulationWeeks));
+  globalSimulationWeeks = Math.max(-8, Math.min(8, Number(globalSimulationWeeks || 0) + Number(delta || 0)));
+  adminSimulationWeeks = globalSimulationWeeks;
+  localStorage.setItem("explora_admin_sim_weeks", String(globalSimulationWeeks));
+  localStorage.setItem("explora_global_sim_weeks", String(globalSimulationWeeks));
   periodoOperativoCache = null;
   cierreSemanalCache = null;
   cacheRemove("ranking_global_fast");
+  cacheRemove("global_week_simulation");
+  try{
+    await setDoc(doc(db,"configuracion","simulador_semanas_global"),{
+      activo: globalSimulationWeeks !== 0,
+      weeks: globalSimulationWeeks,
+      actualizadoPor: currentUserId || "admin",
+      actualizadoTexto: new Date().toLocaleString("es-AR"),
+      actualizado: serverTimestamp()
+    },{merge:true});
+  }catch(e){
+    console.warn("No se pudo guardar simulación global", e);
+    if($("adminMsg")) msg($("adminMsg"), "No se pudo guardar la simulación global en Firebase: " + e.message);
+  }
   updateAdminSimulationUI();
-  if($("adminMsg")) msg($("adminMsg"), `Simulación de semanas actualizada. Fecha usada por Admin: ${today()}.`, true);
+  if($("adminMsg")) msg($("adminMsg"), `Simulación global actualizada. Fecha usada por Admin y choferes al refrescar: ${today()}.`, true);
   setTimeout(()=>loadAdmin().catch(e=>console.warn("No se pudo refrescar admin con simulación", e)), 50);
 };
 
-window.volverFechaRealAdmin = function(){
+window.volverFechaRealAdmin = async function(){
+  globalSimulationWeeks = 0;
   adminSimulationWeeks = 0;
   localStorage.removeItem("explora_admin_sim_weeks");
+  localStorage.removeItem("explora_global_sim_weeks");
   periodoOperativoCache = null;
   cierreSemanalCache = null;
   cacheRemove("ranking_global_fast");
+  cacheRemove("global_week_simulation");
+  try{
+    await setDoc(doc(db,"configuracion","simulador_semanas_global"),{
+      activo:false,
+      weeks:0,
+      actualizadoPor: currentUserId || "admin",
+      actualizadoTexto: new Date().toLocaleString("es-AR"),
+      actualizado: serverTimestamp()
+    },{merge:true});
+  }catch(e){
+    console.warn("No se pudo desactivar simulación global", e);
+  }
   updateAdminSimulationUI();
-  if($("adminMsg")) msg($("adminMsg"), "Simulación desactivada. Admin volvió a fecha real/servidor.", true);
+  if($("adminMsg")) msg($("adminMsg"), "Simulación desactivada. Admin y choferes vuelven a fecha real/servidor al actualizar.", true);
   setTimeout(()=>loadAdmin().catch(e=>console.warn("No se pudo refrescar admin al volver a fecha real", e)), 50);
 };
 
@@ -1494,6 +1553,7 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
 });
 
 async function loadDriver(){
+  updateAdminSimulationUI();
   $("driverName").textContent = currentProfile.nombre || currentUserId;
   setStatusButton(currentProfile.estado || "disponible");
   $("todayTrips").textContent = "...";
@@ -2874,7 +2934,8 @@ function uploadComprobanteHtml({inputId, buttonText, onClick, nota}){
     <div class="comprobante-box">
       <b>📎 Comprobante obligatorio</b><br>
       <small>${nota || "Subí foto del comprobante para marcar el pago como realizado."}</small>
-      <input id="${inputId}" class="file-input" type="file" accept="image/*" capture="environment" />
+      <input id="${inputId}" class="file-input" type="file" accept="image/*,.jpg,.jpeg,.png,.webp" />
+      <small>Podés elegir una foto desde galería o tomar una foto nueva.</small>
       <button class="btn-gold" style="margin-top:8px" onclick="${onClick}">${buttonText || "Subir comprobante y marcar pagado"}</button>
     </div>
   `;
@@ -2909,14 +2970,21 @@ window.subirComprobantePagoChofer = async function(){
 
 window.subirComprobantePagoAdmin = async function(chofer, periodoId, sentido, monto, inputId){
   const file = $(inputId) && $(inputId).files[0];
+  const clicked = Array.from(document.querySelectorAll('button')).find(b => (b.getAttribute('onclick') || '').includes(inputId));
+  const oldText = clicked ? clicked.textContent : "";
   try{
+    if(clicked){ clicked.disabled = true; clicked.textContent = "Subiendo comprobante..."; }
+    if($("adminMsg")) msg($("adminMsg"), "Subiendo comprobante...", true);
     await subirComprobantePago({chofer, periodoId, sentido, monto, file, marcadoPor:"admin"});
-    alert("Comprobante cargado y pago marcado como realizado.");
     cacheRemove("comprobantes_admin_recientes");
+    if($("adminMsg")) msg($("adminMsg"), "Comprobante cargado y pago marcado como realizado.", true);
     await loadAdmin();
     if($("adminComprobantesList") && $("adminComprobantesList").innerHTML.trim()) loadComprobantesAdmin(true).catch(()=>{});
   }catch(e){
+    if($("adminMsg")) msg($("adminMsg"), "No se pudo subir el comprobante: " + e.message);
     alert("No se pudo subir el comprobante: " + e.message);
+  }finally{
+    if(clicked){ clicked.disabled = false; clicked.textContent = oldText || "Subir comprobante"; }
   }
 }
 
