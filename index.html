@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.53
-Build: 2026-06-06-CIERRE-LIMPIO-MOTOR-UNICO-001
+Version: 2.8.56
+Build: 2026-06-06-MOTOR-SEMANAL-SABADO-0001-001
 Fecha: 05/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
@@ -16,15 +16,10 @@ Cambios:
 - Se mejora el texto visible de servicios con íconos: 🛬 🇦🇷 🇧🇷 🇵🇾 para lectura rápida.
 - Formato automático con punto en campos numéricos: 30.000 en lugar de 30000, sin afectar cálculos internos.
 - Reasignación segura de vehículo: al asignar un auto existente a otro chofer conserva Mi auto, km y mantenimiento.
-- Motor único de fecha operativa: simulador, ranking, cierre, 50/50 y acumulados usan la misma semana.
-- Cierre automático exacto: todos los sábados desde las 00:01 se cierra la semana anterior y la nueva semana empieza en cero.
-- Ajuste chofer: entre sábado 00:00 y 00:00:59 todavía se considera semana anterior; desde 00:01 todos arrancan semana nueva en 0.
-- Semana operativa corregida: sábado a viernes; el sábado cierra la semana anterior y la nueva semana inicia en 0.
 - Comprobantes obligatorios para pagos semanales: solo carga quien debe pagar, con imagen comprimida y carga bajo demanda.
 - Cierre semanal flexible: permite avanzar con pago pendiente, mantiene alerta, suspende bono a las 24 h si el chofer no sube comprobante.
 - Ranking conserva posiciones, marca suspendidos del bono y asigna el bono al siguiente elegible.
 - Corrección período semanal: si un chofer queda con una semana futura por pruebas o error, se reajusta automáticamente a la semana real sin romper cierres confirmados.
-- Limpieza visual de cierres/comprobantes: solo se muestra un aviso activo válido por chofer; los períodos de prueba o duplicados quedan fuera del cartel principal.
 - Ranking actualizado: 50% facturación, 20% viajes, 20% derivaciones, 10% actividad para incentivar derivar dentro de EXPLORA.
 - Optimización: Nuevo servicio abre desde caché/default y verifica km diario con cache local.
 - Optimización: Ranking abre desde cache/acumulados sin verificar viajes completos en cada apertura.
@@ -32,12 +27,15 @@ Cambios:
 - En una derivación aceptada/completada suman ambos: origen por derivación y receptor por viaje/facturación.
 - Se aumenta el peso de derivaciones al 20% para evitar que servicios salgan fuera de EXPLORA.
 - Ranking corregido: cuenta derivaciones aceptadas/completadas reales sin volver lenta la app.
+- Motor semanal único reconstruido: sábado 00:01 a sábado siguiente 00:00:59.
+- Ranking, facturación, cierre 50/50, bono y comprobantes usan el mismo periodoId.
+- Nueva semana arranca automáticamente a sábado 00:01 sin botón manual de chofer.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.53 · Build 2026-06-06-CIERRE-LIMPIO-MOTOR-UNICO-001</title>
+<title>EXPLORA v2.8.56 · Build 2026-06-06-MOTOR-SEMANAL-SABADO-0001-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -497,7 +495,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.53</b> · Build 2026-06-06-CIERRE-LIMPIO-MOTOR-UNICO-001</div>
+    <div class="build-version"><b>v2.8.56</b> · Build 2026-06-06-MOTOR-SEMANAL-SABADO-0001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -510,7 +508,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.53</b> · CIERRE-LIMPIO-MOTOR-UNICO-001</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.42</b> · CIERRE-AUTO-SIN-BOTON-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -693,7 +691,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.53</b> · CIERRE-LIMPIO-MOTOR-UNICO-001</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.42</b> · CIERRE-AUTO-SIN-BOTON-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -796,7 +794,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div id="adminSimBanner" class="sim-banner hidden"></div>
       <div class="admin-sim-box">
         <b>Fecha simulada global:</b> <span id="adminSimFecha">Fecha real</span><br>
-        <small id="adminSimDetalle" class="note">Sin simulación activa. Semana operativa: sábado a viernes.</small>
+        <small id="adminSimDetalle" class="note">Sin simulación activa.</small>
       </div>
       <div class="row">
         <button class="btn-dark" onclick="simularSemanaAdmin(1)">+1 semana</button>
@@ -811,7 +809,6 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <h3>Herramientas</h3>
       <button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios EXPLORA</button>
       <button class="btn-dark" style="margin-top:10px" onclick="verificarYRepararAcumuladosAdmin()">Verificar / reparar acumulados actuales</button>
-      <button class="btn-dark" style="margin-top:10px" onclick="limpiarAvisosCierrePruebaAdmin()">Limpiar avisos duplicados de cierre</button>
       <button class="btn-red" style="margin-top:10px" onclick="eliminarChoferesDemoAdmin()">Eliminar choferes demo anteriores</button>
       <div id="adminToolsMsg"></div>
     </div>
@@ -825,7 +822,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
     <h2>Cierre semanal pendiente</h2>
     <p class="note">Esta pantalla aparece automáticamente en el día de cierre semanal. Podés revisar el período, subir/consultar comprobantes y confirmar para iniciar la nueva semana.</p>
     <div id="cierreSemanalResumen"></div>
-    <button id="confirmarCierreSemanalBtn" class="btn-gold" onclick="confirmarCierreSemanal()">Confirmar cierre e iniciar nueva semana</button>
+    <button id="confirmarCierreSemanalBtn" class="btn-gold" onclick="confirmarCierreSemanal()">Aceptar resumen y continuar</button>
     <button id="volverAppCierreBtn" class="btn-dark hidden" style="margin-top:10px" onclick="cerrarCierreSemanalModal()">Volver a la app</button>
     <div id="cierreSemanalMsg"></div>
   </div>
@@ -941,6 +938,38 @@ function today(){
   return weeks ? addDaysToDateStringSafe(base, weeks * 7) : base;
 }
 
+
+function nowArgentinaParts(){
+  try{
+    const parts = new Intl.DateTimeFormat("en-CA",{
+      timeZone:"America/Argentina/Buenos_Aires",
+      year:"numeric", month:"2-digit", day:"2-digit",
+      hour:"2-digit", minute:"2-digit", second:"2-digit",
+      hour12:false
+    }).formatToParts(new Date()).reduce((a,p)=>{a[p.type]=p.value; return a;},{});
+    return {
+      fecha:`${parts.year}-${parts.month}-${parts.day}`,
+      hora:Number(parts.hour || 0),
+      minuto:Number(parts.minute || 0),
+      segundo:Number(parts.second || 0)
+    };
+  }catch(e){
+    const d = new Date();
+    return {fecha:formatDateArgentina(d), hora:d.getHours(), minuto:d.getMinutes(), segundo:d.getSeconds()};
+  }
+}
+
+function currentOperationalMinute(){
+  // En modo simulador admin se considera siempre después de 00:01 para poder probar cierres.
+  if(Number(globalSimulationWeeks || 0) !== 0) return 1;
+  const p = nowArgentinaParts();
+  return Number(p.hora || 0) * 60 + Number(p.minuto || 0);
+}
+
+function afterSaturday0001(dateStr = today()){
+  return isSaturday(dateStr) && currentOperationalMinute() >= 1;
+}
+
 async function syncGlobalWeekSimulation(){
   try{
     const cached = cacheGet("global_week_simulation", 2 * 60 * 1000);
@@ -1037,7 +1066,7 @@ function updateAdminSimulationUI(){
   if(detalle){
     detalle.textContent = weeks
       ? `Simulación global activa: ${weeks > 0 ? "+" : ""}${weeks} semana(s). Fecha real/servidor: ${base}. Afecta a choferes al refrescar.`
-      : "Sin simulación activa. Admin y choferes usan fecha real/servidor. Semana operativa: sábado a viernes.";
+      : "Sin simulación activa. Admin y choferes usan fecha real/servidor.";
   }
   const txt = weeks ? `🧪 MODO SIMULACIÓN GLOBAL: ${weeks > 0 ? "+" : ""}${weeks} semana(s) · Fecha simulada ${fechaSimulada}` : "";
   [banner, driverBanner].forEach(el=>{
@@ -2147,34 +2176,8 @@ function isSaturday(dateStr){
   return parseLocalDate(dateStr).getDay() === 6;
 }
 
-function minutosArgentinaActuales(){
-  // Hora operativa usada solo para habilitar el cierre real de sábado 00:01.
-  // La fecha del teléfono no debe adelantar semanas; cuando hay simulación global activa
-  // se permite probar el cierre sin depender de la hora real.
-  try{
-    const parts = new Intl.DateTimeFormat("en-GB",{
-      timeZone:"America/Argentina/Buenos_Aires",
-      hour:"2-digit",
-      minute:"2-digit",
-      hour12:false
-    }).formatToParts(new Date()).reduce((a,p)=>{a[p.type]=p.value; return a;},{});
-    return Number(parts.hour || 0) * 60 + Number(parts.minute || 0);
-  }catch(e){
-    const d = new Date();
-    return d.getHours() * 60 + d.getMinutes();
-  }
-}
-
-function pasoCorteSemanal0001(dateStr = fechaOperativaActual()){
-  if(!isSaturday(dateStr)) return false;
-  // En simulación global se habilita el cierre apenas la fecha simulada cae sábado,
-  // para probar semanas sin tocar el reloj del teléfono.
-  if(Number(globalSimulationWeeks || 0) !== 0) return true;
-  return minutosArgentinaActuales() >= 1;
-}
-
 function puedeCerrarPeriodo(periodo, dateStr = today()){
-  return !!(periodo && periodo.closeDate === dateStr && pasoCorteSemanal0001(dateStr));
+  return !!(periodo && periodo.closeDate === dateStr && afterSaturday0001(dateStr));
 }
 
 window.cerrarCierreSemanalModal = function(){
@@ -2184,106 +2187,39 @@ window.cerrarCierreSemanalModal = function(){
   if(box) box.innerHTML = "";
 }
 
-function fechaOperativaActual(){
-  // Único motor de fecha operativa.
-  // Todas las pantallas críticas deben usar today()/fechaOperativaActual():
-  // ranking, cierre, 50/50, acumulados y simulador.
-  return today();
-}
-
-function getPeriodoTrabajoActual(dateStr = fechaOperativaActual()){
-  // Motor único de semana operativa EXPLORA.
-  // Regla exacta: la nueva semana NO arranca a las 00:00, arranca a las 00:01 del sábado.
-  // Por eso, durante el minuto sábado 00:00 a 00:00:59 todavía se considera la semana anterior.
-  const baseDateStr = (isSaturday(dateStr) && !pasoCorteSemanal0001(dateStr)) ? addDays(dateStr, -1) : dateStr;
-  const d = parseLocalDate(baseDateStr);
+function getPeriodoTrabajoActual(dateStr = today()){
+  const d = parseLocalDate(dateStr);
   const day = d.getDay(); // 0 domingo ... 6 sábado
 
-  // Semana operativa EXPLORA: sábado 00:01 a viernes 23:59:59.
-  // En términos de fecha se guarda como sábado -> viernes; el corte horario real lo controla pasoCorteSemanal0001().
-  const diasDesdeSabado = (day + 1) % 7; // sábado=0, domingo=1 ... viernes=6
-  const start = addDays(baseDateStr, -diasDesdeSabado);
-  const end = addDays(start, 6); // viernes
-  const closeDate = addDays(end, 1); // sábado siguiente desde 00:01
-
-  return {start,end,closeDate,id:`${start}_${end}`};
-}
-
-
-function periodoEsSemanaExploraValida(periodo){
-  if(!periodo) return false;
-  const start = String(periodo.start || periodo.periodoInicio || "").slice(0,10);
-  const end = String(periodo.end || periodo.periodoFin || "").slice(0,10);
-  const closeDate = String(periodo.closeDate || periodo.cierreObligatorio || "").slice(0,10);
-  if(!start || !end) return false;
-  if(!isSaturday(start)) return false;
-  if(daysBetween(start,end) !== 6) return false;
-  if(closeDate && closeDate !== addDays(end,1)) return false;
-  return true;
-}
-
-function periodoDesdePagoSemanal(p){
-  const pid = String(p && p.periodoId || "");
-  let start = String(p && p.periodoInicio || "").slice(0,10);
-  let end = String(p && p.periodoFin || "").slice(0,10);
-  if((!start || !end) && pid.includes("_")){
-    const parts = pid.split("_");
-    start = start || String(parts[0] || "").slice(0,10);
-    end = end || String(parts[1] || "").slice(0,10);
+  // Motor semanal único EXPLORA:
+  // La semana nueva arranca cada sábado a las 00:01.
+  // Sábado 00:00:00 a 00:00:59 todavía pertenece a la semana anterior.
+  let start;
+  if(day === 6){
+    start = currentOperationalMinute() >= 1 ? dateStr : addDays(dateStr, -7);
+  }else{
+    // Domingo=0 -> sábado anterior es -1; lunes=1 -> -2; ... viernes=5 -> -6
+    const diffToPreviousSaturday = day + 1;
+    start = addDays(dateStr, -diffToPreviousSaturday);
   }
-  const closeDate = String(p && (p.cierreObligatorio || p.periodoCierre) || (end ? addDays(end,1) : "")).slice(0,10);
-  return {start,end,closeDate,id:start && end ? `${start}_${end}` : pid};
+  const end = addDays(start, 6);       // viernes siguiente como fecha de fin operativa
+  const closeDate = addDays(end, 1);   // sábado de cierre desde 00:01
+  return {start, end, closeDate, id:`${start}_${end}`, motor:"sabado_0001"};
 }
 
-function pagoSemanalTienePeriodoValido(p){
-  const periodo = periodoDesdePagoSemanal(p);
-  return !!(periodo.id && periodoEsSemanaExploraValida(periodo));
-}
-
-function semanaTextoPago(p){
-  const periodo = periodoDesdePagoSemanal(p);
-  return periodo.start && periodo.end ? `${periodo.start} al ${periodioFixEnd(periodo.end)}` : String(p && p.periodoId || "").replace("_"," al ");
-}
-
-function periodoFixEnd(end){ return end; }
-
-function filtrarAvisosActivosChofer(items){
-  const validos = (items || [])
-    .filter(p=>p && p.ocultarAviso !== true && pagoSemanalTienePeriodoValido(p))
-    .filter(p=>{
-      const pendientePago = p.pagado !== true;
-      const davidPagoSinVisto = p.sentido === "david_a_chofer" && p.pagado === true && p.vistoPorChofer !== true;
-      return pendientePago || davidPagoSinVisto;
-    })
-    .sort((a,b)=>String(b.periodoId || "").localeCompare(String(a.periodoId || "")));
-
-  if(!validos.length) return [];
-
-  // Cartel principal: nunca muestra varios cierres a la vez.
-  // Si hay deuda del chofer, tiene prioridad. Si no, se muestra el último pago de David pendiente de visto.
-  const deudaChofer = validos.find(p=>p.sentido === "chofer_a_david" && p.pagado !== true);
-  if(deudaChofer) return [deudaChofer];
-  return [validos[0]];
-}
-
-function getPeriodoCierrePendiente(dateStr = fechaOperativaActual()){
-  // Cierre automático exacto EXPLORA:
-  // todos los sábados desde 00:01 se cierra la semana anterior
-  // (sábado -> viernes) y la nueva semana empieza en cero por período nuevo.
-  // Con simulador global activo, si la fecha simulada cae sábado se habilita igual
-  // para poder probar sin cambiar la fecha del teléfono.
-  if(!pasoCorteSemanal0001(dateStr)) return null;
-  const end = addDays(dateStr, -1);
-  const start = addDays(end, -6);
-  const closeDate = dateStr;
-  return {start,end,closeDate,id:`${start}_${end}`};
+function getPeriodoCierrePendiente(dateStr = today()){
+  // El sábado desde 00:01 se cierra la semana anterior.
+  if(!afterSaturday0001(dateStr)) return null;
+  const end = addDays(dateStr, -1);    // viernes anterior
+  const start = addDays(end, -6);      // sábado anterior
+  return {start, end, closeDate:dateStr, id:`${start}_${end}`, motor:"sabado_0001"};
 }
 
 function getPeriodoSiguiente(periodo){
-  const start = addDays(periodo.closeDate || addDays(periodo.end, 1), 0);
+  const start = addDays(periodo.end, 1);
   const end = addDays(start, 6);
   const closeDate = addDays(end, 1);
-  return {start,end,closeDate,id:`${start}_${end}`};
+  return {start,end,closeDate,id:`${start}_${end}`, motor:"sabado_0001"};
 }
 
 function perteneceAlPeriodo(data, periodo){
@@ -2295,72 +2231,22 @@ function perteneceAlPeriodo(data, periodo){
   return fecha >= periodo.start && fecha <= periodo.end;
 }
 
-function getPeriodoOperativoDesdePerfil(c, dateStr = fechaOperativaActual()){
-  const calendarioOperativo = getPeriodoTrabajoActual(dateStr);
-
-  if(
-    c &&
-    c.periodoActivoCalendario === CALENDARIO_CIERRE &&
-    c.periodoActivoId &&
-    c.periodoActivoInicio &&
-    c.periodoActivoFin
-  ){
-    const guardado = {
-      id: c.periodoActivoId,
-      start: c.periodoActivoInicio,
-      end: c.periodoActivoFin,
-      closeDate: c.periodoActivoCierre || addDays(c.periodoActivoFin, 1)
-    };
-
-    // Si el período guardado coincide con la semana operativa actual, se respeta.
-    // Si quedó contaminado por pruebas de fecha/simulador, se corrige al período único actual.
-    if(guardado.id === calendarioOperativo.id){
-      return guardado;
-    }
-  }
-
-  return calendarioOperativo;
+function getPeriodoOperativoDesdePerfil(c, dateStr = today()){
+  // No confiamos en períodos guardados en el perfil para decidir la semana activa.
+  // Así evitamos contaminación por simulaciones, fechas viejas del teléfono o cierres anteriores.
+  return getPeriodoTrabajoActual(dateStr);
 }
 
 async function getPeriodoOperativoChofer(choferId){
-  if(choferId === currentUserId && periodoOperativoCache) return periodoOperativoCache;
-
-  try{
-    const snap = await getDoc(doc(db,"choferes",choferId));
-    if(snap.exists()){
-      const data = snap.data();
-      const periodo = getPeriodoOperativoDesdePerfil(data);
-
-      // Si el período guardado no coincide con el período válido calculado, reparo en segundo plano.
-      // Esto evita cierres futuros incorrectos como 2026-06-20 cuando hoy corresponde 2026-06-06.
-      if(data.periodoActivoId && data.periodoActivoId !== periodo.id){
-        updateDoc(doc(db,"choferes",choferId),{
-          periodoActivoId: periodo.id,
-          periodoActivoInicio: periodo.start,
-          periodoActivoFin: periodo.end,
-          periodoActivoCierre: periodo.closeDate,
-          periodoActivoCalendario: CALENDARIO_CIERRE,
-          periodoActivoCorregido: true,
-          periodoActivoCorregidoFecha: today(),
-          ultimaActividad: new Date().toLocaleString("es-AR")
-        }).catch(e=>console.warn("No se pudo corregir período activo", e));
-      }
-
-      if(choferId === currentUserId) periodoOperativoCache = periodo;
-      return periodo;
-    }
-  }catch(e){
-    console.warn("No se pudo leer período activo del chofer", e);
-  }
-  const fallback = getPeriodoTrabajoActual(today());
-  if(choferId === currentUserId) periodoOperativoCache = fallback;
-  return fallback;
+  const periodo = getPeriodoTrabajoActual(today());
+  if(choferId === currentUserId) periodoOperativoCache = periodo;
+  return periodo;
 }
 
 async function getPremioSemana(periodo){
   try{
     const snap = await getDoc(doc(db,"configuracion",`premio_${periodo.id}`));
-    return snap.exists() ? Number(snap.data().monto || 0) : 0;
+    return snap.exists() ? Number(snap.data().monto || 50000) : 50000;
   }catch(e){
     return 0;
   }
@@ -2456,7 +2342,7 @@ async function getDerivacionesAceptadasPorOrigenRapido(periodo){
   return cached || {};
 }
 
-async function calcularRankingSemanalLiviano(periodo = getPeriodoTrabajoActual(fechaOperativaActual())){
+async function calcularRankingSemanalLiviano(periodo = getPeriodoTrabajoActual(today())){
   const cacheKey = `ranking_fast_${periodo.id}`;
   const choferes = await getChoferesRankingActivosRapido();
   const stats = {};
@@ -2849,27 +2735,25 @@ async function getPagosPendientesChofer(force=false){
   if(!currentUserId) return [];
   const cacheKey = "pagos_pendientes_chofer_" + currentUserId;
   const cached = cacheGet(cacheKey, 2 * 60 * 1000);
-  if(cached && !force) return filtrarAvisosActivosChofer(cached);
+  if(cached && !force) return cached;
   try{
     const snap = await withTimeout(getDocs(query(collection(db,"pagos_semanales"), where("chofer","==",currentUserId))), 3500, "Pagos pendientes tardaron.");
     const items = [];
     snap.forEach(d=>{
       const p = {id:d.id, ...d.data()};
-      // Evita que cierres de prueba, semanas viejas mal generadas o duplicados aparezcan en la pantalla principal.
-      if(p.ocultarAviso === true) return;
-      if(!pagoSemanalTienePeriodoValido(p)) return;
       const pendientePago = p.pagado !== true;
       const davidPagoSinVisto = p.sentido === "david_a_chofer" && p.pagado === true && p.vistoPorChofer !== true;
       if(pendientePago || davidPagoSinVisto) items.push(p);
     });
     items.sort((a,b)=>String(b.periodoId || "").localeCompare(String(a.periodoId || "")));
     cacheSet(cacheKey, items);
-    return filtrarAvisosActivosChofer(items);
+    return items;
   }catch(e){
     console.warn("No se pudieron cargar pagos pendientes del chofer", e);
-    return filtrarAvisosActivosChofer(cached || []);
+    return cached || [];
   }
 }
+
 async function checkPagosPendientesChoferAutomatico(){
   const box = $("cierrePagoPendienteAlert");
   if(!box) return;
@@ -2886,7 +2770,7 @@ function renderPagosPendientesChofer(items){
     return;
   }
   const html = items.map(p=>{
-    const semana = semanaTextoPago(p);
+    const semana = String(p.periodoId || "").replace("_"," al ");
     if(p.sentido === "chofer_a_david" && p.pagado !== true){
       const suspendido = pagoPendienteSuspendido(p);
       return `
@@ -2921,11 +2805,6 @@ function renderPagosPendientesChofer(items){
     }
     return "";
   }).join("");
-  if(!html.trim()){
-    box.className = "hidden";
-    box.innerHTML = "";
-    return;
-  }
   box.className = "";
   box.innerHTML = html;
 }
@@ -3135,7 +3014,7 @@ function renderComprobantesLista(box, items, soloPropios){
   box.innerHTML = items.map(x=>{
     const sentidoTxt = x.sentido === "chofer_a_david" ? "Chofer → David" : x.sentido === "david_a_chofer" ? "David → Chofer" : "Sin diferencia";
     const url = x.url || x.comprobanteUrl || "";
-    const semana = semanaTextoPago(x);
+    const semana = String(x.periodoId || "").replace("_"," al ");
     const estado = x.pagado === true ? "✅ Pagado" : "⏳ Pendiente";
     let accion = "";
     if(!soloPropios && x.sentido === "david_a_chofer" && x.pagado !== true){
@@ -3180,35 +3059,30 @@ function renderCierreSemanal(c){
       : `<div class="msg ok"><b>Cierre equilibrado:</b><br>No hay diferencia.</div>`;
 
   let pagoHtml = "";
-
   if(yaPagado){
     pagoHtml = `<div class="paid-box" style="margin-top:10px">✅ Pago marcado como realizado<br><small>${pago.fechaPago || ""} ${pago.horaPago || ""} · ${pago.marcadoPor || ""}</small>${comprobanteLinkHtml(pago)}</div>`;
   }else if(c.choferDebe > 0 || c.davidDebe > 0){
-    if(puedeCerrarHoy){
-      if(c.choferDebe > 0){
-        pagoHtml = uploadComprobanteHtml({
-          inputId:"comprobantePagoChoferInput",
-          buttonText:"Subir comprobante y marcar pagado",
-          onClick:"subirComprobantePagoChofer()",
-          nota:"Como el chofer debe transferir a David, el comprobante lo carga el chofer. Puede avanzar, pero si no sube comprobante dentro de 24 h queda suspendido del bono semanal."
-        }) + `<div class="pending-box" style="margin-top:10px">⚠️ Podés confirmar y seguir operando, pero si no realizás el pago hoy, mañana serás suspendido del bono semanal.</div>`;
-      }else{
-        pagoHtml = `<div class="pending-box" style="margin-top:10px">📎 David aún no cargó el comprobante. Podés confirmar y seguir operando normalmente; esto no afecta tu bono porque el pago depende de David.</div>`;
-      }
+    if(c.choferDebe > 0){
+      pagoHtml = uploadComprobanteHtml({
+        inputId:"comprobantePagoChoferInput",
+        buttonText:"Subir comprobante y marcar pagado",
+        onClick:"subirComprobantePagoChofer()",
+        nota:"Como el chofer debe transferir a David, el comprobante lo carga el chofer. Puede seguir operando, pero si no sube comprobante dentro de 24 h queda suspendido del bono semanal."
+      }) + `<div class="pending-box" style="margin-top:10px">⚠️ Si no realizás el pago hoy, mañana serás suspendido del bono semanal. Podés continuar usando la app.</div>`;
     }else{
-      pagoHtml = `<div class="pending-box" style="margin-top:10px">Pago pendiente. El comprobante se carga el sábado de cierre (${c.periodo ? c.periodo.closeDate : ""}).</div>`;
+      pagoHtml = `<div class="pending-box" style="margin-top:10px">📎 David aún no cargó el comprobante. Podés seguir operando normalmente; esto no afecta tu bono porque el pago depende de David.</div>`;
     }
   }else{
-    pagoHtml = `<div class="paid-box" style="margin-top:10px">✅ Sin pago pendiente<br><small>Están equilibrados.${puedeCerrarHoy ? ' Tocá “Confirmar cierre e iniciar nueva semana” para cerrar el período.' : ' El cierre se habilita el sábado.'}</small></div>`;
+    pagoHtml = `<div class="paid-box" style="margin-top:10px">✅ Sin pago pendiente<br><small>Están equilibrados. La nueva semana ya está activa automáticamente.</small></div>`;
   }
 
   $("cierreSemanalResumen").innerHTML = `
-    <div class="trip"><b>Período de trabajo</b><br><small>${c.periodo.start} al ${c.periodo.end}</small><br><small>Cierre obligatorio: ${c.periodo.closeDate} desde 00:01</small></div>
+    <div class="trip"><b>Período cerrado</b><br><small>${c.periodo.start} al ${c.periodo.end}</small><br><small>Cierre automático: ${c.periodo.closeDate} desde 00:01</small></div>
     <div class="trip"><b>Viajes</b><br><small>Cantidad: ${c.cantidadViajes}</small><br><b style="color:var(--gold)">${money(c.totalViajes)}</b></div>
     <div class="trip"><b>Medios de pago</b><br><small>Efectivo en mano del chofer: ${money(c.efectivo)}</small><br><small>Transferencia en cuenta David: ${money(c.transferencia)}</small><br><small>Tarjeta en cuenta David: ${money(c.tarjeta)}</small></div>
     <div class="trip"><b>Gastos</b><br><small>Cantidad: ${c.cantidadGastos}</small><br><b style="color:var(--gold)">${money(c.totalGastos)}</b></div>
     <div class="trip"><b>Resultado 50/50</b><br><small>Neto: ${money(c.neto)}</small><br><small>Parte chofer: ${money(c.mitadChofer)}</small><br><small>Parte David: ${money(c.mitadDavid)}</small><br><small>Efectivo neto del chofer: ${money(c.efectivoNetoChofer)}</small><br><small>Diferencia antes de premio: ${money(c.diferenciaBase)}</small></div>
-    <div class="trip"><b>Premio semanal</b><br><small>Ganador: ${c.ganadorSemana || "sin ganador"}</small><br><small>Premio configurado: ${money(c.premioSemanal)}</small><br><small>Aplicado a este chofer: ${money(c.premioAplicado)}</small></div>
+    <div class="trip"><b>Premio semanal</b><br><small>Ganador elegible: ${c.ganadorSemana || "sin ganador"}</small><br><small>Bono configurado: ${money(c.premioSemanal || 50000)}</small><br><small>Aplicado a este chofer: ${money(c.premioAplicado)}</small></div>
     ${resultado}
     ${pagoHtml}
   `;
@@ -3218,56 +3092,35 @@ function renderCierreSemanal(c){
   const msgBox = $("cierreSemanalMsg");
 
   if(cierreBtn){
-    if(puedeCerrarHoy){
-      cierreBtn.disabled = false;
-      cierreBtn.textContent = "Guardar cierre e iniciar nueva semana";
-      cierreBtn.classList.remove("hidden");
-    }else{
-      cierreBtn.disabled = true;
-      cierreBtn.textContent = `Cierre disponible el sábado ${c.periodo ? c.periodo.closeDate : ""} desde 00:01`;
-      cierreBtn.classList.remove("hidden");
-    }
+    cierreBtn.disabled = false;
+    cierreBtn.textContent = "Aceptar resumen y continuar";
+    cierreBtn.classList.remove("hidden");
   }
-
-  if(volverBtn){
-    if(puedeCerrarHoy){
-      volverBtn.classList.add("hidden");
-    }else{
-      volverBtn.classList.remove("hidden");
-    }
-  }
-
-  if(msgBox && !puedeCerrarHoy){
-    msgBox.innerHTML = `<div class="msg ok">Todavía no es día de cierre. Tocá “Volver a la app” para seguir cargando servicios normalmente.</div>`;
+  if(volverBtn) volverBtn.classList.remove("hidden");
+  if(msgBox){
+    msgBox.innerHTML = `<div class="msg ok">La nueva semana ya está activa automáticamente desde sábado 00:01. Este resumen queda guardado en el historial.</div>`;
   }
 }
 
 
 
-
 window.confirmarCierreSemanal = async function(){
   if(!cierreSemanalPendiente){
-    $("cierreSemanalModal").classList.add("hidden");
+    if($("cierreSemanalModal")) $("cierreSemanalModal").classList.add("hidden");
     return;
   }
 
   const btn = $("confirmarCierreSemanalBtn");
   if(btn){
     btn.disabled = true;
-    btn.textContent = "Confirmando cierre...";
+    btn.textContent = "Guardando resumen...";
   }
 
   try{
     const c = cierreSemanalPendiente;
-
-    if(!puedeCerrarPeriodo(c.periodo)){
-      msg($("cierreSemanalMsg"), `Este período no se puede cerrar todavía. El cierre corresponde al sábado ${c.periodo ? c.periodo.closeDate : ""}.`);
-      renderCierreSemanal(c);
-      return;
-    }
     const requiereComprobante = (Number(c.choferDebe || 0) > 0 || Number(c.davidDebe || 0) > 0) && !(c.pagoSemanal && c.pagoSemanal.pagado === true);
     if(requiereComprobante){
-      c.pagoSemanal = await asegurarPagoSemanalPendiente(c);
+      c.pagoSemanal = await asegurarPagoSemanalPendiente(c).catch(()=>c.pagoSemanal || null);
     }
     const cierreId = `${currentUserId}_${c.periodo.id}`;
     const sinDiferencia = Number(c.choferDebe || 0) <= 0 && Number(c.davidDebe || 0) <= 0;
@@ -3289,126 +3142,93 @@ window.confirmarCierreSemanal = async function(){
       periodoFin: c.periodo.end,
       cierreObligatorio: c.periodo.closeDate,
       periodoId: c.periodo.id,
+      motor:"sabado_0001",
       chofer: currentUserId,
       vehiculo: currentVehicle ? currentVehicle.id : "",
-      totalViajes: c.totalViajes,
-      cantidadViajes: c.cantidadViajes,
-      efectivo: c.efectivo,
-      transferencia: c.transferencia,
-      tarjeta: c.tarjeta,
-      totalGastos: c.totalGastos,
-      cantidadGastos: c.cantidadGastos,
-      neto: c.neto,
-      mitadChofer: c.mitadChofer,
-      mitadDavid: c.mitadDavid,
-      efectivoNetoChofer: c.efectivoNetoChofer,
-      ganadorSemana: c.ganadorSemana,
-      ganadorId: c.ganadorId,
-      premioSemanal: c.premioSemanal,
-      premioAplicado: c.premioAplicado,
-      diferenciaBase: c.diferenciaBase,
-      diferenciaFinal: c.diferenciaFinal,
-      choferDebe: c.choferDebe,
-      davidDebe: c.davidDebe,
+      totalViajes: Number(c.totalViajes || 0),
+      cantidadViajes: Number(c.cantidadViajes || 0),
+      totalGastos: Number(c.totalGastos || 0),
+      cantidadGastos: Number(c.cantidadGastos || 0),
+      efectivo: Number(c.efectivo || 0),
+      transferencia: Number(c.transferencia || 0),
+      tarjeta: Number(c.tarjeta || 0),
+      neto: Number(c.neto || 0),
+      mitadChofer: Number(c.mitadChofer || 0),
+      mitadDavid: Number(c.mitadDavid || 0),
+      efectivoNetoChofer: Number(c.efectivoNetoChofer || 0),
+      choferDebe: Number(c.choferDebe || 0),
+      davidDebe: Number(c.davidDebe || 0),
+      ganadorSemana: c.ganadorSemana || "",
+      ganadorId: c.ganadorId || "",
+      premioSemanal: Number(c.premioSemanal || 50000),
+      premioAplicado: Number(c.premioAplicado || 0),
       pagoSemanal: c.pagoSemanal || pagoAutomaticoSinDiferencia || null,
-      pagoPendiente: !!(c.pagoSemanal && c.pagoSemanal.pagado !== true),
-      confirmado: true,
-      creado: serverTimestamp()
-    });
+      aceptadoPorChofer:true,
+      actualizado: serverTimestamp()
+    },{merge:true});
 
     if(pagoAutomaticoSinDiferencia){
-      await setDoc(doc(db,"pagos_semanales",`${currentUserId}_${c.periodo.id}`),{
+      await setDoc(doc(db,"pagos_semanales",comprobanteId(currentUserId,c.periodo.id)),{
         ...pagoAutomaticoSinDiferencia,
         actualizado: serverTimestamp()
-      });
+      },{merge:true});
     }
 
-    const proximoPeriodo = getPeriodoSiguiente(c.periodo);
-
-    await updateDoc(doc(db,"choferes",currentUserId),{
-      ultimoCierreSemanal: c.periodo.id,
-      periodoActivoId: proximoPeriodo.id,
-      periodoActivoInicio: proximoPeriodo.start,
-      periodoActivoFin: proximoPeriodo.end,
-      periodoActivoCierre: proximoPeriodo.closeDate,
-      periodoActivoCalendario: CALENDARIO_CIERRE,
-      periodoActivoDesde: today(),
-      ultimaActividad: new Date().toLocaleString("es-AR")
-    });
-
-    // Actualizamos el perfil local para que la pantalla pase inmediatamente a la semana nueva.
-    currentProfile = {
-      ...(currentProfile || {}),
-      ultimoCierreSemanal: c.periodo.id,
-      periodoActivoId: proximoPeriodo.id,
-      periodoActivoInicio: proximoPeriodo.start,
-      periodoActivoFin: proximoPeriodo.end,
-      periodoActivoCierre: proximoPeriodo.closeDate,
-      periodoActivoCalendario: CALENDARIO_CIERRE,
-      periodoActivoDesde: today()
-    };
-    periodoOperativoCache = proximoPeriodo;
-
+    cacheRemove(`cierre_sem_${currentUserId}_${c.periodo.id}`);
+    cacheRemove("pagos_pendientes_chofer_" + currentUserId);
     cierreSemanalPendiente = null;
     cierreSemanalCache = null;
-    kmTodaySaved = false;
-    $("cierreSemanalModal").classList.add("hidden");
-    await loadTodayTrips();
-    await checkPagosPendientesChoferAutomatico().catch(()=>{});
-    alert("Cierre semanal guardado correctamente. La nueva semana ya está iniciada.");
+    if($("cierreSemanalModal")) $("cierreSemanalModal").classList.add("hidden");
+    if($("cierreSemanalMsg")) $("cierreSemanalMsg").innerHTML = "";
+    loadTodayTrips().catch(()=>{});
+    checkPagosPendientesChoferAutomatico().catch(()=>{});
   }catch(e){
-    msg($("cierreSemanalMsg"),"No se pudo confirmar el cierre: " + e.message);
+    msg($("cierreSemanalMsg"),"No se pudo guardar el resumen: " + e.message);
   }finally{
     if(btn){
-      const cActual = cierreSemanalPendiente;
-      const puedeCerrar = cActual && cActual.periodo && puedeCerrarPeriodo(cActual.periodo, today());
-
-      if(cActual && !puedeCerrar){
-        btn.disabled = true;
-        btn.textContent = `Cierre disponible el sábado ${cActual.periodo.closeDate} desde 00:01`;
-      }else{
-        btn.disabled = false;
-        btn.textContent = "Confirmar cierre e iniciar nueva semana";
-      }
+      btn.disabled = false;
+      btn.textContent = "Aceptar resumen y continuar";
     }
   }
 }
+
 
 async function checkCierreSemanalAutomatico(){
   const periodo = getPeriodoCierrePendiente();
-  if(!periodo) return;
+  if(!periodo || !currentUserId) return;
 
   const cierreId = `${currentUserId}_${periodo.id}`;
-  const cierreSnap = await getDoc(doc(db,"cierres_semanales",cierreId));
-  if(cierreSnap.exists()) return;
-
-  // v2.8.52: no mostramos el modal hasta tener un cierre calculado.
-  // Así evitamos el cartel viejo de error/timeout y no bloqueamos la operación del chofer.
   try{
-    const cierreCalculado = await withTimeout(
-      calcularCierreSemanalLiviano(currentUserId, periodo),
-      12000,
-      "cierre_auto_timeout_silencioso"
-    );
-
-    if(!cierreCalculado || (Number(cierreCalculado.cantidadViajes || 0) === 0 && Number(cierreCalculado.cantidadGastos || 0) === 0)){
-      cierreSemanalPendiente = null;
-      if($("cierreSemanalModal")) $("cierreSemanalModal").classList.add("hidden");
-      return;
-    }
-
-    cierreCalculado.pagoSemanal = await getEstadoPagoSemanal(currentUserId, periodo.id);
-    cierreSemanalPendiente = cierreCalculado;
-    cierreSemanalCache = { key: `${currentUserId}_${periodo.id}`, data: cierreSemanalPendiente };
-    if($("cierreSemanalModal")) $("cierreSemanalModal").classList.remove("hidden");
-    renderCierreSemanal(cierreSemanalPendiente);
+    const cierreSnap = await withTimeout(getDoc(doc(db,"cierres_semanales",cierreId)), 2500, "cierre existente");
+    if(cierreSnap.exists()) return;
   }catch(e){
-    console.warn("Cierre automático pendiente no se pudo calcular todavía. Se reintentará al actualizar/ingresar.", e);
-    cierreSemanalPendiente = null;
-    if($("cierreSemanalResumen")) $("cierreSemanalResumen").innerHTML = "";
+    console.warn("No se pudo verificar cierre existente; no se bloquea operación", e);
+    return;
+  }
+
+  try{
+    const c = await withTimeout(calcularCierreSemanalUltraRapido(currentUserId, periodo), 6500, "cierre automático");
+    if(!c || (Number(c.cantidadViajes || 0) === 0 && Number(c.cantidadGastos || 0) === 0)) return;
+    c.pagoSemanal = await getEstadoPagoSemanal(currentUserId, periodo.id).catch(()=>null);
+    cierreSemanalPendiente = c;
+    cierreSemanalCache = { key: cierreId, data: c };
+    cacheSet(`cierre_sem_${cierreId}`, c);
+    if($("cierreSemanalModal") && $("cierreSemanalResumen")){
+      $("cierreSemanalModal").classList.remove("hidden");
+      renderCierreSemanal(c);
+    }
+  }catch(e){
+    // No mostrar cartel rojo ni bloquear la app. El chofer puede seguir trabajando.
+    console.warn("Cierre automático omitido para no generar demora", e);
     if($("cierreSemanalModal")) $("cierreSemanalModal").classList.add("hidden");
   }
 }
+
+window.closeDay = async function(){
+  // El chofer ya no ejecuta cierre manual. El cierre aparece automáticamente sábado 00:01.
+  await checkCierreSemanalAutomatico();
+}
+
 
 async function loadTodayTrips(){
   // Pantalla principal ultra rápida: muestra caché instantánea y refresca 1 documento.
@@ -4800,64 +4620,6 @@ window.marcarPagoSemanalChofer = async function(){
 }
 
 
-
-window.limpiarAvisosCierrePruebaAdmin = async function(){
-  const box = $("adminToolsMsg") || $("adminMsg");
-  if(box) box.innerHTML = `<div class="msg ok">Revisando avisos de cierre duplicados o con períodos inválidos...</div>`;
-  try{
-    const snap = await withTimeout(getDocs(collection(db,"pagos_semanales")), 9000, "La limpieza tardó demasiado.");
-    const porChofer = {};
-    const invalidos = [];
-    snap.forEach(d=>{
-      const p = {id:d.id, ...d.data()};
-      if(!pagoSemanalTienePeriodoValido(p)){
-        invalidos.push(p);
-        return;
-      }
-      const pendientePago = p.pagado !== true;
-      const davidPagoSinVisto = p.sentido === "david_a_chofer" && p.pagado === true && p.vistoPorChofer !== true;
-      if(!(pendientePago || davidPagoSinVisto)) return;
-      const chofer = p.chofer || "sin_chofer";
-      if(!porChofer[chofer]) porChofer[chofer] = [];
-      porChofer[chofer].push(p);
-    });
-
-    const cambios = [];
-    invalidos.forEach(p=>cambios.push(setDoc(doc(db,"pagos_semanales",p.id),{
-      archivado:true,
-      ocultarAviso:true,
-      motivoArchivo:"Periodo semanal inválido o generado por prueba",
-      actualizado:serverTimestamp()
-    },{merge:true})));
-
-    Object.values(porChofer).forEach(arr=>{
-      const activos = filtrarAvisosActivosChofer(arr);
-      const activoId = activos[0] && activos[0].id;
-      arr.forEach(p=>{
-        if(p.id !== activoId){
-          cambios.push(setDoc(doc(db,"pagos_semanales",p.id),{
-            ocultarAviso:true,
-            motivoArchivo:"Aviso duplicado; se conserva en historial",
-            actualizado:serverTimestamp()
-          },{merge:true}));
-        }else{
-          cambios.push(setDoc(doc(db,"pagos_semanales",p.id),{
-            ocultarAviso:false,
-            actualizado:serverTimestamp()
-          },{merge:true}));
-        }
-      });
-    });
-
-    await Promise.all(cambios);
-    cacheRemove("comprobantes_admin_recientes");
-    cacheRemove("ranking_global_fast");
-    if(box) box.innerHTML = `<div class="msg ok">Limpieza realizada. Avisos inválidos: ${invalidos.length}. Avisos duplicados archivados: ${Math.max(0,cambios.length-invalidos.length)}.</div>`;
-  }catch(e){
-    if(box) box.innerHTML = `<div class="msg err">No se pudo limpiar: ${e.message}</div>`;
-  }
-}
-
 window.verificarYRepararAcumuladosAdmin = async function(){
   const box = $("adminToolsMsg");
   const periodo = getPeriodoTrabajoActual(today());
@@ -5351,6 +5113,15 @@ window.eliminarChoferesDemoAdmin = async function(){
   }
 };
 
+
+
+// Limpieza final del módulo semanal: el cierre manual del chofer queda oculto.
+setTimeout(()=>{
+  const b = $("btnCerrarDia");
+  if(b) b.classList.add("hidden");
+  const cb = $("confirmarCierreSemanalBtn");
+  if(cb) cb.textContent = "Aceptar resumen y continuar";
+}, 300);
 </script>
 
 </body>
