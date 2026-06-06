@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.60
+Version: 2.8.63
 Build: 2026-06-06-ESTABLE-CIERRE-RESOLVER-GLOBAL-004
 Fecha: 06/06/2026
 Cambios:
@@ -34,12 +34,13 @@ Cambios:
 - Corrección: cierre semanal pendiente ahora se detecta aunque el chofer abra la app domingo/lunes o días posteriores.
 - Corrección: Ranking semanal visible ahora usa período global activo único para todos los choferes; el cierre pendiente queda separado para no mostrar semanas distintas por perfil.
 - Corrección: si existe un cierre semanal pero el chofer no lo aceptó, sigue apareciendo como pendiente para todos los choferes.
+- Corrección: comprobantes con fallback Firestore si Storage queda bloqueado o tarda; muestra error real y nunca queda infinito en Subiendo.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.61 · Build 2026-06-06-ESTABLE-CIERRE-RESOLVER-GLOBAL-004</title>
+<title>EXPLORA v2.8.63 · Build 2026-06-06-ESTABLE-COMPROBANTES-FALLBACK-005</title>
 <style>
 :root{
   --bg:#080808;
@@ -499,7 +500,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.61</b> · Build 2026-06-06-ESTABLE-CIERRE-RESOLVER-GLOBAL-004</div>
+    <div class="build-version"><b>v2.8.63</b> · Build 2026-06-06-ESTABLE-COMPROBANTES-FALLBACK-005</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -512,7 +513,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.61</b> · ESTABLE-CIERRE-RESOLVER-GLOBAL-004</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.63</b> · ESTABLE-COMPROBANTES-FALLBACK-005</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -695,7 +696,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.61</b> · ESTABLE-CIERRE-RESOLVER-GLOBAL-004</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.63</b> · ESTABLE-COMPROBANTES-FALLBACK-005</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -2931,14 +2932,54 @@ async function obtenerBlobComprobante(file){
   }
 }
 
+function blobToDataURLComprobante(blob){
+  return withTimeout(new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=>resolve(String(reader.result || ""));
+    reader.onerror = ()=>reject(new Error("No se pudo preparar la foto del comprobante."));
+    reader.readAsDataURL(blob);
+  }), 6000, "La preparación del comprobante tardó demasiado.");
+}
+
+async function subirArchivoComprobanteStorage(ref, archivo){
+  // En HTML Keep / algunos WebViews de iPhone uploadBytes puede quedar colgado sin devolver error.
+  // Por eso lo encerramos en timeout y, si falla, se guarda fallback en Firestore.
+  await withTimeout(
+    uploadBytes(ref, archivo.blob, {contentType:archivo.contentType || "image/jpeg"}),
+    15000,
+    "Storage tardó demasiado o está bloqueado. Intento guardarlo en respaldo Firestore."
+  );
+  return await withTimeout(getDownloadURL(ref), 8000, "El comprobante subió, pero no se pudo obtener el enlace.");
+}
+
 async function subirComprobantePago({chofer, periodoId, sentido, monto, file, marcadoPor}){
   if(!chofer || !periodoId) throw new Error("Falta chofer o período para guardar el comprobante.");
+  if(!file) throw new Error("Seleccioná una foto del comprobante antes de subir.");
+
   const archivo = await obtenerBlobComprobante(file);
   const id = comprobanteId(chofer, periodoId);
   const path = `comprobantes_pagos/${periodoId}/${chofer}_${Date.now()}.${archivo.extension || "jpg"}`;
   const ref = storageRef(storage, path);
-  await withTimeout(uploadBytes(ref, archivo.blob, {contentType:archivo.contentType || "image/jpeg"}), 18000, "La subida del comprobante tardó demasiado. Revisá internet y probá de nuevo.");
-  const url = await withTimeout(getDownloadURL(ref), 8000, "El comprobante subió, pero no se pudo obtener el enlace.");
+
+  let url = "";
+  let storagePath = path;
+  let guardadoEn = "storage";
+  let storageError = "";
+
+  try{
+    url = await subirArchivoComprobanteStorage(ref, archivo);
+  }catch(e){
+    console.warn("Storage no completó la subida; guardo comprobante inline en Firestore", e);
+    storageError = e && e.message ? e.message : String(e || "Error de Storage");
+    const dataUrl = await blobToDataURLComprobante(archivo.blob);
+    // Firestore permite aprox. 1 MiB por documento. Dejamos margen para metadatos.
+    if(dataUrl.length > 850000){
+      throw new Error("Firebase Storage no respondió y la foto es demasiado pesada para respaldo. Sacá una captura/foto más liviana o revisá reglas de Storage. Detalle: " + storageError);
+    }
+    url = dataUrl;
+    storagePath = `firestore_inline/${id}`;
+    guardadoEn = "firestore_inline";
+  }
 
   const data = {
     id,
@@ -2949,14 +2990,17 @@ async function subirComprobantePago({chofer, periodoId, sentido, monto, file, ma
     marcadoPor,
     fecha:today(),
     hora:new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
-    storagePath:path,
+    storagePath,
     url,
+    comprobanteUrl:url,
+    guardadoEn,
+    storageError,
     estado:"cargado",
     actualizado:serverTimestamp()
   };
 
-  await setDoc(doc(db,"comprobantes_pagos",id),data,{merge:true});
-  await setDoc(doc(db,"pagos_semanales",id),{
+  await withTimeout(setDoc(doc(db,"comprobantes_pagos",id),data,{merge:true}), 10000, "El comprobante subió, pero no se pudo guardar el registro.");
+  await withTimeout(setDoc(doc(db,"pagos_semanales",id),{
     chofer,
     periodoId,
     sentido,
@@ -2967,10 +3011,12 @@ async function subirComprobantePago({chofer, periodoId, sentido, monto, file, ma
     fechaPago:data.fecha,
     horaPago:data.hora,
     comprobanteUrl:url,
-    comprobantePath:path,
+    comprobantePath:storagePath,
+    guardadoEn,
+    storageError,
     comprobanteObligatorio:true,
     actualizado:serverTimestamp()
-  },{merge:true});
+  },{merge:true}), 10000, "El comprobante subió, pero no se pudo marcar el pago como realizado.");
 
   cacheRemove(`admin_5050_${chofer}_${periodoId}`);
   cacheRemove(`cierre_sem_${chofer}_${periodoId}`);
@@ -3013,10 +3059,13 @@ window.subirComprobantePagoChofer = async function(){
   const input = $("comprobantePagoChoferInput");
   const file = input && input.files && input.files[0];
   const btns = Array.from(document.querySelectorAll('button'));
+  const clicked = btns.find(b => (b.getAttribute('onclick') || '').includes('subirComprobantePagoChofer'));
+  const oldText = clicked ? clicked.textContent : "";
   try{
     if(!file) throw new Error("Seleccioná una foto del comprobante antes de subir.");
     btns.forEach(b=>{ if((b.textContent||"").includes("Subir comprobante")) b.disabled = true; });
-    if($("cierreSemanalMsg")) msg($("cierreSemanalMsg"), "Subiendo comprobante... no cierres esta pantalla.", true);
+    if(clicked) clicked.textContent = "Subiendo comprobante...";
+    if($("cierreSemanalMsg")) msg($("cierreSemanalMsg"), "Subiendo comprobante... si Storage no responde, se guardará en respaldo seguro.", true);
     const pago = await subirComprobantePago({
       chofer:currentUserId,
       periodoId:c.periodo.id,
@@ -3035,7 +3084,8 @@ window.subirComprobantePagoChofer = async function(){
     if($("cierreSemanalMsg")) msg($("cierreSemanalMsg"),"No se pudo subir el comprobante: " + e.message);
     alert("No se pudo subir el comprobante: " + e.message);
   }finally{
-    btns.forEach(b=>{ if((b.textContent||"").includes("Subir comprobante")) b.disabled = false; });
+    btns.forEach(b=>{ if((b.textContent||"").includes("Subir comprobante") || (b.textContent||"").includes("Subiendo comprobante")) b.disabled = false; });
+    if(clicked) clicked.textContent = oldText || "Subir comprobante y marcar pagado";
   }
 }
 
@@ -3120,7 +3170,7 @@ function renderComprobantesLista(box, items, soloPropios){
         <small>Chofer: ${x.chofer || ""}</small><br>
         <small>Semana: ${semana}</small><br>
         <small>Monto: ${money(x.monto)} · ${x.marcadoPor ? 'Subido por: ' + x.marcadoPor : 'Sin comprobante cargado'}</small><br>
-        <small>${x.fechaPago || x.creadoFecha || ""} ${x.horaPago || x.creadoHora || ""}</small>
+        <small>${x.fechaPago || x.creadoFecha || ""} ${x.horaPago || x.creadoHora || ""}</small><br><small>${x.guardadoEn === "firestore_inline" ? "Guardado en respaldo Firestore" : (x.guardadoEn === "storage" ? "Guardado en Firebase Storage" : "")}</small>
         ${accion}
       </div>
     `;
