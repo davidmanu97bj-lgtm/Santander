@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.36
-Build: 2026-06-06-RANKING-DERIVACIONES-FAST-FIX-001
+Version: 2.8.37
+Build: 2026-06-06-PERIODO-SEMANAL-FIX-001
 Fecha: 05/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
@@ -16,6 +16,7 @@ Cambios:
 - Se mejora el texto visible de servicios con íconos: 🛬 🇦🇷 🇧🇷 🇵🇾 para lectura rápida.
 - Formato automático con punto en campos numéricos: 30.000 en lugar de 30000, sin afectar cálculos internos.
 - Reasignación segura de vehículo: al asignar un auto existente a otro chofer conserva Mi auto, km y mantenimiento.
+- Corrección período semanal: si un chofer queda con una semana futura por pruebas o error, se reajusta automáticamente a la semana real sin romper cierres confirmados.
 - Ranking actualizado: 50% facturación, 20% viajes, 20% derivaciones, 10% actividad para incentivar derivar dentro de EXPLORA.
 - Optimización: Nuevo servicio abre desde caché/default y verifica km diario con cache local.
 - Optimización: Ranking abre desde cache/acumulados sin verificar viajes completos en cada apertura.
@@ -28,7 +29,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.36 · Build 2026-06-06-RANKING-DERIVACIONES-FAST-FIX-001</title>
+<title>EXPLORA v2.8.37 · Build 2026-06-06-PERIODO-SEMANAL-FIX-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -404,7 +405,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.36</b> · Build 2026-06-06-RANKING-DERIVACIONES-FAST-FIX-001</div>
+    <div class="build-version"><b>v2.8.37</b> · Build 2026-06-06-PERIODO-SEMANAL-FIX-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -417,7 +418,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.36</b> · RANKING-DERIVACIONES-FAST-FIX-001</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.37</b> · PERIODO-SEMANAL-FIX-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -589,7 +590,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.36</b> · RANKING-DERIVACIONES-FAST-FIX-001</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.37</b> · PERIODO-SEMANAL-FIX-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -1856,7 +1857,9 @@ function perteneceAlPeriodo(data, periodo){
   return fecha >= periodo.start && fecha <= periodo.end;
 }
 
-function getPeriodoOperativoDesdePerfil(c){
+function getPeriodoOperativoDesdePerfil(c, dateStr = today()){
+  const calendarioReal = getPeriodoTrabajoActual(dateStr);
+
   if(
     c &&
     c.periodoActivoCalendario === CALENDARIO_CIERRE &&
@@ -1864,14 +1867,28 @@ function getPeriodoOperativoDesdePerfil(c){
     c.periodoActivoInicio &&
     c.periodoActivoFin
   ){
-    return {
+    const guardado = {
       id: c.periodoActivoId,
       start: c.periodoActivoInicio,
       end: c.periodoActivoFin,
       closeDate: c.periodoActivoCierre || c.periodoActivoFin
     };
+
+    const offsetInicio = daysBetween(dateStr, guardado.start);
+    const offsetFin = daysBetween(guardado.end, dateStr);
+
+    // Seguridad: si por una prueba de fecha o caché quedó una semana futura/lejana
+    // (ej: hoy es sábado 06 y el perfil quedó en 14-20), se vuelve a la semana real.
+    // Se permite solo el caso válido de cierre confirmado el sábado: semana siguiente comienza mañana.
+    const semanaSiguienteValida = isSaturday(dateStr) && offsetInicio === 1 && c.periodoActivoDesde === dateStr;
+    const fechaDentroDelPeriodo = dateStr >= guardado.start && dateStr <= guardado.end;
+
+    if(fechaDentroDelPeriodo || semanaSiguienteValida){
+      return guardado;
+    }
   }
-  return getPeriodoTrabajoActual(today());
+
+  return calendarioReal;
 }
 
 async function getPeriodoOperativoChofer(choferId){
@@ -1880,7 +1897,24 @@ async function getPeriodoOperativoChofer(choferId){
   try{
     const snap = await getDoc(doc(db,"choferes",choferId));
     if(snap.exists()){
-      const periodo = getPeriodoOperativoDesdePerfil(snap.data());
+      const data = snap.data();
+      const periodo = getPeriodoOperativoDesdePerfil(data);
+
+      // Si el período guardado no coincide con el período válido calculado, reparo en segundo plano.
+      // Esto evita cierres futuros incorrectos como 2026-06-20 cuando hoy corresponde 2026-06-06.
+      if(data.periodoActivoId && data.periodoActivoId !== periodo.id){
+        updateDoc(doc(db,"choferes",choferId),{
+          periodoActivoId: periodo.id,
+          periodoActivoInicio: periodo.start,
+          periodoActivoFin: periodo.end,
+          periodoActivoCierre: periodo.closeDate,
+          periodoActivoCalendario: CALENDARIO_CIERRE,
+          periodoActivoCorregido: true,
+          periodoActivoCorregidoFecha: today(),
+          ultimaActividad: new Date().toLocaleString("es-AR")
+        }).catch(e=>console.warn("No se pudo corregir período activo", e));
+      }
+
       if(choferId === currentUserId) periodoOperativoCache = periodo;
       return periodo;
     }
@@ -2434,6 +2468,7 @@ window.confirmarCierreSemanal = async function(){
       periodoActivoCalendario: CALENDARIO_CIERRE,
       periodoActivoDesde: today()
     };
+    periodoOperativoCache = proximoPeriodo;
 
     cierreSemanalPendiente = null;
     cierreSemanalCache = null;
