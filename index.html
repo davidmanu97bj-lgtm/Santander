@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.30
-Build: 2026-06-06-RANKING-BONO-50000-001
+Version: 2.8.31
+Build: 2026-06-06-REASIGNACION-VEHICULO-SEGURA-001
 Fecha: 05/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
@@ -14,12 +14,13 @@ Cambios:
 - Ranking verificado: al tocar Ranking compara acumulados con viajes reales de la semana activa.
 - Bono semanal visible de $50.000 en Ranking para motivar al chofer.
 - Se mejora el texto visible de servicios con íconos: 🛬 🇦🇷 🇧🇷 🇵🇾 para lectura rápida.
+- Reasignación segura de vehículo: al asignar un auto existente a otro chofer conserva Mi auto, km y mantenimiento.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.30 · Build 2026-06-06-RANKING-BONO-50000-001</title>
+<title>EXPLORA v2.8.31 · Build 2026-06-06-REASIGNACION-VEHICULO-SEGURA-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -371,7 +372,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.30</b> · Build 2026-06-06-RANKING-BONO-50000-001</div>
+    <div class="build-version"><b>v2.8.31</b> · Build 2026-06-06-REASIGNACION-VEHICULO-SEGURA-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -384,7 +385,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.30</b> · RANKING-BONO-50000-001</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.31</b> · REASIGNACION-VEHICULO-SEGURA-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -556,7 +557,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.30</b> · RANKING-BONO-50000-001</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.31</b> · REASIGNACION-VEHICULO-SEGURA-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -611,8 +612,8 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
     </div>
 
     <div class="card">
-      <h3>Alta de chofer y vehículo</h3>
-      <p class="note">Crea el usuario real en Firebase Authentication y también guarda el chofer y el vehículo en Firestore. El usuario entra con el nombre sin @.</p>
+      <h3>Alta / reasignación de chofer y vehículo</h3>
+      <p class="note">Crea el usuario real y guarda el chofer. Si la patente ya existe, la app reasigna ese auto al nuevo chofer sin borrar “Mi auto”, km actual, service, correa ni cubiertas.</p>
 
       <label>Nombre del chofer</label>
       <input id="nuevoChoferNombre" placeholder="Ej: Marcelo" />
@@ -641,7 +642,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
         </div>
       </div>
 
-      <button class="btn-gold" onclick="crearChoferVehiculoAdmin()">Crear chofer y vehículo</button>
+      <button class="btn-gold" onclick="crearChoferVehiculoAdmin()">Crear / reasignar chofer y vehículo</button>
       <div id="nuevoChoferMsg"></div>
     </div>
 
@@ -4038,44 +4039,96 @@ window.crearChoferVehiculoAdmin = async function(){
   const usuario = normalizarUsuarioExplora($("nuevoChoferUsuario")?.value || "");
   const pass = String($("nuevoChoferPass")?.value || "").trim();
   const patente = String($("nuevoVehiculoPatente")?.value || "").trim().toUpperCase().replace(/\s+/g,"");
-  const modelo = String($("nuevoVehiculoModelo")?.value || "").trim();
-  const kmActual = Number($("nuevoVehiculoKm")?.value || 0);
-  const aceiteUltimoKm = Number($("nuevoVehiculoAceite")?.value || 0);
+  const modeloInput = String($("nuevoVehiculoModelo")?.value || "").trim();
+  const kmInputRaw = String($("nuevoVehiculoKm")?.value || "").trim();
+  const aceiteInputRaw = String($("nuevoVehiculoAceite")?.value || "").trim();
+  const kmActualInput = kmInputRaw ? Number(kmInputRaw) : null;
+  const aceiteUltimoKmInput = aceiteInputRaw ? Number(aceiteInputRaw) : null;
 
   if(!box) return alert("No se encontró el panel de alta de chofer.");
   if(!nombre) return msg(box,"Ingrese el nombre del chofer.");
   if(!usuario) return msg(box,"Ingrese un usuario válido, sin espacios ni acentos.");
   if(pass.length < 6) return msg(box,"La contraseña debe tener mínimo 6 caracteres.");
   if(!patente) return msg(box,"Ingrese la patente / ID del vehículo.");
-  if(!modelo) return msg(box,"Ingrese el modelo del vehículo.");
 
-  const btn = Array.from(document.querySelectorAll('button')).find(b=>(b.textContent || '').includes('Crear chofer'));
+  const btn = Array.from(document.querySelectorAll('button')).find(b=>(b.textContent || '').includes('Crear') && (b.textContent || '').includes('vehículo'));
   if(btn){
     btn.disabled = true;
-    btn.textContent = "Creando...";
+    btn.textContent = "Procesando...";
   }
-  msg(box,"Creando usuario en Firebase y guardando vehículo...",true);
+  msg(box,"Verificando vehículo y usuario...",true);
 
   let secondaryApp = null;
 
   try{
-    secondaryApp = initializeApp(firebaseConfig, "crearUsuario_" + Date.now());
-    const secondaryAuth = getAuth(secondaryApp);
+    const vehRef = doc(db,"vehiculos",patente);
+    const vehSnap = await getDoc(vehRef);
+    const vehiculoExistente = vehSnap.exists() ? vehSnap.data() : null;
 
-    await createUserWithEmailAndPassword(secondaryAuth, `${usuario}@explora.local`, pass);
-    await signOut(secondaryAuth).catch(()=>{});
+    if(!vehiculoExistente && !modeloInput){
+      return msg(box,"Ingrese el modelo del vehículo para crear un auto nuevo.");
+    }
 
-    const vehiculoData = {
-      modelo,
+    if(kmActualInput !== null && (!Number.isFinite(kmActualInput) || kmActualInput < 0)){
+      return msg(box,"El km actual no es válido.");
+    }
+    if(aceiteUltimoKmInput !== null && (!Number.isFinite(aceiteUltimoKmInput) || aceiteUltimoKmInput < 0)){
+      return msg(box,"El último aceite km no es válido.");
+    }
+
+    const choferAnterior = String((vehiculoExistente && vehiculoExistente.chofer) || "").trim();
+    const esReasignacion = !!(vehiculoExistente && choferAnterior && choferAnterior !== usuario);
+
+    let usuarioAuthCreado = true;
+    try{
+      secondaryApp = initializeApp(firebaseConfig, "crearUsuario_" + Date.now());
+      const secondaryAuth = getAuth(secondaryApp);
+      await createUserWithEmailAndPassword(secondaryAuth, `${usuario}@explora.local`, pass);
+      await signOut(secondaryAuth).catch(()=>{});
+    }catch(eAuth){
+      const code = String(eAuth.code || "");
+      if(code.includes("email-already-in-use")){
+        usuarioAuthCreado = false; // El usuario ya existe: se continúa con la reasignación segura en Firestore.
+      }else{
+        throw eAuth;
+      }
+    }
+
+    // Reasignación segura:
+    // Si el auto ya existe, NO se pisa mantenimientoKm, service/correa/cubiertas, km actual ni otros datos históricos.
+    // Solo se cambia el chofer asignado. Modelo/km/aceite se actualizan únicamente si el admin los carga.
+    const vehiculoUpdate = {
       chofer: usuario,
-      kmActual: kmActual || 0,
-      aceiteUltimoKm: aceiteUltimoKm || 0,
       activo: true,
-      creadoPor: currentUserId || "admin",
-      actualizado: serverTimestamp()
+      actualizado: serverTimestamp(),
+      reasignadoPor: currentUserId || "admin",
+      reasignadoFecha: today(),
+      reasignadoHora: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})
     };
 
-    await setDoc(doc(db,"vehiculos",patente), vehiculoData, { merge:true });
+    if(modeloInput) vehiculoUpdate.modelo = modeloInput;
+    else if(!vehiculoExistente) vehiculoUpdate.modelo = modeloInput;
+
+    if(!vehiculoExistente){
+      vehiculoUpdate.creadoPor = currentUserId || "admin";
+      vehiculoUpdate.kmActual = kmActualInput !== null ? kmActualInput : 0;
+      vehiculoUpdate.aceiteUltimoKm = aceiteUltimoKmInput !== null ? aceiteUltimoKmInput : 0;
+    }else{
+      if(kmActualInput !== null) vehiculoUpdate.kmActual = kmActualInput;
+      if(aceiteUltimoKmInput !== null) vehiculoUpdate.aceiteUltimoKm = aceiteUltimoKmInput;
+    }
+
+    await setDoc(vehRef, vehiculoUpdate, { merge:true });
+
+    if(esReasignacion){
+      await setDoc(doc(db,"choferes",choferAnterior),{
+        vehiculo:"",
+        vehiculoAnterior: patente,
+        estado:"disponible",
+        ultimaReasignacion: today(),
+        actualizado: serverTimestamp()
+      }, { merge:true }).catch(e=>console.warn("No se pudo limpiar chofer anterior", e));
+    }
 
     await setDoc(doc(db,"choferes",usuario),{
       nombre,
@@ -4090,10 +4143,22 @@ window.crearChoferVehiculoAdmin = async function(){
       actualizado: serverTimestamp()
     }, { merge:true });
 
-    cacheSet("vehiculo_" + patente, vehiculoData);
+    const vehiculoCache = {
+      ...(vehiculoExistente || {}),
+      ...vehiculoUpdate,
+      modelo: vehiculoUpdate.modelo || (vehiculoExistente ? vehiculoExistente.modelo : modeloInput)
+    };
+    delete vehiculoCache.actualizado;
+    cacheSet("vehiculo_" + patente, vehiculoCache);
+    cacheRemove("admin_vehiculos_km");
     adminBaseLoadedAt = 0;
+    adminVehiculosKmLoadedAt = 0;
 
-    msg(box,`Chofer creado correctamente.<br><b>Usuario:</b> ${usuario}<br><b>Contraseña:</b> ${pass}<br><b>Vehículo:</b> ${patente}`,true);
+    const estadoUsuario = usuarioAuthCreado ? "Usuario nuevo creado" : "Usuario existente reutilizado";
+    const estadoVehiculo = vehiculoExistente ? "Vehículo existente reasignado sin borrar Mi auto" : "Vehículo nuevo creado";
+    const anteriorHtml = esReasignacion ? `<br><b>Chofer anterior:</b> ${choferAnterior}` : "";
+
+    msg(box,`${estadoUsuario}.<br>${estadoVehiculo}.<br><b>Chofer:</b> ${usuario}<br><b>Vehículo:</b> ${patente}${anteriorHtml}<br><small>Se conservaron km, service, correa, cubiertas y mantenimiento del vehículo.</small>`,true);
 
     ["nuevoChoferNombre","nuevoChoferUsuario","nuevoChoferPass","nuevoVehiculoPatente","nuevoVehiculoModelo","nuevoVehiculoKm","nuevoVehiculoAceite"].forEach(id=>{
       const el = $(id);
@@ -4101,20 +4166,19 @@ window.crearChoferVehiculoAdmin = async function(){
     });
 
     if(typeof loadAdmin === "function"){
-      loadAdmin().catch(e=>console.warn("No se pudo refrescar admin después del alta", e));
+      loadAdmin().catch(e=>console.warn("No se pudo refrescar admin después del alta/reasignación", e));
     }
   }catch(e){
     let texto = e.message || String(e);
     const code = String(e.code || "");
-    if(code.includes("email-already-in-use")) texto = "Ese usuario ya existe. Probá con otro usuario o revisá si el chofer ya fue creado.";
     if(code.includes("operation-not-allowed")) texto = "Firebase Authentication no permite Email/Password. Activá Email/Password en Firebase Console > Authentication > Sign-in method.";
     if(code.includes("weak-password")) texto = "La contraseña es muy débil. Usá mínimo 6 caracteres.";
-    msg(box,"No se pudo crear el chofer: " + texto);
+    msg(box,"No se pudo crear/reasignar el chofer: " + texto);
   }finally{
     if(secondaryApp) await deleteApp(secondaryApp).catch(()=>{});
     if(btn){
       btn.disabled = false;
-      btn.textContent = "Crear chofer y vehículo";
+      btn.textContent = "Crear / reasignar chofer y vehículo";
     }
   }
 };
