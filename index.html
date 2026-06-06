@@ -5,6 +5,7 @@ Version: 2.8.73
 Build: 2026-06-06-FONDO-OPERATIVO-5050-DEUDA-015
 Fecha: 06/06/2026
 Cambios:
+- Se agrega botón “Mi cierre semanal” en Chofer para ver el cierre provisorio de la semana activa sin esperar al sábado.
 - Corrección Fondo Operativo 50/50: el cierre compara caja real de David y caja real del chofer contra el 50/50 neto. Transferencia/tarjeta pueden compensar total o parcialmente el fondo operativo pagado por David.
 - Se agrega Fondo Operativo 50/50 en Admin: se carga separado de gastos del chofer, impacta como gasto compartido y genera deuda acumulada por cierres pendientes.
 - Reordenamiento visual Admin: 50/50, pagos y comprobantes unificados en Cierres semanales, con tarjetas más claras y detalle desplegable.
@@ -685,6 +686,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <button id="btnDerivarServicio" class="bigbtn" type="button" onclick="showPanel('derivePanel')"><span class="icon">🔄</span><strong>Derivar servicio</strong></button>
       <button id="btnCargarGasto" class="bigbtn" type="button" onclick="showPanel('expensePanel')"><span class="icon">💸</span><strong>Cargar gasto</strong></button>
       <button id="btnRanking" class="bigbtn" type="button" onclick="openRankingPanel()"><span class="icon">🏆</span><strong>Ranking</strong></button>
+      <button id="btnMiCierreSemanal" class="bigbtn" type="button" onclick="openMiCierreSemanalPanel()"><span class="icon">📊</span><strong>Mi cierre semanal</strong></button>
       <button id="btnHistorialHoy" class="bigbtn" type="button" onclick="showPanel('historyPanel')"><span class="icon">📋</span><strong>Historial hoy</strong></button>
       <button id="btnMiAuto" class="bigbtn" type="button" onclick="showPanel('miAutoPanel')"><span class="icon">🚗</span><strong>Mi auto <span id="miAutoBadge" class="mi-auto-badge hidden">⚙️</span></strong></button>
       <button id="btnComprobantes" class="bigbtn" type="button" onclick="showPanel('comprobantesPanel')"><span class="icon">📎</span><strong>Comprobantes</strong></button>
@@ -784,6 +786,13 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <h3>Ranking semanal</h3>
       <p class="note">Se calcula solo cuando entrás acá para evitar que la app se ponga lenta.</p>
       <div id="driverRankingList">Cargando ranking...</div>
+    </div>
+
+    <div id="miCierreSemanalPanel" class="card hidden">
+      <h3>📊 Mi cierre semanal</h3>
+      <p class="note">Cálculo provisorio de la semana activa. Puede variar hasta el cierre semanal automático.</p>
+      <button class="btn-dark" onclick="openMiCierreSemanalPanel()">Actualizar cierre</button>
+      <div id="miCierreSemanalResumen" style="margin-top:12px">Tocá actualizar para ver cómo viene el cierre.</div>
     </div>
 
 
@@ -2118,7 +2127,7 @@ window.saveDailyKm = async function(){
 }
 
 window.showPanel = function(id){
-  ["servicePanel","derivePanel","expensePanel","rankingPanel","historyPanel","miAutoPanel","comprobantesPanel"].forEach(p=>{
+  ["servicePanel","derivePanel","expensePanel","rankingPanel","miCierreSemanalPanel","historyPanel","miAutoPanel","comprobantesPanel"].forEach(p=>{
     const panel = $(p);
     if(panel) panel.classList.add("hidden");
   });
@@ -2729,6 +2738,35 @@ window.openRankingPanel = async function(){
     }
   }catch(e){
     $("driverRankingList").innerHTML = `<div class="msg err">No se pudo calcular ranking: ${e.message}</div>`;
+  }
+}
+
+window.openMiCierreSemanalPanel = async function(){
+  showPanel("miCierreSemanalPanel");
+  const box = $("miCierreSemanalResumen");
+  if(!box) return;
+  try{
+    if(!currentUserId) throw new Error("No hay chofer activo.");
+    const periodo = getPeriodoTrabajoActual(today());
+    box.innerHTML = `<div class="msg ok">Calculando cierre provisorio...</div>`;
+    const c = await withTimeout(calcularCierreSemanalUltraRapido(currentUserId, periodo), 9000, "El cierre semanal tardó demasiado.");
+
+    const resultado = Number(c.choferDebe || 0) > 0
+      ? `<div class="msg err"><b>Hoy deberías pagar a David:</b><br>${money(c.choferDebe)}</div>`
+      : Number(c.davidDebe || 0) > 0
+        ? `<div class="msg ok"><b>Hoy David debería pagarte:</b><br>${money(c.davidDebe)}</div>`
+        : `<div class="msg ok"><b>Cierre equilibrado:</b><br>No hay diferencia por ahora.</div>`;
+
+    box.innerHTML = `
+      <div class="single-trip-note">📌 Provisorio: este cálculo usa la semana activa ${c.periodo.start} al ${c.periodo.end}. Cambia si cargás más viajes, gastos o fondo operativo.</div>
+      <div class="trip"><b>Facturación</b><br><small>Viajes: ${c.cantidadViajes}</small><br><small>Total facturado: ${money(c.totalViajes)}</small></div>
+      <div class="trip"><b>Medios de pago</b><br><small>Efectivo en mano del chofer: ${money(c.efectivo)}</small><br><small>Transferencia en cuenta David: ${money(c.transferencia)}</small><br><small>Tarjeta en cuenta David: ${money(c.tarjeta)}</small></div>
+      <div class="trip"><b>Gastos compartidos</b><br><small>Pagados por chofer: ${money(c.totalGastosPagadosChofer || 0)}</small><br><small>Fondo operativo pagado por David: ${money(c.totalFondoOperativo || 0)}</small><br><b style="color:var(--gold)">${money(c.totalGastos)}</b></div>
+      <div class="trip"><b>50/50 actual</b><br><small>Neto después de gastos: ${money(c.neto)}</small><br><small>Parte chofer: ${money(c.mitadChofer)}</small><br><small>Parte David: ${money(c.mitadDavid)}</small><br><small>Efectivo neto del chofer: ${money(c.efectivoNetoChofer)}</small><br><small>Cobros David menos fondo operativo: ${money(c.cajaNetaDavid)}</small></div>
+      ${resultado}
+    `;
+  }catch(e){
+    box.innerHTML = `<div class="msg err">No se pudo calcular tu cierre semanal: ${e.message}</div>`;
   }
 }
 
