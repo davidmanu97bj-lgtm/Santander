@@ -18,6 +18,7 @@ Cambios:
 - Reasignación segura de vehículo: al asignar un auto existente a otro chofer conserva Mi auto, km y mantenimiento.
 - Motor único de fecha operativa: simulador, ranking, cierre, 50/50 y acumulados usan la misma semana.
 - Cierre automático exacto: todos los sábados desde las 00:01 se cierra la semana anterior y la nueva semana empieza en cero.
+- Ajuste chofer: entre sábado 00:00 y 00:00:59 todavía se considera semana anterior; desde 00:01 todos arrancan semana nueva en 0.
 - Semana operativa corregida: sábado a viernes; el sábado cierra la semana anterior y la nueva semana inicia en 0.
 - Comprobantes obligatorios para pagos semanales: solo carga quien debe pagar, con imagen comprimida y carga bajo demanda.
 - Cierre semanal flexible: permite avanzar con pago pendiente, mantiene alerta, suspende bono a las 24 h si el chofer no sube comprobante.
@@ -2189,16 +2190,19 @@ function fechaOperativaActual(){
 }
 
 function getPeriodoTrabajoActual(dateStr = fechaOperativaActual()){
-  const d = parseLocalDate(dateStr);
+  // Motor único de semana operativa EXPLORA.
+  // Regla exacta: la nueva semana NO arranca a las 00:00, arranca a las 00:01 del sábado.
+  // Por eso, durante el minuto sábado 00:00 a 00:00:59 todavía se considera la semana anterior.
+  const baseDateStr = (isSaturday(dateStr) && !pasoCorteSemanal0001(dateStr)) ? addDays(dateStr, -1) : dateStr;
+  const d = parseLocalDate(baseDateStr);
   const day = d.getDay(); // 0 domingo ... 6 sábado
 
-  // Semana operativa EXPLORA: sábado a viernes.
-  // El sábado inicia una nueva semana en 0 y, al mismo tiempo,
-  // se muestra el cierre pendiente de la semana anterior.
+  // Semana operativa EXPLORA: sábado 00:01 a viernes 23:59:59.
+  // En términos de fecha se guarda como sábado -> viernes; el corte horario real lo controla pasoCorteSemanal0001().
   const diasDesdeSabado = (day + 1) % 7; // sábado=0, domingo=1 ... viernes=6
-  const start = addDays(dateStr, -diasDesdeSabado);
+  const start = addDays(baseDateStr, -diasDesdeSabado);
   const end = addDays(start, 6); // viernes
-  const closeDate = addDays(end, 1); // sábado siguiente
+  const closeDate = addDays(end, 1); // sábado siguiente desde 00:01
 
   return {start,end,closeDate,id:`${start}_${end}`};
 }
@@ -3133,7 +3137,7 @@ function renderCierreSemanal(c){
   }
 
   $("cierreSemanalResumen").innerHTML = `
-    <div class="trip"><b>Período de trabajo</b><br><small>${c.periodo.start} al ${c.periodo.end}</small><br><small>Cierre obligatorio: ${c.periodo.closeDate}</small></div>
+    <div class="trip"><b>Período de trabajo</b><br><small>${c.periodo.start} al ${c.periodo.end}</small><br><small>Cierre obligatorio: ${c.periodo.closeDate} desde 00:01</small></div>
     <div class="trip"><b>Viajes</b><br><small>Cantidad: ${c.cantidadViajes}</small><br><b style="color:var(--gold)">${money(c.totalViajes)}</b></div>
     <div class="trip"><b>Medios de pago</b><br><small>Efectivo en mano del chofer: ${money(c.efectivo)}</small><br><small>Transferencia en cuenta David: ${money(c.transferencia)}</small><br><small>Tarjeta en cuenta David: ${money(c.tarjeta)}</small></div>
     <div class="trip"><b>Gastos</b><br><small>Cantidad: ${c.cantidadGastos}</small><br><b style="color:var(--gold)">${money(c.totalGastos)}</b></div>
@@ -3154,7 +3158,7 @@ function renderCierreSemanal(c){
       cierreBtn.classList.remove("hidden");
     }else{
       cierreBtn.disabled = true;
-      cierreBtn.textContent = `Cierre disponible el sábado ${c.periodo ? c.periodo.closeDate : ""}`;
+      cierreBtn.textContent = `Cierre disponible el sábado ${c.periodo ? c.periodo.closeDate : ""} desde 00:01`;
       cierreBtn.classList.remove("hidden");
     }
   }
@@ -3312,23 +3316,31 @@ async function checkCierreSemanalAutomatico(){
   const cierreSnap = await getDoc(doc(db,"cierres_semanales",cierreId));
   if(cierreSnap.exists()) return;
 
-  $("cierreSemanalModal").classList.remove("hidden");
-  $("cierreSemanalResumen").innerHTML = "Calculando cierre semanal pendiente...";
-
+  // v2.8.52: no mostramos el modal hasta tener un cierre calculado.
+  // Así evitamos el cartel viejo de error/timeout y no bloqueamos la operación del chofer.
   try{
-    cierreSemanalPendiente = await withTimeout(calcularCierreSemanalLiviano(currentUserId, periodo), 12000, "El cierre automático tardó demasiado. Tocá “Actualizar página” para reintentar.");
+    const cierreCalculado = await withTimeout(
+      calcularCierreSemanalLiviano(currentUserId, periodo),
+      12000,
+      "cierre_auto_timeout_silencioso"
+    );
 
-    if(cierreSemanalPendiente.cantidadViajes === 0 && cierreSemanalPendiente.cantidadGastos === 0){
+    if(!cierreCalculado || (Number(cierreCalculado.cantidadViajes || 0) === 0 && Number(cierreCalculado.cantidadGastos || 0) === 0)){
       cierreSemanalPendiente = null;
-      $("cierreSemanalModal").classList.add("hidden");
+      if($("cierreSemanalModal")) $("cierreSemanalModal").classList.add("hidden");
       return;
     }
 
-    cierreSemanalPendiente.pagoSemanal = await getEstadoPagoSemanal(currentUserId, periodo.id);
+    cierreCalculado.pagoSemanal = await getEstadoPagoSemanal(currentUserId, periodo.id);
+    cierreSemanalPendiente = cierreCalculado;
     cierreSemanalCache = { key: `${currentUserId}_${periodo.id}`, data: cierreSemanalPendiente };
+    if($("cierreSemanalModal")) $("cierreSemanalModal").classList.remove("hidden");
     renderCierreSemanal(cierreSemanalPendiente);
   }catch(e){
-    $("cierreSemanalResumen").innerHTML = `<div class="msg err">No se pudo calcular cierre automático: ${e.message}</div>`;
+    console.warn("Cierre automático pendiente no se pudo calcular todavía. Se reintentará al actualizar/ingresar.", e);
+    cierreSemanalPendiente = null;
+    if($("cierreSemanalResumen")) $("cierreSemanalResumen").innerHTML = "";
+    if($("cierreSemanalModal")) $("cierreSemanalModal").classList.add("hidden");
   }
 }
 
