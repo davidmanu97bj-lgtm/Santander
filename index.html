@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.76
-Build: 2026-06-06-CHOFER-VISUAL-B-FIX-CIERRE-AUTO-018
+Version: 2.8.78
+Build: 2026-06-06-CHOFER-FAST-PANELS-020
 Fecha: 06/06/2026
 Cambios:
 - Se agrega botón “Mi cierre semanal” en Chofer para ver el cierre provisorio de la semana activa sin esperar al sábado.
@@ -45,7 +45,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.76 · Build 2026-06-06-CHOFER-VISUAL-B-FIX-CIERRE-AUTO-018</title>
+<title>EXPLORA v2.8.78 · Build 2026-06-06-CHOFER-FAST-PANELS-020</title>
 <style>
 :root{
   --bg:#080808;
@@ -995,6 +995,128 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   .driver-b-quick-grid strong{font-size:11px}
 }
 
+
+/* CHOFER · TEXTOS EN COLORES COMO MAQUETA 019 */
+.driver-mobile-b{
+  --driver-gold:#f7c943;
+  --driver-green:#4ade80;
+  --driver-blue:#60a5fa;
+  --driver-purple:#c084fc;
+  --driver-orange:#fb923c;
+  --driver-red:#ff5f57;
+  --driver-white:#f8fafc;
+}
+.driver-mobile-b .driver-b-ranking h3,
+.driver-mobile-b #rankingPanel h3{
+  color:var(--driver-gold)!important;
+  text-shadow:0 0 14px rgba(247,201,67,.18);
+}
+.driver-mobile-b .bonus-money,
+.driver-mobile-b .driver-b-ranking b{
+  color:var(--driver-gold)!important;
+}
+.driver-mobile-b #btnNuevoServicio strong,
+.driver-mobile-b #servicePanel h3,
+.driver-mobile-b #servicePanel .btn-gold{
+  color:#fff!important;
+}
+.driver-mobile-b #btnDerivarServicio strong,
+.driver-mobile-b #derivePanel h3{
+  color:var(--driver-blue)!important;
+  text-shadow:0 0 12px rgba(96,165,250,.18);
+}
+.driver-mobile-b #btnMiCierreSemanal strong,
+.driver-mobile-b #miCierreSemanalPanel h3,
+.driver-mobile-b .driver-b-bottom-nav button:nth-child(3){
+  color:var(--driver-purple)!important;
+  text-shadow:0 0 12px rgba(192,132,252,.18);
+}
+.driver-mobile-b #btnCargarGasto strong,
+.driver-mobile-b #expensePanel h3{
+  color:var(--driver-green)!important;
+  text-shadow:0 0 12px rgba(74,222,128,.16);
+}
+.driver-mobile-b #btnRanking strong{
+  color:var(--driver-gold)!important;
+  text-shadow:0 0 12px rgba(247,201,67,.16);
+}
+.driver-mobile-b #btnComprobantes strong,
+.driver-mobile-b #comprobantesPanel h3{
+  color:var(--driver-orange)!important;
+  text-shadow:0 0 12px rgba(251,146,60,.16);
+}
+.driver-mobile-b #historyPanel h3{
+  color:var(--driver-blue)!important;
+}
+.driver-mobile-b #miAutoPanel h3{
+  color:var(--driver-red)!important;
+}
+.driver-mobile-b .driver-b-more-card strong{
+  color:var(--driver-white)!important;
+}
+.driver-mobile-b .driver-b-more-card small{
+  color:#cbd5e1!important;
+}
+.driver-mobile-b .driver-b-more-panel button:nth-of-type(1) strong{color:var(--driver-gold)!important}
+.driver-mobile-b .driver-b-more-panel button:nth-of-type(2) strong{color:var(--driver-blue)!important}
+.driver-mobile-b .driver-b-more-panel button:nth-of-type(3) strong{color:var(--driver-red)!important}
+.driver-mobile-b .driver-b-more-panel button:nth-of-type(4) strong{color:var(--driver-orange)!important}
+.driver-mobile-b .driver-b-more-panel button:nth-of-type(5) strong{color:var(--driver-blue)!important}
+.driver-mobile-b .driver-b-more-panel .driver-b-logout-row strong{color:var(--driver-red)!important}
+
+.driver-mobile-b .driver-b-bottom-nav button:nth-child(1){
+  color:var(--driver-gold)!important;
+}
+.driver-mobile-b .driver-b-bottom-nav button:nth-child(2){
+  color:var(--driver-purple)!important;
+}
+.driver-mobile-b .driver-b-bottom-nav button:nth-child(4){
+  color:var(--driver-gold)!important;
+}
+.driver-mobile-b label[for],
+.driver-mobile-b label{
+  color:#d7d7d7!important;
+}
+.driver-mobile-b .cierre-color-card{
+  background:linear-gradient(180deg,rgba(16,16,18,.96),rgba(7,7,8,.98))!important;
+  border:1px solid rgba(255,255,255,.10)!important;
+  border-radius:17px!important;
+  padding:14px!important;
+  margin:10px 0!important;
+}
+.driver-mobile-b .cierre-line{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:center;
+  padding:5px 0;
+  font-size:15px;
+}
+.driver-mobile-b .cierre-line span:first-child{font-weight:750}
+.driver-mobile-b .cierre-line span:last-child{font-weight:900}
+.driver-mobile-b .cierre-facturacion span{color:#f8fafc!important}
+.driver-mobile-b .cierre-gastos span{color:var(--driver-red)!important}
+.driver-mobile-b .cierre-fondo span{color:var(--driver-blue)!important}
+.driver-mobile-b .cierre-bono span,.driver-mobile-b .cierre-green span{color:var(--driver-green)!important}
+.driver-mobile-b .cierre-pendiente span{color:var(--driver-gold)!important}
+.driver-mobile-b .cierre-muted span{color:#cbd5e1!important}
+.driver-mobile-b .cierre-divider{
+  height:1px;
+  background:rgba(255,255,255,.15);
+  margin:8px 0;
+}
+.driver-mobile-b .msg.err b,
+.driver-mobile-b .msg.err{
+  color:#fecaca!important;
+}
+.driver-mobile-b .msg.ok b,
+.driver-mobile-b .msg.ok{
+  color:#86efac!important;
+}
+.driver-mobile-b .single-trip-note{
+  color:#f3d77a!important;
+}
+
 </style>
 </head>
 <body>
@@ -1241,7 +1363,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.76</b> · CHOFER-VISUAL-B-FIX-CIERRE-AUTO-018</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.78</b> · CHOFER-FAST-PANELS-020</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -1598,15 +1720,63 @@ window.simularSemanaAdmin = async function(delta){
   setTimeout(()=>loadAdmin().catch(e=>console.warn("No se pudo refrescar admin con simulación", e)), 50);
 };
 
-window.volverFechaRealAdmin = async function(){
+function limpiarSimulacionSemanalLocal(){
+  // Limpieza obligatoria del simulador: vuelve TODO el motor local a fecha real.
   globalSimulationWeeks = 0;
   adminSimulationWeeks = 0;
-  localStorage.removeItem("explora_admin_sim_weeks");
-  localStorage.removeItem("explora_global_sim_weeks");
+  globalSimulationUpdatedAt = "";
+  trustedTodayValue = formatDateArgentina(new Date());
+  trustedTodaySource = "device-reset";
+
+  [
+    "explora_admin_sim_weeks",
+    "explora_global_sim_weeks",
+    "explora_global_sim_updated"
+  ].forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
+
+  [
+    "global_week_simulation",
+    "ranking_global_fast",
+    "trusted_today",
+    "servicios_activos",
+    "admin_vehiculos_km"
+  ].forEach(k=>cacheRemove(k));
+
+  try{
+    const prefijos = [
+      CACHE_PREFIX + "ranking_",
+      CACHE_PREFIX + "ranking_fast_",
+      CACHE_PREFIX + "ranking_derivaciones_reales_",
+      CACHE_PREFIX + "ganador_sem_",
+      CACHE_PREFIX + "cierre_sem_",
+      CACHE_PREFIX + "cierre_ultra_",
+      CACHE_PREFIX + "admin_5050_",
+      CACHE_PREFIX + "acum_sem_",
+      CACHE_PREFIX + "periodo_cierre_pendiente_",
+      CACHE_PREFIX + "comprobantes_",
+      CACHE_PREFIX + "pagos_pendientes_",
+      CACHE_PREFIX + "fondos_operativos_admin_"
+    ];
+    const keys = [];
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(k && prefijos.some(pref=>k.startsWith(pref))) keys.push(k);
+    }
+    keys.forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
+  }catch(e){
+    console.warn("No se pudo limpiar toda la caché de simulación", e);
+  }
+
   periodoOperativoCache = null;
   cierreSemanalCache = null;
-  cacheRemove("ranking_global_fast");
-  cacheRemove("global_week_simulation");
+  derivationInboxSignature = "";
+  adminBaseLoadedAt = 0;
+  adminVehiculosKmLoadedAt = 0;
+  miAutoLoadedAt = 0;
+}
+
+window.volverFechaRealAdmin = async function(){
+  limpiarSimulacionSemanalLocal();
   try{
     await setDoc(doc(db,"configuracion","simulador_semanas_global"),{
       activo:false,
@@ -1615,11 +1785,17 @@ window.volverFechaRealAdmin = async function(){
       actualizadoTexto: new Date().toLocaleString("es-AR"),
       actualizado: serverTimestamp()
     },{merge:true});
+    cacheRemove("global_week_simulation");
+    await syncGlobalWeekSimulation();
+    await syncTrustedToday();
+    limpiarSimulacionSemanalLocal();
   }catch(e){
     console.warn("No se pudo desactivar simulación global", e);
+    limpiarSimulacionSemanalLocal();
+    if($("adminMsg")) msg($("adminMsg"), "Simulación local desactivada. No se pudo confirmar en Firebase: " + e.message);
   }
   updateAdminSimulationUI();
-  if($("adminMsg")) msg($("adminMsg"), "Simulación desactivada. Admin y choferes vuelven a fecha real/servidor al actualizar.", true);
+  if($("adminMsg")) msg($("adminMsg"), `Simulación desactivada. Motor completo vuelto a fecha real/servidor: ${today()}. Admin y choferes deben actualizar la app.`, true);
   setTimeout(()=>loadAdmin().catch(e=>console.warn("No se pudo refrescar admin al volver a fecha real", e)), 50);
 };
 
@@ -1676,6 +1852,68 @@ function cacheGet(key, maxAgeMs=86400000){
 }
 function cacheRemove(key){
   try{ localStorage.removeItem(CACHE_PREFIX + key); }catch(e){}
+}
+
+
+
+// ===== OPTIMIZACIÓN AUTOMÁTICA DE PANELES CHOFER 020 =====
+let rankingLoadToken = 0;
+let cierreLoadToken = 0;
+let comprobantesChoferLoadToken = 0;
+
+function invalidateChoferFastCaches(chofer=currentUserId, periodoId=""){
+  try{
+    if(periodoId){
+      cacheRemove(`ranking_fast_${periodoId}`);
+      cacheRemove(`cierre_sem_${chofer}_${periodoId}`);
+      cacheRemove(`cierre_ultra_${chofer}_${periodoId}`);
+      cacheRemove(`ganador_sem_${periodoId}`);
+    }
+    if(chofer){
+      cacheRemove("comprobantes_chofer_" + chofer);
+      cacheRemove("pagos_pendientes_chofer_" + chofer);
+    }
+  }catch(e){ console.warn("No se pudo limpiar caché rápida", e); }
+}
+
+function renderMiCierreSemanalRapido(c, stale=false){
+  const box = $("miCierreSemanalResumen");
+  if(!box || !c) return;
+  const resultado = Number(c.choferDebe || 0) > 0
+    ? `<div class="msg err"><b>Hoy deberías pagar a David:</b><br>${money(c.choferDebe)}</div>`
+    : Number(c.davidDebe || 0) > 0
+      ? `<div class="msg ok"><b>Hoy David debería pagarte:</b><br>${money(c.davidDebe)}</div>`
+      : `<div class="msg ok"><b>Cierre equilibrado:</b><br>No hay diferencia por ahora.</div>`;
+
+  box.innerHTML = `
+    ${stale ? `<div class="msg ok">Mostrando cierre guardado. Actualizando en segundo plano...</div>` : ``}
+    <div class="single-trip-note">📌 Provisorio: este cálculo usa la semana activa ${c.periodo.start} al ${c.periodo.end}. Cambia si cargás más viajes, gastos o fondo operativo.</div>
+    <div class="trip cierre-color-card">
+      <div class="cierre-line cierre-facturacion"><span>Facturación</span><span>${money(c.totalViajes)}</span></div>
+      <div class="cierre-line cierre-muted"><span>Viajes</span><span>${c.cantidadViajes}</span></div>
+    </div>
+    <div class="trip cierre-color-card">
+      <div class="cierre-line cierre-muted"><span>Efectivo chofer</span><span>${money(c.efectivo)}</span></div>
+      <div class="cierre-line cierre-fondo"><span>Transferencia David</span><span>${money(c.transferencia)}</span></div>
+      <div class="cierre-line cierre-fondo"><span>Tarjeta David</span><span>${money(c.tarjeta)}</span></div>
+    </div>
+    <div class="trip cierre-color-card">
+      <div class="cierre-line cierre-gastos"><span>Gastos</span><span>-${money(c.totalGastos)}</span></div>
+      <div class="cierre-line cierre-muted"><span>Pagados por chofer</span><span>${money(c.totalGastosPagadosChofer || 0)}</span></div>
+      <div class="cierre-line cierre-fondo"><span>Fondo operativo</span><span>${money(c.totalFondoOperativo || 0)}</span></div>
+      <div class="cierre-line cierre-bono"><span>Bono semanal</span><span>-${money(c.premioAplicado || 0)}</span></div>
+      <div class="cierre-divider"></div>
+      <div class="cierre-line cierre-pendiente"><span>Pendiente a favor de David</span><span>${money(Math.max(Number(c.choferDebe || 0), 0))}</span></div>
+    </div>
+    <div class="trip cierre-color-card">
+      <div class="cierre-line cierre-muted"><span>Neto 50/50</span><span>${money(c.neto)}</span></div>
+      <div class="cierre-line cierre-green"><span>Parte chofer</span><span>${money(c.mitadChofer)}</span></div>
+      <div class="cierre-line cierre-fondo"><span>Parte David</span><span>${money(c.mitadDavid)}</span></div>
+      <div class="cierre-line cierre-muted"><span>Efectivo neto chofer</span><span>${money(c.efectivoNetoChofer)}</span></div>
+      <div class="cierre-line cierre-fondo"><span>Cobros David menos fondo</span><span>${money(c.cajaNetaDavid)}</span></div>
+    </div>
+    ${resultado}
+  `;
 }
 
 function limpiarCacheExploraViejo(maxAgeMs = 14 * 24 * 60 * 60 * 1000){
@@ -2665,6 +2903,7 @@ window.saveTrip = async function(){
   }).catch(e=>console.warn("No se pudo actualizar actividad", e));
 
   cierreSemanalCache = null;
+  invalidateChoferFastCaches(currentUserId, periodoOperativo.id);
   todayHistoryLoaded = false;
   msg($("serviceMsg"),"Servicio guardado correctamente.",true);
 
@@ -3115,10 +3354,13 @@ function renderDriverLeaderBonus(data, lider, yo, yoIndex){
 
 window.openRankingPanel = async function(){
   showPanel("rankingPanel");
+  const token = ++rankingLoadToken;
+  const box = $("driverRankingList");
   try{
     const periodoRanking = await getPeriodoRankingVisible();
+    if(token !== rankingLoadToken) return;
     const cacheKey = `ranking_fast_${periodoRanking.id}`;
-    const cached = cacheGet(cacheKey, 30 * 60 * 1000);
+    const cached = cacheGet(cacheKey, 60 * 60 * 1000);
 
     if(cached && cached.ranking){
       renderRankingLiviano(cached,"driverRankingList");
@@ -3126,56 +3368,60 @@ window.openRankingPanel = async function(){
       const yoIndexCache = cached.ranking.findIndex(x=>x.id === currentUserId);
       const yoCache = yoIndexCache >= 0 ? cached.ranking[yoIndexCache] : null;
       if(liderCache) renderDriverLeaderBonus(cached, liderCache, yoCache, yoIndexCache);
-      const box = $("driverRankingList");
       if(box) box.insertAdjacentHTML("afterbegin", `<div class="msg ok">Ranking abierto rápido. Actualizando en segundo plano...</div>`);
-    }else{
-      $("driverRankingList").innerHTML = "Calculando ranking rápido...";
+    }else if(box){
+      box.innerHTML = `<div class="msg ok">Calculando ranking rápido...</div>`;
     }
 
-    const data = await calcularRankingSemanalLiviano(periodoRanking);
-    renderRankingLiviano(data,"driverRankingList");
-
-    const lider = data.ranking[0];
-    const yoIndex = data.ranking.findIndex(x=>x.id === currentUserId);
-    const yo = yoIndex >= 0 ? data.ranking[yoIndex] : null;
-
-    if(lider){
-      renderDriverLeaderBonus(data, lider, yo, yoIndex);
-    }
+    calcularRankingSemanalLiviano(periodoRanking).then(data=>{
+      if(token !== rankingLoadToken) return;
+      cacheSet(cacheKey, data);
+      renderRankingLiviano(data,"driverRankingList");
+      const lider = data.ranking[0];
+      const yoIndex = data.ranking.findIndex(x=>x.id === currentUserId);
+      const yo = yoIndex >= 0 ? data.ranking[yoIndex] : null;
+      if(lider) renderDriverLeaderBonus(data, lider, yo, yoIndex);
+    }).catch(e=>{
+      if(token !== rankingLoadToken) return;
+      if(!cached && box) box.innerHTML = `<div class="msg err">No se pudo calcular ranking: ${e.message}</div>`;
+      else if(box) box.insertAdjacentHTML("afterbegin", `<div class="msg err">No se pudo actualizar ahora. Se mantiene el último ranking guardado.</div>`);
+    });
   }catch(e){
-    $("driverRankingList").innerHTML = `<div class="msg err">No se pudo calcular ranking: ${e.message}</div>`;
+    if(box) box.innerHTML = `<div class="msg err">No se pudo abrir ranking: ${e.message}</div>`;
   }
 }
 
 window.openMiCierreSemanalPanel = async function(){
   showPanel("miCierreSemanalPanel");
-  setTimeout(()=>scrollToOpenedPanel($("miCierreSemanalPanel")), 160);
+  const token = ++cierreLoadToken;
   const box = $("miCierreSemanalResumen");
   if(!box) return;
   try{
     if(!currentUserId) throw new Error("No hay chofer activo.");
     const periodo = getPeriodoTrabajoActual(today());
-    box.innerHTML = `<div class="msg ok">Calculando cierre provisorio...</div>`;
-    const c = await withTimeout(calcularCierreSemanalUltraRapido(currentUserId, periodo), 9000, "El cierre semanal tardó demasiado.");
+    const cacheKey = `cierre_sem_${currentUserId}_${periodo.id}`;
+    const cached = cierreSemanalCache && cierreSemanalCache.key === `${currentUserId}_${periodo.id}`
+      ? cierreSemanalCache.data
+      : cacheGet(cacheKey, 60 * 60 * 1000);
 
-    const resultado = Number(c.choferDebe || 0) > 0
-      ? `<div class="msg err"><b>Hoy deberías pagar a David:</b><br>${money(c.choferDebe)}</div>`
-      : Number(c.davidDebe || 0) > 0
-        ? `<div class="msg ok"><b>Hoy David debería pagarte:</b><br>${money(c.davidDebe)}</div>`
-        : `<div class="msg ok"><b>Cierre equilibrado:</b><br>No hay diferencia por ahora.</div>`;
+    if(cached){
+      renderMiCierreSemanalRapido(cached, true);
+    }else{
+      box.innerHTML = `<div class="msg ok">Calculando cierre provisorio...</div>`;
+    }
 
-    box.innerHTML = `
-      <div class="single-trip-note">📌 Provisorio: este cálculo usa la semana activa ${c.periodo.start} al ${c.periodo.end}. Cambia si cargás más viajes, gastos o fondo operativo.</div>
-      <div class="trip"><b>Facturación</b><br><small>Viajes: ${c.cantidadViajes}</small><br><small>Total facturado: ${money(c.totalViajes)}</small></div>
-      <div class="trip"><b>Medios de pago</b><br><small>Efectivo en mano del chofer: ${money(c.efectivo)}</small><br><small>Transferencia en cuenta David: ${money(c.transferencia)}</small><br><small>Tarjeta en cuenta David: ${money(c.tarjeta)}</small></div>
-      <div class="trip"><b>Gastos compartidos</b><br><small>Pagados por chofer: ${money(c.totalGastosPagadosChofer || 0)}</small><br><small>Fondo operativo pagado por David: ${money(c.totalFondoOperativo || 0)}</small><br><b style="color:var(--gold)">${money(c.totalGastos)}</b></div>
-      <div class="trip"><b>Compensaciones</b><br><small>Fondo operativo a recuperar por David: ${money(c.totalFondoOperativo || 0)}</small><br><small>Cobros en cuenta David: ${money(c.cobrosDavid || 0)}</small><br><small>Bono aplicado a deuda del chofer: -${money(c.premioAplicado || 0)}</small><br><small>Saldo final calculado: ${money(c.diferenciaFinal || 0)}</small></div>
-      <div class="trip"><b>50/50 actual</b><br><small>Neto después de recuperar fondo y gastos: ${money(c.neto)}</small><br><small>Parte chofer: ${money(c.mitadChofer)}</small><br><small>Parte David: ${money(c.mitadDavid)}</small><br><small>Efectivo neto del chofer: ${money(c.efectivoNetoChofer)}</small><br><small>Cobros David menos fondo operativo: ${money(c.cajaNetaDavid)}</small></div>
-      ${resultado}
-    `;
-    setTimeout(()=>scrollToOpenedPanel($("miCierreSemanalPanel")), 120);
+    calcularCierreSemanalUltraRapido(currentUserId, periodo).then(c=>{
+      if(token !== cierreLoadToken) return;
+      cierreSemanalCache = {key:`${currentUserId}_${periodo.id}`, data:c};
+      cacheSet(cacheKey, c);
+      renderMiCierreSemanalRapido(c, false);
+    }).catch(e=>{
+      if(token !== cierreLoadToken) return;
+      if(!cached) box.innerHTML = `<div class="msg err">No se pudo calcular tu cierre semanal: ${e.message}</div>`;
+      else box.insertAdjacentHTML("afterbegin", `<div class="msg err">No se pudo actualizar ahora. Se mantiene el último cierre guardado.</div>`);
+    });
   }catch(e){
-    box.innerHTML = `<div class="msg err">No se pudo calcular tu cierre semanal: ${e.message}</div>`;
+    box.innerHTML = `<div class="msg err">No se pudo abrir tu cierre semanal: ${e.message}</div>`;
   }
 }
 
@@ -3823,16 +4069,34 @@ window.subirComprobantePagoAdmin = async function(chofer, periodoId, sentido, mo
 async function loadComprobantesChofer(force=false){
   const box = $("comprobantesChoferList");
   if(!box || !currentUserId) return;
+  const token = ++comprobantesChoferLoadToken;
   const cacheKey = "comprobantes_chofer_" + currentUserId;
-  const cached = cacheGet(cacheKey, 10 * 60 * 1000);
-  if(cached && !force){ renderComprobantesLista(box, cached, true); return; }
-  box.innerHTML = `<div class="msg ok">Cargando comprobantes...</div>`;
-  const snap = await withTimeout(getDocs(query(collection(db,"pagos_semanales"), where("chofer","==",currentUserId))), 4500, "Los comprobantes tardaron demasiado.");
-  const items = [];
-  snap.forEach(d=>items.push({id:d.id,...d.data()}));
-  items.sort((a,b)=>String(b.periodoId || "").localeCompare(String(a.periodoId || "")) || String(b.fechaPago || b.creadoFecha || "").localeCompare(String(a.fechaPago || a.creadoFecha || "")));
-  cacheSet(cacheKey, items);
-  renderComprobantesLista(box, items, true);
+  const cached = cacheGet(cacheKey, 60 * 60 * 1000);
+
+  if(cached && !force){
+    renderComprobantesLista(box, cached, true);
+    box.insertAdjacentHTML("afterbegin", `<div class="msg ok">Comprobantes abiertos rápido. Actualizando en segundo plano...</div>`);
+  }else{
+    box.innerHTML = `<div class="msg ok">Cargando comprobantes...</div>`;
+  }
+
+  try{
+    const snap = await withTimeout(
+      getDocs(query(collection(db,"pagos_semanales"), where("chofer","==",currentUserId))),
+      4500,
+      "Los comprobantes tardaron demasiado."
+    );
+    if(token !== comprobantesChoferLoadToken) return;
+    const items = [];
+    snap.forEach(d=>items.push({id:d.id,...d.data()}));
+    items.sort((a,b)=>String(b.periodoId || "").localeCompare(String(a.periodoId || "")) || String(b.fechaPago || b.creadoFecha || "").localeCompare(String(a.fechaPago || a.creadoFecha || "")));
+    cacheSet(cacheKey, items);
+    renderComprobantesLista(box, items, true);
+  }catch(e){
+    if(token !== comprobantesChoferLoadToken) return;
+    if(!cached) box.innerHTML = `<div class="msg err">No se pudieron cargar comprobantes: ${e.message}</div>`;
+    else box.insertAdjacentHTML("afterbegin", `<div class="msg err">No se pudo actualizar ahora. Se mantiene la última lista guardada.</div>`);
+  }
 }
 
 async function loadComprobantesAdmin(force=false){
@@ -4591,40 +4855,51 @@ window.saveExpense = async function(){
     return msg($("expenseMsg"),"Ingrese un monto válido.");
   }
 
-  const periodoOperativo = await getPeriodoOperativoChofer(currentUserId);
+  const clicked = Array.from(document.querySelectorAll('button')).find(b => (b.getAttribute('onclick') || '').includes('saveExpense'));
+  const oldText = clicked ? clicked.textContent : "";
+  if(clicked){ clicked.disabled = true; clicked.textContent = "Guardando..."; }
+  msg($("expenseMsg"),"Guardando gasto...",true);
 
-  const gasto = {
-    fecha: today(),
-    hora: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
-    chofer: currentUserId,
-    vehiculo: currentVehicle.id,
-    periodoId: periodoOperativo.id,
-    periodoInicio: periodoOperativo.start,
-    periodoFin: periodoOperativo.end,
-    tipo,
-    monto,
-    detalle,
-    creado: serverTimestamp()
-  };
+  try{
+    const periodoOperativo = await getPeriodoOperativoChofer(currentUserId);
 
-  await addDoc(collection(db,"gastos"),gasto);
-  await actualizarAcumuladosGasto(gasto);
+    const gasto = {
+      fecha: today(),
+      hora: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
+      chofer: currentUserId,
+      vehiculo: currentVehicle.id,
+      periodoId: periodoOperativo.id,
+      periodoInicio: periodoOperativo.start,
+      periodoFin: periodoOperativo.end,
+      tipo,
+      monto,
+      detalle,
+      creado: serverTimestamp()
+    };
 
-  await updateDoc(doc(db,"choferes",currentUserId),{
-    ultimaActividad: new Date().toLocaleString("es-AR")
-  });
+    await addDoc(collection(db,"gastos"),gasto);
+    await actualizarAcumuladosGasto(gasto);
 
-  $("expenseAmount").value = "";
-  $("expenseDetail").value = "";
+    updateDoc(doc(db,"choferes",currentUserId),{
+      ultimaActividad: new Date().toLocaleString("es-AR")
+    }).catch(e=>console.warn("No se pudo actualizar actividad", e));
 
-  cierreSemanalCache = null;
-  msg($("expenseMsg"),"Gasto guardado correctamente.",true);
-  setTimeout(()=>{
-    $("expensePanel").classList.add("hidden");
-    $("expenseMsg").innerHTML="";
-  },900);
+    $("expenseAmount").value = "";
+    $("expenseDetail").value = "";
+
+    cierreSemanalCache = null;
+    invalidateChoferFastCaches(currentUserId, periodoOperativo.id);
+    msg($("expenseMsg"),"Gasto guardado correctamente.",true);
+    setTimeout(()=>{
+      $("expensePanel").classList.add("hidden");
+      $("expenseMsg").innerHTML="";
+    },700);
+  }catch(e){
+    msg($("expenseMsg"),"No se pudo guardar el gasto: " + e.message);
+  }finally{
+    if(clicked){ clicked.disabled = false; clicked.textContent = oldText || "Guardar gasto"; }
+  }
 }
-
 
 
 
