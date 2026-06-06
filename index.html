@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.72
-Build: 2026-06-06-ADMIN-SALIR-TOPBAR-014
+Version: 2.8.73
+Build: 2026-06-06-FONDO-OPERATIVO-5050-DEUDA-015
 Fecha: 06/06/2026
 Cambios:
+- Corrección Fondo Operativo 50/50: el cierre compara caja real de David y caja real del chofer contra el 50/50 neto. Transferencia/tarjeta pueden compensar total o parcialmente el fondo operativo pagado por David.
+- Se agrega Fondo Operativo 50/50 en Admin: se carga separado de gastos del chofer, impacta como gasto compartido y genera deuda acumulada por cierres pendientes.
 - Reordenamiento visual Admin: 50/50, pagos y comprobantes unificados en Cierres semanales, con tarjetas más claras y detalle desplegable.
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
 - Se agrega botón “Mi auto” para chofer con service, correa dentada y cubiertas por km.
@@ -42,7 +44,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.72 · Build 2026-06-06-ADMIN-SALIR-TOPBAR-014</title>
+<title>EXPLORA v2.8.73 · Build 2026-06-06-FONDO-OPERATIVO-5050-DEUDA-015</title>
 <style>
 :root{
   --bg:#080808;
@@ -600,6 +602,24 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 .admin-mobile-list-title{margin-bottom:10px}.admin-mobile-list-title h2{font-size:28px}.admin-mobile-list-title h3{font-size:23px}.admin-mobile-list-title .btn-dark{border-radius:16px!important;padding:12px 16px!important;font-size:15px!important;background:#202020!important;border:1px solid #3a3a3a!important}.admin-critical-banner{display:flex;align-items:center;gap:14px;margin:6px 0 14px;padding:17px;border-radius:19px;text-transform:none;letter-spacing:0;background:linear-gradient(90deg,rgba(239,68,68,.18),rgba(239,68,68,.08));border:1px solid rgba(239,68,68,.45);color:#ff6358}.admin-critical-banner.ok{background:linear-gradient(90deg,rgba(34,197,94,.16),rgba(34,197,94,.07));border-color:rgba(34,197,94,.38);color:#4ade80}.admin-critical-banner small{display:block;color:#ddd;font-weight:500;margin-top:3px}.admin-summary-grid{grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}.admin-summary-card{min-height:132px;padding:13px 11px;border-radius:16px;text-align:center;align-items:center}.admin-summary-card .admin-summary-icon{font-size:34px}.admin-summary-card strong{font-size:38px;margin-top:8px}.admin-summary-card span{font-size:14px;color:#f0f0f0}.admin-summary-card small{display:block;font-size:12px;color:#aaa;margin-top:5px;line-height:1.2}.admin-mini-badge{right:8px;top:8px;min-width:24px;height:24px;font-size:13px}.admin-review-card{border-color:rgba(255,255,255,.12)}.admin-review-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.admin-review-title h3{display:flex;align-items:center;gap:8px;margin:0;font-size:25px}.admin-review-count{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;border-radius:999px;background:#ef4444;color:white;font-size:13px;font-weight:900}.admin-review-all{width:auto!important;padding:10px 0!important;background:transparent!important;border:0!important;color:var(--gold)!important;font-size:15px!important}.admin-review-note{margin:0 0 14px;color:#bbb;font-size:14px;line-height:1.35}.admin-cierre-mobile-card{border-radius:20px;padding:15px;background:linear-gradient(180deg,#171717,#101010);border:1px solid #303030}.admin-cierre-mobile-main{gap:14px}.admin-driver-avatar{width:58px;height:58px;font-size:27px}.admin-cierre-mobile-info b{font-size:22px;text-transform:capitalize}.admin-status-chip{display:inline-flex!important;align-items:center;gap:6px;margin-top:5px!important;padding:5px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.12);width:max-content;max-width:100%;font-weight:900}.admin-status-chip.red{color:#ff6b5f;background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.35)}.admin-status-chip.yellow{color:#f4b400;background:rgba(244,180,0,.12);border-color:rgba(244,180,0,.35)}.admin-status-chip.green{color:#4ade80;background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.35)}.admin-cierre-mobile-info small{font-size:14px}.admin-cierre-mobile-action{min-width:118px!important;padding:14px 16px!important;border-radius:13px!important;font-size:17px!important}.admin-cierre-mobile-action.btn-red{background:#dc2626!important;color:#fff!important;border:1px solid #ef4444!important}.admin-cierre-mobile-arrow{font-size:34px;color:#a6a6a6}.admin-vehicle-alert-row{border-radius:19px}.admin-vehicle-alert-row b{font-size:18px}.admin-vehicle-alert-row small{font-size:16px;color:#f4d46a}.admin-alert-km{font-size:16px;background:rgba(212,175,55,.13);border-color:rgba(212,175,55,.75)}.admin-green-note{margin:14px 0;padding:14px 16px;border-radius:16px;background:rgba(34,197,94,.13);border:1px solid rgba(34,197,94,.34);color:#4ade80;font-weight:800}.admin-bottom-nav{padding:12px 18px calc(12px + env(safe-area-inset-bottom));}.admin-bottom-nav button{font-size:14px;min-height:64px}.admin-bottom-nav button b{font-size:27px}.admin-bottom-nav button.active{border:1px solid rgba(212,175,55,.35);background:linear-gradient(180deg,rgba(212,175,55,.22),rgba(212,175,55,.11))}
 @media(max-width:430px){.admin-summary-grid{grid-template-columns:1fr 1fr}.admin-summary-card{text-align:left;align-items:flex-start;min-height:112px}.admin-summary-card .admin-summary-icon{font-size:30px}.admin-summary-card strong{font-size:34px}.admin-driver-avatar{width:52px;height:52px}.admin-cierre-mobile-action{min-width:104px!important;font-size:15px!important}.admin-logo-circle{width:46px;height:46px}.admin-logo-text{font-size:22px}.admin-bell{min-width:52px!important;height:52px!important}.admin-logout-btn{min-width:58px!important;height:52px!important;padding:8px 10px!important;font-size:13px!important}.admin-top-actions{gap:6px}}
 
+.fondo-operativo-box{
+  background:rgba(59,130,246,.10);
+  border:1px solid rgba(59,130,246,.35);
+  border-radius:16px;
+  padding:14px;
+  margin:10px 0;
+}
+.fondo-operativo-box b{color:#bfdbfe}
+.deuda-acumulada-box{
+  background:rgba(239,68,68,.12);
+  border:1px solid rgba(239,68,68,.40);
+  color:#fecaca;
+  border-radius:14px;
+  padding:10px;
+  margin-top:10px;
+  font-weight:800;
+}
+
 </style>
 </head>
 <body>
@@ -808,7 +828,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.72</b> · ADMIN-SALIR-TOPBAR-014</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.73</b> · FONDO-OPERATIVO-5050-DEUDA-015</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -859,6 +879,8 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-card-soft"><h2>⚙️ Configuración</h2><p class="note">Todo lo que se usa menos seguido queda agrupado acá para que Inicio sea rápido y limpio.</p></div>
 
       <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigPremio')"><b>🏆 Premio semanal</b><span>›</span></button><div id="adminConfigPremio" class="admin-config-content hidden"><div id="adminGanadorSemana" class="leader-card">Cargando ganador...</div><label>Valor del premio para el ganador</label><input id="adminPremioInput" type="text" inputmode="numeric" data-number-format="true" placeholder="Ej: 50.000" /><button class="btn-gold" onclick="guardarPremioSemanalAdmin()">Guardar premio semanal</button><div id="adminPremioMsg"></div></div></div>
+
+      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigFondoOperativo')"><b>⛽ Fondo operativo 50/50</b><span>›</span></button><div id="adminConfigFondoOperativo" class="admin-config-content hidden"><p class="note">Usalo cuando David adelanta dinero operativo, por ejemplo combustible. No se guarda como gasto pagado por el chofer: se suma al cierre como gasto compartido 50/50 y el chofer devuelve su parte con trabajo o en el cierre.</p><label>Chofer</label><select id="fondoOperativoChoferSelect"></select><label>Monto entregado</label><input id="fondoOperativoMonto" type="text" inputmode="numeric" data-number-format="true" placeholder="Ej: 100.000" /><label>Detalle</label><input id="fondoOperativoDetalle" placeholder="Ej: Combustible por falta de efectivo" /><button class="btn-gold" onclick="guardarFondoOperativoAdmin()">Cargar fondo operativo</button><div id="fondoOperativoMsg"></div><div id="fondoOperativoHistorial" style="margin-top:12px"></div></div></div>
 
       <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigTarifas')"><b>💵 Tarifas de servicios</b><span>›</span></button><div id="adminConfigTarifas" class="admin-config-content hidden"><p class="note">Estos precios son las tarifas mínimas para el chofer. Puede cobrar más, pero la app no permite guardar menos.</p><button class="btn-dark" onclick="loadTarifasAdmin()">Ver / editar tarifas</button><div id="adminTarifas" style="margin-top:12px"></div></div></div>
 
@@ -1335,6 +1357,7 @@ async function actualizarAcumuladosGasto(gasto){
       periodoInicio,
       periodoFin,
       totalGastos: increment(monto),
+      totalGastosPagadosChofer: increment(monto),
       cantidadGastos: increment(1),
       actualizado: serverTimestamp()
     },{merge:true}),
@@ -1342,6 +1365,7 @@ async function actualizarAcumuladosGasto(gasto){
       vehiculo: gasto.vehiculo,
       mes,
       totalGastos: increment(monto),
+      totalGastosPagadosChofer: increment(monto),
       cantidadGastos: increment(1),
       actualizado: serverTimestamp()
     },{merge:true})
@@ -1350,6 +1374,7 @@ async function actualizarAcumuladosGasto(gasto){
   const cacheKey = `acum_sem_${gasto.chofer}_${periodoId}`;
   const cached = cacheGet(cacheKey, 60 * 60 * 1000) || {};
   cached.totalGastos = Number(cached.totalGastos || 0) + monto;
+  cached.totalGastosPagadosChofer = Number(cached.totalGastosPagadosChofer || 0) + monto;
   cached.cantidadGastos = Number(cached.cantidadGastos || 0) + 1;
   cached.chofer = gasto.chofer;
   cached.vehiculo = gasto.vehiculo;
@@ -1395,33 +1420,53 @@ function cierreDesdeAcumulado(chofer, periodo, acumulado, ganador, premioSemanal
   const tarjeta = Number(acumulado.tarjeta || 0);
   const cantidadViajes = Number(acumulado.cantidadViajes || 0);
   const totalGastos = Number(acumulado.totalGastos || 0);
+  const totalFondoOperativo = Number(acumulado.totalFondoOperativo || 0);
+  const cantidadFondoOperativo = Number(acumulado.cantidadFondoOperativo || 0);
+  const totalGastosPagadosChofer = Number(
+    typeof acumulado.totalGastosPagadosChofer !== "undefined"
+      ? acumulado.totalGastosPagadosChofer
+      : Math.max(0, totalGastos - totalFondoOperativo)
+  );
   const cantidadGastos = Number(acumulado.cantidadGastos || 0);
   const neto = totalViajes - totalGastos;
   const mitadChofer = neto / 2;
   const mitadDavid = neto / 2;
-  const efectivoNetoChofer = efectivo - totalGastos;
-  const diferenciaBase = efectivoNetoChofer - mitadChofer;
+
+  // Caja real de cada parte antes de compensar el cierre:
+  // - El chofer conserva el efectivo, menos los gastos que pagó él.
+  // - David conserva transferencia/tarjeta, menos el Fondo Operativo que salió de su cuenta.
+  // Así el Fondo Operativo no se cobra dos veces: si transferencia/tarjeta ya lo compensaron,
+  // el cierre solo pide o devuelve la diferencia real para que ambos queden 50/50.
+  const efectivoNetoChofer = efectivo - totalGastosPagadosChofer;
+  const cobrosDavid = transferencia + tarjeta;
+  const cajaNetaDavid = cobrosDavid - totalFondoOperativo;
+  const reintegroFondoOperativoChofer = Math.max(0, totalFondoOperativo / 2);
+
   const esGanador = ganador && ganador.id === chofer;
   const premioAplicado = esGanador ? Number(premioSemanal || 0) : 0;
 
-  // Motor único 50/50 para chofer y administrador.
-  // Regla: si el chofer quedó con más efectivo del que le corresponde, paga a David.
-  // Si quedó con menos efectivo del que le corresponde, David paga al chofer.
-  // Se redondea para evitar diferencias visuales por decimales y nunca se muestran ambos sentidos a la vez.
-  const diferenciaFinal = Math.round((diferenciaBase - premioAplicado) * 100) / 100;
+  // Objetivo final: después del cierre, ambos quedan con su 50% del neto.
+  // Si hay premio semanal para el chofer, se suma a su objetivo y se resta del saldo de David.
+  const objetivoChofer = mitadChofer + premioAplicado;
+  const objetivoDavid = mitadDavid - premioAplicado;
+
+  // Diferencia positiva: el chofer tiene más de lo que le corresponde y debe completar a David.
+  // Diferencia negativa: el chofer tiene menos de lo que le corresponde y David debe pagarle.
+  const diferenciaBase = efectivoNetoChofer - mitadChofer;
+  const diferenciaFinal = Math.round((efectivoNetoChofer - objetivoChofer) * 100) / 100;
   const choferDebe = diferenciaFinal > 0 ? diferenciaFinal : 0;
   const davidDebe = diferenciaFinal < 0 ? Math.abs(diferenciaFinal) : 0;
 
   return {
     periodo, chofer, totalViajes, efectivo, transferencia, tarjeta, cantidadViajes,
-    totalGastos, cantidadGastos, neto, mitadChofer, mitadDavid, efectivoNetoChofer,
+    totalGastos, totalGastosPagadosChofer, totalFondoOperativo, cantidadFondoOperativo, cantidadGastos, neto, mitadChofer, mitadDavid,
+    efectivoNetoChofer, cobrosDavid, cajaNetaDavid, reintegroFondoOperativoChofer, objetivoChofer, objetivoDavid,
     ganadorSemana: ganador ? ganador.nombre : "",
     ganadorId: ganador ? ganador.id : "",
     premioSemanal: Number(premioSemanal || 0), premioAplicado, esGanador,
     diferenciaBase, diferenciaFinal, choferDebe, davidDebe
   };
 }
-
 
 
 async function recalcularAcumuladoSemanalChofer(chofer, periodo, opciones={}){
@@ -1449,7 +1494,10 @@ async function recalcularAcumuladoSemanalChofer(chofer, periodo, opciones={}){
     totalViajes: 0,
     cantidadViajes: 0,
     totalGastos: 0,
+    totalGastosPagadosChofer: 0,
+    totalFondoOperativo: 0,
     cantidadGastos: 0,
+    cantidadFondoOperativo: 0,
     derivaciones: 0
   };
 
@@ -1467,9 +1515,30 @@ async function recalcularAcumuladoSemanalChofer(chofer, periodo, opciones={}){
     const g = d.data();
     if(!perteneceAlPeriodo(g, periodo)) return;
     acumulado.totalGastos += Number(g.monto || 0);
+    acumulado.totalGastosPagadosChofer += Number(g.monto || 0);
     acumulado.cantidadGastos += 1;
     if(!acumulado.vehiculo && g.vehiculo) acumulado.vehiculo = g.vehiculo;
   });
+
+  try{
+    const fondoSnap = await withTimeout(getDocs(query(
+      collection(db,"fondos_operativos"),
+      where("chofer","==",chofer)
+    )), opciones.timeoutFondos || 10000, "Tardó demasiado leyendo fondos operativos de la semana.");
+
+    fondoSnap.forEach(d=>{
+      const f = d.data();
+      if(!perteneceAlPeriodo(f, periodo)) return;
+      const monto = Number(f.monto || 0);
+      acumulado.totalGastos += monto;
+      acumulado.totalFondoOperativo += monto;
+      acumulado.cantidadGastos += 1;
+      acumulado.cantidadFondoOperativo += 1;
+      if(!acumulado.vehiculo && f.vehiculo) acumulado.vehiculo = f.vehiculo;
+    });
+  }catch(e){
+    console.warn("No se pudieron leer fondos operativos para acumulado semanal", e);
+  }
 
   try{
     const derivSnap = await withTimeout(getDocs(query(
@@ -3402,7 +3471,7 @@ function renderCierreSemanal(c){
     <div class="trip"><b>Período cerrado</b><br><small>${c.periodo.start} al ${c.periodo.end}</small><br><small>Cierre automático: ${c.periodo.closeDate} desde 00:01</small></div>
     <div class="trip"><b>Viajes</b><br><small>Cantidad: ${c.cantidadViajes}</small><br><b style="color:var(--gold)">${money(c.totalViajes)}</b></div>
     <div class="trip"><b>Medios de pago</b><br><small>Efectivo en mano del chofer: ${money(c.efectivo)}</small><br><small>Transferencia en cuenta David: ${money(c.transferencia)}</small><br><small>Tarjeta en cuenta David: ${money(c.tarjeta)}</small></div>
-    <div class="trip"><b>Gastos</b><br><small>Cantidad: ${c.cantidadGastos}</small><br><b style="color:var(--gold)">${money(c.totalGastos)}</b></div>
+    <div class="trip"><b>Gastos compartidos</b><br><small>Cantidad: ${c.cantidadGastos}</small><br><small>Pagados por chofer: ${money(c.totalGastosPagadosChofer || 0)}</small><br><small>Fondo operativo pagado por David: ${money(c.totalFondoOperativo || 0)}</small><br><small>Parte a recuperar al chofer: ${money(c.reintegroFondoOperativoChofer || 0)}</small><br><b style="color:var(--gold)">${money(c.totalGastos)}</b></div>
     <div class="trip"><b>Resultado 50/50</b><br><small>Neto: ${money(c.neto)}</small><br><small>Parte chofer: ${money(c.mitadChofer)}</small><br><small>Parte David: ${money(c.mitadDavid)}</small><br><small>Efectivo neto del chofer: ${money(c.efectivoNetoChofer)}</small><br><small>Diferencia antes de premio: ${money(c.diferenciaBase)}</small></div>
     <div class="trip"><b>Premio semanal</b><br><small>Ganador elegible: ${c.ganadorSemana || "sin ganador"}</small><br><small>Bono configurado: ${money(c.premioSemanal || 50000)}</small><br><small>Aplicado a este chofer: ${money(c.premioAplicado)}</small></div>
     ${resultado}
@@ -3470,6 +3539,9 @@ window.confirmarCierreSemanal = async function(){
       totalViajes: Number(c.totalViajes || 0),
       cantidadViajes: Number(c.cantidadViajes || 0),
       totalGastos: Number(c.totalGastos || 0),
+      totalGastosPagadosChofer: Number(c.totalGastosPagadosChofer || 0),
+      totalFondoOperativo: Number(c.totalFondoOperativo || 0),
+      cantidadFondoOperativo: Number(c.cantidadFondoOperativo || 0),
       cantidadGastos: Number(c.cantidadGastos || 0),
       efectivo: Number(c.efectivo || 0),
       transferencia: Number(c.transferencia || 0),
@@ -4589,6 +4661,171 @@ window.guardarFechaCambioMantenimiento = async function(vehiculoId, key, modo){
 }
 
 
+
+async function actualizarAcumuladosFondoOperativo(fondo){
+  const monto = Number(fondo.monto || 0);
+  if(!fondo || !fondo.chofer || !fondo.vehiculo || !monto) return;
+
+  const fecha = fondo.fecha || today();
+  const mes = getMesDesdeFecha(fecha);
+  const periodoId = fondo.periodoId || getPeriodoTrabajoActual(fecha).id;
+  const periodoInicio = fondo.periodoInicio || (periodoId.split("_")[0] || "");
+  const periodoFin = fondo.periodoFin || (periodoId.split("_")[1] || "");
+
+  await Promise.all([
+    setDoc(doc(db,"acumulados_semanales",`${fondo.chofer}_${periodoId}`),{
+      chofer: fondo.chofer,
+      vehiculo: fondo.vehiculo,
+      periodoId,
+      periodoInicio,
+      periodoFin,
+      totalGastos: increment(monto),
+      totalFondoOperativo: increment(monto),
+      cantidadGastos: increment(1),
+      cantidadFondoOperativo: increment(1),
+      actualizado: serverTimestamp()
+    },{merge:true}),
+    setDoc(doc(db,"acumulados_mensuales",`${fondo.vehiculo}_${mes}`),{
+      vehiculo: fondo.vehiculo,
+      mes,
+      totalGastos: increment(monto),
+      totalFondoOperativo: increment(monto),
+      cantidadGastos: increment(1),
+      cantidadFondoOperativo: increment(1),
+      actualizado: serverTimestamp()
+    },{merge:true})
+  ]);
+
+  const cacheKey = `acum_sem_${fondo.chofer}_${periodoId}`;
+  const cached = cacheGet(cacheKey, 60 * 60 * 1000) || {};
+  cached.totalGastos = Number(cached.totalGastos || 0) + monto;
+  cached.totalFondoOperativo = Number(cached.totalFondoOperativo || 0) + monto;
+  cached.cantidadGastos = Number(cached.cantidadGastos || 0) + 1;
+  cached.cantidadFondoOperativo = Number(cached.cantidadFondoOperativo || 0) + 1;
+  cached.chofer = fondo.chofer;
+  cached.vehiculo = fondo.vehiculo;
+  cached.periodoId = periodoId;
+  cached.periodoInicio = periodoInicio;
+  cached.periodoFin = periodoFin;
+  cacheSet(cacheKey, cached);
+  cacheRemove(`admin_5050_${fondo.chofer}_${periodoId}`);
+  cacheRemove(`cierre_sem_${fondo.chofer}_${periodoId}`);
+}
+
+async function cargarChoferesFondoOperativoAdmin(){
+  const sel = $("fondoOperativoChoferSelect");
+  if(!sel) return;
+  const actual = sel.value;
+  const snap = await withTimeout(getDocs(collection(db,"choferes")), 7000, "Tardó demasiado cargando choferes.");
+  const items = [];
+  snap.forEach(d=>{
+    const c = d.data();
+    if(c.rol === "admin" || c.activo === false) return;
+    items.push({id:d.id, nombre:c.nombre || d.id, vehiculo:c.vehiculo || ""});
+  });
+  items.sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre)));
+  sel.innerHTML = items.map(c=>`<option value="${c.id}">${c.nombre} ${c.vehiculo ? "· " + c.vehiculo : ""}</option>`).join("");
+  sel.onchange = ()=>cargarHistorialFondoOperativoAdmin(true).catch(e=>console.warn("No se pudo actualizar historial de fondos", e));
+  if(actual && items.some(c=>c.id === actual)) sel.value = actual;
+  await cargarHistorialFondoOperativoAdmin(false);
+}
+
+async function cargarHistorialFondoOperativoAdmin(force=false){
+  const box = $("fondoOperativoHistorial");
+  const sel = $("fondoOperativoChoferSelect");
+  if(!box || !sel || !sel.value) return;
+  const chofer = sel.value;
+  const cacheKey = "fondos_operativos_admin_" + chofer;
+  const cached = cacheGet(cacheKey, 2 * 60 * 1000);
+  if(cached && !force){ box.innerHTML = cached; return; }
+  try{
+    const snap = await withTimeout(getDocs(query(collection(db,"fondos_operativos"), where("chofer","==",chofer))), 6000, "Tardó demasiado cargando fondos operativos.");
+    const arr = [];
+    snap.forEach(d=>arr.push({id:d.id, ...d.data()}));
+    arr.sort((a,b)=>String(b.periodoId || b.fecha || "").localeCompare(String(a.periodoId || a.fecha || "")));
+    const html = arr.slice(0,8).map(f=>`
+      <div class="fondo-operativo-box">
+        <b>${money(Number(f.monto || 0))}</b><br>
+        <small>Semana: ${String(f.periodoId || "").replace("_"," al ")}</small><br>
+        <small>${f.detalle || "Fondo operativo"}</small>
+      </div>`).join("") || `<p class="note">Todavía no hay fondos operativos cargados para este chofer.</p>`;
+    box.innerHTML = html;
+    cacheSet(cacheKey, html);
+  }catch(e){ box.innerHTML = `<div class="msg err">No se pudo cargar historial: ${e.message}</div>`; }
+}
+
+window.guardarFondoOperativoAdmin = async function(){
+  const sel = $("fondoOperativoChoferSelect");
+  const msgBox = $("fondoOperativoMsg");
+  const chofer = sel ? sel.value : "";
+  const monto = parseNumeroArg($("fondoOperativoMonto") ? $("fondoOperativoMonto").value : 0);
+  const detalle = ($("fondoOperativoDetalle") ? $("fondoOperativoDetalle").value : "").trim() || "Fondo operativo 50/50";
+  if(!chofer) return msg(msgBox,"Seleccioná un chofer.");
+  if(!monto || monto <= 0) return msg(msgBox,"Ingresá un monto válido.");
+
+  try{
+    msg(msgBox,"Cargando fondo operativo...",true);
+    const cSnap = await getDoc(doc(db,"choferes",chofer));
+    if(!cSnap.exists()) throw new Error("Chofer no encontrado.");
+    const c = cSnap.data();
+    const vehiculo = c.vehiculo || "";
+    if(!vehiculo) throw new Error("Este chofer no tiene vehículo asignado.");
+    const periodoOperativo = await getPeriodoOperativoChofer(chofer);
+    const fondo = {
+      fecha: today(),
+      hora: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
+      chofer,
+      choferNombre: c.nombre || chofer,
+      vehiculo,
+      periodoId: periodoOperativo.id,
+      periodoInicio: periodoOperativo.start,
+      periodoFin: periodoOperativo.end,
+      tipo:"fondo_operativo_50_50",
+      monto,
+      detalle,
+      pagadoPor:"david",
+      gastoPagadoPorChofer:false,
+      impactaCierre:true,
+      creadoPor:currentUserId || "admin",
+      creado: serverTimestamp()
+    };
+    await addDoc(collection(db,"fondos_operativos"), fondo);
+    await actualizarAcumuladosFondoOperativo(fondo);
+    if($("fondoOperativoMonto")) $("fondoOperativoMonto").value = "";
+    if($("fondoOperativoDetalle")) $("fondoOperativoDetalle").value = "";
+    cacheRemove("fondos_operativos_admin_" + chofer);
+    adminBaseLoadedAt = 0;
+    msg(msgBox,"Fondo operativo cargado. Impacta en el cierre como gasto compartido 50/50, sin figurar como gasto pagado por el chofer.",true);
+    await cargarHistorialFondoOperativoAdmin(true);
+    if(typeof loadAdmin === "function") setTimeout(()=>loadAdmin().catch(()=>{}), 250);
+  }catch(e){
+    msg(msgBox,"No se pudo cargar fondo operativo: " + e.message);
+  }
+}
+
+async function calcularDeudaAcumuladaChofer(chofer, periodoActualId=""){
+  const result = {choferDebe:0, davidDebe:0, itemsChofer:0, itemsDavid:0};
+  if(!chofer) return result;
+  try{
+    const snap = await withTimeout(getDocs(query(collection(db,"pagos_semanales"), where("chofer","==",chofer))), 4500, "Tardó demasiado calculando deuda acumulada.");
+    snap.forEach(d=>{
+      const p = {id:d.id, ...d.data()};
+      if(p.pagado === true) return;
+      if(!pagoPerteneceASemanaCerradaValida(p)) return;
+      if(periodoActualId && p.periodoId === periodoActualId) return;
+      const monto = Number(p.monto || 0);
+      if(p.sentido === "chofer_a_david"){
+        result.choferDebe += monto;
+        result.itemsChofer += 1;
+      }else if(p.sentido === "david_a_chofer"){
+        result.davidDebe += monto;
+        result.itemsDavid += 1;
+      }
+    });
+  }catch(e){ console.warn("No se pudo calcular deuda acumulada", e); }
+  return result;
+}
+
 window.adminShowSection = function(section){
   const home = $("adminHomeSection");
   const vehicles = $("adminVehiclesSection");
@@ -4610,6 +4847,7 @@ window.toggleAdminConfig = function(id){
   if(!box) return;
   box.classList.toggle("hidden");
   setupNumberFormatting(box);
+  if(id === "adminConfigFondoOperativo") cargarChoferesFondoOperativoAdmin().catch(e=>msg($("fondoOperativoMsg"),"No se pudieron cargar choferes: " + e.message));
 };
 
 function renderAdminResumenMovil(stats={}){
@@ -5026,11 +5264,23 @@ async function cargarVehiculosAdminSimple(periodo){
   });
 
   const pagosPorChofer = {};
+  const deudaPendientePorChofer = {};
   if(pagosSnap){
     pagosSnap.forEach(d=>{
       const p = {id:d.id,...d.data()};
-      if(p.periodoId !== periodo.id || !p.chofer) return;
-      pagosPorChofer[p.chofer] = p;
+      if(!p.chofer) return;
+      if(p.periodoId === periodo.id) pagosPorChofer[p.chofer] = p;
+      if(p.pagado !== true && pagoPerteneceASemanaCerradaValida(p)){
+        if(!deudaPendientePorChofer[p.chofer]) deudaPendientePorChofer[p.chofer] = {choferDebe:0, davidDebe:0, itemsChofer:0, itemsDavid:0};
+        const monto = Number(p.monto || 0);
+        if(p.sentido === "chofer_a_david"){
+          deudaPendientePorChofer[p.chofer].choferDebe += monto;
+          deudaPendientePorChofer[p.chofer].itemsChofer += 1;
+        }else if(p.sentido === "david_a_chofer"){
+          deudaPendientePorChofer[p.chofer].davidDebe += monto;
+          deudaPendientePorChofer[p.chofer].itemsDavid += 1;
+        }
+      }
     });
   }
 
@@ -5051,18 +5301,25 @@ async function cargarVehiculosAdminSimple(periodo){
     if(tieneAlerta) stats.vehiculosConAlertas++;
 
     const pagoReal = choferId ? pagosPorChofer[choferId] : null;
+    const deudaAcumuladaCard = choferId ? deudaPendientePorChofer[choferId] : null;
+    const tieneDeudaAcumulada = !!(deudaAcumuladaCard && (Number(deudaAcumuladaCard.choferDebe || 0) > 0 || Number(deudaAcumuladaCard.davidDebe || 0) > 0));
     const estadoCache = c ? adminCierreEstadoDesdeCache(choferId, periodo, pagoReal) : null;
-    // Pendiente de revisión solo significa: falta comprobante de quien debe pagar.
-    // No se cuenta como pendiente solo por existir un cierre no abierto.
+    // Pendiente de revisión significa: falta comprobante/pago actual o existe deuda acumulada de cierres anteriores.
     let tipo = estadoCache ? estadoCache.tipo : "green";
     let titulo = estadoCache ? estadoCache.titulo : (c ? "Sin acción pendiente" : "Sin chofer asignado");
     let subtitulo = estadoCache ? estadoCache.subtitulo : (c ? "No requiere revisión" : "Asigná un chofer para controlar cierre");
     let accion = estadoCache ? estadoCache.accion : "Ver";
-    const requiereRevisar = !!(estadoCache && estadoCache.revisar === true);
+    if(tieneDeudaAcumulada && (!estadoCache || estadoCache.revisar !== true)){
+      tipo = "red";
+      titulo = "Deuda acumulada";
+      subtitulo = `Cierres pendientes: chofer debe ${money(deudaAcumuladaCard.choferDebe || 0)} · David debe ${money(deudaAcumuladaCard.davidDebe || 0)}`;
+      accion = "Resolver";
+    }
+    const requiereRevisar = !!((estadoCache && estadoCache.revisar === true) || tieneDeudaAcumulada);
     if(requiereRevisar){
       stats.porRevisar++;
-      if(estadoCache.pagoPendiente) stats.pendientesPago++;
-      if(estadoCache.comprobantePendiente) stats.comprobantesPendientes++;
+      if((estadoCache && estadoCache.pagoPendiente) || (deudaAcumuladaCard && Number(deudaAcumuladaCard.choferDebe || 0) > 0)) stats.pendientesPago++;
+      if(estadoCache && estadoCache.comprobantePendiente) stats.comprobantesPendientes++;
     }else if(estadoCache && estadoCache.resuelto){
       stats.cierresResueltos++;
     }
@@ -5168,6 +5425,7 @@ window.calcularSemanaVehiculoAdmin = async function(vehiculoId, choferId){
       3200,
       "El 50/50 rápido no respondió. Si ves datos en pantalla, son los últimos guardados. Si no, reconstruí el acumulado."
     );
+    c.deudaAcumulada = await calcularDeudaAcumuladaChofer(choferId, periodo.id);
     const pago = c.pagoSemanal || null;
     cacheSet(cacheKey, {cierre:c, pago});
     box.innerHTML = renderResumenSemanalAdmin(vehiculoId, c, pago);
@@ -5199,6 +5457,7 @@ window.reconstruirSemanaVehiculoAdmin = async function(vehiculoId, choferId){
   try{
     const c = await withTimeout(calcularCierreSemanalLiviano(choferId, periodo, true), 15000, "La reconstrucción tardó demasiado. Revisá internet y probá otra vez.");
     c.pagoSemanal = await getEstadoPagoSemanal(choferId, periodo.id);
+    c.deudaAcumulada = await calcularDeudaAcumuladaChofer(choferId, periodo.id);
     const pago = c.pagoSemanal || null;
     cacheSet(`admin_5050_${choferId}_${periodo.id}`, {cierre:c, pago});
     box.innerHTML = renderResumenSemanalAdmin(vehiculoId, c, pago);
@@ -5286,11 +5545,14 @@ function renderResumenSemanalAdmin(vehiculoId,c,pago){
         <span style="font-size:24px">${money(montoDeuda)}</span>
       </div>
 
+      ${(c.deudaAcumulada && (Number(c.deudaAcumulada.choferDebe || 0) > 0 || Number(c.deudaAcumulada.davidDebe || 0) > 0)) ? `<div class="deuda-acumulada-box">⚠️ Deuda acumulada de cierres anteriores<br><small>Chofer debe: ${money(c.deudaAcumulada.choferDebe || 0)} (${c.deudaAcumulada.itemsChofer || 0} cierre/s)</small><br><small>David debe: ${money(c.deudaAcumulada.davidDebe || 0)} (${c.deudaAcumulada.itemsDavid || 0} cierre/s)</small></div>` : ""}
+
       ${accionRapida}
 
       <div class="cierre-summary-grid">
         <div class="cierre-summary-item"><span>Facturación</span><b>${money(c.totalViajes)}</b></div>
-        <div class="cierre-summary-item"><span>Gastos</span><b>${money(c.totalGastos)}</b></div>
+        <div class="cierre-summary-item"><span>Gastos compartidos</span><b>${money(c.totalGastos)}</b></div>
+        <div class="cierre-summary-item"><span>Fondo operativo</span><b>${money(c.totalFondoOperativo || 0)}</b></div>
         <div class="cierre-summary-item"><span>Neto</span><b>${money(c.neto)}</b></div>
         <div class="cierre-summary-item"><span>Viajes</span><b>${Number(c.cantidadViajes || 0)}</b></div>
       </div>
@@ -5299,6 +5561,9 @@ function renderResumenSemanalAdmin(vehiculoId,c,pago){
       <div id="cierreDetalle_${detalleId}" class="cierre-detail-box hidden">
         <small>Efectivo en chofer: ${money(c.efectivo)}</small><br>
         <small>Transferencia/Tarjeta en David: ${money(Number(c.transferencia || 0) + Number(c.tarjeta || 0))}</small><br>
+        <small>Gastos pagados por chofer: ${money(c.totalGastosPagadosChofer || 0)}</small><br>
+        <small>Fondo operativo pagado por David: ${money(c.totalFondoOperativo || 0)}</small><br>
+        <small>Parte del fondo que devuelve el chofer: ${money(c.reintegroFondoOperativoChofer || 0)}</small><br>
         <small>Parte chofer: ${money(c.mitadChofer)}</small><br>
         <small>Parte David: ${money(c.mitadDavid)}</small><br>
         <small>Premio aplicado: ${money(c.premioAplicado || 0)}</small><br>
