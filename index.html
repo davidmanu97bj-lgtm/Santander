@@ -17,6 +17,7 @@ Cambios:
 - Formato automático con punto en campos numéricos: 30.000 en lugar de 30000, sin afectar cálculos internos.
 - Reasignación segura de vehículo: al asignar un auto existente a otro chofer conserva Mi auto, km y mantenimiento.
 - Motor único de fecha operativa: simulador, ranking, cierre, 50/50 y acumulados usan la misma semana.
+- Cierre automático exacto: todos los sábados desde las 00:01 se cierra la semana anterior y la nueva semana empieza en cero.
 - Semana operativa corregida: sábado a viernes; el sábado cierra la semana anterior y la nueva semana inicia en 0.
 - Comprobantes obligatorios para pagos semanales: solo carga quien debe pagar, con imagen comprimida y carga bajo demanda.
 - Cierre semanal flexible: permite avanzar con pago pendiente, mantiene alerta, suspende bono a las 24 h si el chofer no sube comprobante.
@@ -2143,8 +2144,34 @@ function isSaturday(dateStr){
   return parseLocalDate(dateStr).getDay() === 6;
 }
 
+function minutosArgentinaActuales(){
+  // Hora operativa usada solo para habilitar el cierre real de sábado 00:01.
+  // La fecha del teléfono no debe adelantar semanas; cuando hay simulación global activa
+  // se permite probar el cierre sin depender de la hora real.
+  try{
+    const parts = new Intl.DateTimeFormat("en-GB",{
+      timeZone:"America/Argentina/Buenos_Aires",
+      hour:"2-digit",
+      minute:"2-digit",
+      hour12:false
+    }).formatToParts(new Date()).reduce((a,p)=>{a[p.type]=p.value; return a;},{});
+    return Number(parts.hour || 0) * 60 + Number(parts.minute || 0);
+  }catch(e){
+    const d = new Date();
+    return d.getHours() * 60 + d.getMinutes();
+  }
+}
+
+function pasoCorteSemanal0001(dateStr = fechaOperativaActual()){
+  if(!isSaturday(dateStr)) return false;
+  // En simulación global se habilita el cierre apenas la fecha simulada cae sábado,
+  // para probar semanas sin tocar el reloj del teléfono.
+  if(Number(globalSimulationWeeks || 0) !== 0) return true;
+  return minutosArgentinaActuales() >= 1;
+}
+
 function puedeCerrarPeriodo(periodo, dateStr = today()){
-  return !!(periodo && isSaturday(dateStr) && periodo.closeDate === dateStr);
+  return !!(periodo && periodo.closeDate === dateStr && pasoCorteSemanal0001(dateStr));
 }
 
 window.cerrarCierreSemanalModal = function(){
@@ -2177,10 +2204,12 @@ function getPeriodoTrabajoActual(dateStr = fechaOperativaActual()){
 }
 
 function getPeriodoCierrePendiente(dateStr = fechaOperativaActual()){
-  // El cartel de cierre aparece solo los sábados.
-  // Cierra la semana anterior: sábado previo a viernes anterior.
-  // Ejemplo: sábado 13 cierra período 06 -> 12 y la nueva semana 13 -> 19 arranca en cero.
-  if(!isSaturday(dateStr)) return null;
+  // Cierre automático exacto EXPLORA:
+  // todos los sábados desde 00:01 se cierra la semana anterior
+  // (sábado -> viernes) y la nueva semana empieza en cero por período nuevo.
+  // Con simulador global activo, si la fecha simulada cae sábado se habilita igual
+  // para poder probar sin cambiar la fecha del teléfono.
+  if(!pasoCorteSemanal0001(dateStr)) return null;
   const end = addDays(dateStr, -1);
   const start = addDays(end, -6);
   const closeDate = dateStr;
@@ -3262,11 +3291,11 @@ window.confirmarCierreSemanal = async function(){
   }finally{
     if(btn){
       const cActual = cierreSemanalPendiente;
-      const puedeCerrar = cActual && cActual.periodo && isSaturday(today()) && cActual.periodo.closeDate === today();
+      const puedeCerrar = cActual && cActual.periodo && puedeCerrarPeriodo(cActual.periodo, today());
 
       if(cActual && !puedeCerrar){
         btn.disabled = true;
-        btn.textContent = `Cierre disponible el sábado ${cActual.periodo.closeDate}`;
+        btn.textContent = `Cierre disponible el sábado ${cActual.periodo.closeDate} desde 00:01`;
       }else{
         btn.disabled = false;
         btn.textContent = "Confirmar cierre e iniciar nueva semana";
