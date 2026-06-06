@@ -2,7 +2,7 @@
 <!--
 EXPLORA BUILD
 Version: 2.8.74
-Build: 2026-06-06-FONDO-OPERATIVO-BONO-VISIBLE-016
+Build: 2026-06-06-CHOFER-VISUAL-B-FIX-017
 Fecha: 06/06/2026
 Cambios:
 - Se agrega botón “Mi cierre semanal” en Chofer para ver el cierre provisorio de la semana activa sin esperar al sábado.
@@ -45,7 +45,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.74 · Build 2026-06-06-FONDO-OPERATIVO-BONO-VISIBLE-016</title>
+<title>EXPLORA v2.8.75 · Build 2026-06-06-CHOFER-VISUAL-B-FIX-017</title>
 <style>
 :root{
   --bg:#080808;
@@ -621,6 +621,380 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   font-weight:800;
 }
 
+
+
+/* CHOFER MÓVIL · OPCIÓN B · BARRA INFERIOR FIJA 017 */
+.driver-mobile-b{
+  padding-bottom:108px;
+  background:
+    radial-gradient(circle at 18% -10%, rgba(212,175,55,.18), transparent 34%),
+    radial-gradient(circle at 92% 30%, rgba(59,130,246,.14), transparent 32%),
+    linear-gradient(180deg,#050505,#090909 58%,#030303);
+}
+.driver-mobile-b .card,
+.driver-mobile-b .leader-card,
+.driver-mobile-b .metric{
+  background:linear-gradient(180deg,rgba(28,28,28,.92),rgba(8,8,8,.96));
+  border:1px solid rgba(255,255,255,.11);
+  box-shadow:0 18px 35px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.05);
+}
+.driver-b-topbar{
+  position:sticky;
+  top:0;
+  z-index:12;
+  margin:-22px -22px 12px;
+  padding:18px 22px 12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:76px;
+  background:linear-gradient(180deg,rgba(0,0,0,.96),rgba(0,0,0,.72),rgba(0,0,0,0));
+  backdrop-filter:blur(12px);
+}
+.driver-b-logo{
+  color:var(--gold);
+  letter-spacing:10px;
+  font-size:30px;
+  font-weight:300;
+  text-shadow:0 0 18px rgba(212,175,55,.35);
+}
+.driver-b-logo span{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:30px;height:30px;
+  border:1px solid rgba(212,175,55,.9);
+  border-radius:50%;
+  font-size:18px;
+  letter-spacing:0;
+  margin:0 2px;
+}
+.driver-b-bell{
+  position:absolute;
+  right:22px;
+  top:20px;
+  width:42px!important;
+  height:42px;
+  padding:0!important;
+  border-radius:50%!important;
+  background:rgba(22,22,22,.78)!important;
+  color:#f3d77a!important;
+  border:1px solid rgba(212,175,55,.25)!important;
+}
+.driver-b-profile{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  background:linear-gradient(180deg,rgba(28,28,28,.92),rgba(11,11,11,.96));
+  border:1px solid rgba(255,255,255,.11);
+  border-radius:22px;
+  padding:14px;
+  margin:8px 0 12px;
+  box-shadow:0 18px 35px rgba(0,0,0,.36);
+}
+.driver-b-avatar{
+  width:58px;height:58px;
+  border-radius:50%;
+  border:1.5px solid rgba(212,175,55,.75);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--gold);
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255,255,255,.26), transparent 26%),
+    linear-gradient(135deg,#101010,#252525 55%,#050505);
+  box-shadow:0 0 24px rgba(212,175,55,.22);
+  flex:0 0 auto;
+}
+.driver-b-profile-text{min-width:0;flex:1}
+.driver-b-profile h2{margin:2px 0 3px!important;font-size:23px;text-transform:capitalize}
+.driver-b-status{
+  width:auto!important;
+  padding:10px 14px!important;
+  border-radius:999px!important;
+  background:rgba(34,197,94,.16)!important;
+  border:1px solid rgba(34,197,94,.23)!important;
+  box-shadow:0 0 22px rgba(34,197,94,.12);
+  white-space:nowrap;
+}
+.driver-mobile-b #statusBtn{
+  display:none!important;
+}
+.driver-mobile-b .driver-b-profile-text{
+  padding-right:4px;
+}
+.driver-b-ranking{
+  border-color:rgba(212,175,55,.58)!important;
+  background:
+    radial-gradient(circle at 0% 0%,rgba(212,175,55,.18),transparent 30%),
+    linear-gradient(180deg,rgba(36,30,9,.78),rgba(12,12,10,.94))!important;
+  padding:14px!important;
+}
+.driver-b-ranking h3{
+  color:#f7c943!important;
+  letter-spacing:.5px;
+  font-size:16px;
+}
+.driver-b-ranking .ranking-bonus-box{
+  position:relative;
+  background:linear-gradient(135deg,rgba(212,175,55,.17),rgba(12,12,12,.86))!important;
+  border-color:rgba(212,175,55,.45)!important;
+  padding:16px 44px 16px 16px!important;
+}
+.driver-b-ranking .ranking-bonus-box:after{
+  content:"›";
+  position:absolute;
+  right:16px;
+  top:50%;
+  transform:translateY(-50%);
+  color:#f7c943;
+  font-size:32px;
+  font-weight:200;
+}
+.driver-b-metrics{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:12px;
+}
+.driver-b-metrics .metric{
+  position:relative;
+  min-height:88px;
+  margin:0;
+  border-radius:16px;
+  padding:13px;
+}
+.driver-b-metrics .metric strong{font-size:28px}
+.driver-b-metrics .metric em{
+  position:absolute;
+  right:13px;
+  bottom:12px;
+  font-style:normal;
+  font-size:28px;
+  opacity:.95;
+}
+.driver-b-section-title{
+  color:#f7c943;
+  font-size:15px;
+  font-weight:900;
+  letter-spacing:.5px;
+  margin:16px 4px 10px;
+}
+.driver-b-hero-row{
+  display:grid;
+  grid-template-columns:1.15fr .85fr;
+  gap:10px;
+}
+.driver-b-service-hero,
+.driver-b-derive-card{
+  position:relative;
+  overflow:hidden;
+  min-height:150px;
+  border-radius:21px!important;
+  padding:17px!important;
+  text-align:left;
+  color:#fff;
+  border:1px solid rgba(212,175,55,.62)!important;
+  box-shadow:0 0 28px rgba(212,175,55,.17), inset 0 1px 0 rgba(255,255,255,.08);
+}
+.driver-b-service-hero{
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+  background:
+    linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.15) 35%,rgba(0,0,0,.78)),
+    radial-gradient(circle at 22% 18%,rgba(255,255,255,.35),transparent 13%),
+    radial-gradient(circle at 35% 12%,rgba(255,255,255,.21),transparent 18%),
+    linear-gradient(115deg,#173d24 0%,#1f5b3a 24%,#1f2e37 45%,#0f2036 62%,#06101e 100%);
+}
+.driver-b-service-hero:before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(ellipse at 28% 20%,rgba(255,255,255,.65),transparent 18%),
+    radial-gradient(ellipse at 36% 29%,rgba(204,240,255,.48),transparent 13%),
+    linear-gradient(100deg,transparent 0 27%,rgba(255,255,255,.45) 28% 32%,transparent 36%),
+    linear-gradient(120deg,transparent 0 40%,rgba(255,255,255,.36) 41% 43%,transparent 45%);
+  opacity:.62;
+  mix-blend-mode:screen;
+}
+.driver-b-service-hero:after{
+  content:"";
+  position:absolute;
+  left:0;right:0;bottom:0;height:42%;
+  background:linear-gradient(180deg,transparent,rgba(0,0,0,.78));
+}
+.driver-b-map-pin{
+  position:absolute;
+  right:22px;
+  top:48px;
+  z-index:2;
+  font-size:36px;
+  filter:drop-shadow(0 0 12px rgba(212,175,55,.7));
+}
+.driver-b-service-hero strong,
+.driver-b-service-hero small,
+.driver-b-derive-card strong,
+.driver-b-derive-card small{
+  position:relative;
+  z-index:3;
+  display:block;
+}
+.driver-b-service-hero strong{font-size:18px;letter-spacing:.3px}
+.driver-b-service-hero small,
+.driver-b-derive-card small{color:#eee;font-size:13px;margin-top:4px}
+.driver-b-derive-card{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  background:
+    radial-gradient(circle at 52% 30%,rgba(59,130,246,.35),transparent 28%),
+    linear-gradient(135deg,rgba(12,22,34,.96),rgba(6,10,16,.98))!important;
+  border-color:rgba(59,130,246,.55)!important;
+}
+.driver-b-derive-card span{font-size:40px;margin-bottom:8px;filter:drop-shadow(0 0 12px rgba(59,130,246,.75))}
+.driver-b-derive-card strong{font-size:15px}
+.driver-b-quick-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  background:linear-gradient(180deg,rgba(24,24,24,.68),rgba(6,6,6,.88));
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:22px;
+  padding:14px 10px;
+  margin-top:12px;
+}
+.driver-b-quick-grid button{
+  min-height:86px;
+  padding:8px 4px!important;
+  background:transparent!important;
+  color:#fff;
+  border:0!important;
+  border-radius:16px!important;
+  text-align:center;
+}
+.driver-b-quick-grid span{
+  width:48px;height:48px;
+  display:inline-flex;
+  align-items:center;justify-content:center;
+  border-radius:50%;
+  font-size:25px;
+  margin-bottom:6px;
+}
+.driver-b-quick-grid strong{display:block;font-size:12px;line-height:1.15}
+.driver-b-quick-grid .purple{background:rgba(147,51,234,.22);box-shadow:0 0 20px rgba(147,51,234,.2)}
+.driver-b-quick-grid .green{background:rgba(34,197,94,.2);box-shadow:0 0 20px rgba(34,197,94,.16)}
+.driver-b-quick-grid .gold{background:rgba(212,175,55,.2);box-shadow:0 0 20px rgba(212,175,55,.16)}
+.driver-b-quick-grid .orange{background:rgba(249,115,22,.18);box-shadow:0 0 20px rgba(249,115,22,.16)}
+.driver-b-more-card{
+  display:flex!important;
+  align-items:center;
+  gap:12px;
+  margin-top:12px;
+  padding:15px!important;
+  background:linear-gradient(180deg,rgba(25,25,25,.92),rgba(9,9,9,.95))!important;
+  color:#fff!important;
+  border:1px solid rgba(255,255,255,.1)!important;
+  border-radius:18px!important;
+  text-align:left;
+}
+.driver-b-more-card>span{
+  width:44px;height:44px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#3b82f6,#0f3264);
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;
+}
+.driver-b-more-card div{flex:1}
+.driver-b-more-card small{display:block;color:#aaa;margin-top:3px}
+.driver-b-more-card b{color:#fff;font-size:28px;font-weight:300}
+.driver-b-bottom-nav{
+  position:fixed;
+  left:50%;
+  bottom:0;
+  transform:translateX(-50%);
+  width:100%;
+  max-width:520px;
+  z-index:18;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:4px;
+  padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,rgba(10,10,10,.76),rgba(0,0,0,.96));
+  backdrop-filter:blur(16px);
+  border-top:1px solid rgba(255,255,255,.12);
+}
+.driver-b-bottom-nav button{
+  background:transparent!important;
+  color:#bdbdbd!important;
+  border:0!important;
+  border-radius:16px!important;
+  padding:8px 4px!important;
+  min-height:58px;
+  font-size:12px;
+}
+.driver-b-bottom-nav button span{
+  display:block;
+  font-size:25px;
+  line-height:1;
+  margin-bottom:4px;
+}
+.driver-b-bottom-nav button:first-child{
+  color:#f7c943!important;
+}
+.driver-b-more-panel h3{
+  text-align:center;
+  margin-top:0;
+}
+.driver-b-more-panel button{
+  display:flex!important;
+  align-items:center;
+  gap:12px;
+  justify-content:flex-start;
+  background:linear-gradient(180deg,#1a1a1a,#101010)!important;
+  color:#fff!important;
+  border:1px solid rgba(255,255,255,.1)!important;
+  border-radius:15px!important;
+  padding:13px!important;
+  margin:9px 0;
+  text-align:left;
+}
+.driver-b-more-panel button span{
+  width:36px;
+  font-size:24px;
+  text-align:center;
+}
+.driver-b-more-panel button strong{
+  flex:1;
+  font-size:15px;
+}
+.driver-b-more-panel button small{
+  display:block;
+  color:#aaa;
+  font-size:12px;
+  margin-top:2px;
+}
+.driver-b-more-panel button b{
+  font-size:24px;
+  font-weight:300;
+  color:#aaa;
+}
+.driver-b-more-panel .driver-b-logout-row{
+  background:linear-gradient(180deg,rgba(80,18,18,.9),rgba(45,10,10,.9))!important;
+  border-color:rgba(239,68,68,.38)!important;
+  color:#ff6b5f!important;
+}
+@media(max-width:430px){
+  .driver-b-logo{font-size:25px;letter-spacing:7px}
+  .driver-b-profile{padding:12px}
+  .driver-b-avatar{width:50px;height:50px}
+  .driver-b-status{font-size:13px!important;padding:8px 10px!important}
+  .driver-b-hero-row{grid-template-columns:1.08fr .92fr}
+  .driver-b-service-hero,.driver-b-derive-card{min-height:138px}
+  .driver-b-quick-grid{gap:6px;padding:12px 6px}
+  .driver-b-quick-grid span{width:42px;height:42px;font-size:22px}
+  .driver-b-quick-grid strong{font-size:11px}
+}
+
 </style>
 </head>
 <body>
@@ -641,37 +1015,35 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
     </div>
   </section>
 
-  <section id="driverView" class="hidden">
-    <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.66</b> · ESTABLE-ADMIN-CIERRE-ACORDEON-008</div></div>
-      <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
+  <section id="driverView" class="hidden driver-mobile-b">
+    <div class="driver-b-topbar">
+      <div class="driver-b-logo">EXPL<span>⌖</span>RA</div>
+      <button class="driver-b-bell" type="button" onclick="showPanel('driverMorePanel')">🔔</button>
     </div>
 
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
-        <div>
-          <div class="note">Hola</div>
-          <h2 id="driverName" style="margin:4px 0 8px">Chofer</h2>
-          <div id="vehicleInfo" class="note">Vehículo asignado</div>
-        </div>
-        <button id="statusBtn" class="status disponible" style="width:auto" onclick="toggleStatus()">🟢 Disponible</button>
+    <div class="driver-b-profile">
+      <div class="driver-b-avatar">⌖</div>
+      <div class="driver-b-profile-text">
+        <div class="note">Hola</div>
+        <h2 id="driverName">Chofer</h2>
+        <div id="vehicleInfo" class="note">Vehículo asignado</div>
       </div>
+      <button id="statusBtn" class="status disponible driver-b-status" onclick="toggleStatus()">🟢 Disponible</button>
     </div>
 
-    <div id="driverLeaderCard" class="leader-card">
-      <h3>🏆 Ranking semanal</h3>
+    <div id="driverLeaderCard" class="leader-card driver-b-ranking">
+      <h3>🏆 RANKING SEMANAL</h3>
       <div id="driverLeaderContent">
         <div class="ranking-bonus-box">
-          <b>🏆 Ranking semanal</b><br>
+          <b>👑 Vas ganando el bono</b><br>
           <div class="bonus-money">💰 Bono semanal: $50.000</div>
-          <small>Tocá Ranking para actualizar tu posición.</small>
+          <small>Puesto por puntos: 1° · 0%</small>
         </div>
       </div>
-    </div>
-
-    <div class="row">
-      <div class="metric"><span>Viajes semana</span><strong id="todayTrips">0</strong></div>
-      <div class="metric"><span>Facturación semana</span><strong id="todayTotal">$0</strong></div>
+      <div class="driver-b-metrics">
+        <div class="metric"><span>Viajes semana</span><strong id="todayTrips">0</strong><em>🧳</em></div>
+        <div class="metric"><span>Facturación semana</span><strong id="todayTotal">$0</strong><em>📊</em></div>
+      </div>
     </div>
 
     <div id="derivationInbox" class="derivation-inbox hidden">
@@ -681,17 +1053,32 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
     <div id="cierrePagoPendienteAlert" class="hidden"></div>
 
-    <div class="grid">
-      <button id="btnNuevoServicio" class="bigbtn" type="button" onclick="openNewService()"><span class="icon">🚕</span><strong>Nuevo servicio</strong></button>
-      <button id="btnDerivarServicio" class="bigbtn" type="button" onclick="showPanel('derivePanel')"><span class="icon">🔄</span><strong>Derivar servicio</strong></button>
-      <button id="btnCargarGasto" class="bigbtn" type="button" onclick="showPanel('expensePanel')"><span class="icon">💸</span><strong>Cargar gasto</strong></button>
-      <button id="btnRanking" class="bigbtn" type="button" onclick="openRankingPanel()"><span class="icon">🏆</span><strong>Ranking</strong></button>
-      <button id="btnMiCierreSemanal" class="bigbtn" type="button" onclick="openMiCierreSemanalPanel()"><span class="icon">📊</span><strong>Mi cierre semanal</strong></button>
-      <button id="btnHistorialHoy" class="bigbtn" type="button" onclick="showPanel('historyPanel')"><span class="icon">📋</span><strong>Historial hoy</strong></button>
-      <button id="btnMiAuto" class="bigbtn" type="button" onclick="showPanel('miAutoPanel')"><span class="icon">🚗</span><strong>Mi auto <span id="miAutoBadge" class="mi-auto-badge hidden">⚙️</span></strong></button>
-      <button id="btnComprobantes" class="bigbtn" type="button" onclick="showPanel('comprobantesPanel')"><span class="icon">📎</span><strong>Comprobantes</strong></button>
-      <button id="btnActualizarPagina" class="bigbtn" type="button" onclick="refrescarPagina()"><span class="icon">🔄</span><strong>Actualizar página</strong></button>
+    <div class="driver-b-section-title">ACCESOS RÁPIDOS</div>
+    <div class="driver-b-hero-row">
+      <button id="btnNuevoServicio" class="driver-b-service-hero" type="button" onclick="openNewService()">
+        <span class="driver-b-map-pin">📍</span>
+        <strong>NUEVO SERVICIO</strong>
+        <small>Crear nuevo viaje</small>
+      </button>
+      <button id="btnDerivarServicio" class="driver-b-derive-card" type="button" onclick="showPanel('derivePanel')">
+        <span>🔄</span>
+        <strong>DERIVAR SERVICIO</strong>
+        <small>Enviar a otro chofer</small>
+      </button>
     </div>
+
+    <div class="driver-b-quick-grid">
+      <button id="btnMiCierreSemanal" type="button" onclick="openMiCierreSemanalPanel()"><span class="purple">📊</span><strong>Mi cierre semanal</strong></button>
+      <button id="btnCargarGasto" type="button" onclick="showPanel('expensePanel')"><span class="green">💸</span><strong>Cargar gasto</strong></button>
+      <button id="btnRanking" type="button" onclick="openRankingPanel()"><span class="gold">🏆</span><strong>Ranking</strong></button>
+      <button id="btnComprobantes" type="button" onclick="showPanel('comprobantesPanel')"><span class="orange">📎</span><strong>Comprobantes</strong></button>
+    </div>
+
+    <button class="driver-b-more-card" type="button" onclick="showPanel('driverMorePanel')">
+      <span>•••</span>
+      <div><strong>Más opciones</strong><small>Ranking, Historial, Mi auto, Comprobantes y más</small></div>
+      <b>›</b>
+    </button>
 
     <div id="servicePanel" class="card hidden">
       <h3>Nuevo servicio</h3>
@@ -830,6 +1217,23 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <h3>Historial de hoy</h3>
       <div id="historyList"></div>
     </div>
+
+    <div id="driverMorePanel" class="card hidden driver-b-more-panel">
+      <h3>Más opciones</h3>
+      <button type="button" onclick="openRankingPanel()"><span>🏆</span><strong>Ranking</strong><b>›</b></button>
+      <button type="button" onclick="showPanel('historyPanel')"><span>📋</span><strong>Historial hoy</strong><b>›</b></button>
+      <button id="btnMiAuto" type="button" onclick="showPanel('miAutoPanel')"><span>🚗</span><strong>Mi auto <small id="miAutoBadge" class="mi-auto-badge hidden">⚙️</small></strong><b>›</b></button>
+      <button type="button" onclick="showPanel('comprobantesPanel')"><span>📎</span><strong>Comprobantes</strong><b>›</b></button>
+      <button id="btnActualizarPagina" type="button" onclick="refrescarPagina()"><span>🔄</span><strong>Actualizar página<small>Sincronizar datos</small></strong><b>›</b></button>
+      <button type="button" class="driver-b-logout-row" onclick="logout()"><span>↪</span><strong>Cerrar sesión</strong><b>›</b></button>
+    </div>
+
+    <div class="driver-b-bottom-nav">
+      <button type="button" onclick="showPanel(''); window.scrollTo({top:0,behavior:'smooth'})"><span>🏠</span>Inicio</button>
+      <button type="button" onclick="openNewService()"><span>📄</span>Nuevo servicio</button>
+      <button type="button" onclick="openMiCierreSemanalPanel()"><span>📊</span>Cierre</button>
+      <button type="button" onclick="showPanel('driverMorePanel')"><span>•••</span>Más</button>
+    </div>
   </section>
 
   <section id="adminView" class="hidden">
@@ -837,7 +1241,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.74</b> · FONDO-OPERATIVO-BONO-VISIBLE-016</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.75</b> · CHOFER-VISUAL-B-FIX-017</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -2129,7 +2533,7 @@ window.saveDailyKm = async function(){
 }
 
 window.showPanel = function(id){
-  ["servicePanel","derivePanel","expensePanel","rankingPanel","miCierreSemanalPanel","historyPanel","miAutoPanel","comprobantesPanel"].forEach(p=>{
+  ["servicePanel","derivePanel","expensePanel","rankingPanel","miCierreSemanalPanel","historyPanel","miAutoPanel","comprobantesPanel","driverMorePanel"].forEach(p=>{
     const panel = $(p);
     if(panel) panel.classList.add("hidden");
   });
@@ -2745,6 +3149,7 @@ window.openRankingPanel = async function(){
 
 window.openMiCierreSemanalPanel = async function(){
   showPanel("miCierreSemanalPanel");
+  setTimeout(()=>scrollToOpenedPanel($("miCierreSemanalPanel")), 160);
   const box = $("miCierreSemanalResumen");
   if(!box) return;
   try{
@@ -2768,6 +3173,7 @@ window.openMiCierreSemanalPanel = async function(){
       <div class="trip"><b>50/50 actual</b><br><small>Neto después de recuperar fondo y gastos: ${money(c.neto)}</small><br><small>Parte chofer: ${money(c.mitadChofer)}</small><br><small>Parte David: ${money(c.mitadDavid)}</small><br><small>Efectivo neto del chofer: ${money(c.efectivoNetoChofer)}</small><br><small>Cobros David menos fondo operativo: ${money(c.cajaNetaDavid)}</small></div>
       ${resultado}
     `;
+    setTimeout(()=>scrollToOpenedPanel($("miCierreSemanalPanel")), 120);
   }catch(e){
     box.innerHTML = `<div class="msg err">No se pudo calcular tu cierre semanal: ${e.message}</div>`;
   }
