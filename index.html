@@ -2,8 +2,8 @@
 <!--
 EXPLORA BUILD
 Version: 2.8.57
-Build: 2026-06-06-PAGOS-PERIODO-VALIDO-001
-Fecha: 05/06/2026
+Build: 2026-06-06-ESTABLE-RANKING-CIERRE-ALINEADO-001
+Fecha: 06/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
 - Se agrega botón “Mi auto” para chofer con service, correa dentada y cubiertas por km.
@@ -30,12 +30,13 @@ Cambios:
 - Motor semanal único reconstruido: sábado 00:01 a sábado siguiente 00:00:59.
 - Ranking, facturación, cierre 50/50, bono y comprobantes usan el mismo periodoId.
 - Nueva semana arranca automáticamente a sábado 00:01 sin botón manual de chofer.
+- Limpieza técnica final: versiones visibles unificadas, función duplicada eliminada, cierre manual viejo removido, sin botones antiguos ocultos y limpieza automática de caché antiguo.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.57 · Build 2026-06-06-PAGOS-PERIODO-VALIDO-001</title>
+<title>EXPLORA v2.8.57 · Build 2026-06-06-ESTABLE-RANKING-CIERRE-ALINEADO-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -495,7 +496,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.57</b> · Build 2026-06-06-PAGOS-PERIODO-VALIDO-001</div>
+    <div class="build-version"><b>v2.8.57</b> · Build 2026-06-06-ESTABLE-RANKING-CIERRE-ALINEADO-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -508,7 +509,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.42</b> · CIERRE-AUTO-SIN-BOTON-001</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.57</b> · ESTABLE-RANKING-CIERRE-ALINEADO-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -691,7 +692,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.42</b> · CIERRE-AUTO-SIN-BOTON-001</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.57</b> · ESTABLE-RANKING-CIERRE-ALINEADO-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -1182,6 +1183,24 @@ function cacheGet(key, maxAgeMs=86400000){
 function cacheRemove(key){
   try{ localStorage.removeItem(CACHE_PREFIX + key); }catch(e){}
 }
+
+function limpiarCacheExploraViejo(maxAgeMs = 14 * 24 * 60 * 60 * 1000){
+  // Evita que tablets/celulares acumulen caché viejo de semanas anteriores.
+  try{
+    const ahora = Date.now();
+    const borrar = [];
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(!k || !k.startsWith(CACHE_PREFIX)) continue;
+      try{
+        const obj = JSON.parse(localStorage.getItem(k));
+        if(!obj || !obj.t || (ahora - obj.t) > maxAgeMs) borrar.push(k);
+      }catch(e){ borrar.push(k); }
+    }
+    borrar.forEach(k=>localStorage.removeItem(k));
+  }catch(e){ console.warn("No se pudo limpiar caché viejo", e); }
+}
+limpiarCacheExploraViejo();
 
 function getMesDesdeFecha(fechaStr = today()){
   return String(fechaStr || today()).slice(0,7);
@@ -2067,82 +2086,6 @@ window.saveTrip = async function(){
 
 // ===== FUNCIONES LIVIANAS DE FECHA / RANKING / CIERRE =====
 
-window.closeDay = async function(){
-  const btn = $("btnCerrarDia");
-  const modal = $("cierreSemanalModal");
-  const resumen = $("cierreSemanalResumen");
-
-  if(cierreSemanalCargando){
-    if(modal) modal.classList.remove("hidden");
-    return;
-  }
-
-  cierreSemanalCargando = true;
-
-  if(btn){
-    btn.disabled = true;
-    btn.innerHTML = '<span class="icon">⏳</span><strong>Abriendo cierre...</strong>';
-  }
-
-  if(modal){
-    modal.classList.remove("hidden");
-    modal.scrollTop = 0;
-  }
-
-  try{
-    const periodo = await getPeriodoOperativoChofer(currentUserId);
-    const cacheKey = `${currentUserId}_${periodo.id}`;
-    const cacheLocal = cacheGet(`cierre_sem_${cacheKey}`, 10 * 60 * 1000);
-
-    // Render inmediato desde memoria/localStorage: evita la pantalla congelada.
-    if(cierreSemanalCache && cierreSemanalCache.key === cacheKey){
-      cierreSemanalPendiente = cierreSemanalCache.data;
-      renderCierreSemanal(cierreSemanalPendiente);
-    }else if(cacheLocal){
-      cierreSemanalPendiente = cacheLocal;
-      cierreSemanalCache = {key:cacheKey, data:cacheLocal};
-      renderCierreSemanal(cacheLocal);
-      if(resumen){
-        resumen.insertAdjacentHTML("afterbegin", `<div class="msg ok">Cierre abierto desde caché. Actualizando datos...</div>`);
-      }
-    }else if(resumen){
-      resumen.innerHTML = `<div class="msg ok">Abriendo cierre rápido...</div>`;
-    }
-
-    // Carga real ultra liviana: acumulado + pago + premio. Sin leer viajes/gastos completos.
-    cierreSemanalPendiente = await withTimeout(
-      calcularCierreSemanalUltraRapido(currentUserId, periodo),
-      4500,
-      "El cierre rápido no pudo sincronizar. Si ya ves datos en pantalla, podés usarlos; si no, tocá reconstruir acumulado."
-    );
-
-    cierreSemanalCache = { key: cacheKey, data: cierreSemanalPendiente };
-    cacheSet(`cierre_sem_${cacheKey}`, cierreSemanalPendiente);
-    renderCierreSemanal(cierreSemanalPendiente);
-  }catch(e){
-    if(resumen && !cierreSemanalPendiente){
-      resumen.innerHTML = `<div class="msg err">No se pudo abrir cierre: ${e.message}</div><button id="reconstruirCierreBtn" class="btn-gold" style="margin-top:10px" onclick="reconstruirCierreSemanal()">Reconstruir acumulado</button><div class="note">Usalo solo si esta semana fue cargada antes de los acumulados rápidos.</div>`;
-    }else if($("cierreSemanalMsg")){
-      msg($("cierreSemanalMsg"), e.message);
-    }
-  }finally{
-    cierreSemanalCargando = false;
-    if(btn){
-      btn.disabled = false;
-      btn.innerHTML = '<span class="icon">✅</span><strong>Cierre semanal</strong>';
-    }
-  }
-}
-
-
-
-
-
-
-
-
-
-
 // ===== EXPLORA: RANKING Y CIERRE SEMANAL LIVIANO =====
 // Calendario operativo: cada semana cierra el día SÁBADO.
 // Motor semanal EXPLORA: sábado 00:01 a sábado siguiente 00:00:59.
@@ -2240,6 +2183,25 @@ async function getPeriodoOperativoChofer(choferId){
   const periodo = getPeriodoTrabajoActual(today());
   if(choferId === currentUserId) periodoOperativoCache = periodo;
   return periodo;
+}
+
+async function getPeriodoRankingVisible(){
+  // Si hay un cierre semanal pendiente, el Ranking visible debe mostrar exactamente
+  // el mismo período que ese cierre. Así el ganador, bono y fechas coinciden.
+  // Cuando el cierre ya fue aceptado, vuelve automáticamente a la semana activa nueva.
+  const cierrePendiente = getPeriodoCierrePendiente();
+  if(cierrePendiente && currentUserId){
+    try{
+      const cierreId = `${currentUserId}_${cierrePendiente.id}`;
+      const snap = await withTimeout(getDoc(doc(db,"cierres_semanales",cierreId)), 1800, "verificación de cierre pendiente");
+      if(!snap.exists()) return cierrePendiente;
+    }catch(e){
+      if(cierreSemanalPendiente && cierreSemanalPendiente.periodo){
+        return cierreSemanalPendiente.periodo;
+      }
+    }
+  }
+  return getPeriodoOperativoChofer(currentUserId);
 }
 
 async function getPremioSemana(periodo){
@@ -2514,7 +2476,7 @@ function renderDriverLeaderBonus(data, lider, yo, yoIndex){
 window.openRankingPanel = async function(){
   showPanel("rankingPanel");
   try{
-    const periodoRanking = await getPeriodoOperativoChofer(currentUserId);
+    const periodoRanking = await getPeriodoRankingVisible();
     const cacheKey = `ranking_fast_${periodoRanking.id}`;
     const cached = cacheGet(cacheKey, 30 * 60 * 1000);
 
@@ -2601,7 +2563,7 @@ window.reconstruirCierreSemanal = async function(){
   const resumen = $("cierreSemanalResumen");
   if(btn){ btn.disabled = true; btn.textContent = "Reconstruyendo..."; }
   try{
-    const periodo = await getPeriodoOperativoChofer(currentUserId);
+    const periodo = (cierreSemanalPendiente && cierreSemanalPendiente.periodo) || getPeriodoCierrePendiente() || await getPeriodoOperativoChofer(currentUserId);
     const cierre = await withTimeout(calcularCierreSemanalLiviano(currentUserId, periodo, true), 15000, "La reconstrucción tardó demasiado. Revisá internet y probá otra vez.");
     cierre.pagoSemanal = await getEstadoPagoSemanal(currentUserId, periodo.id);
     cierreSemanalPendiente = cierre;
@@ -3242,11 +3204,6 @@ async function checkCierreSemanalAutomatico(){
     console.warn("Cierre automático omitido para no generar demora", e);
     if($("cierreSemanalModal")) $("cierreSemanalModal").classList.add("hidden");
   }
-}
-
-window.closeDay = async function(){
-  // El chofer ya no ejecuta cierre manual. El cierre aparece automáticamente sábado 00:01.
-  await checkCierreSemanalAutomatico();
 }
 
 
@@ -5046,7 +5003,7 @@ window.crearChoferVehiculoAdmin = async function(){
 };
 
 
-// ===== EXPLORA v2.8.40: VALIDACIÓN DE FUNCIONES GLOBALES =====
+// ===== EXPLORA v2.8.57: FUNCIONES GLOBALES PARA BOTONES INLINE =====
 // Estas asignaciones evitan errores de botones inline dentro de <script type="module">.
 window.loadAdmin = loadAdmin;
 window.loadComprobantesChofer = loadComprobantesChofer;
@@ -5096,52 +5053,6 @@ setTimeout(function(){
   }
 }, 1500);
 
-// ===== EXPLORA v2.8.40: VALIDACIÓN DE FUNCIONES GLOBALES =====
-// Estas asignaciones evitan errores de botones inline dentro de <script type="module">.
-window.loadAdmin = loadAdmin;
-window.loadComprobantesChofer = loadComprobantesChofer;
-window.loadComprobantesAdmin = loadComprobantesAdmin;
-
-window.eliminarChoferesDemoAdmin = async function(){
-  const box = $("adminToolsMsg");
-  const ok = confirm("¿Eliminar choferes demo anteriores? Esta acción solo borra registros marcados como demo o IDs que empiecen con demo/prueba/test.");
-  if(!ok) return;
-  try{
-    if(box) msg(box,"Buscando choferes demo...",true);
-    const snap = await getDocs(collection(db,"choferes"));
-    const borrados = [];
-    const tareas = [];
-    snap.forEach(d=>{
-      const data = d.data() || {};
-      const id = String(d.id || "").toLowerCase();
-      const nombre = String(data.nombre || "").toLowerCase();
-      const esDemo = data.demo === true || id.startsWith("demo") || id.startsWith("prueba") || id.startsWith("test") || nombre.includes("demo") || nombre.includes("prueba");
-      if(esDemo && data.rol !== "admin"){
-        borrados.push(d.id);
-        tareas.push(deleteDoc(doc(db,"choferes",d.id)));
-      }
-    });
-    if(!tareas.length){
-      if(box) msg(box,"No se encontraron choferes demo para eliminar.",true);
-      return;
-    }
-    await Promise.all(tareas);
-    if(box) msg(box,`Choferes demo eliminados: ${borrados.join(", ")}`,true);
-    if(typeof loadAdmin === "function") loadAdmin().catch(()=>{});
-  }catch(e){
-    if(box) msg(box,"No se pudieron eliminar choferes demo: " + e.message);
-  }
-};
-
-
-
-// Limpieza final del módulo semanal: el cierre manual del chofer queda oculto.
-setTimeout(()=>{
-  const b = $("btnCerrarDia");
-  if(b) b.classList.add("hidden");
-  const cb = $("confirmarCierreSemanalBtn");
-  if(cb) cb.textContent = "Aceptar resumen y continuar";
-}, 300);
 </script>
 
 </body>
