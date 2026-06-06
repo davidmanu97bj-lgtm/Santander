@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.73
-Build: 2026-06-06-FONDO-OPERATIVO-5050-DEUDA-015
+Version: 2.8.74
+Build: 2026-06-06-FONDO-OPERATIVO-BONO-VISIBLE-016
 Fecha: 06/06/2026
 Cambios:
 - Se agrega botón “Mi cierre semanal” en Chofer para ver el cierre provisorio de la semana activa sin esperar al sábado.
@@ -45,7 +45,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.73 · Build 2026-06-06-FONDO-OPERATIVO-5050-DEUDA-015</title>
+<title>EXPLORA v2.8.74 · Build 2026-06-06-FONDO-OPERATIVO-BONO-VISIBLE-016</title>
 <style>
 :root{
   --bg:#080808;
@@ -837,7 +837,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.73</b> · FONDO-OPERATIVO-5050-DEUDA-015</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.74</b> · FONDO-OPERATIVO-BONO-VISIBLE-016</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -2764,7 +2764,8 @@ window.openMiCierreSemanalPanel = async function(){
       <div class="trip"><b>Facturación</b><br><small>Viajes: ${c.cantidadViajes}</small><br><small>Total facturado: ${money(c.totalViajes)}</small></div>
       <div class="trip"><b>Medios de pago</b><br><small>Efectivo en mano del chofer: ${money(c.efectivo)}</small><br><small>Transferencia en cuenta David: ${money(c.transferencia)}</small><br><small>Tarjeta en cuenta David: ${money(c.tarjeta)}</small></div>
       <div class="trip"><b>Gastos compartidos</b><br><small>Pagados por chofer: ${money(c.totalGastosPagadosChofer || 0)}</small><br><small>Fondo operativo pagado por David: ${money(c.totalFondoOperativo || 0)}</small><br><b style="color:var(--gold)">${money(c.totalGastos)}</b></div>
-      <div class="trip"><b>50/50 actual</b><br><small>Neto después de gastos: ${money(c.neto)}</small><br><small>Parte chofer: ${money(c.mitadChofer)}</small><br><small>Parte David: ${money(c.mitadDavid)}</small><br><small>Efectivo neto del chofer: ${money(c.efectivoNetoChofer)}</small><br><small>Cobros David menos fondo operativo: ${money(c.cajaNetaDavid)}</small></div>
+      <div class="trip"><b>Compensaciones</b><br><small>Fondo operativo a recuperar por David: ${money(c.totalFondoOperativo || 0)}</small><br><small>Cobros en cuenta David: ${money(c.cobrosDavid || 0)}</small><br><small>Bono aplicado a deuda del chofer: -${money(c.premioAplicado || 0)}</small><br><small>Saldo final calculado: ${money(c.diferenciaFinal || 0)}</small></div>
+      <div class="trip"><b>50/50 actual</b><br><small>Neto después de recuperar fondo y gastos: ${money(c.neto)}</small><br><small>Parte chofer: ${money(c.mitadChofer)}</small><br><small>Parte David: ${money(c.mitadDavid)}</small><br><small>Efectivo neto del chofer: ${money(c.efectivoNetoChofer)}</small><br><small>Cobros David menos fondo operativo: ${money(c.cajaNetaDavid)}</small></div>
       ${resultado}
     `;
   }catch(e){
