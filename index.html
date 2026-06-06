@@ -889,7 +889,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
       <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigPremio')"><b>🏆 Premio semanal</b><span>›</span></button><div id="adminConfigPremio" class="admin-config-content hidden"><div id="adminGanadorSemana" class="leader-card">Cargando ganador...</div><label>Valor del premio para el ganador</label><input id="adminPremioInput" type="text" inputmode="numeric" data-number-format="true" placeholder="Ej: 50.000" /><button class="btn-gold" onclick="guardarPremioSemanalAdmin()">Guardar premio semanal</button><div id="adminPremioMsg"></div></div></div>
 
-      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigFondoOperativo')"><b>⛽ Fondo operativo 50/50</b><span>›</span></button><div id="adminConfigFondoOperativo" class="admin-config-content hidden"><p class="note">Usalo cuando David adelanta dinero operativo, por ejemplo combustible. No se guarda como gasto pagado por el chofer: se suma al cierre como gasto compartido 50/50 y el chofer devuelve su parte con trabajo o en el cierre.</p><label>Chofer</label><select id="fondoOperativoChoferSelect"></select><label>Monto entregado</label><input id="fondoOperativoMonto" type="text" inputmode="numeric" data-number-format="true" placeholder="Ej: 100.000" /><label>Detalle</label><input id="fondoOperativoDetalle" placeholder="Ej: Combustible por falta de efectivo" /><button class="btn-gold" onclick="guardarFondoOperativoAdmin()">Cargar fondo operativo</button><div id="fondoOperativoMsg"></div><div id="fondoOperativoHistorial" style="margin-top:12px"></div></div></div>
+      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigFondoOperativo')"><b>⛽ Fondo operativo 50/50</b><span>›</span></button><div id="adminConfigFondoOperativo" class="admin-config-content hidden"><p class="note">Usalo cuando David adelanta dinero operativo, por ejemplo combustible. No se guarda como gasto pagado por el chofer: David lo recupera primero al 100% con efectivo, transferencia o tarjeta; después el excedente se reparte 50/50.</p><label>Chofer</label><select id="fondoOperativoChoferSelect"></select><label>Monto entregado</label><input id="fondoOperativoMonto" type="text" inputmode="numeric" data-number-format="true" placeholder="Ej: 100.000" /><label>Detalle</label><input id="fondoOperativoDetalle" placeholder="Ej: Combustible por falta de efectivo" /><button class="btn-gold" onclick="guardarFondoOperativoAdmin()">Cargar fondo operativo</button><div id="fondoOperativoMsg"></div><div id="fondoOperativoHistorial" style="margin-top:12px"></div></div></div>
 
       <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigTarifas')"><b>💵 Tarifas de servicios</b><span>›</span></button><div id="adminConfigTarifas" class="admin-config-content hidden"><p class="note">Estos precios son las tarifas mínimas para el chofer. Puede cobrar más, pero la app no permite guardar menos.</p><button class="btn-dark" onclick="loadTarifasAdmin()">Ver / editar tarifas</button><div id="adminTarifas" style="margin-top:12px"></div></div></div>
 
@@ -1437,32 +1437,34 @@ function cierreDesdeAcumulado(chofer, periodo, acumulado, ganador, premioSemanal
       : Math.max(0, totalGastos - totalFondoOperativo)
   );
   const cantidadGastos = Number(acumulado.cantidadGastos || 0);
-  const neto = totalViajes - totalGastos;
+  const cobrosDavid = transferencia + tarjeta;
+  const efectivoNetoChofer = efectivo - totalGastosPagadosChofer;
+
+  // Regla Fondo Operativo 50/50 corregida:
+  // 1) El Fondo Operativo pagado por David se recupera primero al 100%.
+  // 2) Transferencia y tarjeta ya compensan ese fondo porque entran a la cuenta de David.
+  // 3) Si el cobro fue en efectivo, el chofer debe pasar primero el fondo a David.
+  // 4) Recién después de recuperar el fondo, el excedente neto se reparte 50/50.
+  const fondoCompensadoPorDavid = Math.min(totalFondoOperativo, cobrosDavid);
+  const fondoPendienteDavid = Math.max(0, totalFondoOperativo - cobrosDavid);
+  const ingresoDespuesFondo = Math.max(0, totalViajes - totalFondoOperativo);
+  const neto = Math.max(0, ingresoDespuesFondo - totalGastosPagadosChofer);
   const mitadChofer = neto / 2;
   const mitadDavid = neto / 2;
-
-  // Caja real de cada parte antes de compensar el cierre:
-  // - El chofer conserva el efectivo, menos los gastos que pagó él.
-  // - David conserva transferencia/tarjeta, menos el Fondo Operativo que salió de su cuenta.
-  // Así el Fondo Operativo no se cobra dos veces: si transferencia/tarjeta ya lo compensaron,
-  // el cierre solo pide o devuelve la diferencia real para que ambos queden 50/50.
-  const efectivoNetoChofer = efectivo - totalGastosPagadosChofer;
-  const cobrosDavid = transferencia + tarjeta;
   const cajaNetaDavid = cobrosDavid - totalFondoOperativo;
-  const reintegroFondoOperativoChofer = Math.max(0, totalFondoOperativo / 2);
+  const reintegroFondoOperativoChofer = fondoPendienteDavid;
 
   const esGanador = ganador && ganador.id === chofer;
   const premioAplicado = esGanador ? Number(premioSemanal || 0) : 0;
 
-  // Objetivo final: después del cierre, ambos quedan con su 50% del neto.
-  // Si hay premio semanal para el chofer, se suma a su objetivo y se resta del saldo de David.
+  // David debe quedar con: fondo recuperado + su 50% del excedente neto.
+  // Si ya cobró transferencia/tarjeta, eso se descuenta automáticamente.
+  // Si hay premio semanal para el chofer, se descuenta del saldo a favor de David.
   const objetivoChofer = mitadChofer + premioAplicado;
-  const objetivoDavid = mitadDavid - premioAplicado;
+  const objetivoDavid = totalFondoOperativo + mitadDavid - premioAplicado;
 
-  // Diferencia positiva: el chofer tiene más de lo que le corresponde y debe completar a David.
-  // Diferencia negativa: el chofer tiene menos de lo que le corresponde y David debe pagarle.
-  const diferenciaBase = efectivoNetoChofer - mitadChofer;
-  const diferenciaFinal = Math.round((efectivoNetoChofer - objetivoChofer) * 100) / 100;
+  const diferenciaBase = Math.round((totalFondoOperativo + mitadDavid - cobrosDavid) * 100) / 100;
+  const diferenciaFinal = Math.round((objetivoDavid - cobrosDavid) * 100) / 100;
   const choferDebe = diferenciaFinal > 0 ? diferenciaFinal : 0;
   const davidDebe = diferenciaFinal < 0 ? Math.abs(diferenciaFinal) : 0;
 
@@ -4833,7 +4835,7 @@ window.guardarFondoOperativoAdmin = async function(){
     if($("fondoOperativoDetalle")) $("fondoOperativoDetalle").value = "";
     cacheRemove("fondos_operativos_admin_" + chofer);
     adminBaseLoadedAt = 0;
-    msg(msgBox,"Fondo operativo cargado. Impacta en el cierre como gasto compartido 50/50, sin figurar como gasto pagado por el chofer.",true);
+    msg(msgBox,"Fondo operativo cargado. Impacta en el cierre como fondo a recuperar primero por David, sin figurar como gasto pagado por el chofer.",true);
     await cargarHistorialFondoOperativoAdmin(true);
     if(typeof loadAdmin === "function") setTimeout(()=>loadAdmin().catch(()=>{}), 250);
   }catch(e){
