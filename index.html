@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.74
-Build: 2026-06-06-CHOFER-VISUAL-B-FIX-017
+Version: 2.8.76
+Build: 2026-06-06-CHOFER-VISUAL-B-FIX-CIERRE-AUTO-018
 Fecha: 06/06/2026
 Cambios:
 - Se agrega botón “Mi cierre semanal” en Chofer para ver el cierre provisorio de la semana activa sin esperar al sábado.
@@ -45,7 +45,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.75 · Build 2026-06-06-CHOFER-VISUAL-B-FIX-017</title>
+<title>EXPLORA v2.8.76 · Build 2026-06-06-CHOFER-VISUAL-B-FIX-CIERRE-AUTO-018</title>
 <style>
 :root{
   --bg:#080808;
@@ -1241,7 +1241,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.75</b> · CHOFER-VISUAL-B-FIX-017</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.76</b> · CHOFER-VISUAL-B-FIX-CIERRE-AUTO-018</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -3197,32 +3197,39 @@ async function getGanadorSemanalRapido(periodo){
 
 async function calcularCierreSemanalUltraRapido(chofer, periodo){
   const acumKey = `acum_sem_${chofer}_${periodo.id}`;
-  const acumuladoCached = cacheGet(acumKey, 60 * 60 * 1000);
-
-  const acumuladoPromise = getDoc(doc(db,"acumulados_semanales",`${chofer}_${periodo.id}`));
-  const premioPromise = getPremioSemana(periodo);
-  const pagoPromise = getEstadoPagoSemanal(chofer, periodo.id);
-  const ganadorPromise = getGanadorSemanalRapido(periodo);
-
-  let acumulado = acumuladoCached || null;
-  try{
-    const acumuladoSnap = await withTimeout(acumuladoPromise, 2500, "El acumulado semanal no respondió rápido.");
-    if(acumuladoSnap.exists()){
-      acumulado = acumuladoSnap.data();
-      cacheSet(acumKey, acumulado);
-    }
-  }catch(e){
-    console.warn("Se usa acumulado de caché", e);
-  }
+  let acumulado = cacheGet(acumKey, 60 * 60 * 1000) || null;
 
   if(!acumulado){
-    throw new Error("Este período todavía no tiene acumulado rápido. Tocá ‘Reconstruir acumulado’ una sola vez para semanas viejas.");
+    try{
+      const acumuladoSnap = await withTimeout(
+        getDoc(doc(db,"acumulados_semanales",`${chofer}_${periodo.id}`)),
+        2500,
+        "El acumulado semanal no respondió rápido."
+      );
+      if(acumuladoSnap.exists()){
+        acumulado = acumuladoSnap.data();
+        cacheSet(acumKey, acumulado);
+      }
+    }catch(e){
+      console.warn("No se pudo leer acumulado rápido; se recalcula el cierre", e);
+    }
+  }
+
+  // Si la semana todavía no tiene acumulado rápido, no se muestra error al chofer.
+  // Se reconstruye automáticamente desde viajes, gastos, fondos operativos y derivaciones,
+  // se guarda el acumulado y luego se muestra el cierre normalmente.
+  if(!acumulado){
+    console.warn("Acumulado semanal inexistente; reconstrucción automática para", chofer, periodo.id);
+    const cierreReconstruido = await calcularCierreSemanalLiviano(chofer, periodo, true);
+    cierreReconstruido.pagoSemanal = await getEstadoPagoSemanal(chofer, periodo.id).catch(()=>null);
+    cacheSet(`cierre_sem_${chofer}_${periodo.id}`, cierreReconstruido);
+    return cierreReconstruido;
   }
 
   const [premioSemanal, pagoSemanal, ganador] = await Promise.all([
-    premioPromise.catch(()=>0),
-    pagoPromise.catch(()=>null),
-    ganadorPromise.catch(()=>null)
+    getPremioSemana(periodo).catch(()=>0),
+    getEstadoPagoSemanal(chofer, periodo.id).catch(()=>null),
+    getGanadorSemanalRapido(periodo).catch(()=>null)
   ]);
 
   const cierre = cierreDesdeAcumulado(chofer, periodo, acumulado, ganador, premioSemanal);
