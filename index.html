@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.56
-Build: 2026-06-06-MOTOR-SEMANAL-SABADO-0001-001
+Version: 2.8.57
+Build: 2026-06-06-PAGOS-PERIODO-VALIDO-001
 Fecha: 05/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
@@ -35,7 +35,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.56 · Build 2026-06-06-MOTOR-SEMANAL-SABADO-0001-001</title>
+<title>EXPLORA v2.8.57 · Build 2026-06-06-PAGOS-PERIODO-VALIDO-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -495,7 +495,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.56</b> · Build 2026-06-06-MOTOR-SEMANAL-SABADO-0001</div>
+    <div class="build-version"><b>v2.8.57</b> · Build 2026-06-06-PAGOS-PERIODO-VALIDO-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -820,7 +820,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 <div id="cierreSemanalModal" class="modal hidden">
   <div class="card">
     <h2>Cierre semanal pendiente</h2>
-    <p class="note">Esta pantalla aparece automáticamente en el día de cierre semanal. Podés revisar el período, subir/consultar comprobantes y confirmar para iniciar la nueva semana.</p>
+    <p class="note">Esta pantalla aparece automáticamente en el día de cierre semanal. Podés revisar el período, subir/consultar comprobantes y aceptar el resumen. La nueva semana se activa automáticamente.</p>
     <div id="cierreSemanalResumen"></div>
     <button id="confirmarCierreSemanalBtn" class="btn-gold" onclick="confirmarCierreSemanal()">Aceptar resumen y continuar</button>
     <button id="volverAppCierreBtn" class="btn-dark hidden" style="margin-top:10px" onclick="cerrarCierreSemanalModal()">Volver a la app</button>
@@ -2145,9 +2145,8 @@ window.closeDay = async function(){
 
 // ===== EXPLORA: RANKING Y CIERRE SEMANAL LIVIANO =====
 // Calendario operativo: cada semana cierra el día SÁBADO.
-// Período normal: domingo a sábado.
-// Si el chofer confirma cierre un sábado y luego carga otro servicio ese mismo día,
-// ese servicio entra al período activo siguiente gracias a periodoActivoId.
+// Motor semanal EXPLORA: sábado 00:01 a sábado siguiente 00:00:59.
+// El cierre/comprobante siempre corresponde a una semana ya cerrada, nunca a la actual.
 const CALENDARIO_CIERRE = "sabado";
 
 function parseLocalDate(dateStr){
@@ -2731,6 +2730,26 @@ async function getSuspensionesBono(periodo){
   }
 }
 
+function periodoDesdeIdPago(periodoId){
+  const parts = String(periodoId || "").split("_");
+  if(parts.length !== 2) return null;
+  const start = parts[0];
+  const end = parts[1];
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(end)) return null;
+  if(!isSaturday(start)) return null;
+  if(end !== addDays(start, 6)) return null;
+  return {start, end, closeDate:addDays(end,1), id:`${start}_${end}`, motor:"sabado_0001"};
+}
+
+function pagoPerteneceASemanaCerradaValida(p, fechaBase=today()){
+  const periodo = periodoDesdeIdPago(p && p.periodoId);
+  if(!periodo) return false;
+  const actual = getPeriodoTrabajoActual(fechaBase);
+  // Los comprobantes son de cierres ya cerrados: nunca deben apuntar a la semana actual o futura.
+  // Esto elimina avisos creados por simulaciones/fechas manuales tipo domingo-domingo o períodos adelantados.
+  return periodo.end < actual.start;
+}
+
 async function getPagosPendientesChofer(force=false){
   if(!currentUserId) return [];
   const cacheKey = "pagos_pendientes_chofer_" + currentUserId;
@@ -2741,6 +2760,7 @@ async function getPagosPendientesChofer(force=false){
     const items = [];
     snap.forEach(d=>{
       const p = {id:d.id, ...d.data()};
+      if(!pagoPerteneceASemanaCerradaValida(p)) return;
       const pendientePago = p.pagado !== true;
       const davidPagoSinVisto = p.sentido === "david_a_chofer" && p.pagado === true && p.vistoPorChofer !== true;
       if(pendientePago || davidPagoSinVisto) items.push(p);
@@ -2750,7 +2770,7 @@ async function getPagosPendientesChofer(force=false){
     return items;
   }catch(e){
     console.warn("No se pudieron cargar pagos pendientes del chofer", e);
-    return cached || [];
+    return (cached || []).filter(p=>pagoPerteneceASemanaCerradaValida(p));
   }
 }
 
