@@ -14,6 +14,7 @@ Cambios:
 - Ranking verificado: al tocar Ranking compara acumulados con viajes reales de la semana activa.
 - Bono semanal visible de $50.000 en Ranking para motivar al chofer.
 - Se mejora el texto visible de servicios con íconos: 🛬 🇦🇷 🇧🇷 🇵🇾 para lectura rápida.
+- Formato automático con punto en campos numéricos: 30.000 en lugar de 30000, sin afectar cálculos internos.
 - Reasignación segura de vehículo: al asignar un auto existente a otro chofer conserva Mi auto, km y mantenimiento.
 -->
 <html lang="es">
@@ -450,7 +451,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="price-note">Tarifa mínima obligatoria</div>
 
       <label>Monto cobrado</label>
-      <input id="chargedAmount" type="number" inputmode="numeric" />
+      <input id="chargedAmount" type="text" inputmode="numeric" data-number-format="true" />
 
       <label>Forma de pago</label>
       <select id="paymentMethod">
@@ -486,7 +487,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="price-note">Tarifa mínima obligatoria</div>
 
       <label>Monto cobrado</label>
-      <input id="deriveAmount" type="number" inputmode="numeric" />
+      <input id="deriveAmount" type="text" inputmode="numeric" data-number-format="true" />
 
       <div class="single-trip-note">💳 La forma de pago la confirma el chofer receptor al tocar OK. Así no se perjudica si el pasajero cambia de efectivo a transferencia o tarjeta.</div>
 
@@ -511,7 +512,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       </select>
 
       <label>Monto</label>
-      <input id="expenseAmount" type="number" inputmode="numeric" placeholder="Ej: 90000" />
+      <input id="expenseAmount" type="text" inputmode="numeric" data-number-format="true" placeholder="Ej: 90.000" />
 
       <label>Detalle opcional</label>
       <input id="expenseDetail" placeholder="Ej: Nafta YPF / aceite / cubierta" />
@@ -533,15 +534,15 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div id="miAutoResumen" class="note">Cargando datos del auto...</div>
 
       <label>Service en km</label>
-      <input id="miAutoServiceKm" type="number" inputmode="numeric" placeholder="Km del último service" />
+      <input id="miAutoServiceKm" type="text" inputmode="numeric" data-number-format="true" placeholder="Km del último service" />
       <div class="price-note">Próximo service automático cada 10.000 km.</div>
 
       <label>Correa dentada en km</label>
-      <input id="miAutoCorreaKm" type="number" inputmode="numeric" placeholder="Km del último cambio de correa" />
+      <input id="miAutoCorreaKm" type="text" inputmode="numeric" data-number-format="true" placeholder="Km del último cambio de correa" />
       <div class="price-note">Próximo cambio automático cada 60.000 km.</div>
 
       <label>Cubiertas en km</label>
-      <input id="miAutoCubiertasKm" type="number" inputmode="numeric" placeholder="Km del último cambio de cubiertas" />
+      <input id="miAutoCubiertasKm" type="text" inputmode="numeric" data-number-format="true" placeholder="Km del último cambio de cubiertas" />
       <div class="price-note">Próximo cambio automático cada 40.000 km.</div>
 
       <button class="btn-gold" onclick="guardarMiAutoKm()">Guardar Mi auto</button>
@@ -582,7 +583,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <p id="adminPeriodoSemana" class="note">Cargando período...</p>
       <div id="adminGanadorSemana" class="leader-card">Cargando ganador...</div>
       <label>Valor del premio para el ganador</label>
-      <input id="adminPremioInput" type="number" inputmode="numeric" placeholder="Ej: 50000" />
+      <input id="adminPremioInput" type="text" inputmode="numeric" data-number-format="true" placeholder="Ej: 50.000" />
       <button class="btn-gold" onclick="guardarPremioSemanalAdmin()">Guardar premio semanal</button>
       <div id="adminPremioMsg"></div>
     </div>
@@ -634,11 +635,11 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="row">
         <div>
           <label>Km actual</label>
-          <input id="nuevoVehiculoKm" type="number" inputmode="numeric" placeholder="Ej: 165867" />
+          <input id="nuevoVehiculoKm" type="text" inputmode="numeric" data-number-format="true" placeholder="Ej: 165.867" />
         </div>
         <div>
           <label>Último aceite km</label>
-          <input id="nuevoVehiculoAceite" type="number" inputmode="numeric" placeholder="Opcional" />
+          <input id="nuevoVehiculoAceite" type="text" inputmode="numeric" data-number-format="true" placeholder="Opcional" />
         </div>
       </div>
 
@@ -675,7 +676,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
     <p class="note">Antes del primer servicio, colocá los km actuales del tablero.</p>
     <p><b>Último km registrado:</b> <span id="lastKmText">0</span> km</p>
     <label>Km actual del tablero</label>
-    <input id="kmInput" type="number" inputmode="numeric" />
+    <input id="kmInput" type="text" inputmode="numeric" data-number-format="true" />
     <button class="btn-gold" onclick="saveDailyKm()">Guardar km</button>
     <div id="kmMsg"></div>
   </div>
@@ -741,6 +742,44 @@ function today(){
   return `${y}-${m}-${day}`;
 }
 const money = n => "$" + Number(n || 0).toLocaleString("es-AR");
+
+function parseNumeroArg(value){
+  const raw = String(value ?? "").trim();
+  if(!raw) return 0;
+  const limpio = raw.replace(/\$/g,"").replace(/\s/g,"").replace(/\./g,"").replace(/,/g,".").replace(/[^0-9.-]/g,"");
+  const n = Number(limpio);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function formatNumeroArg(value){
+  const n = parseNumeroArg(value);
+  if(!n) return "";
+  return Math.round(n).toLocaleString("es-AR");
+}
+
+function setFormattedNumberInput(id, value){
+  const el = $(id);
+  if(el) el.value = formatNumeroArg(value);
+}
+
+function setupNumberFormatting(root=document){
+  root.querySelectorAll('input[data-number-format="true"], input[inputmode="numeric"]:not([type="month"]):not([type="date"])').forEach(input=>{
+    if(input.dataset.formatReady === "1") return;
+    input.dataset.formatReady = "1";
+    try{ input.type = "text"; }catch(e){}
+    input.setAttribute("inputmode","numeric");
+    input.addEventListener("input", ()=>{
+      const before = input.value;
+      const formatted = formatNumeroArg(before);
+      input.value = formatted;
+      try{ input.setSelectionRange(input.value.length, input.value.length); }catch(e){}
+    });
+    input.addEventListener("blur", ()=>{ input.value = formatNumeroArg(input.value); });
+    if(input.value) input.value = formatNumeroArg(input.value);
+  });
+}
+
+setupNumberFormatting();
 
 const CACHE_PREFIX = "explora_fast_v3_";
 function cacheSet(key, value){
@@ -1402,7 +1441,7 @@ window.openNewService = async function(){
 
 window.saveDailyKm = async function(){
   const btn = document.querySelector('#kmModal button');
-  const km = Number($("kmInput").value);
+  const km = parseNumeroArg($("kmInput").value);
   if(!currentVehicle) return msg($("kmMsg"),"No hay vehículo asignado.");
 
   const lastKm = Number(currentVehicle.kmActual || 0);
@@ -1536,7 +1575,7 @@ window.updateServicePrice = function(){
   const min = tarifaMinimaPermitida(service);
 
   $("minPrice").value = money(min);
-  $("chargedAmount").value = min;
+  setFormattedNumberInput("chargedAmount", min);
   const priceNote = $("servicePanel") ? $("servicePanel").querySelector(".price-note") : null;
   if(priceNote) priceNote.textContent = textoReglaTarifa(service);
 }
@@ -1545,7 +1584,7 @@ window.saveTrip = async function(){
   const service = services.find(s=>s.id === $("serviceSelect").value);
   if(!service) return msg($("serviceMsg"),"Seleccione un servicio.");
   const min = tarifaMinimaPermitida(service);
-  const charged = Number($("chargedAmount").value);
+  const charged = parseNumeroArg($("chargedAmount").value);
   if(charged < min) return msg($("serviceMsg"),`El monto no puede ser menor a ${money(min)}.`);
 
   const periodoOperativo = await getPeriodoOperativoChofer(currentUserId);
@@ -2670,7 +2709,7 @@ window.updateDerivePrice = function(){
   const min = tarifaMinimaPermitida(service);
 
   $("deriveMinPrice").value = money(min);
-  $("deriveAmount").value = min;
+  setFormattedNumberInput("deriveAmount", min);
   const priceNote = $("derivePanel") ? $("derivePanel").querySelector(".price-note") : null;
   if(priceNote) priceNote.textContent = textoReglaTarifa(service);
 }
@@ -2703,7 +2742,7 @@ window.saveDerivation = async function(){
 
     const min = tarifaMinimaPermitida(service);
 
-    const charged = Number($("deriveAmount").value);
+    const charged = parseNumeroArg($("deriveAmount").value);
 
     if(charged < min){
       return msg($("deriveMsg"),`El monto no puede ser menor a ${money(min)}.`);
@@ -2771,7 +2810,7 @@ window.saveExpense = async function(){
   }
 
   const tipo = $("expenseType").value;
-  const monto = Number($("expenseAmount").value);
+  const monto = parseNumeroArg($("expenseAmount").value);
   const detalle = $("expenseDetail").value.trim();
 
   if(!monto || monto <= 0){
@@ -3009,7 +3048,7 @@ async function loadTarifasAdmin(){
         <small>${s.categoria || "Sin categoría"}</small><br>
         <small>${admiteMediaTarifaArgentina(s) ? `Mínimo permitido al chofer: ${money(tarifaMinimaPermitida(s))} (50%)` : `Mínimo permitido al chofer: ${money(Number(s.precio || 0))}`}</small>
         <div class="tarifa-actions" style="margin-top:8px">
-          <input id="tarifa_${id}" type="number" inputmode="numeric" value="${Number(s.precio || 0)}">
+          <input id="tarifa_${id}" type="text" inputmode="numeric" data-number-format="true" value="${formatNumeroArg(s.precio || 0)}">
           <button class="btn-gold" onclick="actualizarTarifa('${id}')">Guardar</button>
         </div>
       </div>
@@ -3017,13 +3056,14 @@ async function loadTarifasAdmin(){
   });
 
   $("adminTarifas").innerHTML = html || `<p class="note">No hay servicios activos.</p>`;
+  setupNumberFormatting($("adminTarifas"));
 }
 
 window.loadTarifasAdmin = loadTarifasAdmin;
 
 window.actualizarTarifa = async function(id){
   const input = $("tarifa_" + id);
-  const nuevoPrecio = Number(input.value);
+  const nuevoPrecio = parseNumeroArg(input.value);
 
   if(!nuevoPrecio || nuevoPrecio <= 0){
     alert("Ingrese un precio válido.");
@@ -3190,7 +3230,7 @@ function renderMiAutoDesdeVehiculo(v){
   Object.entries(MANTENIMIENTO_KM_CONFIG).forEach(([key,cfg])=>{
     const item = normalizarMantenimientoItem(mant[key], cfg);
     const input = $(cfg.input);
-    if(input) input.value = item.ultimoKm || "";
+    if(input) input.value = item.ultimoKm ? formatNumeroArg(item.ultimoKm) : "";
   });
 
   if($("miAutoResumen")){
@@ -3433,7 +3473,7 @@ async function loadAdmin(){
 async function cargarPremioAdmin(periodo){
   try{
     const premio = await getPremioSemana(periodo);
-    if($("adminPremioInput")) $("adminPremioInput").value = premio || "";
+    if($("adminPremioInput")) $("adminPremioInput").value = premio ? formatNumeroArg(premio) : "";
 
     if($("adminGanadorSemana")){
       $("adminGanadorSemana").innerHTML = `
@@ -3449,7 +3489,7 @@ async function cargarPremioAdmin(periodo){
 
 window.guardarPremioSemanalAdmin = async function(){
   const periodo = getPeriodoTrabajoActual(today());
-  const monto = Number($("adminPremioInput").value || 0);
+  const monto = parseNumeroArg($("adminPremioInput").value || 0);
   if(monto < 0) return msg($("adminPremioMsg"),"Ingrese un valor válido.");
 
   await setDoc(doc(db,"configuracion",`premio_${periodo.id}`),{
@@ -4042,8 +4082,8 @@ window.crearChoferVehiculoAdmin = async function(){
   const modeloInput = String($("nuevoVehiculoModelo")?.value || "").trim();
   const kmInputRaw = String($("nuevoVehiculoKm")?.value || "").trim();
   const aceiteInputRaw = String($("nuevoVehiculoAceite")?.value || "").trim();
-  const kmActualInput = kmInputRaw ? Number(kmInputRaw) : null;
-  const aceiteUltimoKmInput = aceiteInputRaw ? Number(aceiteInputRaw) : null;
+  const kmActualInput = kmInputRaw ? parseNumeroArg(kmInputRaw) : null;
+  const aceiteUltimoKmInput = aceiteInputRaw ? parseNumeroArg(aceiteInputRaw) : null;
 
   if(!box) return alert("No se encontró el panel de alta de chofer.");
   if(!nombre) return msg(box,"Ingrese el nombre del chofer.");
