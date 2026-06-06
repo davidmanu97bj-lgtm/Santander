@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.27
-Build: 2026-06-06-FLAGS-SERVICIOS-001
+Version: 2.8.28
+Build: 2026-06-06-ENCABEZADOS-SIN-TIPO-001
 Fecha: 05/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
@@ -17,7 +17,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.27 · Build 2026-06-06-FLAGS-SERVICIOS-001</title>
+<title>EXPLORA v2.8.28 · Build 2026-06-06-ENCABEZADOS-SIN-TIPO-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -358,7 +358,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.27</b> · Build 2026-06-06-FLAGS-SERVICIOS-001</div>
+    <div class="build-version"><b>v2.8.28</b> · Build 2026-06-06-ENCABEZADOS-SIN-TIPO-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -371,7 +371,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.27</b> · FLAGS-SERVICIOS-001</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.28</b> · ENCABEZADOS-SIN-TIPO-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -413,12 +413,10 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
     <div id="servicePanel" class="card hidden">
       <h3>Nuevo servicio</h3>
-      <div class="single-trip-note">Tarifa mínima obligatoria: el chofer puede cobrar más, pero nunca menos. Tour Brasil $120.000 · Solo ida $25.000.</div>
-      <div id="tripTypeWrap">
-        <label>Tipo de viaje</label>
-        <select id="tripType" onchange="updateServicePrice()">
-          <option value="solo_ida">Solo ida</option>
-          <option value="ida_vuelta">Ida y vuelta</option>
+      <div class="single-trip-note">Tarifa mínima obligatoria: el chofer puede cobrar más, pero nunca menos. Los servicios están ordenados por 🛬 Aeropuerto, 🇦🇷 Argentina, 🇧🇷 Brasil, 🇵🇾 Paraguay y ⭐ Especiales.</div>
+      <div id="tripTypeWrap" class="hidden">
+        <select id="tripType">
+          <option value="servicio">Servicio</option>
         </select>
       </div>
 
@@ -447,16 +445,14 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
     <div id="derivePanel" class="card hidden">
       <h3>Derivar servicio</h3>
-      <div class="single-trip-note">Tarifa mínima obligatoria: el receptor puede cobrar más, pero nunca menos.</div>
+      <div class="single-trip-note">Tarifa mínima obligatoria: el receptor puede cobrar más, pero nunca menos. El tipo de servicio se define desde el servicio seleccionado.</div>
 
       <label>Chofer receptor</label>
       <select id="deriveDriverSelect"></select>
 
-      <div id="deriveTripTypeWrap">
-        <label>Tipo de viaje</label>
-        <select id="deriveTripType" onchange="updateDerivePrice()">
-          <option value="solo_ida">Solo ida</option>
-          <option value="ida_vuelta">Ida y vuelta</option>
+      <div id="deriveTripTypeWrap" class="hidden">
+        <select id="deriveTripType">
+          <option value="servicio">Servicio</option>
         </select>
       </div>
 
@@ -541,7 +537,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.27</b> · FLAGS-SERVICIOS-001</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.28</b> · ENCABEZADOS-SIN-TIPO-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -1279,17 +1275,50 @@ function servicioEtiquetaVisual(s){
   return nombre;
 }
 
+function categoriaServicioLabel(categoria){
+  if(categoria === "Aeropuerto") return "🛬 AEROPUERTO";
+  if(categoria === "Argentina") return "🇦🇷 ARGENTINA";
+  if(categoria === "Brasil") return "🇧🇷 BRASIL";
+  if(categoria === "Paraguay") return "🇵🇾 PARAGUAY";
+  if(categoria === "Especiales") return "⭐ ESPECIALES";
+  return "OTROS";
+}
+
+function ordenCategoriaServicio(categoria){
+  const orden = {Aeropuerto:1, Argentina:2, Brasil:3, Paraguay:4, Especiales:5};
+  return orden[categoria] || 99;
+}
+
 function fillServiceSelects(){
   const selects = [$("serviceSelect"), $("deriveServiceSelect")].filter(Boolean);
+  const serviciosOrdenados = [...services].sort((a,b)=>
+    (ordenCategoriaServicio(a.categoria) - ordenCategoriaServicio(b.categoria)) ||
+    (Number(a.orden || 9999) - Number(b.orden || 9999)) ||
+    String(a.nombre || "").localeCompare(String(b.nombre || ""), "es")
+  );
+
   selects.forEach(select=>{
     const current = select.value;
     select.innerHTML = "";
-    services.forEach(s=>{
+    let grupoActual = null;
+    let contenedorActual = select;
+
+    serviciosOrdenados.forEach(s=>{
+      const categoria = s.categoria || "Otros";
+      if(categoria !== grupoActual){
+        grupoActual = categoria;
+        const grupo = document.createElement("optgroup");
+        grupo.label = categoriaServicioLabel(categoria);
+        select.appendChild(grupo);
+        contenedorActual = grupo;
+      }
+
       const opt = document.createElement("option");
       opt.value = s.id;
       opt.textContent = servicioEtiquetaVisual(s);
-      select.appendChild(opt);
+      contenedorActual.appendChild(opt);
     });
+
     if(current && services.some(s=>s.id === current)) select.value = current;
   });
   updateServicePrice();
@@ -1448,23 +1477,11 @@ window.updateServicePrice = function(){
   const service = services.find(s=>s.id === $("serviceSelect").value);
   if(!service) return;
 
-  const tramoUnico = isTramoUnico(service.id);
+  // Desde v2.8.28 no se elige “Solo ida / Ida y vuelta”.
+  // La tarifa mínima y el tipo operativo salen del servicio elegido, incluyendo ⭐ Especiales.
+  if($("tripTypeWrap")) $("tripTypeWrap").classList.add("hidden");
+  if($("singleTripNote")) $("singleTripNote").classList.add("hidden");
 
-  if(tramoUnico){
-    $("tripTypeWrap").classList.add("hidden");
-    $("singleTripNote").classList.remove("hidden");
-    $("tripType").value = "solo_ida";
-  }else{
-    $("tripTypeWrap").classList.remove("hidden");
-    $("singleTripNote").classList.add("hidden");
-  }
-
-  const type = tramoUnico ? "solo_ida" : $("tripType").value;
-
-  // Regla v2.8.26:
-  // El precio cargado en Admin es la tarifa mínima real.
-  // El chofer puede cobrar más, pero nunca menos.
-  // Ya no se divide automáticamente por “solo ida”, para evitar incoherencias.
   const min = Number(service.precio || 0);
 
   $("minPrice").value = money(min);
@@ -1474,8 +1491,6 @@ window.updateServicePrice = function(){
 window.saveTrip = async function(){
   const service = services.find(s=>s.id === $("serviceSelect").value);
   if(!service) return msg($("serviceMsg"),"Seleccione un servicio.");
-  const tramoUnico = isTramoUnico(service.id);
-  const type = tramoUnico ? "solo_ida" : $("tripType").value;
   const min = Number(service.precio || 0);
   const charged = Number($("chargedAmount").value);
   if(charged < min) return msg($("serviceMsg"),`El monto no puede ser menor a ${money(min)}.`);
@@ -1492,7 +1507,7 @@ window.saveTrip = async function(){
     periodoFin: periodoOperativo.end,
     servicioId: service.id,
     servicioNombre: service.nombre,
-    tipo: tramoUnico ? "Tramo único" : (type === "solo_ida" ? "Solo ida" : "Ida y vuelta"),
+    tipo: service.categoria === "Especiales" ? service.nombre : (service.categoria || "Servicio"),
     tarifaMinima: min,
     monto: charged,
     pago: $("paymentMethod").value,
@@ -2539,18 +2554,10 @@ window.updateDerivePrice = function(){
   const service = services.find(s=>s.id === select.value);
   if(!service) return;
 
-  const tramoUnico = isTramoUnico(service.id);
-
-  if(tramoUnico){
-    $("deriveTripTypeWrap").classList.add("hidden");
-    $("deriveSingleTripNote").classList.remove("hidden");
-    $("deriveTripType").value = "solo_ida";
-  }else{
-    $("deriveTripTypeWrap").classList.remove("hidden");
-    $("deriveSingleTripNote").classList.add("hidden");
-  }
-
-  const type = tramoUnico ? "solo_ida" : $("deriveTripType").value;
+  // Desde v2.8.28 no se elige “Solo ida / Ida y vuelta” en derivaciones.
+  // La tarifa mínima y el tipo operativo salen del servicio elegido.
+  if($("deriveTripTypeWrap")) $("deriveTripTypeWrap").classList.add("hidden");
+  if($("deriveSingleTripNote")) $("deriveSingleTripNote").classList.add("hidden");
 
   const min = Number(service.precio || 0);
 
@@ -2584,9 +2591,6 @@ window.saveDerivation = async function(){
     const destinoData = destinoSnap.data();
     const vehiculoDestino = destinoData.vehiculo || "";
 
-    const tramoUnico = isTramoUnico(service.id);
-    const type = tramoUnico ? "solo_ida" : $("deriveTripType").value;
-
     const min = Number(service.precio || 0);
 
     const charged = Number($("deriveAmount").value);
@@ -2595,7 +2599,7 @@ window.saveDerivation = async function(){
       return msg($("deriveMsg"),`El monto no puede ser menor a ${money(min)}.`);
     }
 
-    const tipoTexto = tramoUnico ? "Tramo único" : (type === "solo_ida" ? "Solo ida" : "Ida y vuelta");
+    const tipoTexto = service.categoria === "Especiales" ? service.nombre : (service.categoria || "Servicio");
     const hora = new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"});
     const periodoOrigen = await getPeriodoOperativoChofer(currentUserId);
     const periodoDestino = await getPeriodoOperativoChofer(destino);
@@ -3846,7 +3850,7 @@ const serviciosExplora = [
   {id:"itaipu_paraguay", nombre:"Itaipú Paraguay", precio:100000, categoria:"Paraguay", orden:33}
 ];
 
-const SERVICIOS_BUILD = "2026-06-06-FLAGS-SERVICIOS-001";
+const SERVICIOS_BUILD = "2026-06-06-ENCABEZADOS-SIN-TIPO-001";
 
 async function aplicarServiciosExplora({mostrarMensaje=false}={}){
   const idsOficiales = new Set(serviciosExplora.map(s=>s.id));
