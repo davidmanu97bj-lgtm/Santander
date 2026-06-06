@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.31
-Build: 2026-06-06-REASIGNACION-VEHICULO-SEGURA-001
+Version: 2.8.33
+Build: 2026-06-06-RANKING-REGLAS-DERIVACIONES-001
 Fecha: 05/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
@@ -16,12 +16,15 @@ Cambios:
 - Se mejora el texto visible de servicios con íconos: 🛬 🇦🇷 🇧🇷 🇵🇾 para lectura rápida.
 - Formato automático con punto en campos numéricos: 30.000 en lugar de 30000, sin afectar cálculos internos.
 - Reasignación segura de vehículo: al asignar un auto existente a otro chofer conserva Mi auto, km y mantenimiento.
+- Ranking actualizado: 60% facturación, 20% viajes, 10% derivaciones, 10% actividad.
+- Se agrega “Ver reglas” con explicación del bono semanal y derivaciones.
+- En una derivación aceptada/completada suman ambos: origen por derivación y receptor por viaje/facturación.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.31 · Build 2026-06-06-REASIGNACION-VEHICULO-SEGURA-001</title>
+<title>EXPLORA v2.8.33 · Build 2026-06-06-RANKING-REGLAS-DERIVACIONES-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -364,6 +367,30 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 .ranking-bonus-box .bonus-money{color:#f3d77a;font-weight:900;margin-top:5px}
 .ranking-bonus-box small{color:var(--muted)}
 
+.ranking-rules-toggle{
+  margin-top:10px;
+  padding:10px 12px;
+  border-radius:12px;
+  background:#1d1d1d;
+  color:#f3d77a;
+  border:1px solid rgba(212,175,55,.35);
+  font-size:13px;
+  font-weight:900;
+}
+.ranking-rules-box{
+  background:#101010;
+  border:1px solid #2b2b2b;
+  border-radius:16px;
+  padding:13px;
+  margin-top:10px;
+  color:#ddd;
+  font-size:13px;
+  line-height:1.45;
+}
+.ranking-rules-box b{color:#f3d77a}
+.ranking-rules-box ul{margin:8px 0 0 18px;padding:0}
+.ranking-rules-box li{margin:4px 0}
+
 </style>
 </head>
 <body>
@@ -373,7 +400,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.31</b> · Build 2026-06-06-REASIGNACION-VEHICULO-SEGURA-001</div>
+    <div class="build-version"><b>v2.8.33</b> · Build 2026-06-06-RANKING-REGLAS-DERIVACIONES-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -386,7 +413,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.31</b> · REASIGNACION-VEHICULO-SEGURA-001</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.33</b> · RANKING-REGLAS-DERIVACIONES-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -558,7 +585,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.31</b> · REASIGNACION-VEHICULO-SEGURA-001</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.33</b> · RANKING-REGLAS-DERIVACIONES-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -1913,16 +1940,29 @@ async function calcularRankingSemanalLiviano(periodo = getPeriodoTrabajoActual(t
   }
 
   const arr = Object.values(stats);
+  arr.forEach(x=>{
+    x.actividad = (Number(x.viajes || 0) > 0 || Number(x.derivaciones || 0) > 0 || Number(x.facturacion || 0) > 0) ? 1 : 0;
+  });
   const maxViajes = Math.max(1,...arr.map(x=>x.viajes));
   const maxDeriv = Math.max(1,...arr.map(x=>x.derivaciones));
   const maxFact = Math.max(1,...arr.map(x=>x.facturacion));
+  const maxActividad = Math.max(1,...arr.map(x=>x.actividad));
 
   arr.forEach(x=>{
-    x.porcentaje = Math.round((((x.viajes/maxViajes)*0.40)+((x.derivaciones/maxDeriv)*0.30)+((x.facturacion/maxFact)*0.30))*100);
+    // Ranking justo para EXPLORA: prioriza facturación, sin dejar de premiar viajes, colaboración y actividad.
+    x.porcentaje = Math.round((((x.facturacion/maxFact)*0.60)+((x.viajes/maxViajes)*0.20)+((x.derivaciones/maxDeriv)*0.10)+((x.actividad/maxActividad)*0.10))*100);
   });
 
   arr.sort((a,b)=>b.porcentaje-a.porcentaje || b.facturacion-a.facturacion || b.viajes-a.viajes);
   return {periodo,ranking:arr};
+}
+
+
+window.toggleRankingRules = function(btn){
+  const box = btn && btn.nextElementSibling;
+  if(!box) return;
+  const hidden = box.classList.toggle("hidden");
+  btn.textContent = hidden ? "📖 Ver reglas" : "📖 Ocultar reglas";
 }
 
 function renderRankingLiviano(data,targetId){
@@ -1941,7 +1981,20 @@ function renderRankingLiviano(data,targetId){
       <h3>🏆 Líder semanal</h3>
       <b>${lider.nombre}</b><br>
       <small>${lider.porcentaje}% · ${data.periodo.start} al ${data.periodo.end}</small><br>
-      <small>Fórmula: 40% viajes · 30% derivaciones · 30% facturación</small>
+      <button class="ranking-rules-toggle" type="button" onclick="toggleRankingRules(this)">📖 Ver reglas</button>
+      <div class="ranking-rules-box hidden">
+        <b>🏆 Cómo funciona el ranking</b><br>
+        El ranking semanal premia al chofer que más aporta al resultado general de EXPLORA.
+        <ul>
+          <li>💰 <b>60% Facturación:</b> los viajes de mayor valor pesan más que los viajes cortos.</li>
+          <li>🚕 <b>20% Viajes:</b> suma la cantidad de servicios realizados.</li>
+          <li>🔄 <b>10% Derivaciones aceptadas:</b> si derivás un viaje y el receptor lo acepta/completa, vos sumás colaboración.</li>
+          <li>🟢 <b>10% Actividad:</b> suma participación real durante la semana.</li>
+        </ul>
+        <br><b>💰 Bono semanal:</b> el chofer que finaliza primero en el cierre semanal recibe ${money(50000)}.
+        <br><br><b>🔄 Derivaciones:</b> cuando una derivación es aceptada y completada, el chofer que deriva suma por derivación; el chofer que realiza el viaje suma viaje y facturación. Las derivaciones rechazadas o ignoradas no suman.
+        <br><br><b>⚠️ Empates:</b> gana quien tenga mayor facturación. Si persiste el empate, gana quien tenga más viajes.
+      </div>
     </div>
   `;
 
@@ -1949,7 +2002,7 @@ function renderRankingLiviano(data,targetId){
     html += `
       <div class="ranking-row">
         <b>${i+1}. ${r.nombre}</b><br>
-        <small>Viajes: ${r.viajes} · Derivaciones: ${r.derivaciones} · Facturación: ${money(r.facturacion)}</small><br>
+        <small>Facturación: ${money(r.facturacion)} · Viajes: ${r.viajes} · Derivaciones: ${r.derivaciones}</small><br>
         <b style="color:var(--gold)">${r.porcentaje}%</b>
         <div class="progress"><span style="width:${Math.min(100,r.porcentaje)}%"></span></div>
       </div>
@@ -1976,14 +2029,14 @@ function renderDriverLeaderBonus(data, lider, yo, yoIndex){
   }
 
   if(yo){
-    const viajesFaltan = Math.max(0, Number(lider.viajes || 0) - Number(yo.viajes || 0) + 1);
+    const diferenciaFacturacion = Math.max(0, Number(lider.facturacion || 0) - Number(yo.facturacion || 0));
     const medalla = yoIndex === 1 ? "🥈" : (yoIndex === 2 ? "🥉" : "🏁");
     target.innerHTML = `
       <div class="ranking-bonus-box">
         <b>${medalla} Vas ${yoIndex + 1}°</b><br>
         <div class="bonus-money">💰 Bono semanal: ${bono}</div>
         <small>Líder: ${lider.nombre} · ${lider.porcentaje}%</small><br>
-        <small>${viajesFaltan > 0 ? `Te faltan ${viajesFaltan} viaje${viajesFaltan === 1 ? "" : "s"} para superar al líder.` : "Estás muy cerca del líder."}</small>
+        <small>${diferenciaFacturacion > 0 ? `Diferencia estimada de facturación con el líder: ${money(diferenciaFacturacion)}.` : "Estás muy cerca del líder."}</small>
       </div>
     `;
     return;
@@ -2045,11 +2098,15 @@ async function getGanadorSemanalRapido(periodo){
 
     if(!arr.length) return cached || null;
 
+    arr.forEach(x=>{
+      x.actividad = (Number(x.viajes || 0) > 0 || Number(x.derivaciones || 0) > 0 || Number(x.facturacion || 0) > 0) ? 1 : 0;
+    });
     const maxViajes = Math.max(1,...arr.map(x=>x.viajes));
     const maxDeriv = Math.max(1,...arr.map(x=>x.derivaciones));
     const maxFact = Math.max(1,...arr.map(x=>x.facturacion));
+    const maxActividad = Math.max(1,...arr.map(x=>x.actividad));
     arr.forEach(x=>{
-      x.porcentaje = Math.round((((x.viajes/maxViajes)*0.40)+((x.derivaciones/maxDeriv)*0.30)+((x.facturacion/maxFact)*0.30))*100);
+      x.porcentaje = Math.round((((x.facturacion/maxFact)*0.60)+((x.viajes/maxViajes)*0.20)+((x.derivaciones/maxDeriv)*0.10)+((x.actividad/maxActividad)*0.10))*100);
     });
     arr.sort((a,b)=>b.porcentaje-a.porcentaje || b.facturacion-a.facturacion || b.viajes-a.viajes);
 
@@ -2576,7 +2633,8 @@ window.aceptarDerivacion = async function(derivacionId){
       facturacionUnica: true,
       pagoConfirmadoPorReceptor: pagoReal,
       puntosOrigen: 1,
-      puntosDestino: 0,
+      puntosDestino: 1,
+      derivacionCompletada: true,
       vistoPor: currentUserId,
       fechaAceptado: today(),
       horaAceptado,
