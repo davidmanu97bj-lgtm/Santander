@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.26
-Build: 2026-06-06-TARIFAS-SERVICIOS-001
+Version: 2.8.27
+Build: 2026-06-06-FLAGS-SERVICIOS-001
 Fecha: 05/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
@@ -11,12 +11,13 @@ Cambios:
 - Optimización: Mi auto y Vehículos usan caché/localStorage y refresco en segundo plano para no trabar la app.
 - Aviso automático con ⚙️ cuando corresponde cambio por kilometraje.
 - No se modifica cierre semanal, 50/50, derivaciones ni acumulados financieros.
+- Se mejora el texto visible de servicios con íconos: 🛬 🇦🇷 🇧🇷 🇵🇾 para lectura rápida.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.26 · Build 2026-06-06-TARIFAS-SERVICIOS-001</title>
+<title>EXPLORA v2.8.27 · Build 2026-06-06-FLAGS-SERVICIOS-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -357,7 +358,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.26</b> · Build 2026-06-06-TARIFAS-SERVICIOS-001</div>
+    <div class="build-version"><b>v2.8.27</b> · Build 2026-06-06-FLAGS-SERVICIOS-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -370,7 +371,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.26</b> · TARIFAS-SERVICIOS-001</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.27</b> · FLAGS-SERVICIOS-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -540,7 +541,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.26</b> · TARIFAS-SERVICIOS-001</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.27</b> · FLAGS-SERVICIOS-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -1251,6 +1252,33 @@ async function loadServices(force=false){
   await refresh();
 }
 
+function servicioEtiquetaVisual(s){
+  const id = String(s.id || "");
+  const nombre = String(s.nombre || "");
+  const categoria = String(s.categoria || "");
+
+  // Solo cambia el texto visible del selector.
+  // Los IDs internos y nombres guardados se mantienen para no romper facturación, derivaciones ni acumulados.
+  const mapaEspecial = {
+    tour_brasil: "🇧🇷 Tour Brasil",
+    solo_ida: "🚕 Solo ida",
+    aeropuerto_centro: "🛬 Aeropuerto → Centro",
+    centro_aeropuerto: "🛬 Centro → Aeropuerto",
+    aeropuerto_brasil: "🛬 Aeropuerto → 🇧🇷 Brasil",
+    brasil_aeropuerto: "🇧🇷 Brasil → 🛬 Aeropuerto",
+    aeropuerto_py: "🛬 Aeropuerto → 🇵🇾 Paraguay",
+    py_aeropuerto: "🇵🇾 Paraguay → 🛬 Aeropuerto"
+  };
+
+  if(mapaEspecial[id]) return mapaEspecial[id];
+  if(categoria === "Argentina") return `🇦🇷 ${nombre}`;
+  if(categoria === "Brasil") return `🇧🇷 ${nombre}`;
+  if(categoria === "Paraguay") return `🇵🇾 ${nombre}`;
+  if(categoria === "Aeropuerto") return `🛬 ${nombre}`;
+  if(categoria === "Especiales") return `⭐ ${nombre}`;
+  return nombre;
+}
+
 function fillServiceSelects(){
   const selects = [$("serviceSelect"), $("deriveServiceSelect")].filter(Boolean);
   selects.forEach(select=>{
@@ -1259,7 +1287,7 @@ function fillServiceSelects(){
     services.forEach(s=>{
       const opt = document.createElement("option");
       opt.value = s.id;
-      opt.textContent = s.categoria ? `${s.categoria} · ${s.nombre}` : s.nombre;
+      opt.textContent = servicioEtiquetaVisual(s);
       select.appendChild(opt);
     });
     if(current && services.some(s=>s.id === current)) select.value = current;
@@ -3818,7 +3846,7 @@ const serviciosExplora = [
   {id:"itaipu_paraguay", nombre:"Itaipú Paraguay", precio:100000, categoria:"Paraguay", orden:33}
 ];
 
-const SERVICIOS_BUILD = "2026-06-06-TARIFAS-SERVICIOS-001";
+const SERVICIOS_BUILD = "2026-06-06-FLAGS-SERVICIOS-001";
 
 async function aplicarServiciosExplora({mostrarMensaje=false}={}){
   const idsOficiales = new Set(serviciosExplora.map(s=>s.id));
