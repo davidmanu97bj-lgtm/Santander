@@ -2,7 +2,7 @@
 <!--
 EXPLORA BUILD
 Version: 2.8.78
-Build: 2026-06-06-SIN-SIMULADOR-FECHA-IPHONE-CIERRE-021
+Build: 2026-06-06-MODO-PRUEBA-FECHA-CHOFER-022
 Fecha: 06/06/2026
 Cambios:
 - Se agrega botón “Mi cierre semanal” en Chofer para ver el cierre provisorio de la semana activa sin esperar al sábado.
@@ -45,7 +45,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.79 · Build 2026-06-06-SIN-SIMULADOR-FECHA-IPHONE-CIERRE-021</title>
+<title>EXPLORA v2.8.80 · Build 2026-06-06-MODO-PRUEBA-FECHA-CHOFER-022</title>
 <style>
 :root{
   --bg:#080808;
@@ -1108,7 +1108,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.79</b> · Build 2026-06-06-SIN-SIMULADOR-FECHA-IPHONE-CIERRE-021</div>
+    <div class="build-version"><b>v2.8.80</b> · Build 2026-06-06-MODO-PRUEBA-FECHA-CHOFER-022</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1406,6 +1406,8 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigAlta')"><b>👤 Alta / reasignación de chofer y vehículo</b><span>›</span></button><div id="adminConfigAlta" class="admin-config-content hidden"><p class="note">Crea el usuario real y guarda el chofer. Si la patente ya existe, la app reasigna ese auto al nuevo chofer sin borrar “Mi auto”, km actual, service, correa ni cubiertas.</p><label>Nombre del chofer</label><input id="nuevoChoferNombre" placeholder="Ej: Marcelo" /><label>Usuario</label><input id="nuevoChoferUsuario" placeholder="Ej: marcelo" autocapitalize="none" /><div class="price-note">Entrará como usuario: marcelo / Firebase usa marcelo@explora.local</div><label>Contraseña</label><input id="nuevoChoferPass" type="password" placeholder="Mínimo 6 caracteres" /><label>Patente / ID del vehículo</label><input id="nuevoVehiculoPatente" placeholder="Ej: AG123CD" autocapitalize="characters" /><label>Modelo del vehículo</label><input id="nuevoVehiculoModelo" placeholder="Ej: Fiat Cronos 2024" /><div class="row"><div><label>Km actual</label><input id="nuevoVehiculoKm" type="text" inputmode="numeric" data-number-format="true" placeholder="Ej: 165.867" /></div><div><label>Último aceite km</label><input id="nuevoVehiculoAceite" type="text" inputmode="numeric" data-number-format="true" placeholder="Opcional" /></div></div><button class="btn-gold" onclick="crearChoferVehiculoAdmin()">Crear / reasignar chofer y vehículo</button><div id="nuevoChoferMsg"></div></div></div>
 
 
+      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigModoPruebaFecha')"><b>🧪 Modo prueba de fecha por chofer</b><span>›</span></button><div id="adminConfigModoPruebaFecha" class="admin-config-content hidden"><p class="note">Para probar el cierre obligatorio con comprobante desde un usuario chofer real. Solo el chofer habilitado usa la fecha de su iPhone. Todos los demás siguen con fecha segura de Firebase.</p><label>Chofer para probar</label><select id="modoPruebaFechaChoferSelect"></select><div class="row"><button class="btn-gold" onclick="activarModoPruebaFechaChoferAdmin()">Activar prueba</button><button class="btn-red" onclick="desactivarModoPruebaFechaChoferAdmin()">Desactivar</button></div><button class="btn-dark" style="margin-top:10px" onclick="cargarModoPruebaFechaAdmin(true)">Actualizar estado</button><div id="modoPruebaFechaMsg"></div><div id="modoPruebaFechaEstado" class="note" style="margin-top:12px">Tocá actualizar para ver el estado.</div></div></div>
+
       <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigHerramientas')"><b>🛠️ Herramientas</b><span>›</span></button><div id="adminConfigHerramientas" class="admin-config-content hidden"><button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios EXPLORA</button><button class="btn-dark" style="margin-top:10px" onclick="verificarYRepararAcumuladosAdmin()">Verificar / reparar acumulados actuales</button><button class="btn-red" style="margin-top:10px" onclick="resetearDatosOperativosAdmin()">🧹 Preparar lanzamiento / resetear datos operativos</button><button class="btn-red" style="margin-top:10px" onclick="eliminarChoferesDemoAdmin()">Eliminar choferes demo anteriores</button><div id="adminToolsMsg"></div></div></div>
     </div>
 
@@ -1490,10 +1492,11 @@ let miAutoLoadedAt = 0;
 let adminVehiculosKmLoadedAt = 0;
 let adminVehiculosCache = [];
 let adminChoferesPorVehiculoCache = {};
+let modoPruebaFechaConfig = {activo:false, choferes:{}, actualizadoTexto:""};
 
 const $ = id => document.getElementById(id);
 let trustedTodayValue = null;
-let trustedTodaySource = "device";
+let trustedTodaySource = "server";
 function formatDateArgentina(date){
   try{
     const parts = new Intl.DateTimeFormat("en-CA",{
@@ -1509,11 +1512,18 @@ function formatDateArgentina(date){
   }
 }
 
+function choferTieneModoPruebaFecha(userId = currentUserId){
+  const id = String(userId || "").toLowerCase().trim();
+  const cfg = modoPruebaFechaConfig || {};
+  const choferes = cfg.choferes || {};
+  return !!(id && cfg.activo !== false && choferes[id] && choferes[id].activo === true);
+}
+
 function today(){
-  // Sin simulador semanal: la app usa siempre la fecha actual del dispositivo.
-  // Esto permite probar el cierre cambiando la fecha del iPhone.
-  // Firebase ya no pisa la fecha local para que el cierre obligatorio aparezca en pruebas.
-  return formatDateArgentina(new Date());
+  // Producción segura: por defecto usa fecha confiable de Firebase.
+  // Prueba controlada: solo el chofer habilitado por Admin usa la fecha del iPhone.
+  if(choferTieneModoPruebaFecha()) return formatDateArgentina(new Date());
+  return trustedTodayValue || formatDateArgentina(new Date());
 }
 
 
@@ -1546,23 +1556,55 @@ function afterSaturday0001(dateStr = today()){
   return isSaturday(dateStr) && currentOperationalMinute() >= 1;
 }
 
+async function syncModoPruebaFecha(){
+  try{
+    const snap = await withTimeout(getDoc(doc(db,"configuracion","modo_prueba_fecha_choferes")), 2200, "Modo prueba de fecha tardó demasiado.");
+    if(snap.exists()){
+      const data = snap.data() || {};
+      modoPruebaFechaConfig = {
+        activo: data.activo !== false,
+        choferes: data.choferes || {},
+        actualizadoTexto: String(data.actualizadoTexto || "")
+      };
+    }else{
+      modoPruebaFechaConfig = {activo:false, choferes:{}, actualizadoTexto:""};
+    }
+  }catch(e){
+    console.warn("No se pudo leer modo prueba de fecha; uso configuración local", e);
+  }
+  return modoPruebaFechaConfig;
+}
+
 async function syncTrustedToday(){
-  // La fecha operativa queda ligada al iPhone/dispositivo.
-  // Se registra la diferencia con Firebase solo como diagnóstico, pero NO se usa
-  // para reemplazar today(); así el test manual cambiando fecha funciona.
   const localDay = formatDateArgentina(new Date());
-  trustedTodayValue = localDay;
-  trustedTodaySource = "device";
-  try{ cacheRemove("trusted_today"); }catch(e){}
+  try{
+    if(choferTieneModoPruebaFecha()){
+      trustedTodayValue = localDay;
+      trustedTodaySource = "device-test-driver";
+      cacheRemove("trusted_today");
+      return localDay;
+    }
+
+    const cache = cacheGet("trusted_today", 10 * 60 * 1000);
+    if(cache && cache.fecha){
+      trustedTodayValue = cache.fecha;
+      trustedTodaySource = cache.source || "server-cache";
+    }
+  }catch(e){}
 
   try{
-    if(!currentUserId) return localDay;
+    if(!currentUserId){
+      trustedTodayValue = localDay;
+      trustedTodaySource = "device-no-user";
+      return localDay;
+    }
     const ref = doc(db,"sistema_fecha", currentUserId);
     await setDoc(ref,{
       serverNow: serverTimestamp(),
       localDay,
       usuario: currentUserId,
-      fuenteFechaOperativa:"device",
+      fuenteFechaOperativa:"firebase",
+      modoPruebaFecha: choferTieneModoPruebaFecha(),
       actualizado: serverTimestamp()
     },{merge:true});
 
@@ -1576,14 +1618,20 @@ async function syncTrustedToday(){
 
     if(data && data.serverNow && data.serverNow.toDate){
       const serverDay = formatDateArgentina(data.serverNow.toDate());
+      trustedTodayValue = serverDay;
+      trustedTodaySource = serverDay === localDay ? "server" : "server-diff-local";
+      cacheSet("trusted_today",{fecha:serverDay, source:trustedTodaySource, localDay},10 * 60 * 1000);
       if(serverDay !== localDay){
-        console.warn("Fecha del teléfono diferente a Firebase; se usa iPhone para pruebas", {localDay, serverDay});
+        console.warn("Fecha del teléfono diferente a Firebase; se usa Firebase salvo chofer en modo prueba", {localDay, serverDay});
       }
+      return serverDay;
     }
   }catch(e){
-    console.warn("No se pudo registrar fecha en Firebase; uso fecha local del dispositivo", e);
+    console.warn("No se pudo sincronizar fecha con Firebase; uso caché/local", e);
   }
-  return localDay;
+  trustedTodayValue = trustedTodayValue || localDay;
+  trustedTodaySource = trustedTodaySource || "device-fallback";
+  return trustedTodayValue;
 }
 
 const money = n => "$" + Number(n || 0).toLocaleString("es-AR");
@@ -2174,6 +2222,7 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
   currentUserId = username;
 
   try{
+    await syncModoPruebaFecha();
     await syncTrustedToday();
     await aplicarResetOperativoLocalSiCorresponde();
     let snap = await getDoc(doc(db, "choferes", username));
@@ -2226,6 +2275,13 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
 
 async function loadDriver(){
   $("driverName").textContent = currentProfile.nombre || currentUserId;
+  if(choferTieneModoPruebaFecha()){
+    const box = $("cierrePagoPendienteAlert");
+    if(box){
+      box.className = "cierre-pendiente-banner warn";
+      box.innerHTML = "🧪 Modo prueba activo: este usuario usa la fecha del iPhone para probar cierres. Desactivar desde Admin al terminar.";
+    }
+  }
   setStatusButton(currentProfile.estado || "disponible");
   $("todayTrips").textContent = "...";
   $("todayTotal").textContent = "...";
@@ -5360,6 +5416,7 @@ window.adminShowSection = function(section){
   if(navVehicles) navVehicles.classList.toggle("active", section === "vehicles");
   if(navConfig) navConfig.classList.toggle("active", section === "config");
   if(section === "vehicles") cargarAdminVehiculosKm(false).catch(e=>console.warn("No se pudo cargar vehículos", e));
+  if(section === "config") setTimeout(()=>cargarModoPruebaFechaAdmin(false).catch(e=>console.warn("No se pudo cargar modo prueba fecha", e)), 200);
 };
 
 window.toggleAdminConfig = function(id){
@@ -5368,6 +5425,107 @@ window.toggleAdminConfig = function(id){
   box.classList.toggle("hidden");
   setupNumberFormatting(box);
   if(id === "adminConfigFondoOperativo") cargarChoferesFondoOperativoAdmin().catch(e=>msg($("fondoOperativoMsg"),"No se pudieron cargar choferes: " + e.message));
+  if(id === "adminConfigModoPruebaFecha") cargarModoPruebaFechaAdmin(false).catch(e=>msg($("modoPruebaFechaMsg"),"No se pudo cargar modo prueba: " + e.message));
+};
+
+
+async function cargarModoPruebaFechaAdmin(force=false){
+  if(!currentProfile || currentProfile.rol !== "admin") return;
+  const sel = $("modoPruebaFechaChoferSelect");
+  const estado = $("modoPruebaFechaEstado");
+  if(estado && force) estado.innerHTML = "Actualizando modo prueba...";
+
+  await syncModoPruebaFecha();
+
+  if(sel && (force || !sel.dataset.loaded)){
+    const snap = await getDocs(collection(db,"choferes"));
+    const opciones = [];
+    snap.forEach(d=>{
+      const data = d.data() || {};
+      if(data.rol === "admin" || data.activo === false) return;
+      opciones.push({id:d.id, nombre:data.nombre || d.id});
+    });
+    opciones.sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre),"es"));
+    sel.innerHTML = opciones.map(x=>`<option value="${x.id}">${x.nombre} (${x.id})</option>`).join("") || `<option value="">Sin choferes</option>`;
+    sel.dataset.loaded = "1";
+  }
+
+  const activos = Object.entries((modoPruebaFechaConfig && modoPruebaFechaConfig.choferes) || {})
+    .filter(([id,cfg])=>cfg && cfg.activo === true)
+    .map(([id,cfg])=>`${cfg.nombre || id} (${id})`);
+  if(estado){
+    estado.innerHTML = activos.length
+      ? `<div class="msg ok">🧪 Modo prueba activo para: <b>${activos.join(", ")}</b><br><small>Ese chofer usa fecha del iPhone. Los demás usan Firebase. Última actualización: ${modoPruebaFechaConfig.actualizadoTexto || "sin dato"}</small></div>`
+      : `<div class="msg ok">Modo prueba desactivado. Todos usan fecha segura de Firebase.</div>`;
+  }
+}
+window.cargarModoPruebaFechaAdmin = cargarModoPruebaFechaAdmin;
+
+function limpiarCachesOperativosFecha(){
+  try{
+    const prefijos = [
+      CACHE_PREFIX + "trusted_today",
+      CACHE_PREFIX + "acum_sem_",
+      CACHE_PREFIX + "ranking_",
+      CACHE_PREFIX + "admin_",
+      CACHE_PREFIX + "today_",
+      CACHE_PREFIX + "cierres_",
+      CACHE_PREFIX + "comprobantes_"
+    ];
+    const keys=[];
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(k && prefijos.some(pref=>k.startsWith(pref))) keys.push(k);
+    }
+    keys.forEach(k=>localStorage.removeItem(k));
+  }catch(e){}
+  periodoOperativoCache = null;
+  cierreSemanalCache = null;
+  adminBaseLoadedAt = 0;
+  todayHistoryLoaded = false;
+}
+
+window.activarModoPruebaFechaChoferAdmin = async function(){
+  if(!currentProfile || currentProfile.rol !== "admin") return msg($("modoPruebaFechaMsg"),"Solo Admin puede activar modo prueba.");
+  const sel = $("modoPruebaFechaChoferSelect");
+  const choferId = String(sel && sel.value || "").trim();
+  if(!choferId) return msg($("modoPruebaFechaMsg"),"Seleccioná un chofer.");
+  const nombre = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].textContent.replace(/\s*\([^)]*\)\s*$/,"") : choferId;
+  msg($("modoPruebaFechaMsg"),"Activando modo prueba...",true);
+  const choferes = {...((modoPruebaFechaConfig && modoPruebaFechaConfig.choferes) || {})};
+  choferes[choferId] = {activo:true, nombre, activadoPor:currentUserId || "admin", actualizadoTexto:new Date().toLocaleString("es-AR")};
+  await setDoc(doc(db,"configuracion","modo_prueba_fecha_choferes"),{
+    activo:true,
+    choferes,
+    actualizadoPor:currentUserId || "admin",
+    actualizadoTexto:new Date().toLocaleString("es-AR"),
+    actualizado:serverTimestamp()
+  },{merge:true});
+  modoPruebaFechaConfig = {activo:true, choferes, actualizadoTexto:new Date().toLocaleString("es-AR")};
+  limpiarCachesOperativosFecha();
+  msg($("modoPruebaFechaMsg"),`Modo prueba activado para ${nombre}. Ese chofer debe refrescar/iniciar sesión y podrá probar con la fecha del iPhone.`,true);
+  await cargarModoPruebaFechaAdmin(true);
+};
+
+window.desactivarModoPruebaFechaChoferAdmin = async function(){
+  if(!currentProfile || currentProfile.rol !== "admin") return msg($("modoPruebaFechaMsg"),"Solo Admin puede desactivar modo prueba.");
+  const sel = $("modoPruebaFechaChoferSelect");
+  const choferId = String(sel && sel.value || "").trim();
+  if(!choferId) return msg($("modoPruebaFechaMsg"),"Seleccioná un chofer.");
+  msg($("modoPruebaFechaMsg"),"Desactivando modo prueba...",true);
+  const choferes = {...((modoPruebaFechaConfig && modoPruebaFechaConfig.choferes) || {})};
+  if(choferes[choferId]) choferes[choferId] = {...choferes[choferId], activo:false, desactivadoPor:currentUserId || "admin", actualizadoTexto:new Date().toLocaleString("es-AR")};
+  await setDoc(doc(db,"configuracion","modo_prueba_fecha_choferes"),{
+    activo:Object.values(choferes).some(x=>x && x.activo === true),
+    choferes,
+    actualizadoPor:currentUserId || "admin",
+    actualizadoTexto:new Date().toLocaleString("es-AR"),
+    actualizado:serverTimestamp()
+  },{merge:true});
+  modoPruebaFechaConfig = {activo:Object.values(choferes).some(x=>x && x.activo === true), choferes, actualizadoTexto:new Date().toLocaleString("es-AR")};
+  limpiarCachesOperativosFecha();
+  msg($("modoPruebaFechaMsg"),"Modo prueba desactivado para ese chofer. Al refrescar, vuelve a fecha Firebase.",true);
+  await cargarModoPruebaFechaAdmin(true);
 };
 
 function renderAdminResumenMovil(stats={}){
