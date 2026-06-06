@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.64
-Build: 2026-06-06-ESTABLE-VER-FOTO-COMPROBANTES-006
+Version: 2.8.67
+Build: 2026-06-06-ADMIN-MOVIL-DASHBOARD-009
 Fecha: 06/06/2026
 Cambios:
+- Reordenamiento visual Admin: 50/50, pagos y comprobantes unificados en Cierres semanales, con tarjetas más claras y detalle desplegable.
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
 - Se agrega botón “Mi auto” para chofer con service, correa dentada y cubiertas por km.
 - Se agrega vista “Vehículos” para admin con el mismo control por auto.
@@ -41,7 +42,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.64 · Build 2026-06-06-ESTABLE-VER-FOTO-COMPROBANTES-006</title>
+<title>EXPLORA v2.8.67 · Build 2026-06-06-ADMIN-MOVIL-DASHBOARD-009</title>
 <style>
 :root{
   --bg:#080808;
@@ -469,6 +470,90 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 .ranking-rules-box ul{margin:8px 0 0 18px;padding:0}
 .ranking-rules-box li{margin:4px 0}
 
+.admin-module-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:12px;
+}
+.admin-module-grid button{
+  background:#151515;
+  color:#ddd;
+  border:1px solid #2b2b2b;
+  min-height:58px;
+  font-size:14px;
+}
+.admin-module-grid button.active{
+  background:var(--gold);
+  color:#0b0b0b;
+}
+.admin-module-panel{
+  margin-top:14px;
+}
+.cierre-admin-card{
+  background:#121212;
+  border:1px solid #292929;
+  border-radius:18px;
+  padding:14px;
+  margin:10px 0;
+}
+.cierre-admin-head{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:flex-start;
+}
+.cierre-admin-head small{color:var(--muted)}
+.cierre-status{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  padding:7px 10px;
+  font-size:12px;
+  font-weight:900;
+  white-space:nowrap;
+}
+.cierre-status-ok{background:rgba(34,197,94,.14);color:#86efac;border:1px solid rgba(34,197,94,.38)}
+.cierre-status-warn{background:rgba(245,158,11,.14);color:#fbbf24;border:1px solid rgba(245,158,11,.38)}
+.cierre-status-red{background:rgba(239,68,68,.14);color:#fecaca;border:1px solid rgba(239,68,68,.38)}
+.cierre-summary-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:12px;
+}
+.cierre-summary-item{
+  background:#0d0d0d;
+  border:1px solid #292929;
+  border-radius:14px;
+  padding:10px;
+}
+.cierre-summary-item span{display:block;color:var(--muted);font-size:12px}
+.cierre-summary-item b{font-size:16px}
+.cierre-result-box{
+  border-radius:16px;
+  padding:14px;
+  margin-top:12px;
+  font-weight:900;
+}
+.cierre-result-box small{font-weight:500;color:inherit;opacity:.9}
+.cierre-detail-toggle{
+  margin-top:10px;
+  padding:11px;
+  font-size:13px;
+  background:#1d1d1d;
+  color:#f3d77a;
+  border:1px solid rgba(212,175,55,.35);
+}
+.cierre-detail-box{
+  background:#0d0d0d;
+  border:1px solid #292929;
+  border-radius:14px;
+  padding:12px;
+  margin-top:10px;
+}
+
 .comprobante-box{
   background:#121212;
   border:1px solid rgba(212,175,55,.35);
@@ -492,6 +577,20 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   padding:13px;
 }
 
+
+/* ADMIN MÓVIL · DASHBOARD 009 */
+#adminView{padding-bottom:96px;}
+.admin-mobile-topbar{position:sticky;top:0;z-index:8;margin:-22px -22px 14px;padding:18px 22px 12px;background:linear-gradient(180deg,rgba(5,5,5,.98),rgba(5,5,5,.82));backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.06)}
+.admin-logo-row{display:flex;align-items:center;justify-content:space-between;gap:12px}.admin-logo-mark{display:flex;align-items:center;gap:10px}.admin-logo-circle{width:38px;height:38px;border:2px solid var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:20px}.admin-logo-text{letter-spacing:5px;color:var(--gold);font-size:21px;font-weight:500;line-height:1}.admin-logo-sub{letter-spacing:4px;color:#d8d8d8;font-size:11px;margin-top:5px}
+.admin-bell{position:relative;width:auto!important;min-width:44px;padding:10px 12px!important;border-radius:14px!important;background:#171717!important;color:#ddd!important;border:1px solid #2b2b2b!important}.admin-bell-badge{position:absolute;right:-7px;top:-7px;background:#ef4444;color:white;border-radius:999px;min-width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;border:2px solid #080808}
+.admin-section{display:block}.admin-section.hidden{display:none!important}.admin-card-soft{background:linear-gradient(180deg,rgba(25,25,25,.96),rgba(12,12,12,.96));border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:16px;margin:14px 0;box-shadow:0 14px 34px rgba(0,0,0,.32)}.admin-card-soft h2,.admin-card-soft h3{margin:0 0 10px}
+.admin-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0 4px}.admin-summary-card{position:relative;background:linear-gradient(180deg,#1b1b1b,#111);border:1px solid #292929;border-radius:18px;padding:14px 12px;min-height:112px;display:flex;flex-direction:column;justify-content:space-between}.admin-summary-card .admin-summary-icon{font-size:25px;line-height:1}.admin-summary-card strong{font-size:30px;line-height:1;margin-top:10px}.admin-summary-card span{color:#e7e7e7;font-size:13px;line-height:1.25}.admin-summary-card.red strong,.admin-summary-card.red .admin-summary-icon{color:#ff5548}.admin-summary-card.yellow strong,.admin-summary-card.yellow .admin-summary-icon{color:#f4b400}.admin-summary-card.green strong,.admin-summary-card.green .admin-summary-icon{color:#4ade80}.admin-mini-badge{position:absolute;right:10px;top:10px;min-width:22px;height:22px;border-radius:999px;background:#ef4444;color:white;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center}
+.admin-mobile-list-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.admin-mobile-list-title h3{margin:0}.admin-mobile-list-title button{width:auto;padding:10px 12px;font-size:13px}.admin-cierre-mobile-card{background:#151515;border:1px solid #292929;border-radius:18px;padding:14px;margin:10px 0}.admin-cierre-mobile-main{display:flex;align-items:center;gap:12px}.admin-driver-avatar{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;flex:0 0 auto;color:#fff;background:#2d2d2d}.admin-driver-avatar.red{background:#b91c1c}.admin-driver-avatar.green{background:#2f8f2f}.admin-driver-avatar.yellow{background:#c58a00}.admin-cierre-mobile-info{min-width:0;flex:1}.admin-cierre-mobile-info b{font-size:17px;display:block}.admin-cierre-mobile-info small{display:block;color:#bdbdbd;margin-top:2px}.admin-cierre-mobile-action{width:auto!important;min-width:104px;padding:11px 12px!important;border-radius:12px!important;font-size:14px!important}.admin-cierre-mobile-arrow{color:#999;font-size:28px;line-height:1}
+.admin-vehicle-alert-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#151515;border:1px solid #292929;border-radius:18px;padding:14px;margin:10px 0}.admin-vehicle-alert-row b{display:block}.admin-vehicle-alert-row small{display:block;color:#bbb;margin-top:3px}.admin-alert-km{background:rgba(212,175,55,.18);border:1px solid rgba(212,175,55,.35);color:#f4d46a;border-radius:999px;padding:8px 10px;font-weight:900;white-space:nowrap}
+.admin-bottom-nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:520px;z-index:19;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:rgba(8,8,8,.92);backdrop-filter:blur(14px);border-top:1px solid #242424;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}.admin-bottom-nav button{background:transparent;color:#aaa;border:0;border-radius:16px;padding:10px 6px;font-size:12px;min-height:58px}.admin-bottom-nav button b{display:block;font-size:23px;line-height:1;margin-bottom:4px}.admin-bottom-nav button.active{background:rgba(212,175,55,.18);color:var(--gold)}
+.admin-config-card{background:#151515;border:1px solid #292929;border-radius:18px;margin:10px 0;overflow:hidden}.admin-config-toggle{width:100%;background:#151515;color:#fff;border:0;border-radius:0;padding:15px;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:10px}.admin-config-toggle span{color:#999;font-size:22px}.admin-config-content{padding:0 15px 15px}.admin-config-content.hidden{display:none!important}
+@media(max-width:390px){.app{padding:18px 14px}.admin-mobile-topbar{margin:-18px -14px 12px;padding:16px 14px 10px}.admin-summary-grid{gap:9px}.admin-summary-card{min-height:106px;padding:12px 10px}.admin-cierre-mobile-main{gap:9px}.admin-driver-avatar{width:42px;height:42px;font-size:18px}.admin-cierre-mobile-action{min-width:88px!important;font-size:13px!important}}
+
 </style>
 </head>
 <body>
@@ -501,7 +600,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.64</b> · Build 2026-06-06-ESTABLE-VER-FOTO-COMPROBANTES-006</div>
+    <div class="build-version"><b>v2.8.65</b> · Build 2026-06-06-ESTABLE-ADMIN-CIERRES-UI-007</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -514,7 +613,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.64</b> · ESTABLE-VER-FOTO-COMPROBANTES-006</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.66</b> · ESTABLE-ADMIN-CIERRE-ACORDEON-008</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -696,128 +795,66 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   </section>
 
   <section id="adminView" class="hidden">
-    <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.64</b> · ESTABLE-VER-FOTO-COMPROBANTES-006</div></div>
-      <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
-    </div>
-
-    <div class="card">
-      <h2>Panel Administrador</h2>
-      <p class="note">Vista liviana: premio semanal, vehículos, choferes, 50/50, pagos y alertas. El ranking queda solo para los choferes.</p>
-      <button class="btn-dark" onclick="loadAdmin()">Actualizar administrador</button>
-      <div id="adminMsg"></div>
-    </div>
-
-
-
-    <div class="card">
-      <h3>Vehículos</h3>
-      <p class="note">Control por km cargado desde “Mi auto” de cada chofer. Muestra service, correa dentada y cubiertas, con aviso cuando ya corresponde cambio.</p>
-      <button class="btn-gold" onclick="toggleAdminVehiculosKm()">🚗 Ver vehículos</button>
-      <div id="adminVehiculosKmPanel" class="hidden"></div>
-    </div>
-
-    <div class="card">
-      <h3>Premio semanal</h3>
-      <p id="adminPeriodoSemana" class="note">Cargando período...</p>
-      <div id="adminGanadorSemana" class="leader-card">Cargando ganador...</div>
-      <label>Valor del premio para el ganador</label>
-      <input id="adminPremioInput" type="text" inputmode="numeric" data-number-format="true" placeholder="Ej: 50.000" />
-      <button class="btn-gold" onclick="guardarPremioSemanalAdmin()">Guardar premio semanal</button>
-      <div id="adminPremioMsg"></div>
-    </div>
-
-    <div class="card">
-      <h3>Vehículos y choferes</h3>
-      <p class="note">Tocá “Ver 50/50 y pago”. Ahora abre con caché y acumulados semanales para evitar lecturas pesadas.</p>
-      <div id="adminVehiculosResumen">Cargando vehículos...</div>
-    </div>
-
-    <div class="card">
-      <h3>Tarifas de servicios</h3>
-      <p class="note">Estos precios son las tarifas mínimas para el chofer. Puede cobrar más, pero la app no permite guardar menos.</p>
-      <button class="btn-dark" onclick="loadTarifasAdmin()">Ver / editar tarifas</button>
-      <div id="adminTarifas" style="margin-top:12px"></div>
-    </div>
-
-    <div class="card">
-      <h3>Resumen mensual por auto</h3>
-      <p class="note">Se carga solo cuando lo pedís. Sirve para revisar cuánto facturó y gastó cada auto por mes sin hacer lento el administrador.</p>
-      <label>Mes</label>
-      <input id="adminMesInput" type="month" />
-      <label>Vehículo</label>
-      <select id="adminMesVehiculoSelect"></select>
-      <button class="btn-gold" onclick="calcularResumenMensualAdmin()">Ver resumen mensual</button>
-      <div id="adminMensualResultado"></div>
-    </div>
-
-    <div class="card">
-      <h3>Alta / reasignación de chofer y vehículo</h3>
-      <p class="note">Crea el usuario real y guarda el chofer. Si la patente ya existe, la app reasigna ese auto al nuevo chofer sin borrar “Mi auto”, km actual, service, correa ni cubiertas.</p>
-
-      <label>Nombre del chofer</label>
-      <input id="nuevoChoferNombre" placeholder="Ej: Marcelo" />
-
-      <label>Usuario</label>
-      <input id="nuevoChoferUsuario" placeholder="Ej: marcelo" autocapitalize="none" />
-      <div class="price-note">Entrará como usuario: marcelo / Firebase usa marcelo@explora.local</div>
-
-      <label>Contraseña</label>
-      <input id="nuevoChoferPass" type="password" placeholder="Mínimo 6 caracteres" />
-
-      <label>Patente / ID del vehículo</label>
-      <input id="nuevoVehiculoPatente" placeholder="Ej: AG123CD" autocapitalize="characters" />
-
-      <label>Modelo del vehículo</label>
-      <input id="nuevoVehiculoModelo" placeholder="Ej: Fiat Cronos 2024" />
-
-      <div class="row">
-        <div>
-          <label>Km actual</label>
-          <input id="nuevoVehiculoKm" type="text" inputmode="numeric" data-number-format="true" placeholder="Ej: 165.867" />
+    <div class="admin-mobile-topbar">
+      <div class="admin-logo-row">
+        <div class="admin-logo-mark">
+          <div class="admin-logo-circle">⌖</div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.67</b> · ADMIN-MOVIL-DASHBOARD-009</div></div>
         </div>
-        <div>
-          <label>Último aceite km</label>
-          <input id="nuevoVehiculoAceite" type="text" inputmode="numeric" data-number-format="true" placeholder="Opcional" />
+        <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
+      </div>
+    </div>
+
+    <div id="adminHomeSection" class="admin-section">
+      <div class="admin-card-soft">
+        <div class="admin-mobile-list-title"><div><h2>Resumen</h2><p id="adminPeriodoSemana" class="note" style="margin:4px 0 0">Cargando período...</p></div><button class="btn-dark" onclick="loadAdmin()">Actualizar</button></div>
+        <div id="adminMsg"></div>
+        <div id="adminSummaryCards" class="admin-summary-grid">
+          <div class="admin-summary-card red"><div class="admin-summary-icon">🧾</div><strong>...</strong><span>Pendientes pago</span></div>
+          <div class="admin-summary-card red"><div class="admin-summary-icon">📎</div><strong>...</strong><span>Comprobantes pendientes</span></div>
+          <div class="admin-summary-card yellow"><div class="admin-summary-icon">🔧</div><strong>...</strong><span>Vehículos con alertas</span></div>
+          <div class="admin-summary-card green"><div class="admin-summary-icon">✅</div><strong>...</strong><span>Cierres resueltos</span></div>
         </div>
       </div>
 
-      <button class="btn-gold" onclick="crearChoferVehiculoAdmin()">Crear / reasignar chofer y vehículo</button>
-      <div id="nuevoChoferMsg"></div>
-    </div>
-
-
-    <div class="card">
-      <h3>📎 Comprobantes</h3>
-      <p class="note">Control de comprobantes semanales. Se cargan bajo demanda para no poner lenta la app.</p>
-      <button class="btn-gold" onclick="loadComprobantesAdmin(true)">Ver comprobantes</button>
-      <div id="adminComprobantesList" style="margin-top:12px"></div>
-    </div>
-
-    <div class="card">
-      <h3>🧪 Simulador de semanas</h3>
-      <p class="note">Afecta a Admin y choferes cuando actualizan la app. No cambia la fecha real del teléfono. Usalo solo para pruebas de cierres, ranking, bono y comprobantes.</p>
-      <div id="adminSimBanner" class="sim-banner hidden"></div>
-      <div class="admin-sim-box">
-        <b>Fecha simulada global:</b> <span id="adminSimFecha">Fecha real</span><br>
-        <small id="adminSimDetalle" class="note">Sin simulación activa.</small>
+      <div class="admin-card-soft">
+        <div class="admin-mobile-list-title"><h3>💰 Cierres semanales</h3><button class="btn-dark" onclick="showAdminCierresTab('comprobantes')">📎 Comprobantes</button></div>
+        <p class="note">Vista compacta para móvil. Tocá Resolver o Ver para abrir el detalle del cierre. Solo queda abierto un cierre por vez.</p>
+        <div id="adminCierresPanel" class="admin-module-panel"><div id="adminVehiculosResumen">Cargando cierres...</div></div>
+        <div id="adminComprobantesPanel" class="admin-module-panel hidden">
+          <div class="admin-mobile-list-title"><h3>📎 Comprobantes</h3><button class="btn-dark" onclick="showAdminCierresTab('cierres')">Volver</button></div>
+          <button class="btn-gold" onclick="loadComprobantesAdmin(true)">Actualizar comprobantes</button>
+          <div id="adminComprobantesList" style="margin-top:12px"></div>
+        </div>
       </div>
-      <div class="row">
-        <button class="btn-dark" onclick="simularSemanaAdmin(1)">+1 semana</button>
-        <button class="btn-dark" onclick="simularSemanaAdmin(2)">+2 semanas</button>
+
+      <div class="admin-card-soft">
+        <div class="admin-mobile-list-title"><h3>🚗 Vehículos con alertas</h3><button class="btn-dark" onclick="adminShowSection('vehicles')">Ver todos</button></div>
+        <div id="adminVehiculosAlertasResumen"><p class="note">Cargando vehículos...</p></div>
       </div>
-      <button class="btn-dark" style="margin-top:10px" onclick="simularSemanaAdmin(-1)">-1 semana</button>
-      <button class="btn-gold" style="margin-top:10px" onclick="volverFechaRealAdmin()">Volver a fecha real</button>
-      <button class="btn-dark" style="margin-top:10px" onclick="refrescarPagina()">🔄 Actualizar página</button>
     </div>
 
-    <div class="card">
-      <h3>Herramientas</h3>
-      <button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios EXPLORA</button>
-      <button class="btn-dark" style="margin-top:10px" onclick="verificarYRepararAcumuladosAdmin()">Verificar / reparar acumulados actuales</button>
-      <button class="btn-red" style="margin-top:10px" onclick="eliminarChoferesDemoAdmin()">Eliminar choferes demo anteriores</button>
-      <div id="adminToolsMsg"></div>
+    <div id="adminVehiclesSection" class="admin-section hidden">
+      <div class="admin-card-soft"><div class="admin-mobile-list-title"><h2>🚗 Vehículos</h2><button class="btn-dark" onclick="cargarAdminVehiculosKm(true)">Actualizar</button></div><p class="note">Control por km cargado desde “Mi auto” de cada chofer. Muestra service, correa dentada y cubiertas, con aviso cuando ya corresponde cambio.</p><div id="adminVehiculosKmPanel"></div></div>
     </div>
+
+    <div id="adminConfigSection" class="admin-section hidden">
+      <div class="admin-card-soft"><h2>⚙️ Configuración</h2><p class="note">Todo lo que se usa menos seguido queda agrupado acá para que Inicio sea rápido y limpio.</p><button class="btn-dark" style="margin-top:10px" onclick="logout()">Salir</button></div>
+
+      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigPremio')"><b>🏆 Premio semanal</b><span>›</span></button><div id="adminConfigPremio" class="admin-config-content hidden"><div id="adminGanadorSemana" class="leader-card">Cargando ganador...</div><label>Valor del premio para el ganador</label><input id="adminPremioInput" type="text" inputmode="numeric" data-number-format="true" placeholder="Ej: 50.000" /><button class="btn-gold" onclick="guardarPremioSemanalAdmin()">Guardar premio semanal</button><div id="adminPremioMsg"></div></div></div>
+
+      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigTarifas')"><b>💵 Tarifas de servicios</b><span>›</span></button><div id="adminConfigTarifas" class="admin-config-content hidden"><p class="note">Estos precios son las tarifas mínimas para el chofer. Puede cobrar más, pero la app no permite guardar menos.</p><button class="btn-dark" onclick="loadTarifasAdmin()">Ver / editar tarifas</button><div id="adminTarifas" style="margin-top:12px"></div></div></div>
+
+      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigMensual')"><b>📊 Resumen mensual por auto</b><span>›</span></button><div id="adminConfigMensual" class="admin-config-content hidden"><p class="note">Se carga solo cuando lo pedís. Sirve para revisar cuánto facturó y gastó cada auto por mes sin hacer lento el administrador.</p><label>Mes</label><input id="adminMesInput" type="month" /><label>Vehículo</label><select id="adminMesVehiculoSelect"></select><button class="btn-gold" onclick="calcularResumenMensualAdmin()">Ver resumen mensual</button><div id="adminMensualResultado"></div></div></div>
+
+      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigAlta')"><b>👤 Alta / reasignación de chofer y vehículo</b><span>›</span></button><div id="adminConfigAlta" class="admin-config-content hidden"><p class="note">Crea el usuario real y guarda el chofer. Si la patente ya existe, la app reasigna ese auto al nuevo chofer sin borrar “Mi auto”, km actual, service, correa ni cubiertas.</p><label>Nombre del chofer</label><input id="nuevoChoferNombre" placeholder="Ej: Marcelo" /><label>Usuario</label><input id="nuevoChoferUsuario" placeholder="Ej: marcelo" autocapitalize="none" /><div class="price-note">Entrará como usuario: marcelo / Firebase usa marcelo@explora.local</div><label>Contraseña</label><input id="nuevoChoferPass" type="password" placeholder="Mínimo 6 caracteres" /><label>Patente / ID del vehículo</label><input id="nuevoVehiculoPatente" placeholder="Ej: AG123CD" autocapitalize="characters" /><label>Modelo del vehículo</label><input id="nuevoVehiculoModelo" placeholder="Ej: Fiat Cronos 2024" /><div class="row"><div><label>Km actual</label><input id="nuevoVehiculoKm" type="text" inputmode="numeric" data-number-format="true" placeholder="Ej: 165.867" /></div><div><label>Último aceite km</label><input id="nuevoVehiculoAceite" type="text" inputmode="numeric" data-number-format="true" placeholder="Opcional" /></div></div><button class="btn-gold" onclick="crearChoferVehiculoAdmin()">Crear / reasignar chofer y vehículo</button><div id="nuevoChoferMsg"></div></div></div>
+
+      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigSimulador')"><b>🧪 Simulador de semanas</b><span>›</span></button><div id="adminConfigSimulador" class="admin-config-content hidden"><p class="note">Afecta a Admin y choferes cuando actualizan la app. No cambia la fecha real del teléfono. Usalo solo para pruebas de cierres, ranking, bono y comprobantes.</p><div id="adminSimBanner" class="sim-banner hidden"></div><div class="admin-sim-box"><b>Fecha simulada global:</b> <span id="adminSimFecha">Fecha real</span><br><small id="adminSimDetalle" class="note">Sin simulación activa.</small></div><div class="row"><button class="btn-dark" onclick="simularSemanaAdmin(1)">+1 semana</button><button class="btn-dark" onclick="simularSemanaAdmin(2)">+2 semanas</button></div><button class="btn-dark" style="margin-top:10px" onclick="simularSemanaAdmin(-1)">-1 semana</button><button class="btn-gold" style="margin-top:10px" onclick="volverFechaRealAdmin()">Volver a fecha real</button><button class="btn-dark" style="margin-top:10px" onclick="refrescarPagina()">🔄 Actualizar página</button></div></div>
+
+      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigHerramientas')"><b>🛠️ Herramientas</b><span>›</span></button><div id="adminConfigHerramientas" class="admin-config-content hidden"><button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios EXPLORA</button><button class="btn-dark" style="margin-top:10px" onclick="verificarYRepararAcumuladosAdmin()">Verificar / reparar acumulados actuales</button><button class="btn-red" style="margin-top:10px" onclick="eliminarChoferesDemoAdmin()">Eliminar choferes demo anteriores</button><div id="adminToolsMsg"></div></div></div>
+    </div>
+
+    <div class="admin-bottom-nav"><button id="adminNavHome" class="active" onclick="adminShowSection('home')"><b>⌂</b>Inicio</button><button id="adminNavVehicles" onclick="adminShowSection('vehicles')"><b>🚗</b>Vehículos</button><button id="adminNavConfig" onclick="adminShowSection('config')"><b>⚙️</b>Configuración</button></div>
   </section>
 
 </div>
@@ -4483,6 +4520,86 @@ window.guardarFechaCambioMantenimiento = async function(vehiculoId, key, modo){
   alert("Cambio guardado correctamente. El próximo km quedó recalculado.");
 }
 
+
+window.adminShowSection = function(section){
+  const home = $("adminHomeSection");
+  const vehicles = $("adminVehiclesSection");
+  const config = $("adminConfigSection");
+  const navHome = $("adminNavHome");
+  const navVehicles = $("adminNavVehicles");
+  const navConfig = $("adminNavConfig");
+  if(home) home.classList.toggle("hidden", section !== "home");
+  if(vehicles) vehicles.classList.toggle("hidden", section !== "vehicles");
+  if(config) config.classList.toggle("hidden", section !== "config");
+  if(navHome) navHome.classList.toggle("active", section === "home");
+  if(navVehicles) navVehicles.classList.toggle("active", section === "vehicles");
+  if(navConfig) navConfig.classList.toggle("active", section === "config");
+  if(section === "vehicles") cargarAdminVehiculosKm(false).catch(e=>console.warn("No se pudo cargar vehículos", e));
+};
+
+window.toggleAdminConfig = function(id){
+  const box = $(id);
+  if(!box) return;
+  box.classList.toggle("hidden");
+  setupNumberFormatting(box);
+};
+
+function renderAdminResumenMovil(stats={}){
+  const pendientesPago = Number(stats.pendientesPago || 0);
+  const comprobantesPendientes = Number(stats.comprobantesPendientes || 0);
+  const vehiculosConAlertas = Number(stats.vehiculosConAlertas || 0);
+  const cierresResueltos = Number(stats.cierresResueltos || 0);
+  const totalPendientes = pendientesPago + comprobantesPendientes;
+  const cards = $("adminSummaryCards");
+  const bell = $("adminBellBadge");
+  if(cards){
+    cards.innerHTML = `
+      <div class="admin-summary-card red" onclick="adminShowSection('home')"><div class="admin-summary-icon">🧾</div>${pendientesPago ? `<span class="admin-mini-badge">${pendientesPago}</span>` : ""}<strong>${pendientesPago}</strong><span>Pendientes pago</span></div>
+      <div class="admin-summary-card red" onclick="showAdminCierresTab('comprobantes')"><div class="admin-summary-icon">📎</div>${comprobantesPendientes ? `<span class="admin-mini-badge">${comprobantesPendientes}</span>` : ""}<strong>${comprobantesPendientes}</strong><span>Comprobantes pendientes</span></div>
+      <div class="admin-summary-card yellow" onclick="adminShowSection('vehicles')"><div class="admin-summary-icon">🔧</div>${vehiculosConAlertas ? `<span class="admin-mini-badge" style="background:#f4b400">${vehiculosConAlertas}</span>` : ""}<strong>${vehiculosConAlertas}</strong><span>Vehículos con alertas</span></div>
+      <div class="admin-summary-card green"><div class="admin-summary-icon">✅</div><strong>${cierresResueltos}</strong><span>Cierres resueltos</span></div>
+    `;
+  }
+  if(bell){
+    if(totalPendientes){ bell.classList.remove("hidden"); bell.textContent = totalPendientes; }
+    else { bell.classList.add("hidden"); bell.textContent = "0"; }
+  }
+}
+
+function adminCierreEstadoDesdeCache(choferId, periodo){
+  try{
+    const cached = cacheGet(`admin_5050_${choferId}_${periodo.id}`, 10 * 60 * 1000);
+    if(!cached || !cached.cierre) return null;
+    const c = cached.cierre;
+    const pago = cached.pago || c.pagoSemanal || null;
+    if(pago && pago.pagado === true) return {tipo:"ok", titulo:"Cierre resuelto", subtitulo:"Todo al día", accion:"Ver"};
+    if(Number(c.choferDebe || 0) > 0) return {tipo:"red", titulo:`Debe pagar ${money(c.choferDebe)}`, subtitulo:"Comprobante pendiente", accion:"Resolver"};
+    if(Number(c.davidDebe || 0) > 0) return {tipo:"yellow", titulo:`David debe pagar ${money(c.davidDebe)}`, subtitulo:"Falta subir comprobante", accion:"Revisar"};
+    return {tipo:"ok", titulo:"Cierre equilibrado", subtitulo:"Sin pago pendiente", accion:"Ver"};
+  }catch(e){ return null; }
+}
+
+function renderAdminVehiculosAlertasResumen(snapshot){
+  const box = $("adminVehiculosAlertasResumen");
+  if(!box) return;
+  const vehiculos = (snapshot && snapshot.vehiculos) || [];
+  const choferesPorVehiculo = (snapshot && snapshot.choferesPorVehiculo) || {};
+  const rows = [];
+  vehiculos.forEach(v=>{
+    const c = choferesPorVehiculo[v.id];
+    let analisis = null;
+    try{ analisis = analizarMantenimientoVehiculo(v); }catch(e){}
+    const alertasHtml = renderAlertasVehiculo(v,c);
+    const tieneAlerta = (analisis && analisis.requiereAtencion) || !String(alertasHtml || "").includes("Sin vencimientos");
+    if(!tieneAlerta) return;
+    let detalle = "Revisar mantenimiento";
+    if(analisis && analisis.vencidos > 0) detalle = `${analisis.vencidos} cambio/s vencido/s`;
+    else if(analisis && analisis.proximos > 0) detalle = `${analisis.proximos} cambio/s próximo/s`;
+    rows.push(`<div class="admin-vehicle-alert-row" onclick="adminShowSection('vehicles')"><div><b>${v.modelo || v.id} - ${c ? (c.nombre || c.id) : "Sin chofer"}</b><small>${detalle}</small></div><div class="admin-alert-km">${Number(v.kmActual || 0).toLocaleString("es-AR")} km</div></div>`);
+  });
+  box.innerHTML = rows.slice(0,4).join("") || `<div class="paid-box">✅ Vehículos sin alertas cargadas</div>`;
+}
+
 window.toggleAdminVehiculosKm = async function(){
   const panel = $("adminVehiculosKmPanel");
   if(!panel) return;
@@ -4593,6 +4710,79 @@ window.toggleDetalleVehiculoKm = function(idSafe){
   if(box) box.classList.toggle("hidden");
 }
 
+
+window.showAdminCierresTab = function(tab){
+  adminShowSection("home");
+  const cierres = $("adminCierresPanel");
+  const comps = $("adminComprobantesPanel");
+  const btnCierres = $("adminBtnCierres");
+  const btnComps = $("adminBtnComprobantes");
+  if(cierres) cierres.classList.toggle("hidden", tab !== "cierres");
+  if(comps) comps.classList.toggle("hidden", tab !== "comprobantes");
+  if(btnCierres) btnCierres.classList.toggle("active", tab === "cierres");
+  if(btnComps) btnComps.classList.toggle("active", tab === "comprobantes");
+  if(tab === "comprobantes") loadComprobantesAdmin(false).catch(e=>{
+    const box = $("adminComprobantesList");
+    if(box) box.innerHTML = `<div class="msg err">No se pudieron cargar comprobantes: ${e.message}</div>`;
+  });
+};
+
+window.toggleCierreAdminDetalle = function(idSafe){
+  const box = $("cierreDetalle_" + idSafe);
+  const btn = $("btnDetalleCierre_" + idSafe);
+  if(!box) return;
+  const abrir = box.classList.contains("hidden");
+  box.classList.toggle("hidden", !abrir);
+  if(btn) btn.textContent = abrir ? "Ocultar detalle completo" : "Ver detalle completo";
+};
+
+let adminCierreAbiertoVehiculoSafeId = "";
+
+function cerrarCierresAdminExcepto(exceptSafeId = ""){
+  document.querySelectorAll('[id^="adminCalc_"]').forEach(el=>{
+    const idSafe = el.id.replace("adminCalc_", "");
+    if(idSafe !== exceptSafeId) el.innerHTML = "";
+  });
+  document.querySelectorAll('[data-admin-cierre-btn="1"]').forEach(btn=>{
+    const idSafe = btn.getAttribute("data-vehiculo-safe") || "";
+    if(idSafe !== exceptSafeId){
+      btn.textContent = "Ver";
+      btn.classList.remove("btn-red");
+      btn.classList.add("btn-gold");
+    }
+  });
+  if(adminCierreAbiertoVehiculoSafeId && adminCierreAbiertoVehiculoSafeId !== exceptSafeId){
+    adminCierreAbiertoVehiculoSafeId = "";
+  }
+}
+
+window.toggleCierreVehiculoAdmin = function(vehiculoId, choferId){
+  const idSafe = safeId(vehiculoId);
+  const box = $("adminCalc_" + idSafe);
+  const btn = $("btnAdminCierre_" + idSafe);
+  if(!box) return;
+
+  if(adminCierreAbiertoVehiculoSafeId === idSafe && box.innerHTML.trim()){
+    box.innerHTML = "";
+    adminCierreAbiertoVehiculoSafeId = "";
+    if(btn){
+      btn.textContent = "Ver";
+      btn.classList.remove("btn-red");
+      btn.classList.add("btn-gold");
+    }
+    return;
+  }
+
+  cerrarCierresAdminExcepto(idSafe);
+  adminCierreAbiertoVehiculoSafeId = idSafe;
+  if(btn){
+    btn.textContent = "Cerrar";
+    btn.classList.remove("btn-gold");
+    btn.classList.add("btn-red");
+  }
+  calcularSemanaVehiculoAdmin(vehiculoId, choferId);
+};
+
 async function loadAdmin(){
   const adminMsg = $("adminMsg");
   if(adminMsg) msg(adminMsg,"Actualizando administrador rápido...",true);
@@ -4668,12 +4858,27 @@ async function cargarVehiculosAdminSimple(periodo){
   const selectMes = $("adminMesVehiculoSelect");
   if(selectMes) selectMes.innerHTML = "";
 
+  const stats = {pendientesPago:0, comprobantesPendientes:0, vehiculosConAlertas:0, cierresResueltos:0};
+
   vehSnap.forEach(d=>{
     const v = {id:d.id,...d.data()};
     vehiculosAdminTemp.push(v);
     const c = choferesPorVehiculo[v.id] || null;
     const choferId = c ? c.id : "";
     const alertas = renderAlertasVehiculo(v,c);
+    const tieneAlerta = !String(alertas || "").includes("Sin vencimientos");
+    if(tieneAlerta) stats.vehiculosConAlertas++;
+
+    const estadoCache = c ? adminCierreEstadoDesdeCache(choferId, periodo) : null;
+    let tipo = estadoCache ? estadoCache.tipo : "green";
+    let titulo = estadoCache ? estadoCache.titulo : "Tocá para revisar";
+    let subtitulo = estadoCache ? estadoCache.subtitulo : (c ? "50/50 y comprobante" : "Sin chofer asignado");
+    let accion = estadoCache ? estadoCache.accion : "Ver";
+    if(estadoCache){
+      if(estadoCache.tipo === "red"){ stats.pendientesPago++; stats.comprobantesPendientes++; }
+      else if(estadoCache.tipo === "yellow"){ stats.pendientesPago++; stats.comprobantesPendientes++; }
+      else stats.cierresResueltos++;
+    }
 
     if(selectMes){
       const opt = document.createElement("option");
@@ -4682,20 +4887,19 @@ async function cargarVehiculosAdminSimple(periodo){
       selectMes.appendChild(opt);
     }
 
+    const avatarTxt = (c ? (c.nombre || c.id) : v.id || "?").trim().slice(0,1).toUpperCase() || "?";
     html += `
-      <div class="vehicle-card" id="adminVehicle_${safeId(v.id)}">
-        <div class="admin-vehicle-head">
-          <div>
-            <b>${v.id}</b><br>
-            <small>${v.modelo || "Vehículo"}</small><br>
-            <small>Chofer: <b>${c ? (c.nombre || c.id) : "sin asignar"}</b></small><br>
-            <small>Estado: ${c ? (c.estado || "sin estado") : "sin chofer"}</small>
+      <div class="admin-cierre-mobile-card" id="adminVehicle_${safeId(v.id)}">
+        <div class="admin-cierre-mobile-main">
+          <div class="admin-driver-avatar ${tipo === "red" ? "red" : tipo === "yellow" ? "yellow" : "green"}">${avatarTxt}</div>
+          <div class="admin-cierre-mobile-info">
+            <b>${c ? (c.nombre || c.id) : v.id}</b>
+            <small style="color:${tipo === "red" ? "#ff6b5f" : tipo === "yellow" ? "#f4b400" : "#4ade80"}">${titulo}</small>
+            <small>${subtitulo}</small>
+            <small>Vehículo: ${v.modelo || v.id}</small>
           </div>
-          <span class="pill ${c && c.estado === "servicio" ? "pill-red" : c && c.estado === "disponible" ? "pill-green" : "pill-gray"}">${c ? (c.estado === "servicio" ? "En servicio" : c.estado === "disponible" ? "Disponible" : "Inactivo") : "Sin chofer"}</span>
-        </div>
-        ${alertas}
-        <div class="admin-actions">
-          <button class="btn-gold" onclick="calcularSemanaVehiculoAdmin('${v.id}','${choferId}')">Ver 50/50 y pago</button>
+          <button id="btnAdminCierre_${safeId(v.id)}" class="${tipo === "red" ? "btn-red" : tipo === "yellow" ? "btn-gold" : "btn-dark"} admin-cierre-mobile-action" data-admin-cierre-btn="1" data-vehiculo-safe="${safeId(v.id)}" onclick="toggleCierreVehiculoAdmin('${v.id}','${choferId}')">${accion}</button>
+          <div class="admin-cierre-mobile-arrow">›</div>
         </div>
         <div id="adminCalc_${safeId(v.id)}"></div>
       </div>
@@ -4705,7 +4909,10 @@ async function cargarVehiculosAdminSimple(periodo){
   adminVehiculosCache = vehiculosAdminTemp;
   adminChoferesPorVehiculoCache = choferesPorVehiculo;
   cacheSet("admin_vehiculos_km_snapshot", {vehiculos:adminVehiculosCache, choferesPorVehiculo:adminChoferesPorVehiculoCache});
+  renderAdminResumenMovil(stats);
+  renderAdminVehiculosAlertasResumen({vehiculos:adminVehiculosCache, choferesPorVehiculo:adminChoferesPorVehiculoCache});
   $("adminVehiculosResumen").innerHTML = html || `<p class="note">Todavía no hay vehículos cargados.</p>`;
+  adminCierreAbiertoVehiculoSafeId = "";
 }
 
 function safeId(value){ return String(value || "").replace(/[^a-zA-Z0-9_-]/g,"_"); }
@@ -4812,20 +5019,22 @@ window.reconstruirSemanaVehiculoAdmin = async function(vehiculoId, choferId){
 }
 
 function renderResumenSemanalAdmin(vehiculoId,c,pago){
-  const puedeCerrarHoy = puedeCerrarPeriodo(c.periodo);
   const yaPagado = pago && pago.pagado === true;
 
   let tituloDeuda = "";
   let montoDeuda = 0;
   let sentido = "";
   let deudaClass = "pending-box";
+  let statusClass = "cierre-status-warn";
+  let statusText = "⏳ Pendiente";
+  let accionRapida = "";
 
   if(c.choferDebe > 0){
-    tituloDeuda = "El chofer debe pasarte a vos";
+    tituloDeuda = "El chofer debe pagar a David";
     montoDeuda = c.choferDebe;
     sentido = "chofer_a_david";
   }else if(c.davidDebe > 0){
-    tituloDeuda = "Vos debés pasarle al chofer";
+    tituloDeuda = "David debe pagar al chofer";
     montoDeuda = c.davidDebe;
     sentido = "david_a_chofer";
   }else{
@@ -4833,48 +5042,79 @@ function renderResumenSemanalAdmin(vehiculoId,c,pago){
     montoDeuda = 0;
     sentido = "sin_diferencia";
     deudaClass = "paid-box";
+    statusClass = "cierre-status-ok";
+    statusText = "✅ Sin diferencia";
   }
 
-  let pagoAccion = "";
-
   if(yaPagado){
-    pagoAccion = `
+    deudaClass = "paid-box";
+    statusClass = "cierre-status-ok";
+    statusText = "✅ Cerrado";
+    accionRapida = `
       <div class="paid-box">
-        ✅ Pago realizado<br>
+        ✅ Pago/comprobante registrado<br>
         <small>${pago.fechaPago || ""} ${pago.horaPago || ""} · Marcado por: ${pago.marcadoPor || ""}</small>
-        ${comprobanteLinkHtml(pago)}
+        ${comprobanteLinkHtml(pago, "Ver foto")}
       </div>
     `;
   }else if(sentido === "sin_diferencia"){
-    pagoAccion = `<div class="paid-box">✅ Sin pago pendiente</div>`;
+    accionRapida = `<div class="paid-box">✅ No requiere pago ni comprobante</div>`;
   }else if(sentido === "david_a_chofer"){
+    statusClass = "cierre-status-red";
+    statusText = "📎 Falta comprobante";
     const inputId = `compAdmin_${safeId(c.chofer)}_${safeId(c.periodo.id)}`;
-    pagoAccion = uploadComprobanteHtml({
+    accionRapida = uploadComprobanteHtml({
       inputId,
-      buttonText:"Subir comprobante y marcar pagado",
+      buttonText:"Subir comprobante y cerrar",
       onClick:`subirComprobantePagoAdmin('${c.chofer}','${c.periodo.id}','${sentido}',${Math.round(montoDeuda)},'${inputId}')`,
-      nota:"Como David debe pagarle al chofer, el comprobante lo carga obligatoriamente el administrador."
+      nota:"David debe pagar este cierre. Al subir la foto queda marcado como pagado."
     });
   }else if(sentido === "chofer_a_david"){
-    pagoAccion = `<div class="pending-box">📎 El chofer debe cargar el comprobante desde su app. Puede seguir operando, pero a las 24 h queda suspendido del bono semanal si no lo sube.</div>`;
+    statusClass = "cierre-status-warn";
+    statusText = "⏳ Esperando chofer";
+    accionRapida = `<div class="pending-box">📎 El chofer debe cargar el comprobante desde su app.<br><small>Puede seguir operando; si pasan 24 h sin comprobante queda suspendido del bono semanal.</small></div>`;
   }else{
-    pagoAccion = `<div class="paid-box">✅ Sin pago pendiente</div>`;
+    accionRapida = `<div class="paid-box">✅ Sin pago pendiente</div>`;
   }
 
-  return `
-    <div class="trip">
-      <b>Semana ${c.periodo.start} al ${c.periodo.end}</b><br>
-      <small>Vehículo: ${vehiculoId}</small><br>
-      <small>Recaudado: ${money(c.totalViajes)} · Gastos: ${money(c.totalGastos)}</small><br>
-      <small>Efectivo chofer: ${money(c.efectivo)} · Transferencia/Tarjeta David: ${money(c.transferencia + c.tarjeta)}</small><br>
-      <small>Neto 50/50: ${money(c.neto)} · Parte chofer: ${money(c.mitadChofer)} · Parte David: ${money(c.mitadDavid)}</small>
+  const detalleId = `${safeId(vehiculoId)}_${safeId(c.chofer)}_${safeId(c.periodo.id)}`;
+  const periodoTxt = `${c.periodo.start} al ${c.periodo.end}`;
 
-      <div class="${deudaClass}" style="margin-top:10px">
-        <b>${tituloDeuda}</b><br>
-        <span style="font-size:22px">${money(montoDeuda)}</span>
+  return `
+    <div class="cierre-admin-card">
+      <div class="cierre-admin-head">
+        <div>
+          <b>${c.chofer || "Chofer"}</b><br>
+          <small>Vehículo: ${vehiculoId}</small><br>
+          <small>Semana: ${periodoTxt}</small>
+        </div>
+        <span class="cierre-status ${statusClass}">${statusText}</span>
       </div>
 
-      ${pagoAccion}
+      <div class="cierre-result-box ${deudaClass}">
+        <small>Resultado 50/50</small><br>
+        ${tituloDeuda}<br>
+        <span style="font-size:24px">${money(montoDeuda)}</span>
+      </div>
+
+      ${accionRapida}
+
+      <div class="cierre-summary-grid">
+        <div class="cierre-summary-item"><span>Facturación</span><b>${money(c.totalViajes)}</b></div>
+        <div class="cierre-summary-item"><span>Gastos</span><b>${money(c.totalGastos)}</b></div>
+        <div class="cierre-summary-item"><span>Neto</span><b>${money(c.neto)}</b></div>
+        <div class="cierre-summary-item"><span>Viajes</span><b>${Number(c.cantidadViajes || 0)}</b></div>
+      </div>
+
+      <button id="btnDetalleCierre_${detalleId}" class="cierre-detail-toggle" onclick="toggleCierreAdminDetalle('${detalleId}')">Ver detalle completo</button>
+      <div id="cierreDetalle_${detalleId}" class="cierre-detail-box hidden">
+        <small>Efectivo en chofer: ${money(c.efectivo)}</small><br>
+        <small>Transferencia/Tarjeta en David: ${money(Number(c.transferencia || 0) + Number(c.tarjeta || 0))}</small><br>
+        <small>Parte chofer: ${money(c.mitadChofer)}</small><br>
+        <small>Parte David: ${money(c.mitadDavid)}</small><br>
+        <small>Premio aplicado: ${money(c.premioAplicado || 0)}</small><br>
+        <small>Ganador semana: ${c.ganadorSemana || "Sin calcular / sin ganador"}</small>
+      </div>
     </div>
   `;
 }
