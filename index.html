@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.63
-Build: 2026-06-06-ESTABLE-CIERRE-RESOLVER-GLOBAL-004
+Version: 2.8.64
+Build: 2026-06-06-ESTABLE-VER-FOTO-COMPROBANTES-006
 Fecha: 06/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
@@ -35,12 +35,13 @@ Cambios:
 - Corrección: Ranking semanal visible ahora usa período global activo único para todos los choferes; el cierre pendiente queda separado para no mostrar semanas distintas por perfil.
 - Corrección: si existe un cierre semanal pero el chofer no lo aceptó, sigue apareciendo como pendiente para todos los choferes.
 - Corrección: comprobantes con fallback Firestore si Storage queda bloqueado o tarda; muestra error real y nunca queda infinito en Subiendo.
+- Corrección: botón “Ver foto” abre visor interno compatible con Storage y respaldo Firestore, tanto en Admin como en Chofer.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.63 · Build 2026-06-06-ESTABLE-COMPROBANTES-FALLBACK-005</title>
+<title>EXPLORA v2.8.64 · Build 2026-06-06-ESTABLE-VER-FOTO-COMPROBANTES-006</title>
 <style>
 :root{
   --bg:#080808;
@@ -500,7 +501,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.63</b> · Build 2026-06-06-ESTABLE-COMPROBANTES-FALLBACK-005</div>
+    <div class="build-version"><b>v2.8.64</b> · Build 2026-06-06-ESTABLE-VER-FOTO-COMPROBANTES-006</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -513,7 +514,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.63</b> · ESTABLE-COMPROBANTES-FALLBACK-005</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.64</b> · ESTABLE-VER-FOTO-COMPROBANTES-006</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -696,7 +697,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.63</b> · ESTABLE-COMPROBANTES-FALLBACK-005</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.64</b> · ESTABLE-VER-FOTO-COMPROBANTES-006</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -3023,11 +3024,93 @@ async function subirComprobantePago({chofer, periodoId, sentido, monto, file, ma
   return data;
 }
 
-function comprobanteLinkHtml(pago){
-  const url = pago && (pago.comprobanteUrl || pago.url);
-  if(!url) return "";
-  return `<button class="btn-dark" style="margin-top:10px" onclick="window.open('${url}','_blank')">Ver comprobante</button>`;
+function jsArg(value){
+  return String(value || "")
+    .replace(/\\/g,"\\\\")
+    .replace(/'/g,"\\'")
+    .replace(/\n/g," ")
+    .replace(/\r/g," ");
 }
+
+function getPagoComprobanteId(pago){
+  if(!pago) return "";
+  if(pago.id) return String(pago.id);
+  if(pago.chofer && pago.periodoId) return comprobanteId(pago.chofer, pago.periodoId);
+  return "";
+}
+
+function comprobanteLinkHtml(pago, texto="Ver foto"){
+  const id = getPagoComprobanteId(pago);
+  const url = pago && (pago.comprobanteUrl || pago.url);
+  if(!id && !url) return "";
+  return `<button class="btn-dark" style="margin-top:10px" onclick="verFotoComprobante('${jsArg(id)}','${jsArg(url)}')">${texto || "Ver foto"}</button>`;
+}
+
+function ensureComprobanteFotoModal(){
+  let modal = $("comprobanteFotoModal");
+  if(modal) return modal;
+  modal = document.createElement("div");
+  modal.id = "comprobanteFotoModal";
+  modal.className = "modal hidden";
+  modal.innerHTML = `
+    <div class="card">
+      <h2>Foto del comprobante</h2>
+      <div id="comprobanteFotoContenido"><div class="msg ok">Cargando foto...</div></div>
+      <button class="btn-dark" style="margin-top:12px" onclick="cerrarFotoComprobante()">Cerrar</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  return modal;
+}
+
+window.cerrarFotoComprobante = function(){
+  const modal = $("comprobanteFotoModal");
+  if(modal) modal.classList.add("hidden");
+};
+
+window.verFotoComprobante = async function(pagoId, urlDirecta=""){
+  const modal = ensureComprobanteFotoModal();
+  const contenido = $("comprobanteFotoContenido");
+  modal.classList.remove("hidden");
+  contenido.innerHTML = `<div class="msg ok">Cargando foto...</div>`;
+
+  try{
+    let url = String(urlDirecta || "");
+    const id = String(pagoId || "");
+
+    // Si el botón viene de caché vieja o sin URL, lee primero pagos_semanales
+    // y luego el respaldo comprobantes_pagos. Esto funciona igual para Admin y chofer.
+    if(id){
+      if(!url){
+        const pagoSnap = await withTimeout(getDoc(doc(db,"pagos_semanales",id)), 7000, "No se pudo leer el pago semanal.");
+        if(pagoSnap.exists()){
+          const pago = pagoSnap.data();
+          url = pago.comprobanteUrl || pago.url || "";
+        }
+      }
+      if(!url){
+        const compSnap = await withTimeout(getDoc(doc(db,"comprobantes_pagos",id)), 7000, "No se pudo leer el comprobante guardado.");
+        if(compSnap.exists()){
+          const comp = compSnap.data();
+          url = comp.comprobanteUrl || comp.url || "";
+        }
+      }
+    }
+
+    if(!url) throw new Error("Este pago no tiene foto guardada todavía.");
+
+    const esImagen = url.startsWith("data:image/") || /^https?:\/\//i.test(url);
+    if(!esImagen) throw new Error("El enlace de la foto no es válido.");
+
+    contenido.innerHTML = `
+      <img class="comprobante-thumb" src="${url}" alt="Comprobante" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'msg err',textContent:'No se pudo mostrar la imagen. Probá actualizar comprobantes.'}))" />
+      ${/^https?:\/\//i.test(url) ? `<button class="btn-dark" style="margin-top:10px" onclick="window.open('${jsArg(url)}','_blank')">Abrir en pestaña</button>` : ""}
+      <div class="note" style="margin-top:10px">Si la imagen no aparece, tocá Actualizar comprobantes y volvé a intentar.</div>
+    `;
+  }catch(e){
+    contenido.innerHTML = `<div class="msg err">No se pudo mostrar la foto: ${e.message}</div>`;
+  }
+};
 
 function uploadComprobanteHtml({inputId, buttonText, onClick, nota}){
   return `
@@ -3160,7 +3243,7 @@ function renderComprobantesLista(box, items, soloPropios){
         nota:"David debe pagar este cierre. Subí la foto comprimida para marcarlo como pagado."
       });
     }else if(url){
-      accion = `<button class="btn-dark" style="margin-top:10px" onclick="window.open('${url}','_blank')">Ver foto</button>`;
+      accion = comprobanteLinkHtml(x, "Ver foto");
     }else if(x.sentido === "chofer_a_david" && x.pagado !== true){
       accion = `<div class="pending-box" style="margin-top:10px">Pendiente de comprobante del chofer.${pagoPendienteSuspendido(x) ? '<br>🚫 Suspendido del bono semanal.' : ''}</div>`;
     }
