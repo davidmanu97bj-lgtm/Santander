@@ -41,6 +41,7 @@ Cambios:
 - Corrección: comprobantes con fallback Firestore si Storage queda bloqueado o tarda; muestra error real y nunca queda infinito en Subiendo.
 - Corrección: botón “Ver foto” abre visor interno compatible con Storage y respaldo Firestore, tanto en Admin como en Chofer.
 - Corrección: modo prueba fecha por chofer se resincroniza después de encontrar el ID real del chofer; ahora el cierre sábado/comprobante toma la fecha del iPhone del usuario autorizado.
+- Herramienta Admin: reset total de lanzamiento que elimina choferes, vehículos y toda actividad, conservando únicamente el usuario admin.
 -->
 <html lang="es">
 <head>
@@ -1409,7 +1410,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
       <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigModoPruebaFecha')"><b>🧪 Modo prueba de fecha por chofer</b><span>›</span></button><div id="adminConfigModoPruebaFecha" class="admin-config-content hidden"><p class="note">Para probar el cierre obligatorio con comprobante desde un usuario chofer real. Solo el chofer habilitado usa la fecha de su iPhone. Todos los demás siguen con fecha segura de Firebase.</p><label>Chofer para probar</label><select id="modoPruebaFechaChoferSelect"></select><div class="row"><button class="btn-gold" onclick="activarModoPruebaFechaChoferAdmin()">Activar prueba</button><button class="btn-red" onclick="desactivarModoPruebaFechaChoferAdmin()">Desactivar</button></div><button class="btn-dark" style="margin-top:10px" onclick="cargarModoPruebaFechaAdmin(true)">Actualizar estado</button><div id="modoPruebaFechaMsg"></div><div id="modoPruebaFechaEstado" class="note" style="margin-top:12px">Tocá actualizar para ver el estado.</div></div></div>
 
-      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigHerramientas')"><b>🛠️ Herramientas</b><span>›</span></button><div id="adminConfigHerramientas" class="admin-config-content hidden"><button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios EXPLORA</button><button class="btn-dark" style="margin-top:10px" onclick="verificarYRepararAcumuladosAdmin()">Verificar / reparar acumulados actuales</button><button class="btn-red" style="margin-top:10px" onclick="resetearDatosOperativosAdmin()">🧹 Preparar lanzamiento / resetear datos operativos</button><button class="btn-red" style="margin-top:10px" onclick="eliminarChoferesDemoAdmin()">Eliminar choferes demo anteriores</button><div id="adminToolsMsg"></div></div></div>
+      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigHerramientas')"><b>🛠️ Herramientas</b><span>›</span></button><div id="adminConfigHerramientas" class="admin-config-content hidden"><button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios EXPLORA</button><button class="btn-dark" style="margin-top:10px" onclick="verificarYRepararAcumuladosAdmin()">Verificar / reparar acumulados actuales</button><button class="btn-red" style="margin-top:10px" onclick="resetearAppLanzamientoAdmin()">🧨 Lanzar app desde cero / borrar todo menos Admin</button><button class="btn-red" style="margin-top:10px" onclick="resetearDatosOperativosAdmin()">🧹 Resetear solo datos operativos</button><button class="btn-red" style="margin-top:10px" onclick="eliminarChoferesDemoAdmin()">Eliminar choferes demo anteriores</button><div id="adminToolsMsg"></div></div></div>
     </div>
 
     <div class="admin-bottom-nav"><button id="adminNavHome" class="active" onclick="adminShowSection('home')"><b>⌂</b>Inicio</button><button id="adminNavVehicles" onclick="adminShowSection('vehicles')"><b>🚗</b>Vehículos</button><button id="adminNavConfig" onclick="adminShowSection('config')"><b>⚙️</b>Configuración</button></div>
@@ -6831,6 +6832,169 @@ window.resetearDatosOperativosAdmin = async function(){
     if(btn){ btn.disabled = false; btn.textContent = "🧹 Preparar lanzamiento / resetear datos operativos"; }
   }
 };
+
+async function borrarColeccionExcepto(nombreColeccion, conservarIds=[], opciones={}){
+  const conservar = new Set((conservarIds || []).map(x=>String(x || "").trim()).filter(Boolean));
+  const snap = await getDocs(collection(db, nombreColeccion));
+  const docs = [];
+  snap.forEach(d=>{
+    if(!conservar.has(d.id)) docs.push(d.id);
+  });
+  const batchSize = Number(opciones.batchSize || 20);
+  let borrados = 0;
+  for(let i=0;i<docs.length;i+=batchSize){
+    const lote = docs.slice(i, i + batchSize).map(id=>deleteDoc(doc(db, nombreColeccion, id)));
+    await Promise.all(lote);
+    borrados += lote.length;
+    if(typeof opciones.onProgress === "function") opciones.onProgress(nombreColeccion, borrados, docs.length);
+  }
+  return docs.length;
+}
+
+async function limpiarConfiguracionDeActividadLanzamiento(opciones={}){
+  const snap = await getDocs(collection(db,"configuracion"));
+  const conservar = new Set(["servicios_tarifas"]);
+  const docs = [];
+  snap.forEach(d=>{
+    const id = String(d.id || "");
+    if(conservar.has(id)) return;
+    docs.push(id);
+  });
+  const batchSize = Number(opciones.batchSize || 20);
+  let borrados = 0;
+  for(let i=0;i<docs.length;i+=batchSize){
+    const lote = docs.slice(i, i + batchSize).map(id=>deleteDoc(doc(db,"configuracion",id)));
+    await Promise.all(lote);
+    borrados += lote.length;
+    if(typeof opciones.onProgress === "function") opciones.onProgress("configuracion", borrados, docs.length);
+  }
+  return docs.length;
+}
+
+window.resetearAppLanzamientoAdmin = async function(){
+  const box = $("adminToolsMsg");
+  if(!currentProfile || currentProfile.rol !== "admin"){
+    if(box) msg(box,"Solo Admin puede lanzar el reset total.");
+    return;
+  }
+
+  const adminId = currentUserId || "admin";
+  const aviso = "RESET TOTAL DE LANZAMIENTO\n\nSe BORRA de Firebase:\n- todos los choferes excepto el Admin actual\n- todos los vehículos\n- viajes y gastos\n- cierres, pagos y comprobantes\n- fondos operativos\n- derivaciones\n- acumulados/ranking\n- fechas de prueba y registros de fecha\n\nSe CONSERVA:\n- el usuario Admin actual\n- tarifas/servicios base\n\nLos usuarios Auth de chofer que existían pueden quedar en Authentication, pero sin documento de chofer no podrán entrar a la app.";
+  if(!confirm(aviso)) return;
+
+  const escrito = prompt('Para confirmar escribí exactamente: LANZAR');
+  if(escrito !== "LANZAR"){
+    if(box) msg(box,"Reset total cancelado. No se borró nada.",true);
+    return;
+  }
+
+  const doble = confirm("Última confirmación: ¿borrar choferes, vehículos y toda actividad, conservando solo Admin?");
+  if(!doble) return;
+
+  const btn = Array.from(document.querySelectorAll('button')).find(b=>String(b.getAttribute('onclick') || '').includes('resetearAppLanzamientoAdmin'));
+  if(btn){ btn.disabled = true; btn.textContent = "Borrando todo..."; }
+
+  const coleccionesBorrarCompleto = [
+    "viajes",
+    "gastos",
+    "fondos_operativos",
+    "acumulados_semanales",
+    "acumulados_mensuales",
+    "cierres_semanales",
+    "pagos_semanales",
+    "comprobantes_pagos",
+    "derivaciones",
+    "kilometrajes",
+    "resumenes_mensuales",
+    "vehiculos",
+    "sistema_fecha"
+  ];
+
+  const resultado = {};
+  try{
+    if(box) msg(box,"Iniciando reset total de lanzamiento...",true);
+
+    const adminRef = doc(db,"choferes",adminId);
+    await setDoc(adminRef,{
+      ...(currentProfile || {}),
+      rol:"admin",
+      activo:true,
+      ultimoResetTotalLanzamiento: today(),
+      actualizado: serverTimestamp()
+    },{merge:true});
+
+    for(const nombre of coleccionesBorrarCompleto){
+      if(box) msg(box,`Borrando ${nombre}...`,true);
+      resultado[nombre] = await borrarColeccionCompleta(nombre, {
+        batchSize: 20,
+        onProgress:(col,borrados,total)=>{
+          if(box && total > 20) msg(box,`Borrando ${col}: ${borrados}/${total}...`,true);
+        }
+      });
+    }
+
+    if(box) msg(box,"Borrando choferes y conservando Admin...",true);
+    resultado.choferes = await borrarColeccionExcepto("choferes", [adminId], {
+      batchSize: 20,
+      onProgress:(col,borrados,total)=>{
+        if(box && total > 20) msg(box,`Borrando ${col}: ${borrados}/${total}...`,true);
+      }
+    });
+
+    if(box) msg(box,"Limpiando configuraciones de actividad y modo prueba...",true);
+    resultado.configuracion_actividad = await limpiarConfiguracionDeActividadLanzamiento({
+      batchSize: 20,
+      onProgress:(col,borrados,total)=>{
+        if(box && total > 20) msg(box,`Borrando ${col}: ${borrados}/${total}...`,true);
+      }
+    });
+
+    const marca = `${Date.now()}_${today()}_reset_total`;
+    await setDoc(doc(db,"configuracion","reset_operativo"),{
+      marca,
+      tipo:"reset_total_lanzamiento",
+      fecha: today(),
+      realizadoPor: adminId,
+      conservaAdmin: adminId,
+      actualizadoTexto: new Date().toLocaleString("es-AR"),
+      actualizado: serverTimestamp(),
+      colecciones: resultado
+    },{merge:true});
+
+    await setDoc(doc(db,"configuracion","modo_prueba_fecha_choferes"),{
+      activo:false,
+      choferes:{},
+      actualizadoTexto: new Date().toLocaleString("es-AR"),
+      actualizado: serverTimestamp()
+    },{merge:true});
+
+    const keys = [];
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(k && (k.startsWith(CACHE_PREFIX) || k.startsWith("explora_"))) keys.push(k);
+    }
+    keys.forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
+    localStorage.setItem("explora_reset_operativo_marca", marca);
+
+    modoPruebaFechaConfig = {activo:false, choferes:{}, actualizadoTexto:""};
+    periodoOperativoCache = null;
+    cierreSemanalCache = null;
+    derivationInboxSignature = "";
+    adminBaseLoadedAt = 0;
+    adminVehiculosKmLoadedAt = 0;
+    adminVehiculosCache = [];
+    adminChoferesPorVehiculoCache = {};
+
+    const detalle = Object.entries(resultado).map(([k,v])=>`${k}: ${v}`).join("<br>");
+    if(box) msg(box,`✅ Reset total completo. La app quedó lista para lanzamiento.<br><br>${detalle}<br><br><small>Se conservó el Admin actual: <b>${adminId}</b>. Ahora podés crear los choferes desde Alta / reasignación.</small>`,true);
+    setTimeout(()=>loadAdmin().catch(e=>console.warn("No se pudo refrescar Admin tras reset total", e)), 300);
+  }catch(e){
+    if(box) msg(box,"No se pudo completar el reset total: " + (e.message || e));
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = "🧨 Lanzar app desde cero / borrar todo menos Admin"; }
+  }
+};
+
 
 window.eliminarChoferesDemoAdmin = async function(){
   const box = $("adminToolsMsg");
