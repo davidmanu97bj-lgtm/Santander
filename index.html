@@ -2,7 +2,7 @@
 <!--
 EXPLORA BUILD
 Version: 2.8.78
-Build: 2026-06-06-CHOFER-FAST-PANELS-020
+Build: 2026-06-06-SIN-SIMULADOR-FECHA-IPHONE-CIERRE-021
 Fecha: 06/06/2026
 Cambios:
 - Se agrega botón “Mi cierre semanal” en Chofer para ver el cierre provisorio de la semana activa sin esperar al sábado.
@@ -45,7 +45,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.78 · Build 2026-06-06-CHOFER-FAST-PANELS-020</title>
+<title>EXPLORA v2.8.79 · Build 2026-06-06-SIN-SIMULADOR-FECHA-IPHONE-CIERRE-021</title>
 <style>
 :root{
   --bg:#080808;
@@ -388,24 +388,6 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 .ranking-bonus-box .bonus-money{color:#f3d77a;font-weight:900;margin-top:5px}
 .ranking-bonus-box small{color:var(--muted)}
 
-.admin-sim-box{
-  background:rgba(59,130,246,.10);
-  border:1px solid rgba(59,130,246,.35);
-  border-radius:16px;
-  padding:14px;
-  margin:10px 0;
-}
-.admin-sim-box b{color:#bfdbfe}
-.sim-banner{
-  background:rgba(245,158,11,.16);
-  border:1px solid rgba(245,158,11,.42);
-  color:#fbbf24;
-  padding:10px;
-  border-radius:14px;
-  font-size:13px;
-  margin:8px 0 12px;
-  font-weight:800;
-}
 
 .cierre-pendiente-banner{
   background:rgba(239,68,68,.12);
@@ -1126,7 +1108,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.65</b> · Build 2026-06-06-ESTABLE-ADMIN-CIERRES-UI-007</div>
+    <div class="build-version"><b>v2.8.79</b> · Build 2026-06-06-SIN-SIMULADOR-FECHA-IPHONE-CIERRE-021</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1423,7 +1405,6 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
       <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigAlta')"><b>👤 Alta / reasignación de chofer y vehículo</b><span>›</span></button><div id="adminConfigAlta" class="admin-config-content hidden"><p class="note">Crea el usuario real y guarda el chofer. Si la patente ya existe, la app reasigna ese auto al nuevo chofer sin borrar “Mi auto”, km actual, service, correa ni cubiertas.</p><label>Nombre del chofer</label><input id="nuevoChoferNombre" placeholder="Ej: Marcelo" /><label>Usuario</label><input id="nuevoChoferUsuario" placeholder="Ej: marcelo" autocapitalize="none" /><div class="price-note">Entrará como usuario: marcelo / Firebase usa marcelo@explora.local</div><label>Contraseña</label><input id="nuevoChoferPass" type="password" placeholder="Mínimo 6 caracteres" /><label>Patente / ID del vehículo</label><input id="nuevoVehiculoPatente" placeholder="Ej: AG123CD" autocapitalize="characters" /><label>Modelo del vehículo</label><input id="nuevoVehiculoModelo" placeholder="Ej: Fiat Cronos 2024" /><div class="row"><div><label>Km actual</label><input id="nuevoVehiculoKm" type="text" inputmode="numeric" data-number-format="true" placeholder="Ej: 165.867" /></div><div><label>Último aceite km</label><input id="nuevoVehiculoAceite" type="text" inputmode="numeric" data-number-format="true" placeholder="Opcional" /></div></div><button class="btn-gold" onclick="crearChoferVehiculoAdmin()">Crear / reasignar chofer y vehículo</button><div id="nuevoChoferMsg"></div></div></div>
 
-      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigSimulador')"><b>🧪 Simulador de semanas</b><span>›</span></button><div id="adminConfigSimulador" class="admin-config-content hidden"><p class="note">Afecta a Admin y choferes cuando actualizan la app. No cambia la fecha real del teléfono. Usalo solo para pruebas de cierres, ranking, bono y comprobantes.</p><div id="adminSimBanner" class="sim-banner hidden"></div><div class="admin-sim-box"><b>Fecha simulada global:</b> <span id="adminSimFecha">Fecha real</span><br><small id="adminSimDetalle" class="note">Sin simulación activa.</small></div><div class="row"><button class="btn-dark" onclick="simularSemanaAdmin(1)">+1 semana</button><button class="btn-dark" onclick="simularSemanaAdmin(2)">+2 semanas</button></div><button class="btn-dark" style="margin-top:10px" onclick="simularSemanaAdmin(-1)">-1 semana</button><button class="btn-gold" style="margin-top:10px" onclick="volverFechaRealAdmin()">Volver a fecha real</button><button class="btn-dark" style="margin-top:10px" onclick="refrescarPagina()">🔄 Actualizar página</button></div></div>
 
       <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigHerramientas')"><b>🛠️ Herramientas</b><span>›</span></button><div id="adminConfigHerramientas" class="admin-config-content hidden"><button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios EXPLORA</button><button class="btn-dark" style="margin-top:10px" onclick="verificarYRepararAcumuladosAdmin()">Verificar / reparar acumulados actuales</button><button class="btn-red" style="margin-top:10px" onclick="resetearDatosOperativosAdmin()">🧹 Preparar lanzamiento / resetear datos operativos</button><button class="btn-red" style="margin-top:10px" onclick="eliminarChoferesDemoAdmin()">Eliminar choferes demo anteriores</button><div id="adminToolsMsg"></div></div></div>
     </div>
@@ -1513,24 +1494,6 @@ let adminChoferesPorVehiculoCache = {};
 const $ = id => document.getElementById(id);
 let trustedTodayValue = null;
 let trustedTodaySource = "device";
-let adminSimulationWeeks = Number(localStorage.getItem("explora_admin_sim_weeks") || 0);
-let globalSimulationWeeks = Number(localStorage.getItem("explora_global_sim_weeks") || adminSimulationWeeks || 0);
-let globalSimulationUpdatedAt = localStorage.getItem("explora_global_sim_updated") || "";
-
-function addDaysToDateStringSafe(dateStr, days){
-  try{
-    const [y,m,d] = String(dateStr).split("-").map(Number);
-    const dt = new Date(y, (m || 1) - 1, d || 1);
-    dt.setDate(dt.getDate() + Number(days || 0));
-    const yy = dt.getFullYear();
-    const mm = String(dt.getMonth() + 1).padStart(2,"0");
-    const dd = String(dt.getDate()).padStart(2,"0");
-    return `${yy}-${mm}-${dd}`;
-  }catch(e){
-    return dateStr;
-  }
-}
-
 function formatDateArgentina(date){
   try{
     const parts = new Intl.DateTimeFormat("en-CA",{
@@ -1547,12 +1510,10 @@ function formatDateArgentina(date){
 }
 
 function today(){
-  // Usa fecha confiable sincronizada con Firebase cuando está disponible.
-  // Esto evita cierres/ranking en semanas futuras si el teléfono tiene la fecha cambiada.
-  // El simulador de semanas es global y solo lo controla Admin; los choferes lo ven al refrescar.
-  const base = trustedTodayValue || formatDateArgentina(new Date());
-  const weeks = Number(globalSimulationWeeks || 0);
-  return weeks ? addDaysToDateStringSafe(base, weeks * 7) : base;
+  // Sin simulador semanal: la app usa siempre la fecha actual del dispositivo.
+  // Esto permite probar el cierre cambiando la fecha del iPhone.
+  // Firebase ya no pisa la fecha local para que el cierre obligatorio aparezca en pruebas.
+  return formatDateArgentina(new Date());
 }
 
 
@@ -1577,8 +1538,6 @@ function nowArgentinaParts(){
 }
 
 function currentOperationalMinute(){
-  // En modo simulador admin se considera siempre después de 00:01 para poder probar cierres.
-  if(Number(globalSimulationWeeks || 0) !== 0) return 1;
   const p = nowArgentinaParts();
   return Number(p.hora || 0) * 60 + Number(p.minuto || 0);
 }
@@ -1587,52 +1546,23 @@ function afterSaturday0001(dateStr = today()){
   return isSaturday(dateStr) && currentOperationalMinute() >= 1;
 }
 
-async function syncGlobalWeekSimulation(){
-  try{
-    const cached = cacheGet("global_week_simulation", 2 * 60 * 1000);
-    if(cached && typeof cached.weeks !== "undefined"){
-      globalSimulationWeeks = Number(cached.weeks || 0);
-      globalSimulationUpdatedAt = cached.updatedAt || "";
-      localStorage.setItem("explora_global_sim_weeks", String(globalSimulationWeeks));
-      if(globalSimulationUpdatedAt) localStorage.setItem("explora_global_sim_updated", globalSimulationUpdatedAt);
-    }
-  }catch(e){}
-
-  try{
-    const snap = await withTimeout(getDoc(doc(db,"configuracion","simulador_semanas_global")), 2500, "Simulador semanal tardó demasiado.");
-    if(snap.exists()){
-      const data = snap.data();
-      globalSimulationWeeks = data.activo ? Number(data.weeks || 0) : 0;
-      globalSimulationUpdatedAt = String(data.actualizadoTexto || data.updatedAt || "");
-    }else{
-      globalSimulationWeeks = 0;
-      globalSimulationUpdatedAt = "";
-    }
-    localStorage.setItem("explora_global_sim_weeks", String(globalSimulationWeeks));
-    if(globalSimulationUpdatedAt) localStorage.setItem("explora_global_sim_updated", globalSimulationUpdatedAt);
-    cacheSet("global_week_simulation", {weeks:globalSimulationWeeks, updatedAt:globalSimulationUpdatedAt}, 2 * 60 * 1000);
-  }catch(e){
-    console.warn("No se pudo leer simulador global; uso caché/local", e);
-  }
-}
-
 async function syncTrustedToday(){
+  // La fecha operativa queda ligada al iPhone/dispositivo.
+  // Se registra la diferencia con Firebase solo como diagnóstico, pero NO se usa
+  // para reemplazar today(); así el test manual cambiando fecha funciona.
   const localDay = formatDateArgentina(new Date());
-  try{
-    const cache = cacheGet("trusted_today", 10 * 60 * 1000);
-    if(cache && cache.fecha){
-      trustedTodayValue = cache.fecha;
-      trustedTodaySource = cache.source || "server-cache";
-    }
-  }catch(e){}
+  trustedTodayValue = localDay;
+  trustedTodaySource = "device";
+  try{ cacheRemove("trusted_today"); }catch(e){}
 
   try{
-    if(!currentUserId) return today();
+    if(!currentUserId) return localDay;
     const ref = doc(db,"sistema_fecha", currentUserId);
     await setDoc(ref,{
       serverNow: serverTimestamp(),
       localDay,
       usuario: currentUserId,
+      fuenteFechaOperativa:"device",
       actualizado: serverTimestamp()
     },{merge:true});
 
@@ -1646,20 +1576,14 @@ async function syncTrustedToday(){
 
     if(data && data.serverNow && data.serverNow.toDate){
       const serverDay = formatDateArgentina(data.serverNow.toDate());
-      trustedTodayValue = serverDay;
-      trustedTodaySource = serverDay === localDay ? "server" : "server-diff-local";
-      cacheSet("trusted_today",{fecha:serverDay, source:trustedTodaySource, localDay},10 * 60 * 1000);
       if(serverDay !== localDay){
-        console.warn("Fecha del teléfono diferente a Firebase", {localDay, serverDay});
+        console.warn("Fecha del teléfono diferente a Firebase; se usa iPhone para pruebas", {localDay, serverDay});
       }
-      await syncGlobalWeekSimulation();
-      return serverDay;
     }
   }catch(e){
-    console.warn("No se pudo sincronizar fecha con Firebase; uso fecha local/caché", e);
+    console.warn("No se pudo registrar fecha en Firebase; uso fecha local del dispositivo", e);
   }
-  await syncGlobalWeekSimulation().catch(()=>{});
-  return today();
+  return localDay;
 }
 
 const money = n => "$" + Number(n || 0).toLocaleString("es-AR");
@@ -1668,135 +1592,6 @@ window.refrescarPagina = function(){
   // Refresca la app sin cerrar sesión. Al volver a cargar se re-chequean
   // cierres y comprobantes pendientes, pero no bloquea la operación del chofer.
   window.location.reload();
-};
-
-function updateAdminSimulationUI(){
-  const base = trustedTodayValue || formatDateArgentina(new Date());
-  const weeks = Number(globalSimulationWeeks || 0);
-  const fechaSimulada = today();
-  const banner = $("adminSimBanner");
-  const driverBanner = $("driverSimBanner");
-  const fecha = $("adminSimFecha");
-  const detalle = $("adminSimDetalle");
-
-  if(fecha) fecha.textContent = weeks ? fechaSimulada : base;
-  if(detalle){
-    detalle.textContent = weeks
-      ? `Simulación global activa: ${weeks > 0 ? "+" : ""}${weeks} semana(s). Fecha real/servidor: ${base}. Afecta a choferes al refrescar.`
-      : "Sin simulación activa. Admin y choferes usan fecha real/servidor.";
-  }
-  const txt = weeks ? `🧪 MODO SIMULACIÓN GLOBAL: ${weeks > 0 ? "+" : ""}${weeks} semana(s) · Fecha simulada ${fechaSimulada}` : "";
-  [banner, driverBanner].forEach(el=>{
-    if(!el) return;
-    if(weeks){ el.classList.remove("hidden"); el.textContent = txt; }
-    else { el.classList.add("hidden"); el.textContent = ""; }
-  });
-}
-
-window.simularSemanaAdmin = async function(delta){
-  if(!currentProfile || currentProfile.rol !== "admin") return;
-  globalSimulationWeeks = Math.max(-8, Math.min(8, Number(globalSimulationWeeks || 0) + Number(delta || 0)));
-  adminSimulationWeeks = globalSimulationWeeks;
-  localStorage.setItem("explora_admin_sim_weeks", String(globalSimulationWeeks));
-  localStorage.setItem("explora_global_sim_weeks", String(globalSimulationWeeks));
-  periodoOperativoCache = null;
-  cierreSemanalCache = null;
-  cacheRemove("ranking_global_fast");
-  cacheRemove("global_week_simulation");
-  try{
-    await setDoc(doc(db,"configuracion","simulador_semanas_global"),{
-      activo: globalSimulationWeeks !== 0,
-      weeks: globalSimulationWeeks,
-      actualizadoPor: currentUserId || "admin",
-      actualizadoTexto: new Date().toLocaleString("es-AR"),
-      actualizado: serverTimestamp()
-    },{merge:true});
-  }catch(e){
-    console.warn("No se pudo guardar simulación global", e);
-    if($("adminMsg")) msg($("adminMsg"), "No se pudo guardar la simulación global en Firebase: " + e.message);
-  }
-  updateAdminSimulationUI();
-  if($("adminMsg")) msg($("adminMsg"), `Simulación global actualizada. Fecha usada por Admin y choferes al refrescar: ${today()}.`, true);
-  setTimeout(()=>loadAdmin().catch(e=>console.warn("No se pudo refrescar admin con simulación", e)), 50);
-};
-
-function limpiarSimulacionSemanalLocal(){
-  // Limpieza obligatoria del simulador: vuelve TODO el motor local a fecha real.
-  globalSimulationWeeks = 0;
-  adminSimulationWeeks = 0;
-  globalSimulationUpdatedAt = "";
-  trustedTodayValue = formatDateArgentina(new Date());
-  trustedTodaySource = "device-reset";
-
-  [
-    "explora_admin_sim_weeks",
-    "explora_global_sim_weeks",
-    "explora_global_sim_updated"
-  ].forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
-
-  [
-    "global_week_simulation",
-    "ranking_global_fast",
-    "trusted_today",
-    "servicios_activos",
-    "admin_vehiculos_km"
-  ].forEach(k=>cacheRemove(k));
-
-  try{
-    const prefijos = [
-      CACHE_PREFIX + "ranking_",
-      CACHE_PREFIX + "ranking_fast_",
-      CACHE_PREFIX + "ranking_derivaciones_reales_",
-      CACHE_PREFIX + "ganador_sem_",
-      CACHE_PREFIX + "cierre_sem_",
-      CACHE_PREFIX + "cierre_ultra_",
-      CACHE_PREFIX + "admin_5050_",
-      CACHE_PREFIX + "acum_sem_",
-      CACHE_PREFIX + "periodo_cierre_pendiente_",
-      CACHE_PREFIX + "comprobantes_",
-      CACHE_PREFIX + "pagos_pendientes_",
-      CACHE_PREFIX + "fondos_operativos_admin_"
-    ];
-    const keys = [];
-    for(let i=0;i<localStorage.length;i++){
-      const k = localStorage.key(i);
-      if(k && prefijos.some(pref=>k.startsWith(pref))) keys.push(k);
-    }
-    keys.forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
-  }catch(e){
-    console.warn("No se pudo limpiar toda la caché de simulación", e);
-  }
-
-  periodoOperativoCache = null;
-  cierreSemanalCache = null;
-  derivationInboxSignature = "";
-  adminBaseLoadedAt = 0;
-  adminVehiculosKmLoadedAt = 0;
-  miAutoLoadedAt = 0;
-}
-
-window.volverFechaRealAdmin = async function(){
-  limpiarSimulacionSemanalLocal();
-  try{
-    await setDoc(doc(db,"configuracion","simulador_semanas_global"),{
-      activo:false,
-      weeks:0,
-      actualizadoPor: currentUserId || "admin",
-      actualizadoTexto: new Date().toLocaleString("es-AR"),
-      actualizado: serverTimestamp()
-    },{merge:true});
-    cacheRemove("global_week_simulation");
-    await syncGlobalWeekSimulation();
-    await syncTrustedToday();
-    limpiarSimulacionSemanalLocal();
-  }catch(e){
-    console.warn("No se pudo desactivar simulación global", e);
-    limpiarSimulacionSemanalLocal();
-    if($("adminMsg")) msg($("adminMsg"), "Simulación local desactivada. No se pudo confirmar en Firebase: " + e.message);
-  }
-  updateAdminSimulationUI();
-  if($("adminMsg")) msg($("adminMsg"), `Simulación desactivada. Motor completo vuelto a fecha real/servidor: ${today()}. Admin y choferes deben actualizar la app.`, true);
-  setTimeout(()=>loadAdmin().catch(e=>console.warn("No se pudo refrescar admin al volver a fecha real", e)), 50);
 };
 
 function parseNumeroArg(value){
@@ -2341,13 +2136,6 @@ async function aplicarResetOperativoLocalSiCorresponde(){
     const localKey = "explora_reset_operativo_marca";
     if(localStorage.getItem(localKey) === marca) return;
 
-    const borrarExactos = [
-      "explora_global_sim_weeks",
-      "explora_global_sim_updated",
-      "explora_admin_sim_weeks"
-    ];
-    borrarExactos.forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
-
     const prefijosOperativos = [
       CACHE_PREFIX + "acum_sem_",
       CACHE_PREFIX + "ranking_",
@@ -2356,8 +2144,7 @@ async function aplicarResetOperativoLocalSiCorresponde(){
       CACHE_PREFIX + "comprobantes_",
       CACHE_PREFIX + "cierres_",
       CACHE_PREFIX + "derivaciones_",
-      CACHE_PREFIX + "trusted_today",
-      CACHE_PREFIX + "global_week_simulation"
+      CACHE_PREFIX + "trusted_today"
     ];
     const keys = [];
     for(let i=0;i<localStorage.length;i++){
@@ -2426,7 +2213,6 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
       $("adminView").classList.remove("hidden");
       if($("adminVehiculosResumen")) $("adminVehiculosResumen").innerHTML = `<p class="note">Panel abierto. Tocá “Actualizar administrador” si necesitás refrescar datos.</p>`;
       if($("adminGanadorSemana")) $("adminGanadorSemana").innerHTML = `<p class="note">Premio y ganador se cargan bajo demanda para abrir más rápido.</p>`;
-      updateAdminSimulationUI();
       setTimeout(()=>loadAdmin().catch(e=>msg($("adminMsg"),"Error cargando administrador: " + e.message)), 250);
     }else{
       $("driverView").classList.remove("hidden");
@@ -2439,7 +2225,6 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
 });
 
 async function loadDriver(){
-  updateAdminSimulationUI();
   $("driverName").textContent = currentProfile.nombre || currentUserId;
   setStatusButton(currentProfile.estado || "disponible");
   $("todayTrips").textContent = "...";
@@ -2988,6 +2773,12 @@ function getPeriodoCierrePendiente(dateStr = today()){
   const end = addDays(dateStr, -1);    // viernes anterior
   const start = addDays(end, -6);      // sábado anterior
   return {start, end, closeDate:dateStr, id:`${start}_${end}`, motor:"sabado_0001"};
+}
+
+function getPeriodoAdminRevision(dateStr = today()){
+  // En Admin, el sábado desde 00:01 se debe revisar la semana que acaba de cerrar,
+  // no la semana nueva. El resto de los días muestra la semana activa normal.
+  return getPeriodoCierrePendiente(dateStr) || getPeriodoTrabajoActual(dateStr);
 }
 
 function periodoCerradoYaVencido(periodo, dateStr = today()){
@@ -4335,7 +4126,7 @@ async function checkCierreSemanalAutomatico(){
         cerradoAutomaticoSinMovimientos:true,
         actualizado: serverTimestamp()
       },{merge:true});
-      cacheRemove(`periodo_cierre_pendiente_${currentUserId}_${today()}`);
+      cacheRemove(`periodo_cierre_pendiente_v2_${currentUserId}_${today()}`);
       return;
     }
 
@@ -5925,7 +5716,7 @@ async function loadAdmin(){
   const adminMsg = $("adminMsg");
   if(adminMsg) msg(adminMsg,"Actualizando administrador rápido...",true);
 
-  const periodo = getPeriodoTrabajoActual(today());
+  const periodo = getPeriodoAdminRevision(today());
   if($("adminPeriodoSemana")) $("adminPeriodoSemana").textContent = `Semana: ${periodo.start} al ${periodo.end} · Cierre: ${periodo.closeDate}`;
   if($("adminMesInput")) $("adminMesInput").value = today().slice(0,7);
 
@@ -6135,7 +5926,7 @@ window.calcularSemanaVehiculoAdmin = async function(vehiculoId, choferId){
 
   // Admin y chofer deben mirar exactamente el mismo período operativo.
   // Esto evita diferencias después de confirmar cierre un sábado o si el chofer ya pasó a una nueva semana activa.
-  const periodo = await getPeriodoOperativoChofer(choferId);
+  const periodo = getPeriodoAdminRevision(today());
   const cacheKey = `admin_5050_${choferId}_${periodo.id}`;
   const cacheLocal = cacheGet(cacheKey, 10 * 60 * 1000);
 
@@ -6181,7 +5972,7 @@ async function calcularCierreSemanalAdminUltraRapido(choferId, periodo){
 window.reconstruirSemanaVehiculoAdmin = async function(vehiculoId, choferId){
   const box = $("adminCalc_" + safeId(vehiculoId));
   if(!box) return;
-  const periodo = await getPeriodoOperativoChofer(choferId);
+  const periodo = getPeriodoAdminRevision(today());
   box.innerHTML = `<div class="msg ok">Reconstruyendo acumulado... Esto puede tardar solo esta vez.</div>`;
   try{
     const c = await withTimeout(calcularCierreSemanalLiviano(choferId, periodo, true), 15000, "La reconstrucción tardó demasiado. Revisá internet y probá otra vez.");
