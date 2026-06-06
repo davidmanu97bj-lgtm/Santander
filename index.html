@@ -2812,8 +2812,9 @@ function renderPagosPendientesChofer(items){
           <small>${suspendido ? '🚫 Ya estás suspendido del bono semanal hasta la próxima semana por no subir el comprobante.' : 'Si no realizás el pago hoy, mañana serás suspendido del bono semanal.'}</small>
           <button class="btn-dark" style="margin-top:10px" onclick="resolverCierrePendienteChofer('${p.periodoId || ''}')">Resolver cierre pendiente</button>
           <div style="margin-top:10px">
-            <input id="compPendChofer_${safeId(p.id)}" class="file-input" type="file" accept="image/*,.jpg,.jpeg,.png,.webp" />
-            <button class="btn-gold" style="margin-top:8px" onclick="subirComprobantePendienteChofer('${p.periodoId}', ${Math.round(Number(p.monto || 0))}, 'compPendChofer_${safeId(p.id)}')">Subir comprobante</button>
+            <input id="compPendChofer_${safeId(p.id)}" class="file-input" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif" onchange="updateComprobanteFileName('compPendChofer_${safeId(p.id)}')" />
+            <small id="compPendChofer_${safeId(p.id)}_name">Ningún comprobante seleccionado.</small>
+            <button type="button" class="btn-gold" style="margin-top:8px" onclick="subirComprobantePendienteChofer('${p.periodoId}', ${Math.round(Number(p.monto || 0))}, 'compPendChofer_${safeId(p.id)}')">Subir comprobante</button>
           </div>
         </div>`;
     }
@@ -2842,15 +2843,23 @@ function renderPagosPendientesChofer(items){
 }
 
 window.subirComprobantePendienteChofer = async function(periodoId, monto, inputId){
-  const file = $(inputId) && $(inputId).files[0];
+  const input = $(inputId);
+  const file = input && input.files && input.files[0];
   try{
+    if(!file) throw new Error("Seleccioná una foto del comprobante antes de subir.");
+    const btn = Array.from(document.querySelectorAll('button')).find(b => (b.getAttribute('onclick') || '').includes(inputId));
+    const old = btn ? btn.textContent : "";
+    if(btn){ btn.disabled = true; btn.textContent = "Subiendo..."; }
     await subirComprobantePago({chofer:currentUserId, periodoId, sentido:"chofer_a_david", monto, file, marcadoPor:"chofer"});
     cacheRemove("pagos_pendientes_chofer_" + currentUserId);
     cacheRemove("comprobantes_chofer_" + currentUserId);
     await checkPagosPendientesChoferAutomatico();
     alert("Comprobante cargado correctamente.");
+    if(btn){ btn.disabled = false; btn.textContent = old || "Subir comprobante"; }
   }catch(e){
     alert("No se pudo subir el comprobante: " + e.message);
+    const btn = Array.from(document.querySelectorAll('button')).find(b => (b.getAttribute('onclick') || '').includes(inputId));
+    if(btn){ btn.disabled = false; btn.textContent = "Subir comprobante"; }
   }
 }
 
@@ -2868,42 +2877,68 @@ function comprobanteId(chofer, periodoId){
   return `${chofer}_${periodoId}`;
 }
 
+function esArchivoImagenComprobante(file){
+  if(!file) return false;
+  const tipo = String(file.type || "").toLowerCase();
+  const nombre = String(file.name || "").toLowerCase();
+  return tipo.startsWith("image/") || /\.(jpg|jpeg|png|webp|heic|heif)$/i.test(nombre);
+}
+
 async function comprimirImagenComprobante(file, maxWidth=1200, quality=0.62){
   if(!file) throw new Error("Seleccioná una foto del comprobante.");
-  if(!file.type || !file.type.startsWith("image/")) throw new Error("El comprobante debe ser una imagen.");
+  if(!esArchivoImagenComprobante(file)) throw new Error("El comprobante debe ser una imagen.");
 
-  const img = await new Promise((resolve,reject)=>{
+  // En algunos visores HTML de iPhone el canvas/toBlob queda colgado.
+  // Por eso la compresión tiene timeout y, si falla, se sube el archivo original.
+  const comprimido = new Promise((resolve,reject)=>{
     const reader = new FileReader();
     reader.onload = ()=>{
       const image = new Image();
-      image.onload = ()=>resolve(image);
-      image.onerror = reject;
+      image.onload = ()=>{
+        try{
+          const scale = Math.min(1, maxWidth / image.width);
+          const width = Math.max(1, Math.round(image.width * scale));
+          const height = Math.max(1, Math.round(image.height * scale));
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(image,0,0,width,height);
+          canvas.toBlob(blob=>{
+            if(blob) resolve(blob);
+            else reject(new Error("No se pudo comprimir la imagen."));
+          }, "image/jpeg", quality);
+        }catch(e){ reject(e); }
+      };
+      image.onerror = ()=>reject(new Error("No se pudo leer la imagen."));
       image.src = reader.result;
     };
-    reader.onerror = reject;
+    reader.onerror = ()=>reject(new Error("No se pudo abrir el archivo."));
     reader.readAsDataURL(file);
   });
 
-  const scale = Math.min(1, maxWidth / img.width);
-  const width = Math.max(1, Math.round(img.width * scale));
-  const height = Math.max(1, Math.round(img.height * scale));
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(img,0,0,width,height);
+  return await withTimeout(comprimido, 4500, "La compresión tardó demasiado.");
+}
 
-  return await new Promise(resolve=>canvas.toBlob(blob=>resolve(blob), "image/jpeg", quality));
+async function obtenerBlobComprobante(file){
+  try{
+    return {blob: await comprimirImagenComprobante(file), contentType:"image/jpeg", extension:"jpg"};
+  }catch(e){
+    console.warn("Subo comprobante sin comprimir", e);
+    if(!file) throw new Error("Seleccioná una foto del comprobante.");
+    if(!esArchivoImagenComprobante(file)) throw new Error("El comprobante debe ser una imagen.");
+    return {blob:file, contentType:file.type || "image/jpeg", extension:(String(file.name||"").split(".").pop() || "jpg").toLowerCase()};
+  }
 }
 
 async function subirComprobantePago({chofer, periodoId, sentido, monto, file, marcadoPor}){
-  const blob = await comprimirImagenComprobante(file);
-  if(!blob) throw new Error("No se pudo comprimir la imagen.");
+  if(!chofer || !periodoId) throw new Error("Falta chofer o período para guardar el comprobante.");
+  const archivo = await obtenerBlobComprobante(file);
   const id = comprobanteId(chofer, periodoId);
-  const path = `comprobantes_pagos/${periodoId}/${chofer}_${Date.now()}.jpg`;
+  const path = `comprobantes_pagos/${periodoId}/${chofer}_${Date.now()}.${archivo.extension || "jpg"}`;
   const ref = storageRef(storage, path);
-  await uploadBytes(ref, blob, {contentType:"image/jpeg"});
-  const url = await getDownloadURL(ref);
+  await withTimeout(uploadBytes(ref, archivo.blob, {contentType:archivo.contentType || "image/jpeg"}), 18000, "La subida del comprobante tardó demasiado. Revisá internet y probá de nuevo.");
+  const url = await withTimeout(getDownloadURL(ref), 8000, "El comprobante subió, pero no se pudo obtener el enlace.");
 
   const data = {
     id,
@@ -2953,20 +2988,35 @@ function uploadComprobanteHtml({inputId, buttonText, onClick, nota}){
     <div class="comprobante-box">
       <b>📎 Comprobante obligatorio</b><br>
       <small>${nota || "Subí foto del comprobante para marcar el pago como realizado."}</small>
-      <input id="${inputId}" class="file-input" type="file" accept="image/*,.jpg,.jpeg,.png,.webp" />
+      <input id="${inputId}" class="file-input" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif" onchange="updateComprobanteFileName('${inputId}')" />
+      <small id="${inputId}_name">Ningún comprobante seleccionado.</small>
       <small>Podés elegir una foto desde galería o tomar una foto nueva.</small>
-      <button class="btn-gold" style="margin-top:8px" onclick="${onClick}">${buttonText || "Subir comprobante y marcar pagado"}</button>
+      <button type="button" class="btn-gold" style="margin-top:8px" onclick="${onClick}">${buttonText || "Subir comprobante y marcar pagado"}</button>
     </div>
   `;
 }
 
+window.updateComprobanteFileName = function(inputId){
+  const input = $(inputId);
+  const label = $(inputId + "_name");
+  if(!label) return;
+  const file = input && input.files && input.files[0];
+  label.textContent = file ? `Seleccionado: ${file.name || "foto"}` : "Ningún comprobante seleccionado.";
+};
+
 window.subirComprobantePagoChofer = async function(){
-  if(!cierreSemanalPendiente) return;
+  if(!cierreSemanalPendiente){
+    alert("No hay cierre pendiente cargado. Tocá Resolver cierre pendiente o Actualizar página.");
+    return;
+  }
   const c = cierreSemanalPendiente;
-  const file = $("comprobantePagoChoferInput") && $("comprobantePagoChoferInput").files[0];
+  const input = $("comprobantePagoChoferInput");
+  const file = input && input.files && input.files[0];
   const btns = Array.from(document.querySelectorAll('button'));
-  btns.forEach(b=>{ if((b.textContent||"").includes("Subir comprobante")) b.disabled = true; });
   try{
+    if(!file) throw new Error("Seleccioná una foto del comprobante antes de subir.");
+    btns.forEach(b=>{ if((b.textContent||"").includes("Subir comprobante")) b.disabled = true; });
+    if($("cierreSemanalMsg")) msg($("cierreSemanalMsg"), "Subiendo comprobante... no cierres esta pantalla.", true);
     const pago = await subirComprobantePago({
       chofer:currentUserId,
       periodoId:c.periodo.id,
@@ -2977,11 +3027,13 @@ window.subirComprobantePagoChofer = async function(){
     });
     cierreSemanalPendiente.pagoSemanal = {...pago, pagado:true, fechaPago:pago.fecha, horaPago:pago.hora, comprobanteUrl:pago.url};
     cierreSemanalCache = {key:`${currentUserId}_${c.periodo.id}`, data:cierreSemanalPendiente};
-    renderCierreSemanal(cierreSemanalPendiente);
-    msg($("cierreSemanalMsg"),"Comprobante cargado. Pago marcado como realizado.",true);
     cacheRemove("comprobantes_chofer_" + currentUserId);
+    cacheRemove("pagos_pendientes_chofer_" + currentUserId);
+    renderCierreSemanal(cierreSemanalPendiente);
+    msg($("cierreSemanalMsg"),"Comprobante cargado correctamente. Pago marcado como realizado.",true);
   }catch(e){
-    msg($("cierreSemanalMsg"),"No se pudo subir el comprobante: " + e.message);
+    if($("cierreSemanalMsg")) msg($("cierreSemanalMsg"),"No se pudo subir el comprobante: " + e.message);
+    alert("No se pudo subir el comprobante: " + e.message);
   }finally{
     btns.forEach(b=>{ if((b.textContent||"").includes("Subir comprobante")) b.disabled = false; });
   }
