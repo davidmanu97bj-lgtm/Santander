@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.57
-Build: 2026-06-06-ESTABLE-RANKING-CIERRE-ALINEADO-001
+Version: 2.8.59
+Build: 2026-06-06-ESTABLE-CIERRE-PENDIENTE-POST-SABADO-002
 Fecha: 06/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
@@ -31,12 +31,14 @@ Cambios:
 - Ranking, facturación, cierre 50/50, bono y comprobantes usan el mismo periodoId.
 - Nueva semana arranca automáticamente a sábado 00:01 sin botón manual de chofer.
 - Limpieza técnica final: versiones visibles unificadas, función duplicada eliminada, cierre manual viejo removido, sin botones antiguos ocultos y limpieza automática de caché antiguo.
+- Corrección: cierre semanal pendiente ahora se detecta aunque el chofer abra la app domingo/lunes o días posteriores.
+- Corrección: Ranking semanal visible ahora usa período global activo único para todos los choferes; el cierre pendiente queda separado para no mostrar semanas distintas por perfil.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.57 · Build 2026-06-06-ESTABLE-RANKING-CIERRE-ALINEADO-001</title>
+<title>EXPLORA v2.8.59 · Build 2026-06-06-ESTABLE-CIERRE-PENDIENTE-POST-SABADO-002</title>
 <style>
 :root{
   --bg:#080808;
@@ -496,7 +498,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.57</b> · Build 2026-06-06-ESTABLE-RANKING-CIERRE-ALINEADO-001</div>
+    <div class="build-version"><b>v2.8.59</b> · Build 2026-06-06-ESTABLE-CIERRE-PENDIENTE-POST-SABADO-002</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -509,7 +511,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.57</b> · ESTABLE-RANKING-CIERRE-ALINEADO-001</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.59</b> · ESTABLE-CIERRE-PENDIENTE-POST-SABADO-002</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -692,7 +694,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.57</b> · ESTABLE-RANKING-CIERRE-ALINEADO-001</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.59</b> · ESTABLE-CIERRE-PENDIENTE-POST-SABADO-002</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -2157,6 +2159,50 @@ function getPeriodoCierrePendiente(dateStr = today()){
   return {start, end, closeDate:dateStr, id:`${start}_${end}`, motor:"sabado_0001"};
 }
 
+function periodoCerradoYaVencido(periodo, dateStr = today()){
+  if(!periodo || !periodo.closeDate) return false;
+  if(periodo.closeDate < dateStr) return true;
+  return periodo.closeDate === dateStr && afterSaturday0001(dateStr);
+}
+
+async function getPeriodoCierrePendienteNoConfirmado(choferId=currentUserId, dateStr=today()){
+  // Detecta cierres pendientes aunque el chofer no haya abierto la app el sábado.
+  // Revisa semanas ya vencidas desde la más reciente hacia atrás, con límite corto
+  // para mantener la app rápida en teléfonos/tablets de bajos recursos.
+  if(!choferId) return null;
+
+  const cacheKey = `periodo_cierre_pendiente_${choferId}_${dateStr}`;
+  const cached = cacheGet(cacheKey, 90 * 1000);
+  if(cached && cached.periodoId){
+    const p = periodoDesdeIdPago(cached.periodoId);
+    if(p && periodoCerradoYaVencido(p, dateStr)) return p;
+  }
+  if(cached && cached.sinPendiente) return null;
+
+  let cursor = periodoAnterior(getPeriodoTrabajoActual(dateStr));
+  for(let i=0; i<8; i++){
+    if(!periodoCerradoYaVencido(cursor, dateStr)){
+      cursor = periodoAnterior(cursor);
+      continue;
+    }
+    const cierreId = `${choferId}_${cursor.id}`;
+    try{
+      const snap = await withTimeout(getDoc(doc(db,"cierres_semanales",cierreId)), 1800, "verificación de cierre pendiente");
+      if(!snap.exists()){
+        cacheSet(cacheKey, {periodoId:cursor.id});
+        return cursor;
+      }
+    }catch(e){
+      console.warn("No se pudo verificar cierre pendiente anterior", e);
+      return null;
+    }
+    cursor = periodoAnterior(cursor);
+  }
+
+  cacheSet(cacheKey, {sinPendiente:true});
+  return null;
+}
+
 function getPeriodoSiguiente(periodo){
   const start = addDays(periodo.end, 1);
   const end = addDays(start, 6);
@@ -2186,22 +2232,13 @@ async function getPeriodoOperativoChofer(choferId){
 }
 
 async function getPeriodoRankingVisible(){
-  // Si hay un cierre semanal pendiente, el Ranking visible debe mostrar exactamente
-  // el mismo período que ese cierre. Así el ganador, bono y fechas coinciden.
-  // Cuando el cierre ya fue aceptado, vuelve automáticamente a la semana activa nueva.
-  const cierrePendiente = getPeriodoCierrePendiente();
-  if(cierrePendiente && currentUserId){
-    try{
-      const cierreId = `${currentUserId}_${cierrePendiente.id}`;
-      const snap = await withTimeout(getDoc(doc(db,"cierres_semanales",cierreId)), 1800, "verificación de cierre pendiente");
-      if(!snap.exists()) return cierrePendiente;
-    }catch(e){
-      if(cierreSemanalPendiente && cierreSemanalPendiente.periodo){
-        return cierreSemanalPendiente.periodo;
-      }
-    }
-  }
-  return getPeriodoOperativoChofer(currentUserId);
+  // Ranking visible GLOBAL:
+  // Todos los choferes deben ver el mismo ranking y el mismo período activo,
+  // aunque un chofer todavía tenga pendiente aceptar el cierre anterior.
+  // El cierre pendiente se muestra en su modal/alerta, pero no debe arrastrar
+  // el ranking del perfil a una semana anterior porque genera diferencias
+  // entre perfiles de choferes.
+  return getPeriodoTrabajoActual(today());
 }
 
 async function getPremioSemana(periodo){
@@ -3176,21 +3213,39 @@ window.confirmarCierreSemanal = async function(){
 
 
 async function checkCierreSemanalAutomatico(){
-  const periodo = getPeriodoCierrePendiente();
+  const periodo = await getPeriodoCierrePendienteNoConfirmado(currentUserId).catch(()=>null);
   if(!periodo || !currentUserId) return;
 
   const cierreId = `${currentUserId}_${periodo.id}`;
-  try{
-    const cierreSnap = await withTimeout(getDoc(doc(db,"cierres_semanales",cierreId)), 2500, "cierre existente");
-    if(cierreSnap.exists()) return;
-  }catch(e){
-    console.warn("No se pudo verificar cierre existente; no se bloquea operación", e);
-    return;
-  }
 
   try{
     const c = await withTimeout(calcularCierreSemanalUltraRapido(currentUserId, periodo), 6500, "cierre automático");
-    if(!c || (Number(c.cantidadViajes || 0) === 0 && Number(c.cantidadGastos || 0) === 0)) return;
+
+    // Si una semana vencida no tuvo viajes ni gastos, se marca cerrada automáticamente
+    // para no frenar al chofer ni repetir el mismo aviso vacío en cada apertura.
+    if(!c || (Number(c.cantidadViajes || 0) === 0 && Number(c.cantidadGastos || 0) === 0)){
+      await setDoc(doc(db,"cierres_semanales",cierreId),{
+        fechaConfirmacion: today(),
+        horaConfirmacion: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
+        periodoInicio: periodo.start,
+        periodoFin: periodo.end,
+        cierreObligatorio: periodo.closeDate,
+        periodoId: periodo.id,
+        motor:"sabado_0001",
+        chofer: currentUserId,
+        vehiculo: currentVehicle ? currentVehicle.id : "",
+        totalViajes:0,
+        cantidadViajes:0,
+        totalGastos:0,
+        cantidadGastos:0,
+        aceptadoPorChofer:true,
+        cerradoAutomaticoSinMovimientos:true,
+        actualizado: serverTimestamp()
+      },{merge:true});
+      cacheRemove(`periodo_cierre_pendiente_${currentUserId}_${today()}`);
+      return;
+    }
+
     c.pagoSemanal = await getEstadoPagoSemanal(currentUserId, periodo.id).catch(()=>null);
     cierreSemanalPendiente = c;
     cierreSemanalCache = { key: cierreId, data: c };
