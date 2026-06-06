@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.33
-Build: 2026-06-06-RANKING-REGLAS-DERIVACIONES-001
+Version: 2.8.34
+Build: 2026-06-06-RANKING-DERIVACIONES-PRIORIDAD-001
 Fecha: 05/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
@@ -16,15 +16,16 @@ Cambios:
 - Se mejora el texto visible de servicios con íconos: 🛬 🇦🇷 🇧🇷 🇵🇾 para lectura rápida.
 - Formato automático con punto en campos numéricos: 30.000 en lugar de 30000, sin afectar cálculos internos.
 - Reasignación segura de vehículo: al asignar un auto existente a otro chofer conserva Mi auto, km y mantenimiento.
-- Ranking actualizado: 60% facturación, 20% viajes, 10% derivaciones, 10% actividad.
+- Ranking actualizado: 50% facturación, 20% viajes, 20% derivaciones, 10% actividad para incentivar derivar dentro de EXPLORA.
 - Se agrega “Ver reglas” con explicación del bono semanal y derivaciones.
 - En una derivación aceptada/completada suman ambos: origen por derivación y receptor por viaje/facturación.
+- Se aumenta el peso de derivaciones al 20% para evitar que servicios salgan fuera de EXPLORA.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.33 · Build 2026-06-06-RANKING-REGLAS-DERIVACIONES-001</title>
+<title>EXPLORA v2.8.34 · Build 2026-06-06-RANKING-DERIVACIONES-PRIORIDAD-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -400,7 +401,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.33</b> · Build 2026-06-06-RANKING-REGLAS-DERIVACIONES-001</div>
+    <div class="build-version"><b>v2.8.34</b> · Build 2026-06-06-RANKING-DERIVACIONES-PRIORIDAD-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -413,7 +414,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.33</b> · RANKING-REGLAS-DERIVACIONES-001</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.34</b> · RANKING-DERIVACIONES-PRIORIDAD-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -585,7 +586,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.33</b> · RANKING-REGLAS-DERIVACIONES-001</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.34</b> · RANKING-DERIVACIONES-PRIORIDAD-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -1949,8 +1950,8 @@ async function calcularRankingSemanalLiviano(periodo = getPeriodoTrabajoActual(t
   const maxActividad = Math.max(1,...arr.map(x=>x.actividad));
 
   arr.forEach(x=>{
-    // Ranking justo para EXPLORA: prioriza facturación, sin dejar de premiar viajes, colaboración y actividad.
-    x.porcentaje = Math.round((((x.facturacion/maxFact)*0.60)+((x.viajes/maxViajes)*0.20)+((x.derivaciones/maxDeriv)*0.10)+((x.actividad/maxActividad)*0.10))*100);
+    // Ranking EXPLORA: prioriza facturación y premia fuerte las derivaciones para que los viajes queden dentro de la red.
+    x.porcentaje = Math.round((((x.facturacion/maxFact)*0.50)+((x.viajes/maxViajes)*0.20)+((x.derivaciones/maxDeriv)*0.20)+((x.actividad/maxActividad)*0.10))*100);
   });
 
   arr.sort((a,b)=>b.porcentaje-a.porcentaje || b.facturacion-a.facturacion || b.viajes-a.viajes);
@@ -1986,13 +1987,13 @@ function renderRankingLiviano(data,targetId){
         <b>🏆 Cómo funciona el ranking</b><br>
         El ranking semanal premia al chofer que más aporta al resultado general de EXPLORA.
         <ul>
-          <li>💰 <b>60% Facturación:</b> los viajes de mayor valor pesan más que los viajes cortos.</li>
+          <li>💰 <b>50% Facturación:</b> los viajes de mayor valor siguen siendo la base del ranking.</li>
           <li>🚕 <b>20% Viajes:</b> suma la cantidad de servicios realizados.</li>
-          <li>🔄 <b>10% Derivaciones aceptadas:</b> si derivás un viaje y el receptor lo acepta/completa, vos sumás colaboración.</li>
+          <li>🔄 <b>20% Derivaciones aceptadas:</b> si no podés hacer un viaje, derivarlo dentro de EXPLORA suma fuerte para el ranking.</li>
           <li>🟢 <b>10% Actividad:</b> suma participación real durante la semana.</li>
         </ul>
         <br><b>💰 Bono semanal:</b> el chofer que finaliza primero en el cierre semanal recibe ${money(50000)}.
-        <br><br><b>🔄 Derivaciones:</b> cuando una derivación es aceptada y completada, el chofer que deriva suma por derivación; el chofer que realiza el viaje suma viaje y facturación. Las derivaciones rechazadas o ignoradas no suman.
+        <br><br><b>🔄 Derivaciones:</b> cuando una derivación es aceptada y completada, el chofer que deriva suma puntos importantes por mantener el viaje dentro de EXPLORA; el chofer que realiza el viaje suma viaje y facturación. Las derivaciones rechazadas o ignoradas no suman.
         <br><br><b>⚠️ Empates:</b> gana quien tenga mayor facturación. Si persiste el empate, gana quien tenga más viajes.
       </div>
     </div>
@@ -2106,7 +2107,7 @@ async function getGanadorSemanalRapido(periodo){
     const maxFact = Math.max(1,...arr.map(x=>x.facturacion));
     const maxActividad = Math.max(1,...arr.map(x=>x.actividad));
     arr.forEach(x=>{
-      x.porcentaje = Math.round((((x.facturacion/maxFact)*0.60)+((x.viajes/maxViajes)*0.20)+((x.derivaciones/maxDeriv)*0.10)+((x.actividad/maxActividad)*0.10))*100);
+      x.porcentaje = Math.round((((x.facturacion/maxFact)*0.50)+((x.viajes/maxViajes)*0.20)+((x.derivaciones/maxDeriv)*0.20)+((x.actividad/maxActividad)*0.10))*100);
     });
     arr.sort((a,b)=>b.porcentaje-a.porcentaje || b.facturacion-a.facturacion || b.viajes-a.viajes);
 
