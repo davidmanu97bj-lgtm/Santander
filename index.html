@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.25
-Build: 2026-06-05-KM-DIARIO-SCROLL-001
+Version: 2.8.26
+Build: 2026-06-06-TARIFAS-SERVICIOS-001
 Fecha: 05/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
@@ -16,7 +16,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.25 · Build 2026-06-05-KM-DIARIO-SCROLL-001</title>
+<title>EXPLORA v2.8.26 · Build 2026-06-06-TARIFAS-SERVICIOS-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -357,7 +357,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.25</b> · Build 2026-06-05-KM-DIARIO-SCROLL-001</div>
+    <div class="build-version"><b>v2.8.26</b> · Build 2026-06-06-TARIFAS-SERVICIOS-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -370,7 +370,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.25</b> · 2026-06-05-KM-DIARIO-SCROLL-001</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.26</b> · TARIFAS-SERVICIOS-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -412,6 +412,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
     <div id="servicePanel" class="card hidden">
       <h3>Nuevo servicio</h3>
+      <div class="single-trip-note">Tarifa mínima obligatoria: el chofer puede cobrar más, pero nunca menos. Tour Brasil $120.000 · Solo ida $25.000.</div>
       <div id="tripTypeWrap">
         <label>Tipo de viaje</label>
         <select id="tripType" onchange="updateServicePrice()">
@@ -445,6 +446,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
     <div id="derivePanel" class="card hidden">
       <h3>Derivar servicio</h3>
+      <div class="single-trip-note">Tarifa mínima obligatoria: el receptor puede cobrar más, pero nunca menos.</div>
 
       <label>Chofer receptor</label>
       <select id="deriveDriverSelect"></select>
@@ -538,7 +540,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.25</b> · 2026-06-05-KM-DIARIO-SCROLL-001</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.26</b> · TARIFAS-SERVICIOS-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -572,6 +574,13 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <h3>Vehículos y choferes</h3>
       <p class="note">Tocá “Ver 50/50 y pago”. Ahora abre con caché y acumulados semanales para evitar lecturas pesadas.</p>
       <div id="adminVehiculosResumen">Cargando vehículos...</div>
+    </div>
+
+    <div class="card">
+      <h3>Tarifas de servicios</h3>
+      <p class="note">Estos precios son las tarifas mínimas para el chofer. Puede cobrar más, pero la app no permite guardar menos.</p>
+      <button class="btn-dark" onclick="loadTarifasAdmin()">Ver / editar tarifas</button>
+      <div id="adminTarifas" style="margin-top:12px"></div>
     </div>
 
     <div class="card">
@@ -1227,7 +1236,7 @@ async function loadServices(force=false){
     const snap = await withTimeout(getDocs(q), 6000, "Los servicios tardaron demasiado en cargar.");
     const fresh = [];
     snap.forEach(d=>fresh.push({id:d.id,...d.data()}));
-    fresh.sort((a,b)=>String(a.nombre || "").localeCompare(String(b.nombre || ""), "es"));
+    fresh.sort((a,b)=>(Number(a.orden || 9999) - Number(b.orden || 9999)) || String(a.nombre || "").localeCompare(String(b.nombre || ""), "es"));
     services = fresh;
     servicesLoaded = true;
     cacheSet("servicios_activos", services);
@@ -1250,7 +1259,7 @@ function fillServiceSelects(){
     services.forEach(s=>{
       const opt = document.createElement("option");
       opt.value = s.id;
-      opt.textContent = s.nombre;
+      opt.textContent = s.categoria ? `${s.categoria} · ${s.nombre}` : s.nombre;
       select.appendChild(opt);
     });
     if(current && services.some(s=>s.id === current)) select.value = current;
@@ -1424,13 +1433,11 @@ window.updateServicePrice = function(){
 
   const type = tramoUnico ? "solo_ida" : $("tripType").value;
 
-  // Regla:
-  // - Tramo único: siempre tarifa completa.
-  // - Solo ida en servicios normales: mitad.
-  // - Ida y vuelta en servicios normales: completo.
-  const min = tramoUnico
-    ? Number(service.precio)
-    : (type === "solo_ida" ? Math.round(Number(service.precio)/2) : Number(service.precio));
+  // Regla v2.8.26:
+  // El precio cargado en Admin es la tarifa mínima real.
+  // El chofer puede cobrar más, pero nunca menos.
+  // Ya no se divide automáticamente por “solo ida”, para evitar incoherencias.
+  const min = Number(service.precio || 0);
 
   $("minPrice").value = money(min);
   $("chargedAmount").value = min;
@@ -1441,9 +1448,7 @@ window.saveTrip = async function(){
   if(!service) return msg($("serviceMsg"),"Seleccione un servicio.");
   const tramoUnico = isTramoUnico(service.id);
   const type = tramoUnico ? "solo_ida" : $("tripType").value;
-  const min = tramoUnico
-    ? Number(service.precio)
-    : (type === "solo_ida" ? Math.round(Number(service.precio)/2) : Number(service.precio));
+  const min = Number(service.precio || 0);
   const charged = Number($("chargedAmount").value);
   if(charged < min) return msg($("serviceMsg"),`El monto no puede ser menor a ${money(min)}.`);
 
@@ -2519,9 +2524,7 @@ window.updateDerivePrice = function(){
 
   const type = tramoUnico ? "solo_ida" : $("deriveTripType").value;
 
-  const min = tramoUnico
-    ? Number(service.precio)
-    : (type === "solo_ida" ? Math.round(Number(service.precio)/2) : Number(service.precio));
+  const min = Number(service.precio || 0);
 
   $("deriveMinPrice").value = money(min);
   $("deriveAmount").value = min;
@@ -2556,9 +2559,7 @@ window.saveDerivation = async function(){
     const tramoUnico = isTramoUnico(service.id);
     const type = tramoUnico ? "solo_ida" : $("deriveTripType").value;
 
-    const min = tramoUnico
-      ? Number(service.precio)
-      : (type === "solo_ida" ? Math.round(Number(service.precio)/2) : Number(service.precio));
+    const min = Number(service.precio || 0);
 
     const charged = Number($("deriveAmount").value);
 
@@ -2853,14 +2854,18 @@ async function loadTarifasAdmin(){
 
   let html = "";
 
-  snap.forEach(d=>{
-    const s = d.data();
-    const id = d.id;
+  const items = [];
+  snap.forEach(d=>items.push({id:d.id,...d.data()}));
+  items.sort((a,b)=>(Number(a.orden || 9999) - Number(b.orden || 9999)) || String(a.nombre || "").localeCompare(String(b.nombre || ""), "es"));
+
+  items.forEach(s=>{
+    const id = s.id;
 
     html += `
       <div class="tarifa-row">
-        <b>${s.nombre}</b>
-        <div class="tarifa-actions">
+        <b>${s.orden ? `${s.orden}. ` : ""}${s.nombre}</b><br>
+        <small>${s.categoria || "Sin categoría"}</small>
+        <div class="tarifa-actions" style="margin-top:8px">
           <input id="tarifa_${id}" type="number" inputmode="numeric" value="${Number(s.precio || 0)}">
           <button class="btn-gold" onclick="actualizarTarifa('${id}')">Guardar</button>
         </div>
@@ -2870,6 +2875,8 @@ async function loadTarifasAdmin(){
 
   $("adminTarifas").innerHTML = html || `<p class="note">No hay servicios activos.</p>`;
 }
+
+window.loadTarifasAdmin = loadTarifasAdmin;
 
 window.actualizarTarifa = async function(id){
   const input = $("tarifa_" + id);
@@ -2881,9 +2888,12 @@ window.actualizarTarifa = async function(id){
   }
 
   await updateDoc(doc(db,"servicios",id),{
-    precio:nuevoPrecio
+    precio:nuevoPrecio,
+    actualizado: serverTimestamp()
   });
 
+  cacheRemove("servicios_activos");
+  servicesLoaded = false;
   alert("Tarifa actualizada correctamente.");
   await loadTarifasAdmin();
 }
@@ -3268,6 +3278,7 @@ async function loadAdmin(){
   try{
     // Carga en paralelo y sin calcular ranking pesado al entrar.
     await Promise.all([cargarPremioAdmin(periodo), cargarVehiculosAdminSimple(periodo)]);
+    setTimeout(()=>autoActualizarServiciosExploraAdmin(), 600);
     adminBaseLoadedAt = Date.now();
     if(adminMsg) msg(adminMsg,"Administrador actualizado.",true);
   }catch(e){
@@ -3764,19 +3775,102 @@ window.calcularResumenMensualAdmin = async function(){
   }
 }
 
+
+const serviciosExplora = [
+  {id:"tour_brasil", nombre:"Tour Brasil", precio:120000, categoria:"Especiales", orden:0},
+  {id:"solo_ida", nombre:"Solo ida", precio:25000, categoria:"Especiales", orden:0.5},
+
+  {id:"aeropuerto_centro", nombre:"Aeropuerto → Centro", precio:25000, categoria:"Aeropuerto", orden:1},
+  {id:"centro_aeropuerto", nombre:"Centro → Aeropuerto", precio:25000, categoria:"Aeropuerto", orden:2},
+  {id:"aeropuerto_brasil", nombre:"Aeropuerto → Brasil", precio:85000, categoria:"Aeropuerto", orden:3},
+  {id:"brasil_aeropuerto", nombre:"Brasil → Aeropuerto", precio:70000, categoria:"Aeropuerto", orden:4},
+  {id:"aeropuerto_py", nombre:"Aeropuerto → PY", precio:130000, categoria:"Aeropuerto", orden:5},
+  {id:"py_aeropuerto", nombre:"PY → Aeropuerto", precio:90000, categoria:"Aeropuerto", orden:6},
+
+  {id:"cataratas_argentinas", nombre:"Cataratas Argentinas", precio:50000, categoria:"Argentina", orden:7},
+  {id:"hito_tres_fronteras", nombre:"Hito Tres Fronteras", precio:20000, categoria:"Argentina", orden:8},
+  {id:"guira_oga", nombre:"Güirá Oga", precio:18000, categoria:"Argentina", orden:9},
+  {id:"la_aripuca", nombre:"La Aripuca", precio:18000, categoria:"Argentina", orden:10},
+  {id:"icebar", nombre:"Icebar", precio:18000, categoria:"Argentina", orden:11},
+  {id:"catamaran", nombre:"Catamarán", precio:18000, categoria:"Argentina", orden:12},
+  {id:"selva_iryapu", nombre:"Selva Iryapú", precio:18000, categoria:"Argentina", orden:13},
+  {id:"la_feirinha", nombre:"La Feirinha", precio:18000, categoria:"Argentina", orden:14},
+  {id:"minas_wanda", nombre:"Minas de Wanda", precio:80000, categoria:"Argentina", orden:15},
+  {id:"duty_free", nombre:"Duty Free", precio:20000, categoria:"Argentina", orden:16},
+  {id:"puerto_libertad", nombre:"Puerto Libertad", precio:65000, categoria:"Argentina", orden:17},
+  {id:"puerto_esperanza", nombre:"Puerto Esperanza", precio:75000, categoria:"Argentina", orden:18},
+  {id:"eldorado", nombre:"Eldorado", precio:150000, categoria:"Argentina", orden:19},
+
+  {id:"cataratas_brasilenas", nombre:"Cataratas Brasileñas", precio:80000, categoria:"Brasil", orden:20},
+  {id:"parque_das_aves", nombre:"Parque das Aves", precio:70000, categoria:"Brasil", orden:21},
+  {id:"itaipu_brasil", nombre:"Itaipú Brasil", precio:80000, categoria:"Brasil", orden:22},
+  {id:"marco_tres_front_br", nombre:"Marco Três front BR", precio:70000, categoria:"Brasil", orden:23},
+  {id:"templo_budista", nombre:"Templo Budista", precio:80000, categoria:"Brasil", orden:24},
+  {id:"mezquita", nombre:"Mezquita", precio:80000, categoria:"Brasil", orden:25},
+  {id:"yup_star", nombre:"Yup Star", precio:70000, categoria:"Brasil", orden:26},
+  {id:"helicoptero", nombre:"Helicóptero", precio:70000, categoria:"Brasil", orden:27},
+  {id:"aquafoz", nombre:"AquaFoz", precio:70000, categoria:"Brasil", orden:28},
+  {id:"blue_park", nombre:"Blue Park", precio:70000, categoria:"Brasil", orden:29},
+  {id:"aqua_mania", nombre:"Aqua Manía", precio:70000, categoria:"Brasil", orden:30},
+
+  {id:"compras_cde", nombre:"Compras CDE", precio:80000, categoria:"Paraguay", orden:31},
+  {id:"saltos_monday", nombre:"Saltos del Monday", precio:100000, categoria:"Paraguay", orden:32},
+  {id:"itaipu_paraguay", nombre:"Itaipú Paraguay", precio:100000, categoria:"Paraguay", orden:33}
+];
+
+const SERVICIOS_BUILD = "2026-06-06-TARIFAS-SERVICIOS-001";
+
+async function aplicarServiciosExplora({mostrarMensaje=false}={}){
+  const idsOficiales = new Set(serviciosExplora.map(s=>s.id));
+
+  // Desactiva servicios viejos que ya no pertenecen al tarifario oficial para evitar duplicados.
+  const snapActuales = await getDocs(collection(db,"servicios"));
+  const desactivar = [];
+  snapActuales.forEach(d=>{
+    if(!idsOficiales.has(d.id)){
+      desactivar.push(setDoc(doc(db,"servicios",d.id),{activo:false, actualizado:serverTimestamp()},{merge:true}));
+    }
+  });
+
+  const actualizar = serviciosExplora.map(s=>setDoc(doc(db, "servicios", s.id), {
+    nombre: s.nombre,
+    precio: s.precio,
+    categoria: s.categoria || "",
+    orden: s.orden || 9999,
+    activo: true,
+    actualizado: serverTimestamp()
+  }, {merge:true}));
+
+  await Promise.all([...desactivar, ...actualizar]);
+  await setDoc(doc(db,"configuracion","servicios_tarifas"),{
+    build: SERVICIOS_BUILD,
+    actualizado: serverTimestamp()
+  },{merge:true});
+
+  cacheRemove("servicios_activos");
+  servicesLoaded = false;
+
+  if(mostrarMensaje){
+    msg($("adminToolsMsg") || $("adminMsg"), "Servicios EXPLORA instalados/actualizados correctamente.", true);
+    if($("adminTarifas")) await loadTarifasAdmin();
+    await loadAdmin();
+  }
+}
+
+async function autoActualizarServiciosExploraAdmin(){
+  try{
+    const snap = await getDoc(doc(db,"configuracion","servicios_tarifas"));
+    if(snap.exists() && snap.data().build === SERVICIOS_BUILD) return;
+    await aplicarServiciosExplora({mostrarMensaje:false});
+    console.log("Servicios EXPLORA actualizados a", SERVICIOS_BUILD);
+  }catch(e){
+    console.warn("No se pudo autoactualizar servicios", e);
+  }
+}
+
 window.instalarServiciosExplora = async function(){
   try{
-    for(const s of serviciosExplora){
-      await setDoc(doc(db, "servicios", s.id), {
-        nombre: s.nombre,
-        precio: s.precio,
-        activo: true
-      });
-    }
-
-    msg($("adminToolsMsg") || $("adminMsg"), "Servicios EXPLORA instalados correctamente.", true);
-    await loadAdmin();
-
+    await aplicarServiciosExplora({mostrarMensaje:true});
   }catch(e){
     msg($("adminToolsMsg") || $("adminMsg"), "Error instalando servicios: " + e.message);
   }
