@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.78
+Version: 2.8.81
 Build: 2026-06-06-MODO-PRUEBA-FECHA-CHOFER-022
 Fecha: 06/06/2026
 Cambios:
@@ -40,12 +40,13 @@ Cambios:
 - Corrección: si existe un cierre semanal pero el chofer no lo aceptó, sigue apareciendo como pendiente para todos los choferes.
 - Corrección: comprobantes con fallback Firestore si Storage queda bloqueado o tarda; muestra error real y nunca queda infinito en Subiendo.
 - Corrección: botón “Ver foto” abre visor interno compatible con Storage y respaldo Firestore, tanto en Admin como en Chofer.
+- Corrección: modo prueba fecha por chofer se resincroniza después de encontrar el ID real del chofer; ahora el cierre sábado/comprobante toma la fecha del iPhone del usuario autorizado.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.80 · Build 2026-06-06-MODO-PRUEBA-FECHA-CHOFER-022</title>
+<title>EXPLORA v2.8.81 · Build 2026-06-06-MODO-PRUEBA-FECHA-CHOFER-FIX</title>
 <style>
 :root{
   --bg:#080808;
@@ -1108,7 +1109,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.80</b> · Build 2026-06-06-MODO-PRUEBA-FECHA-CHOFER-022</div>
+    <div class="build-version"><b>v2.8.81</b> · Build 2026-06-06-MODO-PRUEBA-FECHA-CHOFER-FIX</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1512,11 +1513,37 @@ function formatDateArgentina(date){
   }
 }
 
+function normalizarClaveUsuario(v){
+  return String(v || "").toLowerCase().trim();
+}
+
 function choferTieneModoPruebaFecha(userId = currentUserId){
-  const id = String(userId || "").toLowerCase().trim();
   const cfg = modoPruebaFechaConfig || {};
   const choferes = cfg.choferes || {};
-  return !!(id && cfg.activo !== false && choferes[id] && choferes[id].activo === true);
+  if(cfg.activo === false) return false;
+
+  const id = normalizarClaveUsuario(userId);
+  const aliases = [id];
+
+  // Corrección: cuando el login se hace por email, primero currentUserId puede ser
+  // el usuario del email y después cambia al ID real del documento del chofer.
+  // Por eso el modo prueba debe reconocer también nombre/email/uid y no solo una clave.
+  try{
+    if(currentProfile){
+      aliases.push(normalizarClaveUsuario(currentProfile.nombre));
+      aliases.push(normalizarClaveUsuario(currentProfile.email));
+      aliases.push(normalizarClaveUsuario(currentProfile.usuario));
+      aliases.push(normalizarClaveUsuario(currentProfile.uid));
+    }
+    if(auth && auth.currentUser){
+      const email = normalizarClaveUsuario(auth.currentUser.email);
+      aliases.push(email);
+      aliases.push(email.split("@")[0]);
+      aliases.push(normalizarClaveUsuario(auth.currentUser.uid));
+    }
+  }catch(e){}
+
+  return aliases.some(k => k && choferes[k] && choferes[k].activo === true);
 }
 
 function today(){
@@ -2252,8 +2279,18 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
       currentUserId = idEncontrado;
       currentProfile = encontrado;
 
+      // Corrección crítica: el modo prueba se había sincronizado con el usuario del email.
+      // Al encontrar el ID real del chofer, se sincroniza de nuevo para que today() use
+      // la fecha del iPhone si Admin autorizó a ese chofer.
+      await syncModoPruebaFecha();
+      await syncTrustedToday();
+
     }else{
       currentProfile = snap.data();
+
+      // Asegura que el modo prueba también quede ligado al documento real del chofer.
+      await syncModoPruebaFecha();
+      await syncTrustedToday();
     }
 
     $("loginView").classList.add("hidden");
@@ -5493,7 +5530,8 @@ window.activarModoPruebaFechaChoferAdmin = async function(){
   const nombre = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].textContent.replace(/\s*\([^)]*\)\s*$/,"") : choferId;
   msg($("modoPruebaFechaMsg"),"Activando modo prueba...",true);
   const choferes = {...((modoPruebaFechaConfig && modoPruebaFechaConfig.choferes) || {})};
-  choferes[choferId] = {activo:true, nombre, activadoPor:currentUserId || "admin", actualizadoTexto:new Date().toLocaleString("es-AR")};
+  const emailAlias = String(choferId || "").toLowerCase().trim();
+  choferes[choferId] = {activo:true, nombre, alias:[emailAlias, String(nombre || "").toLowerCase().trim()], activadoPor:currentUserId || "admin", actualizadoTexto:new Date().toLocaleString("es-AR")};
   await setDoc(doc(db,"configuracion","modo_prueba_fecha_choferes"),{
     activo:true,
     choferes,
