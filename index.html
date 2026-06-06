@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.35
-Build: 2026-06-06-RANKING-SERVICIO-ULTRA-FAST-001
+Version: 2.8.36
+Build: 2026-06-06-RANKING-DERIVACIONES-FAST-FIX-001
 Fecha: 05/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
@@ -22,12 +22,13 @@ Cambios:
 - Se agrega “Ver reglas” con explicación del bono semanal y derivaciones.
 - En una derivación aceptada/completada suman ambos: origen por derivación y receptor por viaje/facturación.
 - Se aumenta el peso de derivaciones al 20% para evitar que servicios salgan fuera de EXPLORA.
+- Ranking corregido: cuenta derivaciones aceptadas/completadas reales sin volver lenta la app.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.35 · Build 2026-06-06-RANKING-SERVICIO-ULTRA-FAST-001</title>
+<title>EXPLORA v2.8.36 · Build 2026-06-06-RANKING-DERIVACIONES-FAST-FIX-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -403,7 +404,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.35</b> · Build 2026-06-06-RANKING-SERVICIO-ULTRA-FAST-001</div>
+    <div class="build-version"><b>v2.8.36</b> · Build 2026-06-06-RANKING-DERIVACIONES-FAST-FIX-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -416,7 +417,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.35</b> · RANKING-SERVICIO-ULTRA-FAST-001</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.36</b> · RANKING-DERIVACIONES-FAST-FIX-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -588,7 +589,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.35</b> · RANKING-SERVICIO-ULTRA-FAST-001</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.36</b> · RANKING-DERIVACIONES-FAST-FIX-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -1943,6 +1944,53 @@ function calcularPorcentajeRanking(arr){
   return arr;
 }
 
+
+async function getDerivacionesAceptadasPorOrigenRapido(periodo){
+  const cacheKey = `ranking_derivaciones_reales_${periodo.id}`;
+  const cached = cacheGet(cacheKey, 2 * 60 * 1000);
+  const counts = {};
+  let huboLectura = false;
+
+  function sumarDesdeSnap(snap){
+    if(!snap) return;
+    snap.forEach(d=>{
+      const x = d.data();
+      const estadoOk = x.estado === "aceptado";
+      const completada = x.derivacionCompletada === true || !!x.viajeId || !!x.facturadoA;
+      if(!estadoOk || !completada || !x.origen) return;
+
+      // Para documentos viejos, aceptamos periodoId; para documentos nuevos, periodoOrigenId.
+      const periodoDoc = x.periodoOrigenId || x.periodoId || "";
+      if(periodoDoc && periodoDoc !== periodo.id) return;
+
+      counts[x.origen] = (counts[x.origen] || 0) + 1;
+    });
+  }
+
+  try{
+    const consultas = await Promise.allSettled([
+      withTimeout(getDocs(query(collection(db,"derivaciones"), where("periodoOrigenId","==",periodo.id))), 1400, "Derivaciones por periodoOrigenId tardaron."),
+      withTimeout(getDocs(query(collection(db,"derivaciones"), where("periodoId","==",periodo.id))), 1400, "Derivaciones por periodoId tardaron.")
+    ]);
+
+    consultas.forEach(r=>{
+      if(r.status === "fulfilled"){
+        huboLectura = true;
+        sumarDesdeSnap(r.value);
+      }
+    });
+
+    if(huboLectura){
+      cacheSet(cacheKey, counts);
+      return counts;
+    }
+  }catch(e){
+    console.warn("No se pudieron leer derivaciones reales rápido", e);
+  }
+
+  return cached || {};
+}
+
 async function calcularRankingSemanalLiviano(periodo = getPeriodoTrabajoActual(today())){
   const cacheKey = `ranking_fast_${periodo.id}`;
   const choferes = await getChoferesRankingActivosRapido();
@@ -1951,11 +1999,16 @@ async function calcularRankingSemanalLiviano(periodo = getPeriodoTrabajoActual(t
     stats[c.id] = {id:c.id,nombre:c.nombre || c.id,viajes:0,derivaciones:0,facturacion:0,porcentaje:0,actividad:0};
   });
 
+  const derivacionesPromise = getDerivacionesAceptadasPorOrigenRapido(periodo).catch(e=>{
+    console.warn("Ranking: derivaciones reales no disponibles", e);
+    return {};
+  });
+
   try{
     const acumSnap = await withTimeout(getDocs(query(
       collection(db,"acumulados_semanales"),
       where("periodoId","==",periodo.id)
-    )), 2500, "El ranking tardó cargando acumulados.");
+    )), 2200, "El ranking tardó cargando acumulados.");
 
     acumSnap.forEach(d=>{
       const a = d.data();
@@ -1971,8 +2024,16 @@ async function calcularRankingSemanalLiviano(periodo = getPeriodoTrabajoActual(t
     if(cached && cached.ranking) return cached;
   }
 
+  // Corrección rápida: las derivaciones aceptadas/completadas se leen desde la colección derivaciones
+  // y se cruzan con acumulados sin recalcular todos los viajes. Esto evita ranking lento y evita 0 falsos.
+  const derivacionesReales = await derivacionesPromise;
+  Object.keys(derivacionesReales || {}).forEach(choferId=>{
+    if(!stats[choferId]) return;
+    stats[choferId].derivaciones = Math.max(Number(stats[choferId].derivaciones || 0), Number(derivacionesReales[choferId] || 0));
+  });
+
   const arr = calcularPorcentajeRanking(Object.values(stats));
-  const data = {periodo, ranking: arr, actualizado: Date.now(), modo:"acumulados_fast"};
+  const data = {periodo, ranking: arr, actualizado: Date.now(), modo:"acumulados_derivaciones_fast"};
   cacheSet(cacheKey, data);
   return data;
 }
@@ -2111,42 +2172,10 @@ async function getGanadorSemanalRapido(periodo){
   const cached = cacheGet(key, 10 * 60 * 1000);
 
   try{
-    const acumSnap = await withTimeout(getDocs(query(
-      collection(db,"acumulados_semanales"),
-      where("periodoId","==",periodo.id)
-    )), 1800, "Ranking semanal no disponible rápido.");
-
-    let arr = [];
-    acumSnap.forEach(d=>{
-      const a = d.data();
-      const id = a.chofer || String(d.id).split("_")[0];
-      arr.push({
-        id,
-        nombre: a.nombre || id,
-        viajes: Number(a.cantidadViajes || 0),
-        derivaciones: Number(a.derivaciones || 0),
-        facturacion: Number(a.totalViajes || 0),
-        porcentaje: 0
-      });
-    });
-
-    if(!arr.length) return cached || null;
-
-    arr.forEach(x=>{
-      x.actividad = (Number(x.viajes || 0) > 0 || Number(x.derivaciones || 0) > 0 || Number(x.facturacion || 0) > 0) ? 1 : 0;
-    });
-    const maxViajes = Math.max(1,...arr.map(x=>x.viajes));
-    const maxDeriv = Math.max(1,...arr.map(x=>x.derivaciones));
-    const maxFact = Math.max(1,...arr.map(x=>x.facturacion));
-    const maxActividad = Math.max(1,...arr.map(x=>x.actividad));
-    arr.forEach(x=>{
-      x.porcentaje = Math.round((((x.facturacion/maxFact)*0.50)+((x.viajes/maxViajes)*0.20)+((x.derivaciones/maxDeriv)*0.20)+((x.actividad/maxActividad)*0.10))*100);
-    });
-    arr.sort((a,b)=>b.porcentaje-a.porcentaje || b.facturacion-a.facturacion || b.viajes-a.viajes);
-
-    const ganador = arr[0] || null;
+    const data = await withTimeout(calcularRankingSemanalLiviano(periodo), 2800, "Ranking semanal no disponible rápido.");
+    const ganador = data && data.ranking ? data.ranking[0] : null;
     if(ganador) cacheSet(key, ganador);
-    return ganador;
+    return ganador || cached || null;
   }catch(e){
     console.warn("Ganador rápido no disponible; uso caché", e);
     return cached || null;
@@ -2677,7 +2706,11 @@ window.aceptarDerivacion = async function(derivacionId){
     });
 
     if(!viajeExistente.exists()){
-      await actualizarAcumuladoDerivacionAceptada(x.origen, x.periodoOrigenId || x.periodoId || periodoOperativo.id, x.periodoInicio || "", x.periodoFin || "");
+      const periodoOrigenRanking = x.periodoOrigenId || x.periodoId || periodoOperativo.id;
+      await actualizarAcumuladoDerivacionAceptada(x.origen, periodoOrigenRanking, x.periodoInicio || "", x.periodoFin || "");
+      cacheRemove(`ranking_fast_${periodoOrigenRanking}`);
+      cacheRemove(`ganador_sem_${periodoOrigenRanking}`);
+      cacheRemove(`ranking_derivaciones_reales_${periodoOrigenRanking}`);
     }
 
     cierreSemanalCache = null;
