@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.37
-Build: 2026-06-06-PERIODO-SEMANAL-FIX-001
+Version: 2.8.38
+Build: 2026-06-06-COMPROBANTES-PAGOS-001
 Fecha: 05/06/2026
 Cambios:
 - Base estable tomada desde v2.8.21 ACUMULADOS-VERIFICADOS.
@@ -16,6 +16,7 @@ Cambios:
 - Se mejora el texto visible de servicios con íconos: 🛬 🇦🇷 🇧🇷 🇵🇾 para lectura rápida.
 - Formato automático con punto en campos numéricos: 30.000 en lugar de 30000, sin afectar cálculos internos.
 - Reasignación segura de vehículo: al asignar un auto existente a otro chofer conserva Mi auto, km y mantenimiento.
+- Comprobantes obligatorios para pagos semanales: solo carga quien debe pagar, con imagen comprimida y carga bajo demanda.
 - Corrección período semanal: si un chofer queda con una semana futura por pruebas o error, se reajusta automáticamente a la semana real sin romper cierres confirmados.
 - Ranking actualizado: 50% facturación, 20% viajes, 20% derivaciones, 10% actividad para incentivar derivar dentro de EXPLORA.
 - Optimización: Nuevo servicio abre desde caché/default y verifica km diario con cache local.
@@ -29,7 +30,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.37 · Build 2026-06-06-PERIODO-SEMANAL-FIX-001</title>
+<title>EXPLORA v2.8.38 · Build 2026-06-06-COMPROBANTES-PAGOS-001</title>
 <style>
 :root{
   --bg:#080808;
@@ -396,6 +397,29 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 .ranking-rules-box ul{margin:8px 0 0 18px;padding:0}
 .ranking-rules-box li{margin:4px 0}
 
+.comprobante-box{
+  background:#121212;
+  border:1px solid rgba(212,175,55,.35);
+  border-radius:16px;
+  padding:14px;
+  margin:10px 0;
+}
+.comprobante-box small{color:var(--muted)}
+.comprobante-thumb{
+  width:100%;
+  max-height:340px;
+  object-fit:contain;
+  border-radius:14px;
+  border:1px solid #333;
+  background:#050505;
+  margin-top:10px;
+}
+.file-input{
+  background:#0d0d0d;
+  border:1px dashed rgba(212,175,55,.45);
+  padding:13px;
+}
+
 </style>
 </head>
 <body>
@@ -405,7 +429,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.37</b> · Build 2026-06-06-PERIODO-SEMANAL-FIX-001</div>
+    <div class="build-version"><b>v2.8.38</b> · Build 2026-06-06-COMPROBANTES-PAGOS-001</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -418,7 +442,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="driverView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.37</b> · PERIODO-SEMANAL-FIX-001</div></div>
+      <div><div class="small-logo">EXPLORA</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.38</b> · COMPROBANTES-PAGOS-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -461,6 +485,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <button id="btnRanking" class="bigbtn" type="button" onclick="openRankingPanel()"><span class="icon">🏆</span><strong>Ranking</strong></button>
       <button id="btnHistorialHoy" class="bigbtn" type="button" onclick="showPanel('historyPanel')"><span class="icon">📋</span><strong>Historial hoy</strong></button>
       <button id="btnMiAuto" class="bigbtn" type="button" onclick="showPanel('miAutoPanel')"><span class="icon">🚗</span><strong>Mi auto <span id="miAutoBadge" class="mi-auto-badge hidden">⚙️</span></strong></button>
+      <button id="btnComprobantes" class="bigbtn" type="button" onclick="showPanel('comprobantesPanel')"><span class="icon">📎</span><strong>Comprobantes</strong></button>
       <button id="btnCerrarDia" class="bigbtn" type="button" onclick="closeDay()"><span class="icon">✅</span><strong>Ver cierre semanal</strong></button>
     </div>
 
@@ -582,6 +607,14 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div id="miAutoEstado"></div>
     </div>
 
+
+    <div id="comprobantesPanel" class="card hidden">
+      <h3>📎 Comprobantes</h3>
+      <p class="note">Acá ves los comprobantes que enviaste para rendiciones semanales. Las fotos se cargan solo cuando tocás “Ver foto”.</p>
+      <button class="btn-dark" onclick="loadComprobantesChofer(true)">Actualizar comprobantes</button>
+      <div id="comprobantesChoferList" style="margin-top:12px">Tocá actualizar para cargar.</div>
+    </div>
+
     <div id="historyPanel" class="card hidden">
       <h3>Historial de hoy</h3>
       <div id="historyList"></div>
@@ -590,7 +623,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="adminView" class="hidden">
     <div class="topbar">
-      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.37</b> · PERIODO-SEMANAL-FIX-001</div></div>
+      <div><div class="small-logo">EXPLORA ADMIN</div><div class="build-version" style="text-align:left;margin:2px 0 0"><b>v2.8.38</b> · COMPROBANTES-PAGOS-001</div></div>
       <button class="btn-dark" style="width:auto;padding:10px 13px" onclick="logout()">Salir</button>
     </div>
 
@@ -679,6 +712,14 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div id="nuevoChoferMsg"></div>
     </div>
 
+
+    <div class="card">
+      <h3>📎 Comprobantes</h3>
+      <p class="note">Control de comprobantes semanales. Se cargan bajo demanda para no poner lenta la app.</p>
+      <button class="btn-gold" onclick="loadComprobantesAdmin(true)">Ver comprobantes</button>
+      <div id="adminComprobantesList" style="margin-top:12px"></div>
+    </div>
+
     <div class="card">
       <h3>Herramientas</h3>
       <button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios EXPLORA</button>
@@ -721,6 +762,7 @@ import {
   getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, addDoc,
   query, where, getDocs, serverTimestamp, onSnapshot, increment
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
@@ -741,6 +783,7 @@ setPersistence(auth, browserLocalPersistence).catch(e=>{
 });
 
 const db = getFirestore(app);
+const storage = getStorage(app);
 
 let currentUserId = null;
 let currentProfile = null;
@@ -1560,7 +1603,7 @@ window.saveDailyKm = async function(){
 }
 
 window.showPanel = function(id){
-  ["servicePanel","derivePanel","expensePanel","rankingPanel","historyPanel","miAutoPanel"].forEach(p=>{
+  ["servicePanel","derivePanel","expensePanel","rankingPanel","historyPanel","miAutoPanel","comprobantesPanel"].forEach(p=>{
     const panel = $(p);
     if(panel) panel.classList.add("hidden");
   });
@@ -1583,6 +1626,11 @@ window.showPanel = function(id){
   if(id === "miAutoPanel"){
     cargarMiAutoPanel().catch(e=>{
       if($("miAutoMsg")) msg($("miAutoMsg"), "No se pudo cargar Mi auto: " + e.message);
+    });
+  }
+  if(id === "comprobantesPanel"){
+    loadComprobantesChofer(false).catch(e=>{
+      if($("comprobantesChoferList")) $("comprobantesChoferList").innerHTML = `<div class="msg err">No se pudieron cargar comprobantes: ${e.message}</div>`;
     });
   }
 }
@@ -2303,6 +2351,197 @@ async function calcularCierreSemanalLiviano(chofer, periodo, forceRebuild=false)
   return cierreDesdeAcumulado(chofer, periodo, acumulado, ganador, premioSemanal);
 }
 
+
+function comprobanteId(chofer, periodoId){
+  return `${chofer}_${periodoId}`;
+}
+
+async function comprimirImagenComprobante(file, maxWidth=1200, quality=0.62){
+  if(!file) throw new Error("Seleccioná una foto del comprobante.");
+  if(!file.type || !file.type.startsWith("image/")) throw new Error("El comprobante debe ser una imagen.");
+
+  const img = await new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      const image = new Image();
+      image.onload = ()=>resolve(image);
+      image.onerror = reject;
+      image.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+  const scale = Math.min(1, maxWidth / img.width);
+  const width = Math.max(1, Math.round(img.width * scale));
+  const height = Math.max(1, Math.round(img.height * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img,0,0,width,height);
+
+  return await new Promise(resolve=>canvas.toBlob(blob=>resolve(blob), "image/jpeg", quality));
+}
+
+async function subirComprobantePago({chofer, periodoId, sentido, monto, file, marcadoPor}){
+  const blob = await comprimirImagenComprobante(file);
+  if(!blob) throw new Error("No se pudo comprimir la imagen.");
+  const id = comprobanteId(chofer, periodoId);
+  const path = `comprobantes_pagos/${periodoId}/${chofer}_${Date.now()}.jpg`;
+  const ref = storageRef(storage, path);
+  await uploadBytes(ref, blob, {contentType:"image/jpeg"});
+  const url = await getDownloadURL(ref);
+
+  const data = {
+    id,
+    chofer,
+    periodoId,
+    sentido,
+    monto:Number(monto || 0),
+    marcadoPor,
+    fecha:today(),
+    hora:new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
+    storagePath:path,
+    url,
+    estado:"cargado",
+    actualizado:serverTimestamp()
+  };
+
+  await setDoc(doc(db,"comprobantes_pagos",id),data,{merge:true});
+  await setDoc(doc(db,"pagos_semanales",id),{
+    chofer,
+    periodoId,
+    sentido,
+    monto:Number(monto || 0),
+    pagado:true,
+    marcadoPor,
+    fechaPago:data.fecha,
+    horaPago:data.hora,
+    comprobanteUrl:url,
+    comprobantePath:path,
+    comprobanteObligatorio:true,
+    actualizado:serverTimestamp()
+  },{merge:true});
+
+  cacheRemove(`admin_5050_${chofer}_${periodoId}`);
+  cacheRemove(`cierre_sem_${chofer}_${periodoId}`);
+  return data;
+}
+
+function comprobanteLinkHtml(pago){
+  const url = pago && (pago.comprobanteUrl || pago.url);
+  if(!url) return "";
+  return `<button class="btn-dark" style="margin-top:10px" onclick="window.open('${url}','_blank')">Ver comprobante</button>`;
+}
+
+function uploadComprobanteHtml({inputId, buttonText, onClick, nota}){
+  return `
+    <div class="comprobante-box">
+      <b>📎 Comprobante obligatorio</b><br>
+      <small>${nota || "Subí foto del comprobante para marcar el pago como realizado."}</small>
+      <input id="${inputId}" class="file-input" type="file" accept="image/*" capture="environment" />
+      <button class="btn-gold" style="margin-top:8px" onclick="${onClick}">${buttonText || "Subir comprobante y marcar pagado"}</button>
+    </div>
+  `;
+}
+
+window.subirComprobantePagoChofer = async function(){
+  if(!cierreSemanalPendiente) return;
+  const c = cierreSemanalPendiente;
+  const file = $("comprobantePagoChoferInput") && $("comprobantePagoChoferInput").files[0];
+  const btns = Array.from(document.querySelectorAll('button'));
+  btns.forEach(b=>{ if((b.textContent||"").includes("Subir comprobante")) b.disabled = true; });
+  try{
+    const pago = await subirComprobantePago({
+      chofer:currentUserId,
+      periodoId:c.periodo.id,
+      sentido:"chofer_a_david",
+      monto:c.choferDebe,
+      file,
+      marcadoPor:"chofer"
+    });
+    cierreSemanalPendiente.pagoSemanal = {...pago, pagado:true, fechaPago:pago.fecha, horaPago:pago.hora, comprobanteUrl:pago.url};
+    cierreSemanalCache = {key:`${currentUserId}_${c.periodo.id}`, data:cierreSemanalPendiente};
+    renderCierreSemanal(cierreSemanalPendiente);
+    msg($("cierreSemanalMsg"),"Comprobante cargado. Pago marcado como realizado.",true);
+    cacheRemove("comprobantes_chofer_" + currentUserId);
+  }catch(e){
+    msg($("cierreSemanalMsg"),"No se pudo subir el comprobante: " + e.message);
+  }finally{
+    btns.forEach(b=>{ if((b.textContent||"").includes("Subir comprobante")) b.disabled = false; });
+  }
+}
+
+window.subirComprobantePagoAdmin = async function(chofer, periodoId, sentido, monto, inputId){
+  const file = $(inputId) && $(inputId).files[0];
+  try{
+    await subirComprobantePago({chofer, periodoId, sentido, monto, file, marcadoPor:"admin"});
+    alert("Comprobante cargado y pago marcado como realizado.");
+    cacheRemove("comprobantes_admin_recientes");
+    await loadAdmin();
+    if($("adminComprobantesList") && $("adminComprobantesList").innerHTML.trim()) loadComprobantesAdmin(true).catch(()=>{});
+  }catch(e){
+    alert("No se pudo subir el comprobante: " + e.message);
+  }
+}
+
+async function loadComprobantesChofer(force=false){
+  const box = $("comprobantesChoferList");
+  if(!box || !currentUserId) return;
+  const cacheKey = "comprobantes_chofer_" + currentUserId;
+  const cached = cacheGet(cacheKey, 10 * 60 * 1000);
+  if(cached && !force){ renderComprobantesLista(box, cached, true); return; }
+  box.innerHTML = `<div class="msg ok">Cargando comprobantes...</div>`;
+  const snap = await withTimeout(getDocs(query(collection(db,"comprobantes_pagos"), where("chofer","==",currentUserId))), 4500, "Los comprobantes tardaron demasiado.");
+  const items = [];
+  snap.forEach(d=>{
+    const x = d.data();
+    if(x.marcadoPor !== "chofer") return;
+    items.push({id:d.id,...x});
+  });
+  items.sort((a,b)=>String(b.periodoId || "").localeCompare(String(a.periodoId || "")) || String(b.fecha || "").localeCompare(String(a.fecha || "")));
+  cacheSet(cacheKey, items);
+  renderComprobantesLista(box, items, true);
+}
+
+async function loadComprobantesAdmin(force=false){
+  const box = $("adminComprobantesList");
+  if(!box) return;
+  const cacheKey = "comprobantes_admin_recientes";
+  const cached = cacheGet(cacheKey, 10 * 60 * 1000);
+  if(cached && !force){ renderComprobantesLista(box, cached, false); return; }
+  box.innerHTML = `<div class="msg ok">Cargando comprobantes...</div>`;
+  const snap = await withTimeout(getDocs(collection(db,"comprobantes_pagos")), 6000, "Los comprobantes tardaron demasiado.");
+  const items = [];
+  snap.forEach(d=>items.push({id:d.id,...d.data()}));
+  items.sort((a,b)=>String(b.periodoId || "").localeCompare(String(a.periodoId || "")) || String(b.fecha || "").localeCompare(String(a.fecha || "")));
+  const limited = items.slice(0,60);
+  cacheSet(cacheKey, limited);
+  renderComprobantesLista(box, limited, false);
+}
+
+function renderComprobantesLista(box, items, soloPropios){
+  if(!items || !items.length){
+    box.innerHTML = `<div class="paid-box">No hay comprobantes cargados.</div>`;
+    return;
+  }
+  box.innerHTML = items.map(x=>{
+    const sentidoTxt = x.sentido === "chofer_a_david" ? "Chofer → David" : x.sentido === "david_a_chofer" ? "David → Chofer" : "Sin diferencia";
+    const url = x.url || x.comprobanteUrl || "";
+    return `
+      <div class="comprobante-box">
+        <b>${sentidoTxt}</b><br>
+        <small>Chofer: ${x.chofer || ""}</small><br>
+        <small>Semana: ${String(x.periodoId || "").replace("_"," al ")}</small><br>
+        <small>Monto: ${money(x.monto)} · Subido por: ${x.marcadoPor || ""}</small><br>
+        <small>${x.fecha || ""} ${x.hora || ""}</small>
+        ${url ? `<button class="btn-dark" style="margin-top:10px" onclick="window.open('${url}','_blank')">Ver foto</button>` : `<div class="msg err">Sin imagen disponible</div>`}
+      </div>
+    `;
+  }).join("");
+}
+
 function renderCierreSemanal(c){
   const pago = c.pagoSemanal || null;
   const yaPagado = pago && pago.pagado === true;
@@ -2317,12 +2556,21 @@ function renderCierreSemanal(c){
   let pagoHtml = "";
 
   if(yaPagado){
-    pagoHtml = `<div class="paid-box" style="margin-top:10px">✅ Pago marcado como realizado<br><small>${pago.fechaPago || ""} ${pago.horaPago || ""} · ${pago.marcadoPor || ""}</small></div>`;
+    pagoHtml = `<div class="paid-box" style="margin-top:10px">✅ Pago marcado como realizado<br><small>${pago.fechaPago || ""} ${pago.horaPago || ""} · ${pago.marcadoPor || ""}</small>${comprobanteLinkHtml(pago)}</div>`;
   }else if(c.choferDebe > 0 || c.davidDebe > 0){
     if(puedeCerrarHoy){
-      pagoHtml = `<button id="btnPagoChofer" class="btn-gold" style="margin-top:10px" onclick="marcarPagoSemanalChofer()">Marcar pagado</button><div class="note">Usá este botón solo cuando el dinero ya fue entregado/transferido. El cierre se confirma con el botón de abajo.</div>`;
+      if(c.choferDebe > 0){
+        pagoHtml = uploadComprobanteHtml({
+          inputId:"comprobantePagoChoferInput",
+          buttonText:"Subir comprobante y marcar pagado",
+          onClick:"subirComprobantePagoChofer()",
+          nota:"Como el chofer debe transferir a David, el comprobante lo carga obligatoriamente el chofer."
+        });
+      }else{
+        pagoHtml = `<div class="pending-box" style="margin-top:10px">📎 David debe cargar el comprobante desde Admin → Comprobantes / Vehículos y choferes. El chofer no carga comprobante en este caso.</div>`;
+      }
     }else{
-      pagoHtml = `<div class="pending-box" style="margin-top:10px">Pago pendiente. Solo se puede marcar como pagado el sábado de cierre (${c.periodo ? c.periodo.closeDate : ""}).</div>`;
+      pagoHtml = `<div class="pending-box" style="margin-top:10px">Pago pendiente. El comprobante se carga el sábado de cierre (${c.periodo ? c.periodo.closeDate : ""}).</div>`;
     }
   }else{
     pagoHtml = `<div class="paid-box" style="margin-top:10px">✅ Sin pago pendiente<br><small>Están equilibrados.${puedeCerrarHoy ? ' Tocá “Confirmar cierre e iniciar nueva semana” para cerrar el período.' : ' El cierre se habilita el sábado.'}</small></div>`;
@@ -2345,8 +2593,9 @@ function renderCierreSemanal(c){
 
   if(cierreBtn){
     if(puedeCerrarHoy){
-      cierreBtn.disabled = false;
-      cierreBtn.textContent = "Confirmar cierre e iniciar nueva semana";
+      const requiereComprobante = (Number(c.choferDebe || 0) > 0 || Number(c.davidDebe || 0) > 0) && !(c.pagoSemanal && c.pagoSemanal.pagado === true);
+      cierreBtn.disabled = requiereComprobante;
+      cierreBtn.textContent = requiereComprobante ? "Falta comprobante obligatorio" : "Confirmar cierre e iniciar nueva semana";
       cierreBtn.classList.remove("hidden");
     }else{
       cierreBtn.disabled = true;
@@ -2388,6 +2637,12 @@ window.confirmarCierreSemanal = async function(){
 
     if(!puedeCerrarPeriodo(c.periodo)){
       msg($("cierreSemanalMsg"), `Este período no se puede cerrar todavía. El cierre corresponde al sábado ${c.periodo ? c.periodo.closeDate : ""}.`);
+      renderCierreSemanal(c);
+      return;
+    }
+    const requiereComprobante = (Number(c.choferDebe || 0) > 0 || Number(c.davidDebe || 0) > 0) && !(c.pagoSemanal && c.pagoSemanal.pagado === true);
+    if(requiereComprobante){
+      msg($("cierreSemanalMsg"), "Antes de confirmar el cierre hay que cargar el comprobante obligatorio.");
       renderCierreSemanal(c);
       return;
     }
@@ -3859,19 +4114,27 @@ function renderResumenSemanalAdmin(vehiculoId,c,pago){
       <div class="paid-box">
         ✅ Pago realizado<br>
         <small>${pago.fechaPago || ""} ${pago.horaPago || ""} · Marcado por: ${pago.marcadoPor || ""}</small>
+        ${comprobanteLinkHtml(pago)}
       </div>
     `;
   }else if(sentido === "sin_diferencia"){
     pagoAccion = `<div class="paid-box">✅ Sin pago pendiente</div>`;
   }else if(puedeCerrarHoy){
-    pagoAccion = `
-      <button class="btn-gold" style="margin-top:10px" onclick="marcarPagoSemanalAdmin('${c.chofer}','${c.periodo.id}','${sentido}',${Math.round(montoDeuda)})">Marcar pagado</button>
-      <div class="note">Usá este botón cuando el dinero ya fue entregado/transferido. Después queda bloqueado como pago realizado.</div>
-    `;
+    if(sentido === "david_a_chofer"){
+      const inputId = `compAdmin_${safeId(c.chofer)}_${safeId(c.periodo.id)}`;
+      pagoAccion = uploadComprobanteHtml({
+        inputId,
+        buttonText:"Subir comprobante y marcar pagado",
+        onClick:`subirComprobantePagoAdmin('${c.chofer}','${c.periodo.id}','${sentido}',${Math.round(montoDeuda)},'${inputId}')`,
+        nota:"Como David debe pagarle al chofer, el comprobante lo carga obligatoriamente el administrador."
+      });
+    }else{
+      pagoAccion = `<div class="pending-box">📎 El chofer debe cargar el comprobante desde su app. Esta opción no aparece en Admin porque el pagador es el chofer.</div>`;
+    }
   }else{
     pagoAccion = `
-      <button class="btn-dark" style="margin-top:10px" disabled>Marcar pagado disponible solo el sábado</button>
-      <div class="note">El pago solo se puede marcar el sábado de cierre (${c.periodo.closeDate}).</div>
+      <button class="btn-dark" style="margin-top:10px" disabled>Comprobante disponible solo el sábado</button>
+      <div class="note">El comprobante solo se carga el sábado de cierre (${c.periodo.closeDate}).</div>
     `;
   }
 
@@ -3901,80 +4164,11 @@ async function getEstadoPagoSemanal(chofer, periodoId){
 }
 
 window.marcarPagoSemanalAdmin = async function(chofer, periodoId, sentido, monto){
-  const parts = String(periodoId || "").split("_");
-  const periodo = parts.length === 2 ? { id: periodoId, start: parts[0], end: parts[1], closeDate: parts[1] } : null;
-  if(!puedeCerrarPeriodo(periodo)){
-    alert(`El pago solo se puede marcar el sábado de cierre${periodo ? " (" + periodo.closeDate + ")" : ""}.`);
-    return;
-  }
-
-  const buttons = Array.from(document.querySelectorAll('button'));
-  buttons.forEach(b=>{
-    if((b.textContent || '').includes('Marcar pagado')) b.disabled = true;
-  });
-
-  await setDoc(doc(db,"pagos_semanales",`${chofer}_${periodoId}`),{
-    chofer,
-    periodoId,
-    sentido,
-    monto:Number(monto || 0),
-    pagado:true,
-    marcadoPor:"admin",
-    fechaPago:today(),
-    horaPago:new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
-    actualizado:serverTimestamp()
-  });
-  cacheRemove(`admin_5050_${chofer}_${periodoId}`);
-  cacheRemove(`cierre_sem_${chofer}_${periodoId}`);
-  alert("Pago marcado como pagado.");
-  await loadAdmin();
+  alert("Ahora el pago requiere comprobante obligatorio. Usá el botón ‘Subir comprobante y marcar pagado’.");
 }
 
 window.marcarPagoSemanalChofer = async function(){
-  if(!cierreSemanalPendiente) return;
-
-  const btn = $("btnPagoChofer");
-  if(btn){
-    btn.disabled = true;
-    btn.textContent = "Marcando pagado...";
-  }
-
-  const c = cierreSemanalPendiente;
-
-  if(!puedeCerrarPeriodo(c.periodo)){
-    msg($("cierreSemanalMsg"), `El pago solo se puede marcar el sábado de cierre (${c.periodo ? c.periodo.closeDate : ""}).`);
-    renderCierreSemanal(c);
-    return;
-  }
-
-  const sentido = c.choferDebe > 0 ? "chofer_a_david" : c.davidDebe > 0 ? "david_a_chofer" : "sin_diferencia";
-  const monto = c.choferDebe > 0 ? c.choferDebe : c.davidDebe;
-
-  const pago = {
-    chofer: currentUserId,
-    periodoId: c.periodo.id,
-    sentido,
-    monto:Number(monto || 0),
-    pagado:true,
-    marcadoPor:"chofer",
-    fechaPago:today(),
-    horaPago:new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
-    actualizado:serverTimestamp()
-  };
-
-  try{
-    await setDoc(doc(db,"pagos_semanales",`${currentUserId}_${c.periodo.id}`),pago);
-    cierreSemanalPendiente.pagoSemanal = pago;
-    cierreSemanalCache = { key: `${currentUserId}_${c.periodo.id}`, data: cierreSemanalPendiente };
-    renderCierreSemanal(cierreSemanalPendiente);
-    msg($("cierreSemanalMsg"),"Pago marcado como realizado. Ahora podés confirmar el cierre semanal.",true);
-  }catch(e){
-    if(btn){
-      btn.disabled = false;
-      btn.textContent = "Marcar pagado";
-    }
-    msg($("cierreSemanalMsg"),"No se pudo marcar pagado: " + e.message);
-  }
+  alert("Ahora el pago requiere comprobante. Usá ‘Subir comprobante y marcar pagado’. ");
 }
 
 
