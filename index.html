@@ -1878,7 +1878,7 @@ function renderMiCierreSemanalRapido(c, stale=false){
       <div class="cierre-line cierre-gastos"><span>Gastos</span><span>-${money(c.totalGastos)}</span></div>
       <div class="cierre-line cierre-muted"><span>Pagados por chofer</span><span>${money(c.totalGastosPagadosChofer || 0)}</span></div>
       <div class="cierre-line cierre-fondo"><span>Fondo operativo</span><span>${money(c.totalFondoOperativo || 0)}</span></div>
-      <div class="cierre-line cierre-bono"><span>Bono semanal</span><span>-${money(c.premioAplicado || 0)}</span></div>
+      <div class="cierre-line cierre-bono"><span>Bono semanal</span><span>${Number(c.premioAplicado || 0) > 0 ? "+" + money(c.premioAplicado || 0) : money(0)}</span></div>
       <div class="cierre-divider"></div>
       <div class="cierre-line cierre-pendiente"><span>Pendiente a favor de David</span><span>${money(Math.max(Number(c.choferDebe || 0), 0))}</span></div>
     </div>
@@ -7968,6 +7968,168 @@ checkCierreSemanalAutomatico = async function(){
 window.checkCierreSemanalAutomatico = checkCierreSemanalAutomatico;
 window.getPeriodoCierrePendienteNoConfirmado = getPeriodoCierrePendienteNoConfirmado;
 window.EXPLORA_BUILD_CIERRE_PERSISTENTE = EXPLORA_BUILD_CIERRE_PERSISTENTE;
+
+// ===== EXPLORA v2.8.94 · OPTIMIZACIÓN GAMA MEDIA/BAJA =====
+// Objetivo: que el chofer vea y pueda tocar la pantalla principal más rápido.
+// No cambia lógica financiera, cierres, ranking, pagos ni comprobantes.
+// Cambios seguros:
+// - Entrada chofer: usa caché visible primero y difiere escuchas/tareas pesadas.
+// - Acumulado inicial: lee caché + documento semanal directo; no reconstruye viajes al iniciar.
+// - Cierre obligatorio: sigue automático, pero espera unos segundos para no competir con el login.
+// - Servicios: se precargan después de abrir; si hay caché/default, Nuevo servicio abre rápido.
+const EXPLORA_BUILD_OPTIMIZACION_GAMA_BAJA = "v2.8.94 · OPTIMIZACION-GAMA-BAJA";
+
+function exploraRunIdle(fn, delay){
+  const ms = Number(delay || 0);
+  if(typeof requestIdleCallback === "function"){
+    return requestIdleCallback(()=>fn(), {timeout: Math.max(ms, 1200)});
+  }
+  return setTimeout(fn, ms);
+}
+
+async function loadTodayTripsRapidoV294(){
+  if(!currentUserId) return;
+  const periodoOperativo = periodoOperativoCache || getPeriodoOperativoDesdePerfil(currentProfile) || getPeriodoTrabajoActual(today());
+  const cacheKey = `acum_sem_${currentUserId}_${periodoOperativo.id}`;
+  const cached = cacheGet(cacheKey, 3 * 60 * 60 * 1000);
+
+  if(cached){
+    if($("todayTrips")) $("todayTrips").textContent = Number(cached.cantidadViajes || 0);
+    if($("todayTotal")) $("todayTotal").textContent = money(cached.totalViajes || 0);
+  }else{
+    if($("todayTrips")) $("todayTrips").textContent = "0";
+    if($("todayTotal")) $("todayTotal").textContent = money(0);
+  }
+
+  try{
+    const snap = await withTimeout(
+      getDoc(doc(db,"acumulados_semanales",`${currentUserId}_${periodoOperativo.id}`)),
+      2200,
+      "acumulado semanal rápido"
+    );
+    if(snap.exists()){
+      const a = snap.data() || {};
+      cacheSet(cacheKey, a);
+      if($("todayTrips")) $("todayTrips").textContent = Number(a.cantidadViajes || 0);
+      if($("todayTotal")) $("todayTotal").textContent = money(a.totalViajes || 0);
+    }
+  }catch(e){
+    console.warn("Acumulado rápido no disponible al iniciar; se mantiene caché", e);
+  }
+
+  if(!todayHistoryLoaded && $("historyList")){
+    $("historyList").innerHTML = `<p class="note">Tocá Historial hoy para ver el detalle. El inicio usa acumulado rápido para celulares lentos.</p>`;
+  }
+}
+
+const _loadDriverV294Base = loadDriver;
+loadDriver = async function(){
+  // Render mínimo inmediato: evita que el chofer sienta la app trabada.
+  if($("driverName")) $("driverName").textContent = currentProfile.nombre || currentUserId;
+  if(choferTieneModoPruebaFecha()){
+    const box = $("cierrePagoPendienteAlert");
+    if(box){
+      box.className = "cierre-pendiente-banner warn";
+      box.innerHTML = "🧪 Modo prueba activo: este usuario usa la fecha del iPhone para probar cierres. Desactivar desde Admin al terminar.";
+    }
+  }
+  setStatusButton(currentProfile.estado || "disponible");
+  if($("todayTrips")) $("todayTrips").textContent = "...";
+  if($("todayTotal")) $("todayTotal").textContent = "...";
+  if($("historyList")) $("historyList").innerHTML = `<p class="note">Tocá Historial hoy para cargar el detalle.</p>`;
+
+  periodoOperativoCache = getPeriodoOperativoDesdePerfil(currentProfile);
+
+  const vehicleId = currentProfile.vehiculo;
+  const vehCache = cacheGet("vehiculo_" + vehicleId, 12 * 60 * 60 * 1000);
+  if(vehCache){
+    currentVehicle = { id: vehicleId, ...vehCache };
+    if($("vehicleInfo")) $("vehicleInfo").innerHTML = `${currentVehicle.modelo || "Vehículo"}<br>Patente: <b>${vehicleId}</b>`;
+    if($("lastKmText")) $("lastKmText").textContent = currentVehicle.kmActual || 0;
+    actualizarBadgeMiAuto();
+  }else if($("vehicleInfo")){
+    $("vehicleInfo").innerHTML = `Vehículo asignado<br>Patente: <b>${vehicleId || "sin asignar"}</b>`;
+  }
+
+  // Lo visible primero. Nada de esto bloquea el ingreso.
+  loadTodayTripsRapidoV294().catch(e=>{
+    console.warn("No se pudo cargar acumulado rápido inicial", e);
+    if($("todayTrips")) $("todayTrips").textContent = "0";
+    if($("todayTotal")) $("todayTotal").textContent = money(0);
+  });
+
+  // Escrituras/lecturas secundarias se hacen cuando el navegador respira.
+  exploraRunIdle(()=>{
+    updateDoc(doc(db,"choferes",currentUserId),{
+      ultimaActividad: new Date().toLocaleString("es-AR")
+    }).catch(e=>console.warn("No se pudo actualizar actividad", e));
+  }, 1200);
+
+  exploraRunIdle(()=>{
+    if(!vehicleId) return;
+    getDoc(doc(db,"vehiculos",vehicleId)).then(vSnap=>{
+      if(vSnap.exists()){
+        currentVehicle = { id: vehicleId, ...vSnap.data() };
+        cacheSet("vehiculo_" + vehicleId, vSnap.data());
+        if($("vehicleInfo")) $("vehicleInfo").innerHTML = `${currentVehicle.modelo || "Vehículo"}<br>Patente: <b>${vehicleId}</b>`;
+        if($("lastKmText")) $("lastKmText").textContent = currentVehicle.kmActual || 0;
+        actualizarBadgeMiAuto();
+      }
+    }).catch(e=>console.warn("Vehículo diferido no disponible", e));
+  }, 1400);
+
+  // Servicios se precargan sin competir con el login.
+  exploraRunIdle(()=>loadServices().catch(e=>console.warn("Precarga de servicios diferida", e)), 1700);
+
+  // Derivaciones en tiempo real después de abrir: antes competía con cierre/login en teléfonos lentos.
+  exploraRunIdle(()=>startDerivationInboxPolling(), 2200);
+
+  // Comprobantes/cierre siguen automáticos, pero diferidos para no congelar el inicio.
+  setTimeout(()=>checkPagosPendientesChoferAutomatico().catch(e=>console.warn("Comprobantes pendientes diferidos", e)), 2600);
+  setTimeout(()=>checkCierreSemanalAutomatico().catch(e=>console.warn("Cierre automático diferido", e)), 3600);
+};
+
+const _openNewServiceV294Base = window.openNewService;
+window.openNewService = async function(){
+  try{
+    if(!currentVehicle){
+      alert("No hay vehículo asignado.");
+      return;
+    }
+
+    // Si ya hay servicios en memoria/caché/default, no espera Firestore para abrir.
+    if(!servicesLoaded || !services.length){
+      const cached = cacheGet("servicios_activos", 7 * 24 * 60 * 60 * 1000);
+      if(cached && cached.length){
+        services = cached.map(s=>({...s}));
+        servicesLoaded = true;
+        fillServiceSelects();
+        loadServices().catch(e=>console.warn("Refresh servicios segundo plano", e));
+      }else if(typeof serviciosExplora !== "undefined" && serviciosExplora.length){
+        services = serviciosExplora.map(s=>({...s, activo:true}));
+        servicesLoaded = true;
+        fillServiceSelects();
+        cacheSet("servicios_activos", services);
+        loadServices().catch(e=>console.warn("Refresh servicios segundo plano", e));
+      }else{
+        await loadServices();
+      }
+    }
+
+    await checkKmToday();
+    if(!kmTodaySaved){
+      $("kmModal").classList.remove("hidden");
+      setTimeout(()=>{ try{ $("kmInput").focus(); }catch(e){} },120);
+      return;
+    }
+    showPanel("servicePanel");
+  }catch(e){
+    alert("Error al abrir Nuevo servicio: " + e.message);
+  }
+};
+
+window.loadTodayTripsRapidoV294 = loadTodayTripsRapidoV294;
+window.EXPLORA_BUILD_OPTIMIZACION_GAMA_BAJA = EXPLORA_BUILD_OPTIMIZACION_GAMA_BAJA;
 
 
 </script>
