@@ -62,12 +62,13 @@ Cambios:
 - v2.8.101: Lanzar app desde cero muestra confirmación visual de ganador_semana_pasada eliminado y resetea la tarjeta al instante.
 - v2.8.101: historial persistente ultimo_ganador_semana para mostrar el ganador anterior aunque el ranking actual se reinicie.
 - v2.8.102: Chofer lee la misma fuente persistente de último ganador que Admin y Admin corrige estado visible si falta comprobante al abrir cierre.
+- v2.8.103: sincronización espejo del último ganador en cada documento de chofer para que Chofer y Admin vean lo mismo aunque una colección no sea legible para chofer.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.102 · Build 2026-06-07-GANADOR-CHOFER-ESTADO-CIERRE</title>
+<title>EXPLORA v2.8.103 · Build 2026-06-07-GANADOR-SYNC-CHOFER</title>
 <style>
 :root{
   --bg:#080808;
@@ -1225,7 +1226,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.102</b> · Build 2026-06-07-GANADOR-CHOFER-ESTADO-CIERRE</div>
+    <div class="build-version"><b>v2.8.103</b> · Build 2026-06-07-GANADOR-SYNC-CHOFER</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1580,7 +1581,7 @@ import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, addDoc,
-  query, where, getDocs, serverTimestamp, onSnapshot, increment
+  query, where, getDocs, serverTimestamp, onSnapshot, increment, deleteField
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
 
@@ -3750,12 +3751,76 @@ async function guardarUltimoGanadorSemana(periodo, ganador, fuente="cierre_seman
     cacheSet("ultimo_ganador_semana", result);
     cacheSet("ganador_semana_pasada_global", result);
     cacheSet(`ganador_semana_pasada_${periodo.id}`, result);
+    publicarUltimoGanadorEnChoferes(result).catch(()=>{});
     return result;
   }catch(e){
     console.warn("No se pudo guardar ultimo_ganador_semana", e);
     return null;
   }
 }
+
+async function publicarUltimoGanadorEnChoferes(data){
+  try{
+    const normalizado = data && data.ganador ? data : normalizarUltimoGanadorSemana(data);
+    if(!normalizado || !normalizado.ganador || !normalizado.periodo) return;
+    const payload = {
+      ultimoGanadorSemana: {
+        periodo: normalizado.periodo,
+        periodoId: normalizado.periodo.id,
+        periodoInicio: normalizado.periodo.start || "",
+        periodoFin: normalizado.periodo.end || "",
+        fechaCierre: normalizado.periodo.closeDate || addDays(normalizado.periodo.end, 1),
+        bono: 50000,
+        ganador: normalizado.ganador,
+        ganadorId: normalizado.ganador.id || "",
+        ganadorNombre: normalizado.ganador.nombre || normalizado.ganador.id || "Ganador",
+        actualizadoMs: Date.now(),
+        fuente: "sync_choferes"
+      }
+    };
+    const snap = await withTimeout(getDocs(collection(db,"choferes")), 4500, "Sincronizar ganador en choferes tardó demasiado.");
+    const tareas = [];
+    snap.forEach(d=>{
+      const info = d.data() || {};
+      if(info && info.rol === "admin") return;
+      tareas.push(updateDoc(doc(db,"choferes",d.id), payload).catch(e=>console.warn("No se pudo sincronizar ganador en chofer", d.id, e)));
+    });
+    await Promise.all(tareas);
+  }catch(e){
+    console.warn("No se pudo publicar último ganador en choferes", e);
+  }
+}
+
+async function getUltimoGanadorDesdeChoferActual(){
+  try{
+    if(currentProfile && currentProfile.ultimoGanadorSemana){
+      const n = normalizarUltimoGanadorSemana(currentProfile.ultimoGanadorSemana);
+      if(n && n.ganador){
+        cacheSet("ultimo_ganador_semana", n);
+        cacheSet("ganador_semana_pasada_global", n);
+        return n;
+      }
+    }
+    if(!currentUserId) return null;
+    const snap = await withTimeout(getDoc(doc(db,"choferes",currentUserId)), 2800, "Último ganador desde perfil tardó demasiado.");
+    if(snap.exists()){
+      const data = snap.data() || {};
+      if(data.ultimoGanadorSemana){
+        currentProfile = {...(currentProfile || {}), ultimoGanadorSemana:data.ultimoGanadorSemana};
+        const n = normalizarUltimoGanadorSemana(data.ultimoGanadorSemana);
+        if(n && n.ganador){
+          cacheSet("ultimo_ganador_semana", n);
+          cacheSet("ganador_semana_pasada_global", n);
+          return n;
+        }
+      }
+    }
+  }catch(e){
+    console.warn("No se pudo leer último ganador desde perfil chofer", e);
+  }
+  return null;
+}
+
 
 async function guardarUltimoGanadorSemanaDesdeRanking(periodo, fuente="cierre_semanal"){
   try{
@@ -3773,7 +3838,16 @@ async function guardarUltimoGanadorSemanaDesdeRanking(periodo, fuente="cierre_se
 async function eliminarUltimoGanadorSemanaPersistente(){
   try{ await deleteDoc(ganadorSemanaPasadaDocRef()); }catch(e){ console.warn("No se pudo borrar ultimo_ganador_semana", e); }
   try{ await deleteDoc(doc(db,"sistema","ultimo_ganador_semana")); }catch(e){}
+  try{
+    const snap = await withTimeout(getDocs(collection(db,"choferes")), 4500, "Limpiar ganador en choferes tardó demasiado.");
+    const tareas = [];
+    snap.forEach(d=>{
+      tareas.push(updateDoc(doc(db,"choferes",d.id), {ultimoGanadorSemana: deleteField()}).catch(()=>{}));
+    });
+    await Promise.all(tareas);
+  }catch(e){ console.warn("No se pudo limpiar ganador en perfiles de chofer", e); }
   try{ cacheRemove("ultimo_ganador_semana"); }catch(e){}
+  try{ cacheRemove("ganador_semana_pasada_global"); }catch(e){}
 }
 
 async function getGanadorSemanalRapido(periodo){
@@ -3893,6 +3967,16 @@ async function getGanadorSemanaPasadaRapido(){
   const cachedGlobal = cacheGet("ganador_semana_pasada_global", 24 * 60 * 60 * 1000);
   const cachedPersistente = cacheGet("ultimo_ganador_semana", 24 * 60 * 60 * 1000);
 
+  // 0A) Fuente espejo para Chofer: el Admin copia el último ganador dentro de cada documento de chofer.
+  // Esto evita diferencias por permisos/caché entre Admin y Chofer.
+  const desdeChofer = await getUltimoGanadorDesdeChoferActual();
+  if(desdeChofer && desdeChofer.ganador){
+    cacheSet("ultimo_ganador_semana", desdeChofer);
+    cacheSet("ganador_semana_pasada_global", desdeChofer);
+    cacheSet(key, desdeChofer);
+    return desdeChofer;
+  }
+
   // 0) Fuente estable de producción: último ganador guardado al cerrar semana.
   // Debe ganar sobre el caché específico del período para que Chofer y Admin vean lo mismo.
   const persistente = await getUltimoGanadorSemanaPersistente();
@@ -3980,7 +4064,9 @@ async function loadGanadorSemanaPasadaChofer(){
   const periodo = periodoSemanaPasadaVisible();
   const key = `ganador_semana_pasada_${periodo.id}`;
   const cached = cacheGet("ultimo_ganador_semana", 24 * 60 * 60 * 1000) || cacheGet("ganador_semana_pasada_global", 24 * 60 * 60 * 1000) || cacheGet(key, 6 * 60 * 60 * 1000);
-  if(cached && cached.ganador) renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",cached,"chofer");
+  const perfilSync = await getUltimoGanadorDesdeChoferActual();
+  if(perfilSync && perfilSync.ganador) renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",perfilSync,"chofer");
+  else if(cached && cached.ganador) renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",cached,"chofer");
   else renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",{periodo, ganador:null},"chofer");
   const data = await getGanadorSemanaPasadaRapido();
   renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",data,"chofer");
@@ -3994,6 +4080,7 @@ async function loadGanadorSemanaPasadaAdmin(){
   else renderGanadorSemanaPasadaEn("adminLastWeekWinnerCard","adminLastWeekWinnerContent",{periodo, ganador:null},"admin");
   const data = await getGanadorSemanaPasadaRapido();
   renderGanadorSemanaPasadaEn("adminLastWeekWinnerCard","adminLastWeekWinnerContent",data,"admin");
+  if(data && data.ganador) publicarUltimoGanadorEnChoferes(data).catch(()=>{});
 }
 
 function resetGanadorSemanaPasadaLocalState(){
