@@ -51,7 +51,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.82 · Build 2026-06-07-CIERRE-COMPROBANTE-FIX</title>
+<title>EXPLORA v2.8.83 · Build 2026-06-07-CIERRES-UNIFICADOS-FINAL</title>
 <style>
 :root{
   --bg:#080808;
@@ -3602,6 +3602,66 @@ function pagoPerteneceASemanaCerradaValida(p, fechaBase=today()){
   return periodo.end < actual.start;
 }
 
+function pagoPendienteVisibleOperativo(p){
+  if(!p) return false;
+  if(p.oculto === true || p.inconsistente === true || p.archivado === true) return false;
+  if(!["chofer_a_david","david_a_chofer"].includes(String(p.sentido || ""))) return false;
+  if(Number(p.monto || 0) <= 0) return false;
+  return true;
+}
+
+function montoEsperadoPagoDesdeCierre(cierre, sentido){
+  if(!cierre) return 0;
+  if(sentido === "chofer_a_david") return Number(cierre.choferDebe || 0);
+  if(sentido === "david_a_chofer") return Number(cierre.davidDebe || 0);
+  return 0;
+}
+
+async function ocultarPagoInconsistente(p, motivo="Pago viejo/inconsistente"){
+  try{
+    if(!p || !p.id) return;
+    await setDoc(doc(db,"pagos_semanales",p.id),{
+      oculto:true,
+      inconsistente:true,
+      motivoOculto:motivo,
+      actualizado:serverTimestamp()
+    },{merge:true});
+  }catch(e){ console.warn("No se pudo ocultar pago inconsistente", e); }
+}
+
+async function depurarPagosContraCierreReal(items, choferId){
+  const visibles = [];
+  for(const p of (items || [])){
+    if(!pagoPendienteVisibleOperativo(p)) continue;
+    const periodo = periodoDesdeIdPago(p.periodoId);
+    if(!periodo) continue;
+    try{
+      const c = await withTimeout(calcularCierreSemanalUltraRapido(choferId || p.chofer, periodo), 4500, "No se pudo validar el cierre.");
+      const esperado = montoEsperadoPagoDesdeCierre(c, p.sentido);
+      const sinAct = cierreSinActividad(c);
+      if(sinAct || esperado <= 0){
+        await ocultarPagoInconsistente(p, sinAct ? "Cierre real sin actividad: no corresponde pago ni comprobante." : "El cierre real no tiene saldo pendiente.");
+        continue;
+      }
+      // Si el monto viejo viene de una prueba/bono anterior y no coincide con el cierre real,
+      // se oculta para que Admin y Chofer no mezclen semanas ni deudas falsas.
+      if(Math.abs(Number(p.monto || 0) - esperado) > 1){
+        await ocultarPagoInconsistente(p, `Monto viejo ${Number(p.monto || 0)} no coincide con cierre real ${esperado}.`);
+        continue;
+      }
+      visibles.push(p);
+    }catch(e){
+      // Si no se pudo validar por red, mostramos solo pagos básicos válidos para no bloquear la app.
+      console.warn("No se pudo validar pago contra cierre real", e);
+      visibles.push(p);
+    }
+  }
+  visibles.sort((a,b)=>String(a.periodoId || "").localeCompare(String(b.periodoId || "")));
+  // Regla simple: se muestra un solo cierre pendiente a la vez, el más antiguo real.
+  // Cuando se resuelve, aparece el siguiente. Evita carteles duplicados.
+  return visibles.slice(0,1);
+}
+
 async function getPagosPendientesChofer(force=false){
   if(!currentUserId) return [];
   const cacheKey = "pagos_pendientes_chofer_" + currentUserId;
@@ -3612,17 +3672,18 @@ async function getPagosPendientesChofer(force=false){
     const items = [];
     snap.forEach(d=>{
       const p = {id:d.id, ...d.data()};
+      if(!pagoPendienteVisibleOperativo(p)) return;
       if(!pagoPerteneceASemanaCerradaValida(p)) return;
       const pendientePago = p.pagado !== true;
       const davidPagoSinVisto = p.sentido === "david_a_chofer" && p.pagado === true && p.vistoPorChofer !== true;
       if(pendientePago || davidPagoSinVisto) items.push(p);
     });
-    items.sort((a,b)=>String(a.periodoId || "").localeCompare(String(b.periodoId || "")));
-    cacheSet(cacheKey, items);
-    return items;
+    const depurados = await depurarPagosContraCierreReal(items, currentUserId);
+    cacheSet(cacheKey, depurados);
+    return depurados;
   }catch(e){
     console.warn("No se pudieron cargar pagos pendientes del chofer", e);
-    return (cached || []).filter(p=>pagoPerteneceASemanaCerradaValida(p));
+    return (cached || []).filter(p=>pagoPendienteVisibleOperativo(p) && pagoPerteneceASemanaCerradaValida(p)).slice(0,1);
   }
 }
 
@@ -5534,6 +5595,7 @@ async function calcularDeudaAcumuladaChofer(chofer, periodoActualId=""){
     snap.forEach(d=>{
       const p = {id:d.id, ...d.data()};
       if(p.pagado === true) return;
+      if(!pagoPendienteVisibleOperativo(p)) return;
       if(!pagoPerteneceASemanaCerradaValida(p)) return;
       if(periodoActualId && p.periodoId === periodoActualId) return;
       const monto = Number(p.monto || 0);
@@ -6085,7 +6147,7 @@ window.guardarPremioSemanalAdmin = async function(){
 function seleccionarPagoPendienteMasAntiguo(pagos, choferId, perfilChofer=null){
   const fechaBase = fechaOperativaParaChofer(choferId, perfilChofer);
   return (pagos || [])
-    .filter(p=>p && p.chofer === choferId && (p.pagado !== true || (p.sentido === "david_a_chofer" && p.pagado === true && p.vistoPorChofer !== true)))
+    .filter(p=>p && p.chofer === choferId && pagoPendienteVisibleOperativo(p) && (p.pagado !== true || (p.sentido === "david_a_chofer" && p.pagado === true && p.vistoPorChofer !== true)))
     .filter(p=>pagoPerteneceASemanaCerradaValida(p, fechaBase))
     .sort((a,b)=>String(a.periodoId || "").localeCompare(String(b.periodoId || "")))[0] || null;
 }
@@ -6113,6 +6175,7 @@ async function cargarVehiculosAdminSimple(periodo){
   if(pagosSnap){
     pagosSnap.forEach(d=>{
       const p = {id:d.id,...d.data()};
+      if(!pagoPendienteVisibleOperativo(p)) return;
       pagosListaAdmin.push(p);
       if(!p.chofer) return;
       const perfilPago = choferesPorId[p.chofer] || null;
@@ -6343,6 +6406,7 @@ function renderResumenSemanalAdmin(vehiculoId,c,pago){
   if(cierreSinActividad(c)){
     pago = {sentido:"sin_diferencia", monto:0, pagado:true, marcadoPor:"sistema", sinActividad:true};
     c.choferDebe = 0; c.davidDebe = 0; c.premioAplicado = 0;
+    c.deudaAcumulada = null;
   }
   const yaPagado = pago && pago.pagado === true;
 
@@ -6461,6 +6525,39 @@ window.marcarPagoSemanalChofer = async function(){
   alert("Ahora el pago requiere comprobante. Usá ‘Subir comprobante y marcar pagado’. ");
 }
 
+
+
+window.limpiarCierresPruebaInconsistentesAdmin = async function(){
+  const box = $("adminToolsMsg");
+  if(box) box.innerHTML = `<div class="msg ok">Limpiando pagos/comprobantes viejos inconsistentes...</div>`;
+  try{
+    const snap = await withTimeout(getDocs(collection(db,"pagos_semanales")), 10000, "Tardó demasiado leyendo pagos semanales.");
+    let revisados = 0, ocultados = 0;
+    for(const d of snap.docs){
+      const p = {id:d.id, ...d.data()};
+      revisados++;
+      if(!pagoPendienteVisibleOperativo(p)) continue;
+      const periodo = periodoDesdeIdPago(p.periodoId);
+      if(!periodo){ await ocultarPagoInconsistente(p,"Período inválido."); ocultados++; continue; }
+      let debeOcultar = false;
+      let motivo = "";
+      try{
+        const c = await withTimeout(calcularCierreSemanalUltraRapido(p.chofer, periodo), 4500, "No se pudo validar cierre.");
+        const esperado = montoEsperadoPagoDesdeCierre(c, p.sentido);
+        if(cierreSinActividad(c)){ debeOcultar = true; motivo = "Cierre real sin actividad."; }
+        else if(esperado <= 0){ debeOcultar = true; motivo = "El cierre real no tiene saldo pendiente."; }
+        else if(Math.abs(Number(p.monto || 0) - esperado) > 1){ debeOcultar = true; motivo = `Monto viejo ${Number(p.monto || 0)} no coincide con cierre real ${esperado}.`; }
+      }catch(e){ console.warn("No se pudo validar pago", p.id, e); }
+      if(debeOcultar){ await ocultarPagoInconsistente(p,motivo); ocultados++; }
+    }
+    cacheRemove("pagos_pendientes_chofer_" + currentUserId);
+    adminBaseLoadedAt = 0;
+    if(box) box.innerHTML = `<div class="msg ok"><b>Limpieza lista.</b><br>Pagos revisados: ${revisados}<br>Registros viejos/inconsistentes ocultados: ${ocultados}<br>Actualizá Admin y Chofer para ver el estado limpio.</div>`;
+    if(typeof loadAdmin === "function") setTimeout(()=>loadAdmin().catch(()=>{}), 300);
+  }catch(e){
+    if(box) box.innerHTML = `<div class="msg err">No se pudo limpiar: ${e.message}</div>`;
+  }
+}
 
 window.verificarYRepararAcumuladosAdmin = async function(){
   const box = $("adminToolsMsg");
