@@ -43,6 +43,7 @@ Cambios:
 - Corrección: modo prueba fecha por chofer se resincroniza después de encontrar el ID real del chofer; ahora el cierre sábado/comprobante toma la fecha del iPhone del usuario autorizado.
 - Corrección crítica: si el acumulado rápido está en 0, el cierre obligatorio reconstruye viajes/gastos reales y ya no se autoacepta sin mostrar comprobante.
 - Regla lanzamiento: semana sin actividad también muestra cierre obligatorio, pero sin pedir comprobante y queda guardada como “sin actividad”.
+- Cierre con comprobante simplificado: quien debe pagar sube foto; la app sigue operando con cartel hasta resolver; David puede pagar desde Admin y el chofer confirma para ocultar aviso.
 - Corrección: Admin y Chofer usan la misma fecha efectiva por chofer; el modo prueba de fecha del iPhone también aplica al panel Admin para ese chofer.
 - Herramienta Admin: reset total de lanzamiento que elimina choferes, vehículos y toda actividad, conservando únicamente el usuario admin.
 -->
@@ -1425,7 +1426,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 <div id="cierreSemanalModal" class="modal hidden">
   <div class="card">
     <h2>Cierre semanal pendiente</h2>
-    <p class="note">Esta pantalla aparece automáticamente en el día de cierre semanal. Podés revisar el período, subir/consultar comprobantes y aceptar el resumen. La nueva semana se activa automáticamente.</p>
+    <p class="note">Esta pantalla aparece al cerrar la semana. Si hay diferencia, quien debe pagar sube el comprobante. La app sigue funcionando, pero el cartel queda visible hasta resolver el pago.</p>
     <div id="cierreSemanalResumen"></div>
     <button id="confirmarCierreSemanalBtn" class="btn-gold" onclick="confirmarCierreSemanal()">Aceptar resumen y continuar</button>
     <button id="volverAppCierreBtn" class="btn-dark hidden" style="margin-top:10px" onclick="cerrarCierreSemanalModal()">Volver a la app</button>
@@ -3617,7 +3618,7 @@ function renderPagosPendientesChofer(items){
     if(p.sentido === "david_a_chofer" && p.pagado !== true){
       return `
         <div class="cierre-pendiente-banner warn">
-          <b>📎 David aún no me pagó</b><br>
+          <b>📎 David aún no te pagó</b><br>
           <small>Semana: ${semana}</small><br>
           <small>Monto pendiente: <b>${money(p.monto)}</b></small><br>
           <small>Podés seguir trabajando normalmente. No afecta tu bono porque el pago depende de David.</small>
@@ -3626,10 +3627,10 @@ function renderPagosPendientesChofer(items){
     if(p.sentido === "david_a_chofer" && p.pagado === true && p.vistoPorChofer !== true){
       return `
         <div class="cierre-pendiente-banner ok">
-          <b>✅ David ya me pagó</b><br>
+          <b>✅ David ya te pagó</b><br>
           <small>Semana: ${semana} · Monto: <b>${money(p.monto)}</b></small>
           ${comprobanteLinkHtml(p)}
-          <button class="btn-gold" style="margin-top:8px" onclick="confirmarPagoDavidVisto('${p.id}')">Guardar y ocultar aviso</button>
+          <button class="btn-gold" style="margin-top:8px" onclick="confirmarPagoDavidVisto('${p.id}')">Aceptar y ocultar aviso</button>
         </div>`;
     }
     return "";
@@ -3650,7 +3651,7 @@ window.subirComprobantePendienteChofer = async function(periodoId, monto, inputI
     cacheRemove("pagos_pendientes_chofer_" + currentUserId);
     cacheRemove("comprobantes_chofer_" + currentUserId);
     await checkPagosPendientesChoferAutomatico();
-    alert("Comprobante cargado correctamente.");
+    alert("Comprobante cargado correctamente. Admin ya puede verlo.");
     if(btn){ btn.disabled = false; btn.textContent = old || "Subir comprobante"; }
   }catch(e){
     alert("No se pudo subir el comprobante: " + e.message);
@@ -3956,7 +3957,7 @@ window.subirComprobantePagoChofer = async function(){
     cacheRemove("comprobantes_chofer_" + currentUserId);
     cacheRemove("pagos_pendientes_chofer_" + currentUserId);
     renderCierreSemanal(cierreSemanalPendiente);
-    msg($("cierreSemanalMsg"),"Comprobante cargado correctamente. Pago marcado como realizado.",true);
+    msg($("cierreSemanalMsg"),"Comprobante cargado correctamente. Admin ya puede verlo. El pago quedó marcado como realizado.",true);
   }catch(e){
     if($("cierreSemanalMsg")) msg($("cierreSemanalMsg"),"No se pudo subir el comprobante: " + e.message);
     alert("No se pudo subir el comprobante: " + e.message);
@@ -3975,7 +3976,9 @@ window.subirComprobantePagoAdmin = async function(chofer, periodoId, sentido, mo
     if($("adminMsg")) msg($("adminMsg"), "Subiendo comprobante...", true);
     await subirComprobantePago({chofer, periodoId, sentido, monto, file, marcadoPor:"admin"});
     cacheRemove("comprobantes_admin_recientes");
-    if($("adminMsg")) msg($("adminMsg"), "Comprobante cargado y pago marcado como realizado.", true);
+    cacheRemove("pagos_pendientes_chofer_" + chofer);
+    cacheRemove(`admin_5050_${chofer}_${periodoId}`);
+    if($("adminMsg")) msg($("adminMsg"), "Comprobante cargado. Al chofer le aparecerá “David ya te pagó” para aceptar y ocultar el aviso.", true);
     await loadAdmin();
     if($("adminComprobantesList") && $("adminComprobantesList").innerHTML.trim()) loadComprobantesAdmin(true).catch(()=>{});
   }catch(e){
@@ -4114,10 +4117,10 @@ function renderCierreSemanal(c){
         inputId:"comprobantePagoChoferInput",
         buttonText:"Subir comprobante y marcar pagado",
         onClick:"subirComprobantePagoChofer()",
-        nota:"Como el chofer debe transferir a David, el comprobante lo carga el chofer. Puede seguir operando, pero si no sube comprobante dentro de 24 h queda suspendido del bono semanal."
-      }) + `<div class="pending-box" style="margin-top:10px">⚠️ Si no realizás el pago hoy, mañana serás suspendido del bono semanal. Podés continuar usando la app.</div>`;
+        nota:"Como vos debés pagarle a David, subí la foto del comprobante. Podés seguir usando la app, pero si no pagás dentro de las 24 h posteriores al cierre no calificás para el bono semanal."
+      }) + `<div class="pending-box" style="margin-top:10px">⚠️ Podés seguir operando. Si no subís el comprobante dentro de las 24 h posteriores al cierre, no calificás para el bono semanal de esa semana.</div>`;
     }else{
-      pagoHtml = `<div class="pending-box" style="margin-top:10px">📎 David aún no cargó el comprobante. Podés seguir operando normalmente; esto no afecta tu bono porque el pago depende de David.</div>`;
+      pagoHtml = `<div class="pending-box" style="margin-top:10px">📎 David todavía no cargó el comprobante de pago. Podés seguir operando normalmente; esto no afecta tu bono porque el pago depende de David.</div>`;
     }
   }else{
     pagoHtml = sinActividad
@@ -4143,14 +4146,14 @@ function renderCierreSemanal(c){
 
   if(cierreBtn){
     cierreBtn.disabled = false;
-    cierreBtn.textContent = sinActividad ? "Cerrar semana sin actividad" : "Aceptar resumen y continuar";
+    cierreBtn.textContent = sinActividad ? "Cerrar semana sin actividad" : (Number(c.choferDebe || 0) > 0 ? "Cerrar y dejar pago pendiente" : Number(c.davidDebe || 0) > 0 ? "Cerrar y esperar pago de David" : "Aceptar resumen y continuar");
     cierreBtn.classList.remove("hidden");
   }
   if(volverBtn) volverBtn.classList.remove("hidden");
   if(msgBox){
     msgBox.innerHTML = sinActividad
       ? `<div class="msg ok">No se requiere comprobante porque la semana quedó en cero. Al cerrar, se guarda como semana sin actividad.</div>`
-      : `<div class="msg ok">La nueva semana ya está activa automáticamente desde sábado 00:01. Este resumen queda guardado en el historial.</div>`;
+      : `<div class="msg ok">La nueva semana ya está activa. Si hay pago pendiente, podés seguir operando y el aviso queda visible hasta que se cargue el comprobante.</div>`;
   }
 }
 
@@ -5668,7 +5671,7 @@ function estadoRevisionDesdePagoYCierre(cierre=null, pago=null){
   const montoDavid = Number((pago && pago.sentido === "david_a_chofer" ? pago.monto : 0) || (cierre && cierre.davidDebe) || 0);
 
   if(pago && pago.pagado === true){
-    return {tipo:"green", titulo:"Cierre resuelto", subtitulo:"Comprobante registrado", accion:"Ver", revisar:false, pagoPendiente:false, comprobantePendiente:false, resuelto:true, monto:0};
+    return {tipo:"green", titulo:"Cierre resuelto", subtitulo:(pago && pago.sentido === "chofer_a_david" ? "Comprobante del chofer recibido" : "Comprobante registrado"), accion:"Ver", revisar:false, pagoPendiente:false, comprobantePendiente:false, resuelto:true, monto:0};
   }
 
   if(pago && pago.sentido === "chofer_a_david"){
@@ -6297,12 +6300,12 @@ function renderResumenSemanalAdmin(vehiculoId,c,pago){
       inputId,
       buttonText:"Subir comprobante y cerrar",
       onClick:`subirComprobantePagoAdmin('${c.chofer}','${c.periodo.id}','${sentido}',${Math.round(montoDeuda)},'${inputId}')`,
-      nota:"David debe pagar este cierre. Al subir la foto queda marcado como pagado."
+      nota:"David debe pagar este cierre. Subí la foto desde Admin; al chofer le aparecerá “David ya te pagó” con el comprobante para aceptar y ocultar el aviso."
     });
   }else if(sentido === "chofer_a_david"){
     statusClass = "cierre-status-warn";
     statusText = "⏳ Esperando chofer";
-    accionRapida = `<div class="pending-box">📎 El chofer debe cargar el comprobante desde su app.<br><small>Puede seguir operando; si pasan 24 h sin comprobante queda suspendido del bono semanal.</small></div>`;
+    accionRapida = `<div class="pending-box">📎 El chofer debe subir el comprobante desde su app.<br><small>Puede seguir operando; si pasan 24 h posteriores al cierre sin comprobante, no califica para el bono semanal.</small></div>`;
   }else{
     accionRapida = `<div class="paid-box">✅ Sin pago pendiente</div>`;
   }
