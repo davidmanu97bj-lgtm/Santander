@@ -54,12 +54,14 @@ Cambios:
 - v2.8.88: si un chofer no tiene fecha de alta, se repara automáticamente y no se buscan cierres históricos anteriores.
 - v2.8.87: cierre semanal estable en un solo documento, bloqueo por fecha de alta y cartel visible de fuente de fecha (iPhone/Firebase).
 - Optimización comprobantes 2026-06-07: imagen más liviana, timeout Storage menor y refresco pesado diferido para Admin/Chofer.
+- v2.8.95: comprobantes producción rápida: 750px/0.45, timeout Storage 4s, Admin no recarga todo después de subir y fecha técnica oculta para chofer.
+- v2.8.96: se agrega tarjeta visible de ganador de la semana pasada para Chofer y Admin, con caché y carga diferida.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.94 · Build 2026-06-07-KM-SEMANAL-CIERRE</title>
+<title>EXPLORA v2.8.96 · Build 2026-06-07-GANADOR-SEMANA-PASADA</title>
 <style>
 :root{
   --bg:#080808;
@@ -433,6 +435,28 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   margin-top:10px;
   color:#86efac;
 }
+
+.last-week-winner-card{
+  background:linear-gradient(180deg,rgba(212,175,55,.16),rgba(10,10,10,.96));
+  border:1px solid rgba(212,175,55,.52);
+  border-radius:22px;
+  padding:15px;
+  margin:12px 0 14px;
+  box-shadow:0 14px 30px rgba(0,0,0,.32);
+}
+.last-week-winner-card h3{margin:0 0 10px;color:#f7c943;font-size:17px;letter-spacing:.2px}
+.last-week-winner-body{display:flex;align-items:center;gap:12px}
+.last-week-winner-icon{
+  width:48px;height:48px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(212,175,55,.16);
+  border:1px solid rgba(212,175,55,.45);
+  font-size:25px;flex:0 0 auto;
+}
+.last-week-winner-card b{font-size:20px;color:#fff}
+.last-week-winner-card small{display:block;color:#cfcfcf;margin-top:2px;line-height:1.35}
+.last-week-winner-money{color:#4ade80!important;font-weight:900!important}
+.admin-last-week-winner-card{margin-top:12px;cursor:pointer}
 .suspended-badge{
   display:inline-flex;
   margin-top:7px;
@@ -1195,7 +1219,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.94</b> · Build 2026-06-07-KM-SEMANAL-CIERRE</div>
+    <div class="build-version"><b>v2.8.96</b> · Build 2026-06-07-GANADOR-SEMANA-PASADA</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1234,6 +1258,16 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="driver-b-metrics">
         <div class="metric"><span>Viajes semana</span><strong id="todayTrips">0</strong><em>🧳</em></div>
         <div class="metric"><span>Facturación semana</span><strong id="todayTotal">$0</strong><em>📊</em></div>
+      </div>
+    </div>
+
+    <div id="driverLastWeekWinnerCard" class="last-week-winner-card hidden">
+      <h3>🏆 GANADOR SEMANA PASADA</h3>
+      <div id="driverLastWeekWinnerContent">
+        <div class="last-week-winner-body">
+          <div class="last-week-winner-icon">👑</div>
+          <div><b>Cargando...</b><small>Buscando último ranking cerrado.</small></div>
+        </div>
       </div>
     </div>
 
@@ -1432,7 +1466,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.90</b> · CIERRE-POR-FECHA</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.96</b> · GANADOR-SEMANA-PASADA</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -1451,6 +1485,15 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
           <div class="admin-summary-card red"><div class="admin-summary-icon">📎</div><strong>...</strong><span>Comprobantes pendientes</span></div>
           <div class="admin-summary-card yellow"><div class="admin-summary-icon">🔧</div><strong>...</strong><span>Vehículos con alertas</span></div>
           <div class="admin-summary-card yellow"><div class="admin-summary-icon">🚨</div><strong>...</strong><span>Por revisar</span></div>
+        </div>
+        <div id="adminLastWeekWinnerCard" class="last-week-winner-card admin-last-week-winner-card hidden" onclick="adminShowSection('home')">
+          <h3>🏆 Último ganador del ranking</h3>
+          <div id="adminLastWeekWinnerContent">
+            <div class="last-week-winner-body">
+              <div class="last-week-winner-icon">👑</div>
+              <div><b>Cargando...</b><small>Buscando semana anterior cerrada.</small></div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2465,6 +2508,9 @@ async function loadDriver(){
     $("todayTrips").textContent = "0";
     $("todayTotal").textContent = money(0);
   });
+
+  // Ganador semana pasada: carga diferida y con caché para no trabar celulares lentos.
+  setTimeout(()=>loadGanadorSemanaPasadaChofer().catch(e=>console.warn("Ganador semana pasada diferido", e)), 350);
 
   // El vehículo se refresca en segundo plano. No bloquea la pantalla principal.
   getDoc(doc(db,"vehiculos",vehicleId)).then(vSnap=>{
@@ -3619,6 +3665,95 @@ async function getGanadorSemanalRapido(periodo){
   }
 }
 
+
+function periodoCortoTexto(periodo){
+  if(!periodo) return "Semana anterior";
+  const corto = (x)=> String(x || "").slice(8,10) + "/" + String(x || "").slice(5,7);
+  return `${corto(periodo.start)} al ${corto(periodo.end)}`;
+}
+
+function periodoSemanaPasadaVisible(){
+  let baseFecha = today();
+  try{
+    if(currentUserId && typeof fechaOperativaParaChofer === "function"){
+      baseFecha = fechaOperativaParaChofer(currentUserId, currentProfile || null);
+    }
+  }catch(e){ baseFecha = today(); }
+  return periodoAnterior(getPeriodoTrabajoActual(baseFecha));
+}
+
+function ganadorSemanaPasadaValido(item){
+  if(!item) return false;
+  return Number(item.facturacion || 0) > 0 || Number(item.viajes || 0) > 0 || Number(item.derivaciones || 0) > 0;
+}
+
+async function getGanadorSemanaPasadaRapido(){
+  const periodo = periodoSemanaPasadaVisible();
+  const key = `ganador_semana_pasada_${periodo.id}`;
+  const cached = cacheGet(key, 6 * 60 * 60 * 1000);
+  if(cached && cached.periodo && cached.ganador) return cached;
+
+  try{
+    const data = await withTimeout(calcularRankingSemanalLiviano(periodo), 3200, "Ganador anterior no disponible rápido.");
+    const ranking = (data && data.ranking) || [];
+    const ganador = data && data.ganadorBono ? data.ganadorBono : ranking.find(x=>!x.suspendidoBono);
+    const result = ganadorSemanaPasadaValido(ganador) ? {periodo, ganador, actualizado:Date.now()} : {periodo, ganador:null, actualizado:Date.now()};
+    cacheSet(key, result);
+    return result;
+  }catch(e){
+    console.warn("No se pudo calcular ganador semana pasada", e);
+    return cached || {periodo, ganador:null, error:e.message || "No disponible"};
+  }
+}
+
+function renderGanadorSemanaPasadaEn(boxId, contentId, data, modo="chofer"){
+  const card = $(boxId);
+  const box = $(contentId);
+  if(!card || !box) return;
+  card.classList.remove("hidden");
+  const periodo = data && data.periodo ? data.periodo : periodoSemanaPasadaVisible();
+  const ganador = data && data.ganador ? data.ganador : null;
+  if(!ganador){
+    box.innerHTML = `
+      <div class="last-week-winner-body">
+        <div class="last-week-winner-icon">🏆</div>
+        <div><b>Aún no hay ganador anterior</b><small>${periodoCortoTexto(periodo)} · Se mostrará cuando haya ranking cerrado con actividad.</small></div>
+      </div>
+    `;
+    return;
+  }
+  box.innerHTML = `
+    <div class="last-week-winner-body">
+      <div class="last-week-winner-icon">👑</div>
+      <div>
+        <b>${ganador.nombre || ganador.id || "Ganador"}</b>
+        <small>Ganó el bono semanal <span class="last-week-winner-money">${money(50000)}</span></small>
+        <small>Semana cerrada: ${periodoCortoTexto(periodo)}</small>
+      </div>
+    </div>
+  `;
+}
+
+async function loadGanadorSemanaPasadaChofer(){
+  const periodo = periodoSemanaPasadaVisible();
+  const key = `ganador_semana_pasada_${periodo.id}`;
+  const cached = cacheGet(key, 6 * 60 * 60 * 1000);
+  if(cached) renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",cached,"chofer");
+  else renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",{periodo, ganador:null},"chofer");
+  const data = await getGanadorSemanaPasadaRapido();
+  renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",data,"chofer");
+}
+
+async function loadGanadorSemanaPasadaAdmin(){
+  const periodo = periodoSemanaPasadaVisible();
+  const key = `ganador_semana_pasada_${periodo.id}`;
+  const cached = cacheGet(key, 6 * 60 * 60 * 1000);
+  if(cached) renderGanadorSemanaPasadaEn("adminLastWeekWinnerCard","adminLastWeekWinnerContent",cached,"admin");
+  else renderGanadorSemanaPasadaEn("adminLastWeekWinnerCard","adminLastWeekWinnerContent",{periodo, ganador:null},"admin");
+  const data = await getGanadorSemanaPasadaRapido();
+  renderGanadorSemanaPasadaEn("adminLastWeekWinnerCard","adminLastWeekWinnerContent",data,"admin");
+}
+
 async function calcularCierreSemanalUltraRapido(chofer, periodo){
   const acumKey = `acum_sem_${chofer}_${periodo.id}`;
   let acumulado = cacheGet(acumKey, 60 * 60 * 1000) || null;
@@ -4038,7 +4173,7 @@ function esArchivoImagenComprobante(file){
   return tipo.startsWith("image/") || /\.(jpg|jpeg|png|webp|heic|heif)$/i.test(nombre);
 }
 
-async function comprimirImagenComprobante(file, maxWidth=900, quality=0.50){
+async function comprimirImagenComprobante(file, maxWidth=750, quality=0.45){
   if(!file) throw new Error("Seleccioná una foto del comprobante.");
   if(!esArchivoImagenComprobante(file)) throw new Error("El comprobante debe ser una imagen.");
 
@@ -4099,7 +4234,7 @@ async function subirArchivoComprobanteStorage(ref, archivo){
   // Por eso lo encerramos en timeout y, si falla, se guarda fallback en Firestore.
   await withTimeout(
     uploadBytes(ref, archivo.blob, {contentType:archivo.contentType || "image/jpeg"}),
-    7000,
+    4000,
     "Storage tardó demasiado o está bloqueado. Intento guardarlo en respaldo Firestore."
   );
   return await withTimeout(getDownloadURL(ref), 5000, "El comprobante subió, pero no se pudo obtener el enlace.");
@@ -4342,11 +4477,12 @@ window.subirComprobantePagoAdmin = async function(chofer, periodoId, sentido, mo
     cacheRemove("comprobantes_admin_recientes");
     cacheRemove("pagos_pendientes_chofer_" + chofer);
     cacheRemove(`admin_5050_${chofer}_${periodoId}`);
-    if($("adminMsg")) msg($("adminMsg"), "Comprobante cargado. Actualizando la lista en segundo plano.", true);
+    if($("adminMsg")) msg($("adminMsg"), "Comprobante cargado. Actualizando comprobantes sin recargar todo Admin.", true);
+    // Producción rápida: no llamar loadAdmin() completo después de subir una foto.
+    // Solo se refresca la lista de comprobantes si está abierta.
     setTimeout(()=>{
-      loadAdmin().catch(e=>console.warn("Refresco admin diferido", e));
       if($("adminComprobantesList") && $("adminComprobantesList").innerHTML.trim()) loadComprobantesAdmin(true).catch(()=>{});
-    }, 250);
+    }, 120);
   }catch(e){
     if($("adminMsg")) msg($("adminMsg"), "No se pudo subir el comprobante: " + e.message);
     alert("No se pudo subir el comprobante: " + e.message);
@@ -6376,6 +6512,7 @@ async function loadAdmin(){
   try{
     // Carga en paralelo y sin calcular ranking pesado al entrar.
     await Promise.all([cargarPremioAdmin(periodo), cargarVehiculosAdminSimple(periodo)]);
+    setTimeout(()=>loadGanadorSemanaPasadaAdmin().catch(e=>console.warn("Ganador semana pasada admin diferido", e)), 250);
     setTimeout(()=>autoActualizarServiciosExploraAdmin(), 600);
     adminBaseLoadedAt = Date.now();
     if(adminMsg) msg(adminMsg,"Administrador actualizado.",true);
@@ -7602,7 +7739,12 @@ function upsertFechaBadgeV287(containerId, insertAfterSelector=null){
 
 function renderFechaOperativaVisibleV287(){
   try{ upsertFechaBadgeV287("loginView", ".build-version"); }catch(e){}
-  try{ upsertFechaBadgeV287("driverView", ".driver-b-topbar"); }catch(e){}
+  // Producción: no mostrar mensajes técnicos de fecha/modo prueba al chofer.
+  try{
+    const driver = $("driverView");
+    const oldBadge = driver ? driver.querySelector(".fecha-source-badge") : null;
+    if(oldBadge) oldBadge.remove();
+  }catch(e){}
   try{ upsertFechaBadgeV287("adminView", ".admin-mobile-topbar"); }catch(e){}
 }
 
