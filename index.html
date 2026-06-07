@@ -62,14 +62,15 @@ Cambios:
 - v2.8.101: Lanzar app desde cero muestra confirmación visual de ganador_semana_pasada eliminado y resetea la tarjeta al instante.
 - v2.8.101: historial persistente ultimo_ganador_semana para mostrar el ganador anterior aunque el ranking actual se reinicie.
 - v2.8.102: Chofer lee la misma fuente persistente de último ganador que Admin y Admin corrige estado visible si falta comprobante al abrir cierre.
-- v2.8.103: Chofer reutiliza la misma tarjeta/fuente visual del último ganador que Admin para evitar desincronización.
 - v2.8.103: sincronización espejo del último ganador en cada documento de chofer para que Chofer y Admin vean lo mismo aunque una colección no sea legible para chofer.
+- v2.8.104: ganador semana pasada unificado: Chofer lee primero su propio documento, Admin puede forzar resincronización visible y se reportan fallas por chofer.
+- v2.8.105: limpieza final de ganador semana pasada: una sola fuente oficial, una sola función de lectura para Admin/Chofer y cachés viejos eliminados.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.103 · Build 2026-06-07-GANADOR-SYNC-CHOFER</title>
+<title>EXPLORA v2.8.105 · Build 2026-06-07-GANADOR-OFICIAL-UNICO</title>
 <style>
 :root{
   --bg:#080808;
@@ -1227,7 +1228,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.103</b> · Build 2026-06-07-GANADOR-SYNC-CHOFER</div>
+    <div class="build-version"><b>v2.8.105</b> · Build 2026-06-07-GANADOR-OFICIAL-UNICO</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1546,7 +1547,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
       <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigModoPruebaFecha')"><b>🧪 Modo prueba de fecha por chofer</b><span>›</span></button><div id="adminConfigModoPruebaFecha" class="admin-config-content hidden"><p class="note">Para probar el cierre obligatorio con comprobante desde un usuario chofer real. Solo el chofer habilitado usa la fecha de su iPhone. Todos los demás siguen con fecha segura de Firebase.</p><label>Chofer para probar</label><select id="modoPruebaFechaChoferSelect"></select><div class="row"><button class="btn-gold" onclick="activarModoPruebaFechaChoferAdmin()">Activar prueba</button><button class="btn-red" onclick="desactivarModoPruebaFechaChoferAdmin()">Desactivar</button></div><button class="btn-dark" style="margin-top:10px" onclick="cargarModoPruebaFechaAdmin(true)">Actualizar estado</button><div id="modoPruebaFechaMsg"></div><div id="modoPruebaFechaEstado" class="note" style="margin-top:12px">Tocá actualizar para ver el estado.</div></div></div>
 
-      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigHerramientas')"><b>🛠️ Herramientas</b><span>›</span></button><div id="adminConfigHerramientas" class="admin-config-content hidden"><button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios EXPLORA</button><button class="btn-dark" style="margin-top:10px" onclick="verificarYRepararAcumuladosAdmin()">Verificar / reparar acumulados actuales</button><button class="btn-red" style="margin-top:10px" onclick="resetearAppLanzamientoAdmin()">🧨 Lanzar app desde cero / borrar todo menos Admin</button><button class="btn-red" style="margin-top:10px" onclick="resetearDatosOperativosAdmin()">🧹 Resetear solo datos operativos</button><button class="btn-red" style="margin-top:10px" onclick="eliminarChoferesDemoAdmin()">Eliminar choferes demo anteriores</button><div id="adminToolsMsg"></div></div></div>
+      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigHerramientas')"><b>🛠️ Herramientas</b><span>›</span></button><div id="adminConfigHerramientas" class="admin-config-content hidden"><button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios EXPLORA</button><button class="btn-dark" style="margin-top:10px" onclick="verificarYRepararAcumuladosAdmin()">Verificar / reparar acumulados actuales</button><button class="btn-dark" style="margin-top:10px" onclick="sincronizarUltimoGanadorSemanaAdmin()">🏆 Sincronizar ganador anterior con choferes</button><button class="btn-red" style="margin-top:10px" onclick="resetearAppLanzamientoAdmin()">🧨 Lanzar app desde cero / borrar todo menos Admin</button><button class="btn-red" style="margin-top:10px" onclick="resetearDatosOperativosAdmin()">🧹 Resetear solo datos operativos</button><button class="btn-red" style="margin-top:10px" onclick="eliminarChoferesDemoAdmin()">Eliminar choferes demo anteriores</button><div id="adminToolsMsg"></div></div></div>
     </div>
 
     <div class="admin-bottom-nav"><button id="adminNavHome" class="active" onclick="adminShowSection('home')"><b>⌂</b>Inicio</button><button id="adminNavVehicles" onclick="adminShowSection('vehicles')"><b>🚗</b>Vehículos</button><button id="adminNavConfig" onclick="adminShowSection('config')"><b>⚙️</b>Configuración</button></div>
@@ -3660,6 +3661,8 @@ window.openMiCierreSemanalPanel = async function(){
 
 
 function ganadorSemanaPasadaDocRef(){
+  // Fuente oficial única para Admin y Chofer.
+  // El espejo en choferes/{id}.ultimoGanadorSemana solo existe para permisos/lectura rápida del Chofer.
   return doc(db,"configuracion","ultimo_ganador_semana");
 }
 
@@ -3678,117 +3681,151 @@ function normalizarUltimoGanadorSemana(data){
   if(!periodo || !periodo.id) return null;
   return {
     periodo,
-    ganador,
-    actualizado: data.actualizadoMs || Date.now(),
-    fuente: data.fuente || "ultimo_ganador_semana"
-  };
-}
-
-async function getUltimoGanadorSemanaPersistente(){
-  try{
-    // Fuente oficial actual.
-    const snap = await withTimeout(getDoc(ganadorSemanaPasadaDocRef()), 3000, "Último ganador tardó demasiado.");
-    if(snap.exists()){
-      const normalizado = normalizarUltimoGanadorSemana(snap.data());
-      if(normalizado && normalizado.ganador){
-        cacheSet("ultimo_ganador_semana", normalizado);
-        cacheSet("ganador_semana_pasada_global", normalizado);
-        return normalizado;
-      }
-    }
-  }catch(e){
-    console.warn("No se pudo leer configuracion/ultimo_ganador_semana", e);
-  }
-
-  try{
-    // Compatibilidad por si alguna versión anterior lo guardó en sistema.
-    const snap2 = await withTimeout(getDoc(doc(db,"sistema","ultimo_ganador_semana")), 3000, "Último ganador sistema tardó demasiado.");
-    if(snap2.exists()){
-      const normalizado = normalizarUltimoGanadorSemana(snap2.data());
-      if(normalizado && normalizado.ganador){
-        cacheSet("ultimo_ganador_semana", normalizado);
-        cacheSet("ganador_semana_pasada_global", normalizado);
-        return normalizado;
-      }
-    }
-  }catch(e){
-    console.warn("No se pudo leer sistema/ultimo_ganador_semana", e);
-  }
-  return null;
-}
-
-async function guardarUltimoGanadorSemana(periodo, ganador, fuente="cierre_semanal"){
-  try{
-    if(!periodo || !periodo.id || !ganadorSemanaPasadaValido(ganador)) return null;
-    const payload = {
-      periodoId: periodo.id,
-      periodoInicio: periodo.start || "",
-      periodoFin: periodo.end || "",
-      fechaCierre: periodo.closeDate || addDays(periodo.end, 1),
-      bono: 50000,
-      ganadorId: ganador.id || "",
-      ganadorNombre: ganador.nombre || ganador.id || "Ganador",
+    ganador:{
+      id: ganador.id || "",
       nombre: ganador.nombre || ganador.id || "Ganador",
       facturacion: Number(ganador.facturacion || 0),
       viajes: Number(ganador.viajes || 0),
       derivaciones: Number(ganador.derivaciones || 0),
-      porcentaje: Number(ganador.porcentaje || 0),
-      ganador: {
-        id: ganador.id || "",
-        nombre: ganador.nombre || ganador.id || "Ganador",
-        facturacion: Number(ganador.facturacion || 0),
-        viajes: Number(ganador.viajes || 0),
-        derivaciones: Number(ganador.derivaciones || 0),
-        porcentaje: Number(ganador.porcentaje || 0)
-      },
-      fuente,
-      actualizadoMs: Date.now(),
-      actualizadoTexto: new Date().toLocaleString("es-AR"),
-      actualizado: serverTimestamp()
-    };
-    await setDoc(ganadorSemanaPasadaDocRef(), payload, {merge:true});
-    try{ await setDoc(doc(db,"sistema","ultimo_ganador_semana"), payload, {merge:true}); }catch(e){}
-    const result = normalizarUltimoGanadorSemana(payload);
-    cacheSet("ultimo_ganador_semana", result);
-    cacheSet("ganador_semana_pasada_global", result);
-    cacheSet(`ganador_semana_pasada_${periodo.id}`, result);
-    publicarUltimoGanadorEnChoferes(result).catch(()=>{});
-    return result;
-  }catch(e){
-    console.warn("No se pudo guardar ultimo_ganador_semana", e);
-    return null;
-  }
+      porcentaje: Number(ganador.porcentaje || 0)
+    },
+    actualizado: data.actualizadoMs || data.actualizado || Date.now(),
+    fuente: data.fuente || "ultimo_ganador_semana_oficial"
+  };
 }
 
-async function publicarUltimoGanadorEnChoferes(data){
+function cacheUltimoGanadorSemanaUnico(data){
+  const normalizado = data && data.ganador ? data : normalizarUltimoGanadorSemana(data);
+  if(!normalizado || !normalizado.ganador || !normalizado.periodo) return null;
+  cacheSet("ultimo_ganador_semana_oficial", normalizado);
+  return normalizado;
+}
+
+function limpiarCachesViejosGanadorSemana(){
   try{
-    const normalizado = data && data.ganador ? data : normalizarUltimoGanadorSemana(data);
-    if(!normalizado || !normalizado.ganador || !normalizado.periodo) return;
-    const payload = {
-      ultimoGanadorSemana: {
-        periodo: normalizado.periodo,
-        periodoId: normalizado.periodo.id,
-        periodoInicio: normalizado.periodo.start || "",
-        periodoFin: normalizado.periodo.end || "",
-        fechaCierre: normalizado.periodo.closeDate || addDays(normalizado.periodo.end, 1),
-        bono: 50000,
-        ganador: normalizado.ganador,
-        ganadorId: normalizado.ganador.id || "",
-        ganadorNombre: normalizado.ganador.nombre || normalizado.ganador.id || "Ganador",
-        actualizadoMs: Date.now(),
-        fuente: "sync_choferes"
-      }
-    };
-    const snap = await withTimeout(getDocs(collection(db,"choferes")), 4500, "Sincronizar ganador en choferes tardó demasiado.");
+    const borrar = [];
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(k && (
+        k === "ultimo_ganador_semana" ||
+        k === "ganador_semana_pasada_global" ||
+        k.includes("ganador_semana_pasada_") ||
+        k.includes("ganador_sem_") ||
+        k.includes("last_week_winner") ||
+        k.includes("LastWeekWinner")
+      )) borrar.push(k);
+    }
+    borrar.forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
+  }catch(e){}
+}
+
+function buildPayloadUltimoGanadorSemana(periodo, ganador, fuente="cierre_semanal"){
+  if(!periodo || !periodo.id || !ganadorSemanaPasadaValido(ganador)) return null;
+  const g = {
+    id: ganador.id || "",
+    nombre: ganador.nombre || ganador.id || "Ganador",
+    facturacion: Number(ganador.facturacion || 0),
+    viajes: Number(ganador.viajes || 0),
+    derivaciones: Number(ganador.derivaciones || 0),
+    porcentaje: Number(ganador.porcentaje || 0)
+  };
+  return {
+    periodo,
+    periodoId: periodo.id,
+    periodoInicio: periodo.start || "",
+    periodoFin: periodo.end || "",
+    fechaCierre: periodo.closeDate || addDays(periodo.end, 1),
+    bono: 50000,
+    ganador: g,
+    ganadorId: g.id,
+    ganadorNombre: g.nombre,
+    nombre: g.nombre,
+    facturacion: g.facturacion,
+    viajes: g.viajes,
+    derivaciones: g.derivaciones,
+    porcentaje: g.porcentaje,
+    fuente,
+    actualizadoMs: Date.now(),
+    actualizadoTexto: new Date().toLocaleString("es-AR"),
+    actualizado: serverTimestamp()
+  };
+}
+
+function payloadUltimoGanadorSemanaParaChofer(data){
+  const normalizado = data && data.ganador ? data : normalizarUltimoGanadorSemana(data);
+  if(!normalizado || !normalizado.ganador || !normalizado.periodo) return null;
+  return {
+    ultimoGanadorSemana: {
+      periodo: normalizado.periodo,
+      periodoId: normalizado.periodo.id,
+      periodoInicio: normalizado.periodo.start || "",
+      periodoFin: normalizado.periodo.end || "",
+      fechaCierre: normalizado.periodo.closeDate || addDays(normalizado.periodo.end, 1),
+      bono: 50000,
+      ganador: normalizado.ganador,
+      ganadorId: normalizado.ganador.id || "",
+      ganadorNombre: normalizado.ganador.nombre || normalizado.ganador.id || "Ganador",
+      nombre: normalizado.ganador.nombre || normalizado.ganador.id || "Ganador",
+      facturacion: Number(normalizado.ganador.facturacion || 0),
+      viajes: Number(normalizado.ganador.viajes || 0),
+      derivaciones: Number(normalizado.ganador.derivaciones || 0),
+      porcentaje: Number(normalizado.ganador.porcentaje || 0),
+      actualizadoMs: Date.now(),
+      fuente: "espejo_chofer_desde_oficial"
+    }
+  };
+}
+
+async function publicarUltimoGanadorEnChoferes(data, mostrarAviso=false){
+  const normalizado = cacheUltimoGanadorSemanaUnico(data);
+  const payload = payloadUltimoGanadorSemanaParaChofer(normalizado);
+  const reporte = {total:0, ok:0, fail:0, errores:[]};
+  if(!payload) return reporte;
+  try{
+    const snap = await withTimeout(getDocs(collection(db,"choferes")), 6500, "Sincronizar ganador en choferes tardó demasiado.");
     const tareas = [];
     snap.forEach(d=>{
       const info = d.data() || {};
       if(info && info.rol === "admin") return;
-      tareas.push(updateDoc(doc(db,"choferes",d.id), payload).catch(e=>console.warn("No se pudo sincronizar ganador en chofer", d.id, e)));
+      reporte.total++;
+      tareas.push(setDoc(doc(db,"choferes",d.id), payload, {merge:true})
+        .then(()=>{ reporte.ok++; })
+        .catch(e=>{
+          reporte.fail++;
+          reporte.errores.push(`${info.nombre || d.id}: ${e.message || e}`);
+          console.warn("No se pudo sincronizar ganador en chofer", d.id, e);
+        }));
     });
     await Promise.all(tareas);
+    if(currentProfile && currentProfile.rol !== "admin") currentProfile = {...currentProfile, ...payload};
+    if(mostrarAviso && $("adminToolsMsg")){
+      const claseOk = reporte.fail === 0;
+      msg($("adminToolsMsg"), claseOk
+        ? `Ganador sincronizado con ${reporte.ok}/${reporte.total} choferes.`
+        : `Ganador sincronizado parcialmente: ${reporte.ok}/${reporte.total}. Fallaron: ${reporte.errores.slice(0,3).join(" · ")}`, claseOk);
+    }
+    return reporte;
   }catch(e){
+    reporte.fail = Math.max(reporte.fail, reporte.total || 1);
+    reporte.errores.push(e.message || String(e));
     console.warn("No se pudo publicar último ganador en choferes", e);
+    if(mostrarAviso && $("adminToolsMsg")) msg($("adminToolsMsg"), "No se pudo sincronizar ganador: " + (e.message || e));
+    return reporte;
+  }
+}
+
+async function guardarUltimoGanadorSemana(periodo, ganador, fuente="cierre_semanal"){
+  try{
+    const payload = buildPayloadUltimoGanadorSemana(periodo, ganador, fuente);
+    if(!payload) return null;
+    limpiarCachesViejosGanadorSemana();
+    await setDoc(ganadorSemanaPasadaDocRef(), payload, {merge:true});
+    const result = cacheUltimoGanadorSemanaUnico(payload);
+    await publicarUltimoGanadorEnChoferes(result).catch(()=>null);
+    return result;
+  }catch(e){
+    console.warn("No se pudo guardar ultimo_ganador_semana oficial", e);
+    return null;
   }
 }
 
@@ -3796,11 +3833,7 @@ async function getUltimoGanadorDesdeChoferActual(){
   try{
     if(currentProfile && currentProfile.ultimoGanadorSemana){
       const n = normalizarUltimoGanadorSemana(currentProfile.ultimoGanadorSemana);
-      if(n && n.ganador){
-        cacheSet("ultimo_ganador_semana", n);
-        cacheSet("ganador_semana_pasada_global", n);
-        return n;
-      }
+      if(n && n.ganador) return cacheUltimoGanadorSemanaUnico(n);
     }
     if(!currentUserId) return null;
     const snap = await withTimeout(getDoc(doc(db,"choferes",currentUserId)), 2800, "Último ganador desde perfil tardó demasiado.");
@@ -3809,11 +3842,7 @@ async function getUltimoGanadorDesdeChoferActual(){
       if(data.ultimoGanadorSemana){
         currentProfile = {...(currentProfile || {}), ultimoGanadorSemana:data.ultimoGanadorSemana};
         const n = normalizarUltimoGanadorSemana(data.ultimoGanadorSemana);
-        if(n && n.ganador){
-          cacheSet("ultimo_ganador_semana", n);
-          cacheSet("ganador_semana_pasada_global", n);
-          return n;
-        }
+        if(n && n.ganador) return cacheUltimoGanadorSemanaUnico(n);
       }
     }
   }catch(e){
@@ -3822,6 +3851,40 @@ async function getUltimoGanadorDesdeChoferActual(){
   return null;
 }
 
+async function getUltimoGanadorSemanaOficial(){
+  try{
+    const snap = await withTimeout(getDoc(ganadorSemanaPasadaDocRef()), 3000, "Último ganador oficial tardó demasiado.");
+    if(snap.exists()){
+      const normalizado = normalizarUltimoGanadorSemana(snap.data());
+      if(normalizado && normalizado.ganador) return cacheUltimoGanadorSemanaUnico(normalizado);
+    }
+  }catch(e){
+    console.warn("No se pudo leer configuracion/ultimo_ganador_semana", e);
+  }
+  return null;
+}
+
+async function getUltimoGanadorSemanaUnico({preferirChofer=false, reconstruirSiFalta=true}={}){
+  // Misma función para Admin y Chofer. Chofer puede leer primero su espejo por permisos.
+  if(preferirChofer && (!currentProfile || currentProfile.rol !== "admin")){
+    const desdeChofer = await getUltimoGanadorDesdeChoferActual();
+    if(desdeChofer && desdeChofer.ganador) return desdeChofer;
+  }
+
+  const oficial = await getUltimoGanadorSemanaOficial();
+  if(oficial && oficial.ganador) return oficial;
+
+  if(!preferirChofer && (!currentProfile || currentProfile.rol !== "admin")){
+    const desdeChofer = await getUltimoGanadorDesdeChoferActual();
+    if(desdeChofer && desdeChofer.ganador) return desdeChofer;
+  }
+
+  const cache = cacheGet("ultimo_ganador_semana_oficial", 24 * 60 * 60 * 1000);
+  if(cache && cache.periodo && cache.ganador) return cache;
+
+  if(!reconstruirSiFalta) return null;
+  return await reconstruirYGuardarUltimoGanadorSemana();
+}
 
 async function guardarUltimoGanadorSemanaDesdeRanking(periodo, fuente="cierre_semanal"){
   try{
@@ -3847,8 +3910,8 @@ async function eliminarUltimoGanadorSemanaPersistente(){
     });
     await Promise.all(tareas);
   }catch(e){ console.warn("No se pudo limpiar ganador en perfiles de chofer", e); }
-  try{ cacheRemove("ultimo_ganador_semana"); }catch(e){}
-  try{ cacheRemove("ganador_semana_pasada_global"); }catch(e){}
+  limpiarCachesViejosGanadorSemana();
+  try{ cacheRemove("ultimo_ganador_semana_oficial"); }catch(e){}
 }
 
 async function getGanadorSemanalRapido(periodo){
@@ -3865,7 +3928,6 @@ async function getGanadorSemanalRapido(periodo){
     return cached || null;
   }
 }
-
 
 function periodoCortoTexto(periodo){
   if(!periodo) return "Semana anterior";
@@ -3961,76 +4023,38 @@ async function getUltimoGanadorHistoricoRapido(periodoActual){
   return null;
 }
 
-async function getGanadorSemanaPasadaRapido(){
+async function reconstruirYGuardarUltimoGanadorSemana(){
   const periodo = periodoSemanaPasadaVisible();
-  const key = `ganador_semana_pasada_${periodo.id}`;
-  const cached = cacheGet(key, 6 * 60 * 60 * 1000);
-  const cachedGlobal = cacheGet("ganador_semana_pasada_global", 24 * 60 * 60 * 1000);
-  const cachedPersistente = cacheGet("ultimo_ganador_semana", 24 * 60 * 60 * 1000);
 
-  // 0A) Fuente espejo para Chofer: el Admin copia el último ganador dentro de cada documento de chofer.
-  // Esto evita diferencias por permisos/caché entre Admin y Chofer.
-  const desdeChofer = await getUltimoGanadorDesdeChoferActual();
-  if(desdeChofer && desdeChofer.ganador){
-    cacheSet("ultimo_ganador_semana", desdeChofer);
-    cacheSet("ganador_semana_pasada_global", desdeChofer);
-    cacheSet(key, desdeChofer);
-    return desdeChofer;
-  }
-
-  // 0) Fuente estable de producción: último ganador guardado al cerrar semana.
-  // Debe ganar sobre el caché específico del período para que Chofer y Admin vean lo mismo.
-  const persistente = await getUltimoGanadorSemanaPersistente();
-  if(persistente && persistente.ganador){
-    cacheSet("ultimo_ganador_semana", persistente);
-    cacheSet("ganador_semana_pasada_global", persistente);
-    cacheSet(key, persistente);
-    return persistente;
-  }
-  if(cachedGlobal && cachedGlobal.periodo && cachedGlobal.ganador){
-    cacheSet(key, cachedGlobal);
-    return cachedGlobal;
-  }
-  if(cachedPersistente && cachedPersistente.periodo && cachedPersistente.ganador){
-    cacheSet(key, cachedPersistente);
-    return cachedPersistente;
-  }
-  if(cached && cached.periodo && cached.ganador) return cached;
-
-  // 1) Intento principal: ranking real del período anterior, con más tiempo porque corre diferido.
   try{
     const data = await withTimeout(calcularRankingSemanalLiviano(periodo), 6500, "Ganador anterior no disponible rápido.");
     const ranking = (data && data.ranking) || [];
     const ganador = data && data.ganadorBono ? data.ganadorBono : ranking.find(x=>!x.suspendidoBono);
     if(ganadorSemanaPasadaValido(ganador)){
-      const result = {periodo, ganador, actualizado:Date.now(), fuente:"ranking_periodo_anterior"};
-      cacheSet(key, result);
-      guardarUltimoGanadorSemana(periodo, ganador, "ranking_periodo_anterior").catch(()=>{});
-      return result;
+      return await guardarUltimoGanadorSemana(periodo, ganador, "reconstruido_ranking_periodo_anterior");
     }
   }catch(e){
-    console.warn("No se pudo calcular ganador semana pasada por ranking", e);
+    console.warn("No se pudo reconstruir ganador por ranking", e);
   }
 
-  // 2) Fallback: acumulados directos del período anterior. Es más liviano y no depende de la lista actual de choferes.
   const porAcumulados = await getGanadorSemanaPasadaDesdeAcumulados(periodo);
   if(porAcumulados && porAcumulados.ganador){
-    cacheSet(key, porAcumulados);
-    guardarUltimoGanadorSemana(porAcumulados.periodo || periodo, porAcumulados.ganador, "acumulados_fallback").catch(()=>{});
-    return porAcumulados;
+    return await guardarUltimoGanadorSemana(porAcumulados.periodo || periodo, porAcumulados.ganador, "reconstruido_acumulados");
   }
 
-  // 3) Fallback final: último período cerrado con actividad. Evita quedar vacío si la semana anterior exacta no tuvo datos.
   const historico = await getUltimoGanadorHistoricoRapido(getPeriodoTrabajoActual(today()));
   if(historico && historico.ganador){
-    cacheSet(key, historico);
-    guardarUltimoGanadorSemana(historico.periodo || periodo, historico.ganador, "historico_acumulados").catch(()=>{});
-    return historico;
+    return await guardarUltimoGanadorSemana(historico.periodo || periodo, historico.ganador, "reconstruido_historico");
   }
 
-  const empty = cached || {periodo, ganador:null, actualizado:Date.now(), fuente:"sin_ganador"};
-  cacheSet(key, empty);
-  return empty;
+  return {periodo, ganador:null, actualizado:Date.now(), fuente:"sin_ganador"};
+}
+
+async function getGanadorSemanaPasadaRapido(){
+  return await getUltimoGanadorSemanaUnico({
+    preferirChofer: (!currentProfile || currentProfile.rol !== "admin"),
+    reconstruirSiFalta: true
+  });
 }
 
 function renderGanadorSemanaPasadaEn(boxId, contentId, data, modo="chofer"){
@@ -4063,44 +4087,46 @@ function renderGanadorSemanaPasadaEn(boxId, contentId, data, modo="chofer"){
 
 async function loadGanadorSemanaPasadaChofer(){
   const periodo = periodoSemanaPasadaVisible();
-  const key = `ganador_semana_pasada_${periodo.id}`;
-  const cached = cacheGet("ultimo_ganador_semana", 24 * 60 * 60 * 1000) || cacheGet("ganador_semana_pasada_global", 24 * 60 * 60 * 1000) || cacheGet(key, 6 * 60 * 60 * 1000);
-  const perfilSync = await getUltimoGanadorDesdeChoferActual();
-  if(perfilSync && perfilSync.ganador) renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",perfilSync,"chofer");
-  else if(cached && cached.ganador) renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",cached,"chofer");
-  else renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",{periodo, ganador:null},"chofer");
-  const data = await getGanadorSemanaPasadaRapido();
+  const cached = cacheGet("ultimo_ganador_semana_oficial", 24 * 60 * 60 * 1000);
+  renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",cached || {periodo, ganador:null},"chofer");
+  const data = await getUltimoGanadorSemanaUnico({preferirChofer:true, reconstruirSiFalta:true});
   renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",data,"chofer");
 }
 
 async function loadGanadorSemanaPasadaAdmin(){
   const periodo = periodoSemanaPasadaVisible();
-  const key = `ganador_semana_pasada_${periodo.id}`;
-  const cached = cacheGet("ultimo_ganador_semana", 24 * 60 * 60 * 1000) || cacheGet("ganador_semana_pasada_global", 24 * 60 * 60 * 1000) || cacheGet(key, 6 * 60 * 60 * 1000);
-  if(cached && cached.ganador) renderGanadorSemanaPasadaEn("adminLastWeekWinnerCard","adminLastWeekWinnerContent",cached,"admin");
-  else renderGanadorSemanaPasadaEn("adminLastWeekWinnerCard","adminLastWeekWinnerContent",{periodo, ganador:null},"admin");
-  const data = await getGanadorSemanaPasadaRapido();
+  const cached = cacheGet("ultimo_ganador_semana_oficial", 24 * 60 * 60 * 1000);
+  renderGanadorSemanaPasadaEn("adminLastWeekWinnerCard","adminLastWeekWinnerContent",cached || {periodo, ganador:null},"admin");
+  const data = await getUltimoGanadorSemanaUnico({preferirChofer:false, reconstruirSiFalta:true});
   renderGanadorSemanaPasadaEn("adminLastWeekWinnerCard","adminLastWeekWinnerContent",data,"admin");
-  if(data && data.ganador) publicarUltimoGanadorEnChoferes(data).catch(()=>{});
+  if(data && data.ganador){
+    const reporte = await publicarUltimoGanadorEnChoferes(data).catch(()=>null);
+    if(reporte && reporte.fail > 0 && $("adminMsg")){
+      msg($("adminMsg"), `Ganador visible en Admin, pero no se copió a todos los choferes (${reporte.ok}/${reporte.total}). Revisá permisos Firebase.`);
+    }
+  }
+}
+
+async function sincronizarUltimoGanadorSemanaAdmin(){
+  if(!currentProfile || currentProfile.rol !== "admin") return msg($("adminToolsMsg"), "Solo Admin puede sincronizar el ganador.");
+  msg($("adminToolsMsg"), "Buscando último ganador oficial y sincronizando con choferes...", true);
+  try{
+    const data = await getUltimoGanadorSemanaUnico({preferirChofer:false, reconstruirSiFalta:true});
+    if(!data || !data.ganador) return msg($("adminToolsMsg"), "No hay ganador anterior para sincronizar todavía.");
+    renderGanadorSemanaPasadaEn("adminLastWeekWinnerCard","adminLastWeekWinnerContent",data,"admin");
+    await guardarUltimoGanadorSemana(data.periodo, data.ganador, "sync_manual_admin");
+    const reporte = await publicarUltimoGanadorEnChoferes(data, true);
+    if(reporte.fail === 0){
+      msg($("adminToolsMsg"), `Listo: ${data.ganador.nombre || data.ganador.id} quedó sincronizado con ${reporte.ok}/${reporte.total} choferes.`, true);
+    }
+  }catch(e){
+    msg($("adminToolsMsg"), "No se pudo sincronizar ganador: " + (e.message || e));
+  }
 }
 
 function resetGanadorSemanaPasadaLocalState(){
-  try{
-    const keys = [];
-    for(let i=0;i<localStorage.length;i++){
-      const k = localStorage.key(i);
-      if(k && (
-        k.includes("ganador_semana_pasada_") ||
-        k.includes("ultimo_ganador_semana") ||
-        k.includes("ganador_semana_pasada_global") ||
-        k.includes("ganador_sem_") ||
-        k.includes("last_week_winner") ||
-        k.includes("LastWeekWinner")
-      )) keys.push(k);
-    }
-    keys.forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
-  }catch(e){}
-
+  limpiarCachesViejosGanadorSemana();
+  try{ cacheRemove("ultimo_ganador_semana_oficial"); }catch(e){}
   const empty = {periodo: periodoSemanaPasadaVisible(), ganador:null, actualizado:Date.now(), reset:true};
   renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",empty,"chofer");
   renderGanadorSemanaPasadaEn("adminLastWeekWinnerCard","adminLastWeekWinnerContent",empty,"admin");
@@ -7782,6 +7808,7 @@ window.crearChoferVehiculoAdmin = async function(){
 // ===== EXPLORA v2.8.61: FUNCIONES GLOBALES PARA BOTONES INLINE =====
 // Estas asignaciones evitan errores de botones inline dentro de <script type="module">.
 window.loadAdmin = loadAdmin;
+window.sincronizarUltimoGanadorSemanaAdmin = sincronizarUltimoGanadorSemanaAdmin;
 window.loadComprobantesChofer = loadComprobantesChofer;
 window.loadComprobantesAdmin = loadComprobantesAdmin;
 
@@ -8796,107 +8823,6 @@ setTimeout(function(){
   }
 }, 1500);
 
-</script>
-
-
-<script>
-/* EXPLORA v2.8.103 · Ganador Admin -> Chofer misma tarjeta/fuente visual */
-(function(){
-  const EMPTY_WINNER_HTML = `
-    <div class="last-week-winner-body">
-      <div class="last-week-winner-icon">🏆</div>
-      <div><b>Aún no hay ganador anterior</b><small>Se actualizará automáticamente cuando haya ranking cerrado.</small></div>
-    </div>`;
-
-  function normalizeWinnerHtmlFromAdmin(){
-    const adminCard = document.getElementById("adminLastWeekWinnerCard")
-      || document.querySelector(".admin-last-week-winner-card")
-      || document.querySelector("[id*='LastWeekWinner'][id*='Admin']")
-      || document.querySelector("[id*='admin'][id*='Winner']");
-
-    const driverContent = document.getElementById("driverLastWeekWinnerContent");
-    const driverCard = document.getElementById("driverLastWeekWinnerCard");
-    if(!driverContent || !driverCard) return false;
-
-    driverCard.classList.remove("hidden");
-
-    if(!adminCard){
-      if(!driverContent.innerHTML.trim()){
-        driverContent.innerHTML = EMPTY_WINNER_HTML;
-      }
-      return false;
-    }
-
-    const adminText = (adminCard.innerText || "").trim();
-    const hasWinner = adminText && !/Aún no hay ganador anterior/i.test(adminText);
-
-    if(!hasWinner){
-      driverContent.innerHTML = EMPTY_WINNER_HTML;
-      return true;
-    }
-
-    // Extrae datos desde la misma tarjeta que ve Admin
-    const nameMatch = adminText.match(/(?:Último ganador del ranking\s*)?([A-Za-zÁÉÍÓÚáéíóúÑñ0-9 ._-]+)\s+Ganó el bono semanal/i);
-    const moneyMatch = adminText.match(/\$[\d.]+/);
-    const weekMatch = adminText.match(/Semana cerrada:\s*([^\n]+)/i);
-
-    const name = nameMatch ? nameMatch[1].trim() : adminText.split("\n").find(x => x.trim() && !/Último ganador|Ganó|Semana cerrada/i.test(x)) || "Ganador anterior";
-    const money = moneyMatch ? moneyMatch[0] : "$50.000";
-    const week = weekMatch ? weekMatch[1].trim() : "";
-
-    driverContent.innerHTML = `
-      <div class="last-week-winner-body">
-        <div class="last-week-winner-icon">👑</div>
-        <div>
-          <b>${name}</b>
-          <small>Ganó el bono semanal <span class="last-week-winner-money">${money}</span>${week ? "<br>Semana cerrada: " + week : ""}</small>
-        </div>
-      </div>`;
-
-    try{
-      localStorage.setItem("explora_last_week_winner_admin_html", driverContent.innerHTML);
-    }catch(e){}
-    return true;
-  }
-
-  function restoreDriverWinnerFromAdminCache(){
-    const driverContent = document.getElementById("driverLastWeekWinnerContent");
-    const driverCard = document.getElementById("driverLastWeekWinnerCard");
-    if(!driverContent || !driverCard) return;
-    driverCard.classList.remove("hidden");
-    try{
-      const cached = localStorage.getItem("explora_last_week_winner_admin_html");
-      if(cached && !/Aún no hay ganador anterior/i.test(cached)){
-        driverContent.innerHTML = cached;
-      }
-    }catch(e){}
-  }
-
-  window.syncDriverWinnerFromAdminCard = function(){
-    restoreDriverWinnerFromAdminCache();
-    return normalizeWinnerHtmlFromAdmin();
-  };
-
-  document.addEventListener("DOMContentLoaded", function(){
-    restoreDriverWinnerFromAdminCache();
-    setTimeout(window.syncDriverWinnerFromAdminCard, 300);
-    setTimeout(window.syncDriverWinnerFromAdminCard, 1200);
-    setTimeout(window.syncDriverWinnerFromAdminCard, 2500);
-
-    const bodyObserver = new MutationObserver(function(){
-      window.syncDriverWinnerFromAdminCard();
-    });
-    bodyObserver.observe(document.body, {childList:true, subtree:true, characterData:true});
-  });
-
-  // Si la app llama render/load después del login, este intervalo corto vuelve a copiar la tarjeta sin frenar carga.
-  let tries = 0;
-  const t = setInterval(function(){
-    tries++;
-    window.syncDriverWinnerFromAdminCard();
-    if(tries > 20) clearInterval(t);
-  }, 500);
-})();
 </script>
 
 </body>
