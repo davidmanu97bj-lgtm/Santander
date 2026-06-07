@@ -46,6 +46,7 @@ Cambios:
 - Cierre con comprobante simplificado: quien debe pagar sube foto; la app sigue operando con cartel hasta resolver; David puede pagar desde Admin y el chofer confirma para ocultar aviso.
 - Corrección: Admin y Chofer usan la misma fecha efectiva por chofer; el modo prueba de fecha del iPhone también aplica al panel Admin para ese chofer.
 - Herramienta Admin: reset total de lanzamiento que elimina choferes, vehículos y toda actividad, conservando únicamente el usuario admin.
+- v2.8.89: modo prueba fuerza FECHA EFECTIVA = iPhone para ranking, cierres, bono y comprobantes.
 - v2.8.88: si un chofer no tiene fecha de alta, se repara automáticamente y no se buscan cierres históricos anteriores.
 - v2.8.87: cierre semanal estable en un solo documento, bloqueo por fecha de alta y cartel visible de fuente de fecha (iPhone/Firebase).
 -->
@@ -53,7 +54,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.88 · Build 2026-06-07-CIERRE-ESTABLE-ALTA-SEGURA</title>
+<title>EXPLORA v2.8.89 · Build 2026-06-07-FECHA-EFECTIVA-IPHONE-PRUEBA</title>
 <style>
 :root{
   --bg:#080808;
@@ -1147,7 +1148,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 @media(max-width:430px){.admin-clean-row{grid-template-columns:1fr}.admin-summary-grid.admin-clean-summary-grid{grid-template-columns:1fr 1fr!important}.admin-cierre-mobile-action{min-width:88px!important}}
 
 
-/* EXPLORA v2.8.88 · FECHA VISIBLE + ALTA SEGURA */
+/* EXPLORA v2.8.89 · FECHA EFECTIVA IPHONE PARA PRUEBA */
 .fecha-source-badge{
   display:flex;
   align-items:center;
@@ -1189,7 +1190,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.88</b> · Build 2026-06-07-CIERRE-ESTABLE-ALTA-SEGURA</div>
+    <div class="build-version"><b>v2.8.89</b> · Build 2026-06-07-FECHA-EFECTIVA-IPHONE-PRUEBA</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1426,7 +1427,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.88</b> · CIERRE-ALTA-SEGURA</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.89</b> · FECHA-EFECTIVA-IPHONE</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -7325,7 +7326,7 @@ window.eliminarChoferesDemoAdmin = async function(){
 // Este bloque deja una sola regla de cierre: un chofer + un período = un documento.
 // También impide pedir cierres anteriores a la fecha de alta del chofer.
 
-const EXPLORA_CIERRE_VERSION = "v2.8.88 · CIERRE-ESTABLE-ALTA-SEGURA";
+const EXPLORA_CIERRE_VERSION = "v2.8.89 · FECHA-EFECTIVA-IPHONE-PRUEBA";
 const perfilAltaCacheV287 = {};
 
 function fechaBadgeTextoV287(){
@@ -7575,6 +7576,58 @@ syncTrustedToday = async function(){
   renderFechaOperativaVisibleV287();
   return r;
 };
+
+
+
+// ===== EXPLORA v2.8.89 · FECHA EFECTIVA IPHONE PARA PRUEBA =====
+// Mientras estés probando, toda la app trabaja con una sola fecha: la fecha del iPhone.
+// Firebase queda solo como referencia visual. Para producción, cambiar este valor a false.
+const EXPLORA_FECHA_EFECTIVA_IPHONE_PRUEBA = true;
+
+const _fechaOperativaParaChoferV289 = fechaOperativaParaChofer;
+fechaOperativaParaChofer = function(choferId = currentUserId, perfil = null){
+  if(EXPLORA_FECHA_EFECTIVA_IPHONE_PRUEBA){
+    return formatDateArgentina(new Date());
+  }
+  return _fechaOperativaParaChoferV289(choferId, perfil);
+};
+
+today = function(){
+  return fechaOperativaParaChofer(currentUserId, currentProfile || null);
+};
+
+fechaBadgeTextoV287 = function(){
+  const fechaIphone = formatDateArgentina(new Date());
+  const fechaFirebase = trustedTodayValue || "sin sincronizar";
+  if(EXPLORA_FECHA_EFECTIVA_IPHONE_PRUEBA){
+    return {
+      clase:"iphone",
+      html:`🧪 FECHA EFECTIVA: IPHONE · ${fechaIphone}<br><small>Firebase referencia: ${fechaFirebase}. Cierres, ranking, bono y comprobantes usan iPhone.</small>`
+    };
+  }
+  const fechaOperativa = today();
+  if(String(trustedTodaySource || "").startsWith("server")){
+    return {clase:"firebase", html:`☁️ FECHA EFECTIVA: FIREBASE · ${fechaOperativa}<br><small>iPhone: ${fechaIphone}</small>`};
+  }
+  return {clase:"local", html:`⚠️ FECHA LOCAL/RESPALDO · ${fechaOperativa}<br><small>No se confirmó Firebase todavía</small>`};
+};
+
+// En prueba, sábado completo dispara cierre. No se espera 00:01.
+afterSaturday0001 = function(dateStr = today()){
+  return isSaturday(dateStr);
+};
+
+// Limpia cachés de fecha/período al cargar esta versión para que no quede un sábado viejo guardado.
+try{
+  Object.keys(localStorage || {}).forEach(k=>{
+    if(String(k).includes("periodo_cierre_pendiente") || String(k).includes("trusted_today") || String(k).includes("cierre_sem_")){
+      localStorage.removeItem(k);
+    }
+  });
+}catch(e){}
+
+renderFechaOperativaVisibleV287();
+window.EXPLORA_FECHA_EFECTIVA_IPHONE_PRUEBA = EXPLORA_FECHA_EFECTIVA_IPHONE_PRUEBA;
 
 renderFechaOperativaVisibleV287();
 window.checkCierreSemanalAutomatico = checkCierreSemanalAutomatico;
