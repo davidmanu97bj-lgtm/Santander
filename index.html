@@ -2,7 +2,7 @@
 <!--
 EXPLORA BUILD
 Version: 2.8.82
-Build: 2026-06-06-MODO-PRUEBA-FECHA-CHOFER-022
+Build: 2026-06-07-FECHA-UNIFICADA-ADMIN-CHOFER-023
 Fecha: 06/06/2026
 Cambios:
 - Se agrega botón “Mi cierre semanal” en Chofer para ver el cierre provisorio de la semana activa sin esperar al sábado.
@@ -43,13 +43,14 @@ Cambios:
 - Corrección: modo prueba fecha por chofer se resincroniza después de encontrar el ID real del chofer; ahora el cierre sábado/comprobante toma la fecha del iPhone del usuario autorizado.
 - Corrección crítica: si el acumulado rápido está en 0, el cierre obligatorio reconstruye viajes/gastos reales y ya no se autoacepta sin mostrar comprobante.
 - Regla lanzamiento: semana sin actividad también muestra cierre obligatorio, pero sin pedir comprobante y queda guardada como “sin actividad”.
+- Corrección: Admin y Chofer usan la misma fecha efectiva por chofer; el modo prueba de fecha del iPhone también aplica al panel Admin para ese chofer.
 - Herramienta Admin: reset total de lanzamiento que elimina choferes, vehículos y toda actividad, conservando únicamente el usuario admin.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.81 · Build 2026-06-07-CIERRE-COMPROBANTE-FIX</title>
+<title>EXPLORA v2.8.82 · Build 2026-06-07-CIERRE-COMPROBANTE-FIX</title>
 <style>
 :root{
   --bg:#080808;
@@ -1112,7 +1113,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.81</b> · Build 2026-06-07-CIERRE-COMPROBANTE-FIX</div>
+    <div class="build-version"><b>v2.8.82</b> · Build 2026-06-07-CIERRE-COMPROBANTE-FIX</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1520,40 +1521,64 @@ function normalizarClaveUsuario(v){
   return String(v || "").toLowerCase().trim();
 }
 
-function choferTieneModoPruebaFecha(userId = currentUserId){
+function choferTieneModoPruebaFechaPorDatos(userId = currentUserId, perfil = null){
   const cfg = modoPruebaFechaConfig || {};
   const choferes = cfg.choferes || {};
   if(cfg.activo === false) return false;
 
-  const id = normalizarClaveUsuario(userId);
-  const aliases = [id];
+  const aliases = [];
+  const addAlias = v => {
+    const k = normalizarClaveUsuario(v);
+    if(k && !aliases.includes(k)) aliases.push(k);
+  };
 
-  // Corrección: cuando el login se hace por email, primero currentUserId puede ser
-  // el usuario del email y después cambia al ID real del documento del chofer.
-  // Por eso el modo prueba debe reconocer también nombre/email/uid y no solo una clave.
+  addAlias(userId);
   try{
-    if(currentProfile){
-      aliases.push(normalizarClaveUsuario(currentProfile.nombre));
-      aliases.push(normalizarClaveUsuario(currentProfile.email));
-      aliases.push(normalizarClaveUsuario(currentProfile.usuario));
-      aliases.push(normalizarClaveUsuario(currentProfile.uid));
+    if(perfil){
+      addAlias(perfil.id);
+      addAlias(perfil.nombre);
+      addAlias(perfil.email);
+      addAlias(perfil.usuario);
+      addAlias(perfil.uid);
     }
-    if(auth && auth.currentUser){
+    if(!perfil && currentProfile){
+      addAlias(currentProfile.nombre);
+      addAlias(currentProfile.email);
+      addAlias(currentProfile.usuario);
+      addAlias(currentProfile.uid);
+    }
+    if(!perfil && auth && auth.currentUser){
       const email = normalizarClaveUsuario(auth.currentUser.email);
-      aliases.push(email);
-      aliases.push(email.split("@")[0]);
-      aliases.push(normalizarClaveUsuario(auth.currentUser.uid));
+      addAlias(email);
+      addAlias(email.split("@")[0]);
+      addAlias(auth.currentUser.uid);
     }
   }catch(e){}
 
-  return aliases.some(k => k && choferes[k] && choferes[k].activo === true);
+  return Object.entries(choferes).some(([key, cfgChofer])=>{
+    if(!cfgChofer || cfgChofer.activo !== true) return false;
+    const claves = [key, cfgChofer.id, cfgChofer.nombre, cfgChofer.email, cfgChofer.usuario, cfgChofer.uid, ...(Array.isArray(cfgChofer.alias) ? cfgChofer.alias : [])]
+      .map(normalizarClaveUsuario)
+      .filter(Boolean);
+    return aliases.some(a=>claves.includes(a));
+  });
+}
+
+function choferTieneModoPruebaFecha(userId = currentUserId){
+  // Compatibilidad con el motor existente para el chofer logueado.
+  return choferTieneModoPruebaFechaPorDatos(userId, null);
+}
+
+function fechaOperativaParaChofer(choferId = currentUserId, perfil = null){
+  // Regla unificada: si Admin habilitó modo prueba para un chofer,
+  // Admin y Chofer calculan cierres de ese chofer con la misma fecha del iPhone.
+  // En producción, todos usan fecha confiable de Firebase.
+  if(choferTieneModoPruebaFechaPorDatos(choferId, perfil)) return formatDateArgentina(new Date());
+  return trustedTodayValue || formatDateArgentina(new Date());
 }
 
 function today(){
-  // Producción segura: por defecto usa fecha confiable de Firebase.
-  // Prueba controlada: solo el chofer habilitado por Admin usa la fecha del iPhone.
-  if(choferTieneModoPruebaFecha()) return formatDateArgentina(new Date());
-  return trustedTodayValue || formatDateArgentina(new Date());
+  return fechaOperativaParaChofer(currentUserId, null);
 }
 
 
@@ -2875,6 +2900,14 @@ function getPeriodoAdminRevision(dateStr = today()){
   // En Admin, el sábado desde 00:01 se debe revisar la semana que acaba de cerrar,
   // no la semana nueva. El resto de los días muestra la semana activa normal.
   return getPeriodoCierrePendiente(dateStr) || getPeriodoTrabajoActual(dateStr);
+}
+
+function getPeriodoAdminRevisionParaChofer(choferId, perfil=null){
+  return getPeriodoAdminRevision(fechaOperativaParaChofer(choferId, perfil));
+}
+
+function getPeriodoTrabajoActualParaChofer(choferId, perfil=null){
+  return getPeriodoTrabajoActual(fechaOperativaParaChofer(choferId, perfil));
 }
 
 function periodoCerradoYaVencido(periodo, dateStr = today()){
@@ -6007,14 +6040,15 @@ async function cargarVehiculosAdminSimple(periodo){
     if(c.vehiculo) choferesPorVehiculo[c.vehiculo] = {id:d.id,...c};
   });
 
-  const pagosPorChofer = {};
+  const pagosPorChoferPeriodo = {};
   const deudaPendientePorChofer = {};
   if(pagosSnap){
     pagosSnap.forEach(d=>{
       const p = {id:d.id,...d.data()};
       if(!p.chofer) return;
-      if(p.periodoId === periodo.id) pagosPorChofer[p.chofer] = p;
-      if(p.pagado !== true && pagoPerteneceASemanaCerradaValida(p)){
+      const perfilPago = choferesPorId[p.chofer] || null;
+      pagosPorChoferPeriodo[`${p.chofer}_${p.periodoId || ""}`] = p;
+      if(p.pagado !== true && pagoPerteneceASemanaCerradaValida(p, fechaOperativaParaChofer(p.chofer, perfilPago))){
         if(!deudaPendientePorChofer[p.chofer]) deudaPendientePorChofer[p.chofer] = {choferDebe:0, davidDebe:0, itemsChofer:0, itemsDavid:0};
         const monto = Number(p.monto || 0);
         if(p.sentido === "chofer_a_david"){
@@ -6044,10 +6078,11 @@ async function cargarVehiculosAdminSimple(periodo){
     const tieneAlerta = !String(alertas || "").includes("Sin vencimientos");
     if(tieneAlerta) stats.vehiculosConAlertas++;
 
-    const pagoReal = choferId ? pagosPorChofer[choferId] : null;
+    const periodoChofer = c ? getPeriodoAdminRevisionParaChofer(choferId, c) : periodo;
+    const pagoReal = choferId ? pagosPorChoferPeriodo[`${choferId}_${periodoChofer.id}`] : null;
     const deudaAcumuladaCard = choferId ? deudaPendientePorChofer[choferId] : null;
     const tieneDeudaAcumulada = !!(deudaAcumuladaCard && (Number(deudaAcumuladaCard.choferDebe || 0) > 0 || Number(deudaAcumuladaCard.davidDebe || 0) > 0));
-    const estadoCache = c ? adminCierreEstadoDesdeCache(choferId, periodo, pagoReal) : null;
+    const estadoCache = c ? adminCierreEstadoDesdeCache(choferId, periodoChofer, pagoReal) : null;
     // Pendiente de revisión significa: falta comprobante/pago actual o existe deuda acumulada de cierres anteriores.
     let tipo = estadoCache ? estadoCache.tipo : "green";
     let titulo = estadoCache ? estadoCache.titulo : (c ? "Sin acción pendiente" : "Sin chofer asignado");
@@ -6084,6 +6119,7 @@ async function cargarVehiculosAdminSimple(periodo){
             <b>${c ? (c.nombre || c.id) : v.id}</b>
             <small class="admin-status-chip ${tipo === "red" ? "red" : tipo === "yellow" ? "yellow" : "green"}">${titulo}</small>
             <small>${subtitulo}</small>
+            ${c ? `<small>Semana controlada: ${periodoChofer.start} al ${periodoChofer.end}</small>` : ""}
             ${requiereRevisar ? `<small>Cierre generado: ${new Date().toLocaleDateString("es-AR")} ${new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})}</small>` : `<small>Vehículo: ${v.modelo || v.id}</small>`}
           </div>
           <button id="btnAdminCierre_${safeId(v.id)}" class="${tipo === "red" ? "btn-red" : tipo === "yellow" ? "btn-gold" : "btn-dark"} admin-cierre-mobile-action" data-admin-cierre-btn="1" data-vehiculo-safe="${safeId(v.id)}" onclick="toggleCierreVehiculoAdmin('${jsArg(v.id)}','${jsArg(choferId)}')">${accion}</button>
@@ -6150,7 +6186,8 @@ window.calcularSemanaVehiculoAdmin = async function(vehiculoId, choferId){
 
   // Admin y chofer deben mirar exactamente el mismo período operativo.
   // Esto evita diferencias después de confirmar cierre un sábado o si el chofer ya pasó a una nueva semana activa.
-  const periodo = getPeriodoAdminRevision(today());
+  const perfilChofer = Object.values(adminChoferesPorVehiculoCache || {}).find(c=>c && c.id === choferId) || {id:choferId};
+  const periodo = getPeriodoAdminRevisionParaChofer(choferId, perfilChofer);
   const cacheKey = `admin_5050_${choferId}_${periodo.id}`;
   const cacheLocal = cacheGet(cacheKey, 10 * 60 * 1000);
 
@@ -6196,7 +6233,8 @@ async function calcularCierreSemanalAdminUltraRapido(choferId, periodo){
 window.reconstruirSemanaVehiculoAdmin = async function(vehiculoId, choferId){
   const box = $("adminCalc_" + safeId(vehiculoId));
   if(!box) return;
-  const periodo = getPeriodoAdminRevision(today());
+  const perfilChofer = Object.values(adminChoferesPorVehiculoCache || {}).find(c=>c && c.id === choferId) || {id:choferId};
+  const periodo = getPeriodoAdminRevisionParaChofer(choferId, perfilChofer);
   box.innerHTML = `<div class="msg ok">Reconstruyendo acumulado... Esto puede tardar solo esta vez.</div>`;
   try{
     const c = await withTimeout(calcularCierreSemanalLiviano(choferId, periodo, true), 15000, "La reconstrucción tardó demasiado. Revisá internet y probá otra vez.");
