@@ -1105,6 +1105,45 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   color:#f3d77a!important;
 }
 
+
+
+/* ADMIN LIMPIO · CIERRES SIMPLES 023 */
+.admin-card-soft.admin-clean-summary{padding:14px!important}
+.admin-clean-row{display:grid;grid-template-columns:1.25fr .75fr;gap:10px;margin-top:10px}
+.admin-clean-pill{background:linear-gradient(180deg,#181818,#0f0f0f);border:1px solid rgba(255,255,255,.10);border-radius:18px;padding:14px;min-height:86px;display:flex;flex-direction:column;justify-content:center}
+.admin-clean-pill strong{font-size:34px;line-height:1;color:#ff5f57}
+.admin-clean-pill.ok strong{color:#4ade80}
+.admin-clean-pill span{font-size:14px;color:#e8e8e8;font-weight:800}
+.admin-clean-pill small{display:block;color:#aaa;margin-top:4px;line-height:1.25}
+.admin-summary-grid.admin-clean-summary-grid{grid-template-columns:1fr 1fr!important;gap:10px!important}
+.admin-summary-grid.admin-clean-summary-grid .admin-summary-card{min-height:86px!important;padding:13px!important;text-align:left!important;align-items:flex-start!important}
+.admin-summary-grid.admin-clean-summary-grid .admin-summary-card .admin-summary-icon{font-size:22px!important}
+.admin-summary-grid.admin-clean-summary-grid .admin-summary-card strong{font-size:28px!important;margin-top:4px!important}
+.admin-summary-grid.admin-clean-summary-grid .admin-summary-card span{font-size:13px!important}
+.admin-summary-grid.admin-clean-summary-grid .admin-summary-card small{display:none!important}
+.admin-review-card{padding-top:14px!important}
+.admin-review-title h3{font-size:23px!important}
+.admin-review-note{font-size:13px!important;color:#aaa!important;margin-bottom:10px!important}
+.admin-cierre-mobile-card{padding:13px!important;border-radius:18px!important}
+.admin-cierre-mobile-main{align-items:center!important}
+.admin-driver-avatar{width:48px!important;height:48px!important;font-size:22px!important}
+.admin-cierre-mobile-info b{font-size:20px!important;line-height:1.1}
+.admin-status-chip{font-size:13px!important;margin-top:6px!important}
+.admin-cierre-mobile-info small.admin-clean-sub{font-size:13px!important;color:#cfcfcf!important;line-height:1.25;margin-top:5px!important}
+.admin-cierre-mobile-info small.admin-hide-extra{display:none!important}
+.admin-cierre-mobile-action{min-width:94px!important;padding:12px!important;font-size:15px!important}
+.admin-cierre-mobile-arrow{display:none!important}
+.cierre-admin-card{border-radius:18px!important;margin-top:12px!important;background:#111!important}
+.cierre-admin-head{align-items:center!important}
+.cierre-result-box{padding:13px!important}
+.cierre-result-box span{font-size:30px!important}
+.admin-cierre-simple-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.admin-cierre-simple-item{background:#0b0b0b;border:1px solid #2b2b2b;border-radius:13px;padding:9px}
+.admin-cierre-simple-item span{display:block;color:#999;font-size:12px}
+.admin-cierre-simple-item b{font-size:15px}
+.cierre-summary-grid.admin-extra-hidden{display:none!important}
+@media(max-width:430px){.admin-clean-row{grid-template-columns:1fr}.admin-summary-grid.admin-clean-summary-grid{grid-template-columns:1fr 1fr!important}.admin-cierre-mobile-action{min-width:88px!important}}
+
 </style>
 </head>
 <body>
@@ -1351,7 +1390,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.78</b> · CHOFER-FAST-PANELS-020</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.82</b> · ADMIN-LIMPIO-CIERRES</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -1378,7 +1417,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
           <h3>⚠️ Choferes por revisar <span id="adminReviewCount" class="admin-review-count hidden">0</span></h3>
           <button class="admin-review-all" onclick="adminMostrarTodosLosCierres()">Ver todos ›</button>
         </div>
-        <p class="admin-review-note">Solo aparecen choferes que requieren una acción tuya: comprobante pendiente, pago pendiente o comprobante por validar.</p>
+        <p class="admin-review-note">Pendientes reales. Tocá “Cerrar” para ver el comprobante o cargarlo.</p>
         <div id="adminCierresPanel" class="admin-module-panel"><div id="adminVehiculosResumen">Cargando cierres...</div></div>
         <div id="adminComprobantesPanel" class="admin-module-panel hidden">
           <div class="admin-mobile-list-title"><h3>📎 Comprobantes</h3><button class="btn-dark" onclick="showAdminCierresTab('cierres')">Volver</button></div>
@@ -1391,7 +1430,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
         <div class="admin-mobile-list-title"><h3>🔧 Vehículos con alertas</h3><button class="btn-dark" onclick="adminShowSection('vehicles')">Ver todos ›</button></div>
         <div id="adminVehiculosAlertasResumen"><p class="note">Cargando vehículos...</p></div>
       </div>
-      <div class="admin-green-note">ⓘ Solo se muestran choferes que requieren acción.</div>
+      
     </div>
 
     <div id="adminVehiclesSection" class="admin-section hidden">
@@ -5634,19 +5673,30 @@ function renderAdminResumenMovil(stats={}){
   const pendientesPago = Number(stats.pendientesPago || 0);
   const comprobantesPendientes = Number(stats.comprobantesPendientes || 0);
   const vehiculosConAlertas = Number(stats.vehiculosConAlertas || 0);
-  const cierresResueltos = Number(stats.cierresResueltos || 0);
   const porRevisar = Number(stats.porRevisar || 0);
   const totalPendientes = porRevisar;
   const cards = $("adminSummaryCards");
   const bell = $("adminBellBadge");
   const banner = $("adminCriticalBanner");
   const reviewCount = $("adminReviewCount");
+
   if(cards){
+    cards.classList.add("admin-clean-summary-grid");
     cards.innerHTML = `
-      <div class="admin-summary-card red" onclick="adminMostrarChoferesPorRevisar()"><div class="admin-summary-icon">📄</div>${pendientesPago ? `<span class="admin-mini-badge">${pendientesPago}</span>` : ""}<strong>${pendientesPago}</strong><span>Pendientes<br>de pago</span><small>Choferes que deben dinero.</small></div>
-      <div class="admin-summary-card red" onclick="showAdminCierresTab('comprobantes')"><div class="admin-summary-icon">📎</div>${comprobantesPendientes ? `<span class="admin-mini-badge">${comprobantesPendientes}</span>` : ""}<strong>${comprobantesPendientes}</strong><span>Comprobantes<br>pendientes</span><small>Subidos o faltantes.</small></div>
-      <div class="admin-summary-card yellow" onclick="adminShowSection('vehicles')"><div class="admin-summary-icon">🔧</div>${vehiculosConAlertas ? `<span class="admin-mini-badge" style="background:#f4b400">${vehiculosConAlertas}</span>` : ""}<strong>${vehiculosConAlertas}</strong><span>Vehículos con<br>alertas</span><small>Requieren mantenimiento.</small></div>
-      <div class="admin-summary-card green" onclick="adminMostrarTodosLosCierres()"><div class="admin-summary-icon">✅</div><strong>${cierresResueltos}</strong><span>Cierres<br>resueltos</span><small>Todo en orden.</small></div>
+      <div class="admin-summary-card ${totalPendientes ? "red" : "green"}" onclick="adminMostrarChoferesPorRevisar()">
+        <div class="admin-summary-icon">${totalPendientes ? "⚠️" : "✅"}</div>
+        ${totalPendientes ? `<span class="admin-mini-badge">${totalPendientes}</span>` : ""}
+        <strong>${totalPendientes}</strong>
+        <span>${totalPendientes ? "Cierres por resolver" : "Todo al día"}</span>
+        <small>${pendientesPago} pagos · ${comprobantesPendientes} comprobantes</small>
+      </div>
+      <div class="admin-summary-card ${vehiculosConAlertas ? "yellow" : "green"}" onclick="adminShowSection('vehicles')">
+        <div class="admin-summary-icon">🔧</div>
+        ${vehiculosConAlertas ? `<span class="admin-mini-badge" style="background:#f4b400">${vehiculosConAlertas}</span>` : ""}
+        <strong>${vehiculosConAlertas}</strong>
+        <span>Alertas de vehículos</span>
+        <small>Mantenimiento por km o fecha.</small>
+      </div>
     `;
   }
   if(bell){
@@ -5660,12 +5710,11 @@ function renderAdminResumenMovil(stats={}){
   if(banner){
     banner.className = totalPendientes ? "admin-critical-banner" : "admin-critical-banner ok";
     banner.innerHTML = totalPendientes
-      ? `<div style="font-size:34px;line-height:1">❗</div><div>${totalPendientes} PENDIENTE${totalPendientes === 1 ? "" : "S"} DE REVISAR<small>Hay ${totalPendientes === 1 ? "un chofer" : totalPendientes + " choferes"} que requiere${totalPendientes === 1 ? "" : "n"} tu atención.</small></div>`
-      : `<div style="font-size:28px;line-height:1">✅</div><div>Todo al día<small>No hay comprobantes ni pagos pendientes.</small></div>`;
+      ? `<div style="font-size:30px;line-height:1">⚠️</div><div>${totalPendientes} cierre${totalPendientes === 1 ? "" : "s"} por resolver<small>${pendientesPago} pago${pendientesPago === 1 ? "" : "s"} · ${comprobantesPendientes} comprobante${comprobantesPendientes === 1 ? "" : "s"}. Tocá abajo para resolver.</small></div>`
+      : `<div style="font-size:28px;line-height:1">✅</div><div>Todo al día<small>No hay pagos ni comprobantes pendientes.</small></div>`;
     banner.onclick = ()=> totalPendientes ? adminMostrarChoferesPorRevisar() : adminMostrarTodosLosCierres();
   }
 }
-
 function estadoRevisionDesdePagoYCierre(cierre=null, pago=null){
   const montoChofer = Number((pago && pago.sentido === "chofer_a_david" ? pago.monto : 0) || (cierre && cierre.choferDebe) || 0);
   const montoDavid = Number((pago && pago.sentido === "david_a_chofer" ? pago.monto : 0) || (cierre && cierre.davidDebe) || 0);
@@ -6121,9 +6170,8 @@ async function cargarVehiculosAdminSimple(periodo){
           <div class="admin-cierre-mobile-info">
             <b>${c ? (c.nombre || c.id) : v.id}</b>
             <small class="admin-status-chip ${tipo === "red" ? "red" : tipo === "yellow" ? "yellow" : "green"}">${titulo}</small>
-            <small>${subtitulo}</small>
-            ${c ? `<small>Semana controlada: ${periodoChofer.start} al ${periodoChofer.end}</small>` : ""}
-            ${requiereRevisar ? `<small>Cierre generado: ${new Date().toLocaleDateString("es-AR")} ${new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})}</small>` : `<small>Vehículo: ${v.modelo || v.id}</small>`}
+            <small class="admin-clean-sub">${subtitulo}</small>
+            ${c ? `<small class="admin-clean-sub">Semana: ${periodoChofer.start} al ${periodoChofer.end}</small>` : `<small class="admin-clean-sub">Sin chofer asignado</small>`}
           </div>
           <button id="btnAdminCierre_${safeId(v.id)}" class="${tipo === "red" ? "btn-red" : tipo === "yellow" ? "btn-gold" : "btn-dark"} admin-cierre-mobile-action" data-admin-cierre-btn="1" data-vehiculo-safe="${safeId(v.id)}" onclick="toggleCierreVehiculoAdmin('${jsArg(v.id)}','${jsArg(choferId)}')">${accion}</button>
           <div class="admin-cierre-mobile-arrow" onclick="toggleCierreVehiculoAdmin('${jsArg(v.id)}','${jsArg(choferId)}')">›</div>
@@ -6285,27 +6333,26 @@ function renderResumenSemanalAdmin(vehiculoId,c,pago){
     statusText = "✅ Cerrado";
     accionRapida = `
       <div class="paid-box">
-        ✅ Pago/comprobante registrado<br>
-        <small>${pago.fechaPago || ""} ${pago.horaPago || ""} · Marcado por: ${pago.marcadoPor || ""}</small>
-        ${comprobanteLinkHtml(pago, "Ver foto")}
+        ✅ Comprobante registrado
+        ${comprobanteLinkHtml(pago, "Ver comprobante")}
       </div>
     `;
   }else if(sentido === "sin_diferencia"){
     accionRapida = `<div class="paid-box">✅ No requiere pago ni comprobante</div>`;
   }else if(sentido === "david_a_chofer"){
     statusClass = "cierre-status-red";
-    statusText = "📎 Falta comprobante";
+    statusText = "📎 Falta tu comprobante";
     const inputId = `compAdmin_${safeId(c.chofer)}_${safeId(c.periodo.id)}`;
     accionRapida = uploadComprobanteHtml({
       inputId,
       buttonText:"Subir comprobante y cerrar",
       onClick:`subirComprobantePagoAdmin('${c.chofer}','${c.periodo.id}','${sentido}',${Math.round(montoDeuda)},'${inputId}')`,
-      nota:"David debe pagar este cierre. Subí la foto desde Admin; al chofer le aparecerá “David ya te pagó” con el comprobante para aceptar y ocultar el aviso."
+      nota:"Subí la foto del pago. Al chofer le aparecerá “David ya te pagó” con el comprobante."
     });
   }else if(sentido === "chofer_a_david"){
     statusClass = "cierre-status-warn";
     statusText = "⏳ Esperando chofer";
-    accionRapida = `<div class="pending-box">📎 El chofer debe subir el comprobante desde su app.<br><small>Puede seguir operando; si pasan 24 h posteriores al cierre sin comprobante, no califica para el bono semanal.</small></div>`;
+    accionRapida = `<div class="pending-box">El chofer debe subir el comprobante desde su app.<br><small>Puede seguir operando. Si no paga dentro de 24 h, pierde el bono semanal.</small></div>`;
   }else{
     accionRapida = `<div class="paid-box">✅ Sin pago pendiente</div>`;
   }
@@ -6318,8 +6365,7 @@ function renderResumenSemanalAdmin(vehiculoId,c,pago){
       <div class="cierre-admin-head">
         <div>
           <b>${c.chofer || "Chofer"}</b><br>
-          <small>Vehículo: ${vehiculoId}</small><br>
-          <small>Semana: ${periodoTxt}</small>
+          <small>${vehiculoId} · ${periodoTxt}</small>
         </div>
         <span class="cierre-status ${statusClass}">${statusText}</span>
       </div>
@@ -6327,22 +6373,21 @@ function renderResumenSemanalAdmin(vehiculoId,c,pago){
       <div class="cierre-result-box ${deudaClass}">
         <small>Resultado 50/50</small><br>
         ${tituloDeuda}<br>
-        <span style="font-size:24px">${money(montoDeuda)}</span>
+        <span>${money(montoDeuda)}</span>
       </div>
 
-      ${(c.deudaAcumulada && (Number(c.deudaAcumulada.choferDebe || 0) > 0 || Number(c.deudaAcumulada.davidDebe || 0) > 0)) ? `<div class="deuda-acumulada-box">⚠️ Deuda acumulada de cierres anteriores<br><small>Chofer debe: ${money(c.deudaAcumulada.choferDebe || 0)} (${c.deudaAcumulada.itemsChofer || 0} cierre/s)</small><br><small>David debe: ${money(c.deudaAcumulada.davidDebe || 0)} (${c.deudaAcumulada.itemsDavid || 0} cierre/s)</small></div>` : ""}
+      ${(c.deudaAcumulada && (Number(c.deudaAcumulada.choferDebe || 0) > 0 || Number(c.deudaAcumulada.davidDebe || 0) > 0)) ? `<div class="deuda-acumulada-box">⚠️ Deuda acumulada<br><small>Chofer: ${money(c.deudaAcumulada.choferDebe || 0)} · David: ${money(c.deudaAcumulada.davidDebe || 0)}</small></div>` : ""}
 
       ${accionRapida}
 
-      <div class="cierre-summary-grid">
-        <div class="cierre-summary-item"><span>Facturación</span><b>${money(c.totalViajes)}</b></div>
-        <div class="cierre-summary-item"><span>Gastos compartidos</span><b>${money(c.totalGastos)}</b></div>
-        <div class="cierre-summary-item"><span>Fondo operativo</span><b>${money(c.totalFondoOperativo || 0)}</b></div>
-        <div class="cierre-summary-item"><span>Neto</span><b>${money(c.neto)}</b></div>
-        <div class="cierre-summary-item"><span>Viajes</span><b>${Number(c.cantidadViajes || 0)}</b></div>
+      <div class="admin-cierre-simple-grid">
+        <div class="admin-cierre-simple-item"><span>Facturación</span><b>${money(c.totalViajes)}</b></div>
+        <div class="admin-cierre-simple-item"><span>Gastos</span><b>${money(c.totalGastos)}</b></div>
+        <div class="admin-cierre-simple-item"><span>Viajes</span><b>${Number(c.cantidadViajes || 0)}</b></div>
+        <div class="admin-cierre-simple-item"><span>Neto</span><b>${money(c.neto)}</b></div>
       </div>
 
-      <button id="btnDetalleCierre_${detalleId}" class="cierre-detail-toggle" onclick="toggleCierreAdminDetalle('${detalleId}')">Ver detalle completo</button>
+      <button id="btnDetalleCierre_${detalleId}" class="cierre-detail-toggle" onclick="toggleCierreAdminDetalle('${detalleId}')">Ver detalle técnico</button>
       <div id="cierreDetalle_${detalleId}" class="cierre-detail-box hidden">
         <small>Efectivo en chofer: ${money(c.efectivo)}</small><br>
         <small>Transferencia/Tarjeta en David: ${money(Number(c.transferencia || 0) + Number(c.tarjeta || 0))}</small><br>
@@ -6357,7 +6402,6 @@ function renderResumenSemanalAdmin(vehiculoId,c,pago){
     </div>
   `;
 }
-
 async function getEstadoPagoSemanal(chofer, periodoId){
   try{
     const snap = await getDoc(doc(db,"pagos_semanales",`${chofer}_${periodoId}`));
