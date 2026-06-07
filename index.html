@@ -62,6 +62,7 @@ Cambios:
 - v2.8.101: Lanzar app desde cero muestra confirmación visual de ganador_semana_pasada eliminado y resetea la tarjeta al instante.
 - v2.8.101: historial persistente ultimo_ganador_semana para mostrar el ganador anterior aunque el ranking actual se reinicie.
 - v2.8.102: Chofer lee la misma fuente persistente de último ganador que Admin y Admin corrige estado visible si falta comprobante al abrir cierre.
+- v2.8.103: Chofer reutiliza la misma tarjeta/fuente visual del último ganador que Admin para evitar desincronización.
 - v2.8.103: sincronización espejo del último ganador en cada documento de chofer para que Chofer y Admin vean lo mismo aunque una colección no sea legible para chofer.
 -->
 <html lang="es">
@@ -8795,6 +8796,107 @@ setTimeout(function(){
   }
 }, 1500);
 
+</script>
+
+
+<script>
+/* EXPLORA v2.8.103 · Ganador Admin -> Chofer misma tarjeta/fuente visual */
+(function(){
+  const EMPTY_WINNER_HTML = `
+    <div class="last-week-winner-body">
+      <div class="last-week-winner-icon">🏆</div>
+      <div><b>Aún no hay ganador anterior</b><small>Se actualizará automáticamente cuando haya ranking cerrado.</small></div>
+    </div>`;
+
+  function normalizeWinnerHtmlFromAdmin(){
+    const adminCard = document.getElementById("adminLastWeekWinnerCard")
+      || document.querySelector(".admin-last-week-winner-card")
+      || document.querySelector("[id*='LastWeekWinner'][id*='Admin']")
+      || document.querySelector("[id*='admin'][id*='Winner']");
+
+    const driverContent = document.getElementById("driverLastWeekWinnerContent");
+    const driverCard = document.getElementById("driverLastWeekWinnerCard");
+    if(!driverContent || !driverCard) return false;
+
+    driverCard.classList.remove("hidden");
+
+    if(!adminCard){
+      if(!driverContent.innerHTML.trim()){
+        driverContent.innerHTML = EMPTY_WINNER_HTML;
+      }
+      return false;
+    }
+
+    const adminText = (adminCard.innerText || "").trim();
+    const hasWinner = adminText && !/Aún no hay ganador anterior/i.test(adminText);
+
+    if(!hasWinner){
+      driverContent.innerHTML = EMPTY_WINNER_HTML;
+      return true;
+    }
+
+    // Extrae datos desde la misma tarjeta que ve Admin
+    const nameMatch = adminText.match(/(?:Último ganador del ranking\s*)?([A-Za-zÁÉÍÓÚáéíóúÑñ0-9 ._-]+)\s+Ganó el bono semanal/i);
+    const moneyMatch = adminText.match(/\$[\d.]+/);
+    const weekMatch = adminText.match(/Semana cerrada:\s*([^\n]+)/i);
+
+    const name = nameMatch ? nameMatch[1].trim() : adminText.split("\n").find(x => x.trim() && !/Último ganador|Ganó|Semana cerrada/i.test(x)) || "Ganador anterior";
+    const money = moneyMatch ? moneyMatch[0] : "$50.000";
+    const week = weekMatch ? weekMatch[1].trim() : "";
+
+    driverContent.innerHTML = `
+      <div class="last-week-winner-body">
+        <div class="last-week-winner-icon">👑</div>
+        <div>
+          <b>${name}</b>
+          <small>Ganó el bono semanal <span class="last-week-winner-money">${money}</span>${week ? "<br>Semana cerrada: " + week : ""}</small>
+        </div>
+      </div>`;
+
+    try{
+      localStorage.setItem("explora_last_week_winner_admin_html", driverContent.innerHTML);
+    }catch(e){}
+    return true;
+  }
+
+  function restoreDriverWinnerFromAdminCache(){
+    const driverContent = document.getElementById("driverLastWeekWinnerContent");
+    const driverCard = document.getElementById("driverLastWeekWinnerCard");
+    if(!driverContent || !driverCard) return;
+    driverCard.classList.remove("hidden");
+    try{
+      const cached = localStorage.getItem("explora_last_week_winner_admin_html");
+      if(cached && !/Aún no hay ganador anterior/i.test(cached)){
+        driverContent.innerHTML = cached;
+      }
+    }catch(e){}
+  }
+
+  window.syncDriverWinnerFromAdminCard = function(){
+    restoreDriverWinnerFromAdminCache();
+    return normalizeWinnerHtmlFromAdmin();
+  };
+
+  document.addEventListener("DOMContentLoaded", function(){
+    restoreDriverWinnerFromAdminCache();
+    setTimeout(window.syncDriverWinnerFromAdminCard, 300);
+    setTimeout(window.syncDriverWinnerFromAdminCard, 1200);
+    setTimeout(window.syncDriverWinnerFromAdminCard, 2500);
+
+    const bodyObserver = new MutationObserver(function(){
+      window.syncDriverWinnerFromAdminCard();
+    });
+    bodyObserver.observe(document.body, {childList:true, subtree:true, characterData:true});
+  });
+
+  // Si la app llama render/load después del login, este intervalo corto vuelve a copiar la tarjeta sin frenar carga.
+  let tries = 0;
+  const t = setInterval(function(){
+    tries++;
+    window.syncDriverWinnerFromAdminCard();
+    if(tries > 20) clearInterval(t);
+  }, 500);
+})();
 </script>
 
 </body>
