@@ -57,12 +57,13 @@ Cambios:
 - v2.8.95: comprobantes producción rápida: 750px/0.45, timeout Storage 4s, Admin no recarga todo después de subir y fecha técnica oculta para chofer.
 - v2.8.96: se agrega tarjeta visible de ganador de la semana pasada para Chofer y Admin, con caché y carga diferida.
 - v2.8.97: la tarjeta Ganador semana pasada queda visible desde el inicio con estado vacío, sin esperar la carga diferida.
+- v2.8.98: Lanzar app desde cero también limpia caché/estado visual de Ganador semana pasada.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.97 · Build 2026-06-07-GANADOR-VISIBLE-INICIO</title>
+<title>EXPLORA v2.8.98 · Build 2026-06-07-RESET-GANADOR-SEMANA-PASADA</title>
 <style>
 :root{
   --bg:#080808;
@@ -1220,7 +1221,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.97</b> · Build 2026-06-07-GANADOR-VISIBLE-INICIO</div>
+    <div class="build-version"><b>v2.8.98</b> · Build 2026-06-07-RESET-GANADOR-SEMANA-PASADA</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -3753,6 +3754,26 @@ async function loadGanadorSemanaPasadaAdmin(){
   else renderGanadorSemanaPasadaEn("adminLastWeekWinnerCard","adminLastWeekWinnerContent",{periodo, ganador:null},"admin");
   const data = await getGanadorSemanaPasadaRapido();
   renderGanadorSemanaPasadaEn("adminLastWeekWinnerCard","adminLastWeekWinnerContent",data,"admin");
+}
+
+function resetGanadorSemanaPasadaLocalState(){
+  try{
+    const keys = [];
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(k && (
+        k.includes("ganador_semana_pasada_") ||
+        k.includes("ganador_sem_") ||
+        k.includes("last_week_winner") ||
+        k.includes("LastWeekWinner")
+      )) keys.push(k);
+    }
+    keys.forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
+  }catch(e){}
+
+  const empty = {periodo: periodoSemanaPasadaVisible(), ganador:null, actualizado:Date.now(), reset:true};
+  renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",empty,"chofer");
+  renderGanadorSemanaPasadaEn("adminLastWeekWinnerCard","adminLastWeekWinnerContent",empty,"admin");
 }
 
 async function calcularCierreSemanalUltraRapido(chofer, periodo){
@@ -7482,7 +7503,14 @@ window.resetearDatosOperativosAdmin = async function(){
     const keys = [];
     for(let i=0;i<localStorage.length;i++){
       const k = localStorage.key(i);
-      if(k && (k.startsWith(CACHE_PREFIX) || k.startsWith("explora_"))) keys.push(k);
+      if(k && (
+        k.startsWith(CACHE_PREFIX) ||
+        k.startsWith("explora_") ||
+        k.includes("ganador_semana_pasada_") ||
+        k.includes("ganador_sem_") ||
+        k.includes("last_week_winner") ||
+        k.includes("LastWeekWinner")
+      )) keys.push(k);
     }
     keys.forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
     localStorage.setItem("explora_reset_operativo_marca", marca);
@@ -7493,6 +7521,7 @@ window.resetearDatosOperativosAdmin = async function(){
     adminVehiculosKmLoadedAt = 0;
     adminVehiculosCache = [];
     adminChoferesPorVehiculoCache = {};
+    resetGanadorSemanaPasadaLocalState();
 
     const detalle = Object.entries(resultado).map(([k,v])=>`${k}: ${v}`).join("<br>");
     if(box) msg(box,`✅ Reset operativo completo. La app queda lista para lanzamiento con datos en 0.<br><br>${detalle}<br><br><small>Choferes, vehículos, tarifas y usuarios se conservaron.</small>`,true);
