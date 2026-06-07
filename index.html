@@ -66,6 +66,7 @@ Cambios:
 - v2.8.104: ganador semana pasada unificado: Chofer lee primero su propio documento, Admin puede forzar resincronización visible y se reportan fallas por chofer.
 - v2.8.105: limpieza final de ganador semana pasada: una sola fuente oficial, una sola función de lectura para Admin/Chofer y cachés viejos eliminados.
 - v2.8.106: Chofer recibe botón igual al Admin para actualizar ganador actual y se refresca automáticamente desde el mismo ranking liviano.
+- v2.8.107: modificación radical ganador anterior: Chofer usa la misma tarjeta, misma lectura oficial y mismos espejos que Admin; se eliminan lecturas separadas como fuente principal.
 -->
 <html lang="es">
 <head>
@@ -1273,14 +1274,16 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       </div>
     </div>
 
-    <div id="driverLastWeekWinnerCard" class="last-week-winner-card">
-      <h3>🏆 GANADOR SEMANA PASADA</h3>
+    <div id="driverLastWeekWinnerCard" class="last-week-winner-card admin-last-week-winner-card">
+      <h3>🏆 Último ganador del ranking</h3>
       <div id="driverLastWeekWinnerContent">
         <div class="last-week-winner-body">
           <div class="last-week-winner-icon">🏆</div>
-          <div><b>Aún no hay ganador anterior</b><small>Se actualizará automáticamente cuando haya ranking cerrado.</small></div>
+          <div><b>Cargando ganador...</b><small>Chofer y Admin usan la misma fuente.</small></div>
         </div>
       </div>
+      <button class="btn-dark" style="margin-top:10px" type="button" onclick="loadGanadorSemanaPasadaChofer(true)">Actualizar</button>
+      <div id="driverLastWeekWinnerMsg"></div>
     </div>
 
     <div id="derivationInbox" class="derivation-inbox hidden">
@@ -3638,6 +3641,7 @@ async function actualizarGanadorActualChofer(mostrarMsg=false){
 }
 
 window.actualizarGanadorActualChofer = actualizarGanadorActualChofer;
+window.loadGanadorSemanaPasadaChofer = loadGanadorSemanaPasadaChofer;
 
 window.openRankingPanel = async function(){
   showPanel("rankingPanel");
@@ -3877,7 +3881,12 @@ async function guardarUltimoGanadorSemana(periodo, ganador, fuente="cierre_seman
     const payload = buildPayloadUltimoGanadorSemana(periodo, ganador, fuente);
     if(!payload) return null;
     limpiarCachesViejosGanadorSemana();
+    // Fuente oficial principal que ve Admin.
     await setDoc(ganadorSemanaPasadaDocRef(), payload, {merge:true});
+    // Espejos livianos: si las reglas de Firestore no dejan al Chofer leer configuracion,
+    // intentamos leer exactamente el mismo dato desde sistema/publico o desde su perfil.
+    await setDoc(doc(db,"sistema","ultimo_ganador_semana"), payload, {merge:true}).catch(()=>null);
+    await setDoc(doc(db,"publico","ultimo_ganador_semana"), payload, {merge:true}).catch(()=>null);
     const result = cacheUltimoGanadorSemanaUnico(payload);
     await publicarUltimoGanadorEnChoferes(result).catch(()=>null);
     return result;
@@ -3910,14 +3919,23 @@ async function getUltimoGanadorDesdeChoferActual(){
 }
 
 async function getUltimoGanadorSemanaOficial(){
-  try{
-    const snap = await withTimeout(getDoc(ganadorSemanaPasadaDocRef()), 3000, "Último ganador oficial tardó demasiado.");
-    if(snap.exists()){
-      const normalizado = normalizarUltimoGanadorSemana(snap.data());
-      if(normalizado && normalizado.ganador) return cacheUltimoGanadorSemanaUnico(normalizado);
+  // Misma lectura para Admin y Chofer. No hay lógica especial de Chofer acá.
+  // Se prueban espejos equivalentes porque las reglas Firebase pueden permitir uno y bloquear otro.
+  const refs = [
+    ganadorSemanaPasadaDocRef(),
+    doc(db,"sistema","ultimo_ganador_semana"),
+    doc(db,"publico","ultimo_ganador_semana")
+  ];
+  for(const ref of refs){
+    try{
+      const snap = await withTimeout(getDoc(ref), 3000, "Último ganador oficial tardó demasiado.");
+      if(snap.exists()){
+        const normalizado = normalizarUltimoGanadorSemana(snap.data());
+        if(normalizado && normalizado.ganador) return cacheUltimoGanadorSemanaUnico(normalizado);
+      }
+    }catch(e){
+      console.warn("No se pudo leer fuente oficial de último ganador", ref && ref.path ? ref.path : ref, e);
     }
-  }catch(e){
-    console.warn("No se pudo leer configuracion/ultimo_ganador_semana", e);
   }
   return null;
 }
@@ -4123,10 +4141,11 @@ function renderGanadorSemanaPasadaEn(boxId, contentId, data, modo="chofer"){
   const periodo = data && data.periodo ? data.periodo : periodoSemanaPasadaVisible();
   const ganador = data && data.ganador ? data.ganador : null;
   if(!ganador){
+    const cargando = data && data.cargando;
     box.innerHTML = `
       <div class="last-week-winner-body">
         <div class="last-week-winner-icon">🏆</div>
-        <div><b>Aún no hay ganador anterior</b><small>${periodoCortoTexto(periodo)} · Se mostrará cuando haya ranking cerrado con actividad.</small></div>
+        <div><b>${cargando ? "Cargando ganador..." : "Aún no hay ganador anterior"}</b><small>${periodoCortoTexto(periodo)} · ${cargando ? "Leyendo la misma fuente que Admin." : "Se mostrará cuando haya ranking cerrado con actividad."}</small></div>
       </div>
     `;
     return;
@@ -4143,26 +4162,49 @@ function renderGanadorSemanaPasadaEn(boxId, contentId, data, modo="chofer"){
   `;
 }
 
-async function loadGanadorSemanaPasadaChofer(){
+async function loadGanadorSemanaPasadaChofer(mostrarMsg=false){
+  const msgBox = $("driverLastWeekWinnerMsg");
+  if(mostrarMsg && msgBox) msg(msgBox, "Actualizando último ganador...", true);
   const periodo = periodoSemanaPasadaVisible();
-  const cached = cacheGet("ultimo_ganador_semana_oficial", 24 * 60 * 60 * 1000);
-  renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",cached || {periodo, ganador:null},"chofer");
-  const data = await getUltimoGanadorSemanaUnico({preferirChofer:true, reconstruirSiFalta:true});
-  renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",data,"chofer");
+  renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",{periodo, ganador:null, cargando:true},"admin");
+  let data = null;
+
+  // Radical: Chofer lee primero la MISMA fuente oficial que Admin.
+  data = await getUltimoGanadorSemanaUnico({preferirChofer:false, reconstruirSiFalta:false});
+
+  // Si las reglas bloquean esa fuente, recién ahí usa su espejo de perfil.
+  if(!data || !data.ganador){
+    data = await getUltimoGanadorDesdeChoferActual();
+  }
+
+  // Último recurso: reconstruir con el mismo ranking/acumulados y guardar espejo oficial.
+  if(!data || !data.ganador){
+    data = await reconstruirYGuardarUltimoGanadorSemana();
+  }
+
+  renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",data || {periodo, ganador:null},"admin");
+  if(mostrarMsg && msgBox){
+    if(data && data.ganador) msg(msgBox, `Actualizado: ${data.ganador.nombre || data.ganador.id}.`, true);
+    else msg(msgBox, "No encontré ganador cerrado todavía.");
+  }
+  return data;
 }
 
 async function loadGanadorSemanaPasadaAdmin(){
   const periodo = periodoSemanaPasadaVisible();
-  const cached = cacheGet("ultimo_ganador_semana_oficial", 24 * 60 * 60 * 1000);
-  renderGanadorSemanaPasadaEn("adminLastWeekWinnerCard","adminLastWeekWinnerContent",cached || {periodo, ganador:null},"admin");
+  renderGanadorSemanaPasadaEn("adminLastWeekWinnerCard","adminLastWeekWinnerContent",{periodo, ganador:null, cargando:true},"admin");
   const data = await getUltimoGanadorSemanaUnico({preferirChofer:false, reconstruirSiFalta:true});
   renderGanadorSemanaPasadaEn("adminLastWeekWinnerCard","adminLastWeekWinnerContent",data,"admin");
+
+  // Cuando Admin lo ve, lo republica automáticamente en todos los espejos para que Chofer vea lo mismo.
   if(data && data.ganador){
+    await guardarUltimoGanadorSemana(data.periodo, data.ganador, "auto_admin_misma_fuente").catch(()=>null);
     const reporte = await publicarUltimoGanadorEnChoferes(data).catch(()=>null);
     if(reporte && reporte.fail > 0 && $("adminMsg")){
       msg($("adminMsg"), `Ganador visible en Admin, pero no se copió a todos los choferes (${reporte.ok}/${reporte.total}). Revisá permisos Firebase.`);
     }
   }
+  return data;
 }
 
 async function sincronizarUltimoGanadorSemanaAdmin(){
