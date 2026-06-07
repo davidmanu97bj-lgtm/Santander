@@ -58,12 +58,14 @@ Cambios:
 - v2.8.96: se agrega tarjeta visible de ganador de la semana pasada para Chofer y Admin, con caché y carga diferida.
 - v2.8.97: la tarjeta Ganador semana pasada queda visible desde el inicio con estado vacío, sin esperar la carga diferida.
 - v2.8.98: Lanzar app desde cero también limpia caché/estado visual de Ganador semana pasada.
+- v2.8.99: Ganador semana pasada corregido con fallback por acumulados e histórico si la carga rápida no encuentra datos.
+- v2.8.100: Lanzar app desde cero muestra confirmación visual de ganador_semana_pasada eliminado y resetea la tarjeta al instante.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.98 · Build 2026-06-07-RESET-GANADOR-SEMANA-PASADA</title>
+<title>EXPLORA v2.8.100 · Build 2026-06-07-RESET-GANADOR-VISIBLE</title>
 <style>
 :root{
   --bg:#080808;
@@ -1221,7 +1223,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.98</b> · Build 2026-06-07-RESET-GANADOR-SEMANA-PASADA</div>
+    <div class="build-version"><b>v2.8.100</b> · Build 2026-06-07-RESET-GANADOR-VISIBLE</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -3689,23 +3691,116 @@ function ganadorSemanaPasadaValido(item){
   return Number(item.facturacion || 0) > 0 || Number(item.viajes || 0) > 0 || Number(item.derivaciones || 0) > 0;
 }
 
+function periodoDesdeIdGenerico(periodoId){
+  const parts = String(periodoId || "").split("_");
+  if(parts.length !== 2) return null;
+  const start = parts[0];
+  const end = parts[1];
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(end)) return null;
+  return {start,end,closeDate:addDays(end,1),id:`${start}_${end}`,motor:"sabado_0001"};
+}
+
+function elegirGanadorDesdeAcumuladosDocs(docs, periodo){
+  const stats = {};
+  (docs || []).forEach(d=>{
+    const a = d.data ? d.data() : d;
+    const choferId = a.chofer || String(d.id || "").split("_")[0];
+    if(!choferId) return;
+    if(!stats[choferId]) stats[choferId] = {
+      id:choferId,
+      nombre:a.nombre || a.choferNombre || choferId,
+      viajes:0,
+      derivaciones:0,
+      facturacion:0,
+      porcentaje:0,
+      actividad:0
+    };
+    stats[choferId].viajes += Number(a.cantidadViajes || 0);
+    stats[choferId].facturacion += Number(a.totalViajes || 0);
+    stats[choferId].derivaciones += Number(a.derivaciones || 0);
+  });
+
+  const arr = calcularPorcentajeRanking(Object.values(stats));
+  const ganador = (arr || []).find(x=>ganadorSemanaPasadaValido(x)) || null;
+  return ganador ? {periodo, ganador, actualizado:Date.now(), fuente:"acumulados_fallback"} : null;
+}
+
+async function getGanadorSemanaPasadaDesdeAcumulados(periodo){
+  try{
+    const snap = await withTimeout(getDocs(query(
+      collection(db,"acumulados_semanales"),
+      where("periodoId","==",periodo.id)
+    )), 5500, "Acumulados del período anterior tardaron demasiado.");
+    const docs = [];
+    snap.forEach(d=>docs.push(d));
+    return elegirGanadorDesdeAcumuladosDocs(docs, periodo);
+  }catch(e){
+    console.warn("No se pudo leer ganador por acumulados del período", e);
+    return null;
+  }
+}
+
+async function getUltimoGanadorHistoricoRapido(periodoActual){
+  try{
+    const snap = await withTimeout(getDocs(collection(db,"acumulados_semanales")), 6500, "Histórico de acumulados tardó demasiado.");
+    const grupos = {};
+    snap.forEach(d=>{
+      const a = d.data() || {};
+      const pid = a.periodoId || String(d.id || "").split("_").slice(1).join("_");
+      const periodo = periodoDesdeIdGenerico(pid);
+      if(!periodo || periodo.id >= periodoActual.id) return;
+      if(!grupos[periodo.id]) grupos[periodo.id] = {periodo, docs:[]};
+      grupos[periodo.id].docs.push(d);
+    });
+
+    const ids = Object.keys(grupos).sort().reverse();
+    for(const id of ids){
+      const elegido = elegirGanadorDesdeAcumuladosDocs(grupos[id].docs, grupos[id].periodo);
+      if(elegido && elegido.ganador) return elegido;
+    }
+  }catch(e){
+    console.warn("No se pudo buscar último ganador histórico", e);
+  }
+  return null;
+}
+
 async function getGanadorSemanaPasadaRapido(){
   const periodo = periodoSemanaPasadaVisible();
   const key = `ganador_semana_pasada_${periodo.id}`;
   const cached = cacheGet(key, 6 * 60 * 60 * 1000);
   if(cached && cached.periodo && cached.ganador) return cached;
 
+  // 1) Intento principal: ranking real del período anterior, con más tiempo porque corre diferido.
   try{
-    const data = await withTimeout(calcularRankingSemanalLiviano(periodo), 3200, "Ganador anterior no disponible rápido.");
+    const data = await withTimeout(calcularRankingSemanalLiviano(periodo), 6500, "Ganador anterior no disponible rápido.");
     const ranking = (data && data.ranking) || [];
     const ganador = data && data.ganadorBono ? data.ganadorBono : ranking.find(x=>!x.suspendidoBono);
-    const result = ganadorSemanaPasadaValido(ganador) ? {periodo, ganador, actualizado:Date.now()} : {periodo, ganador:null, actualizado:Date.now()};
-    cacheSet(key, result);
-    return result;
+    if(ganadorSemanaPasadaValido(ganador)){
+      const result = {periodo, ganador, actualizado:Date.now(), fuente:"ranking_periodo_anterior"};
+      cacheSet(key, result);
+      return result;
+    }
   }catch(e){
-    console.warn("No se pudo calcular ganador semana pasada", e);
-    return cached || {periodo, ganador:null, error:e.message || "No disponible"};
+    console.warn("No se pudo calcular ganador semana pasada por ranking", e);
   }
+
+  // 2) Fallback: acumulados directos del período anterior. Es más liviano y no depende de la lista actual de choferes.
+  const porAcumulados = await getGanadorSemanaPasadaDesdeAcumulados(periodo);
+  if(porAcumulados && porAcumulados.ganador){
+    cacheSet(key, porAcumulados);
+    return porAcumulados;
+  }
+
+  // 3) Fallback final: último período cerrado con actividad. Evita quedar vacío si la semana anterior exacta no tuvo datos.
+  const historico = await getUltimoGanadorHistoricoRapido(getPeriodoTrabajoActual(today()));
+  if(historico && historico.ganador){
+    cacheSet(key, historico);
+    return historico;
+  }
+
+  const empty = cached || {periodo, ganador:null, actualizado:Date.now(), fuente:"sin_ganador"};
+  cacheSet(key, empty);
+  return empty;
 }
 
 function renderGanadorSemanaPasadaEn(boxId, contentId, data, modo="chofer"){
@@ -7514,6 +7609,7 @@ window.resetearDatosOperativosAdmin = async function(){
     }
     keys.forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
     localStorage.setItem("explora_reset_operativo_marca", marca);
+    resultado.ganador_semana_pasada = "eliminado ✅";
 
     periodoOperativoCache = null;
     cierreSemanalCache = null;
@@ -7671,10 +7767,18 @@ window.resetearAppLanzamientoAdmin = async function(){
     const keys = [];
     for(let i=0;i<localStorage.length;i++){
       const k = localStorage.key(i);
-      if(k && (k.startsWith(CACHE_PREFIX) || k.startsWith("explora_"))) keys.push(k);
+      if(k && (
+        k.startsWith(CACHE_PREFIX) ||
+        k.startsWith("explora_") ||
+        k.includes("ganador_semana_pasada_") ||
+        k.includes("ganador_sem_") ||
+        k.includes("last_week_winner") ||
+        k.includes("LastWeekWinner")
+      )) keys.push(k);
     }
     keys.forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
     localStorage.setItem("explora_reset_operativo_marca", marca);
+    resultado.ganador_semana_pasada = "eliminado ✅";
 
     modoPruebaFechaConfig = {activo:false, choferes:{}, actualizadoTexto:""};
     periodoOperativoCache = null;
@@ -7684,6 +7788,7 @@ window.resetearAppLanzamientoAdmin = async function(){
     adminVehiculosKmLoadedAt = 0;
     adminVehiculosCache = [];
     adminChoferesPorVehiculoCache = {};
+    resetGanadorSemanaPasadaLocalState();
 
     const detalle = Object.entries(resultado).map(([k,v])=>`${k}: ${v}`).join("<br>");
     if(box) msg(box,`✅ Reset total completo. La app quedó lista para lanzamiento.<br><br>${detalle}<br><br><small>Se conservó el Admin actual: <b>${adminId}</b>. Ahora podés crear los choferes desde Alta / reasignación.</small>`,true);
