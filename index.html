@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.85
-Build: 2026-06-07-BLOQUEO-CIERRES-ANTES-DE-ALTA-025
+Version: 2.8.87
+Build: 2026-06-07-CIERRE-SEMANAL-ESTABLE-FECHA-VISIBLE-027
 Fecha: 06/06/2026
 Cambios:
 - Se agrega botón “Mi cierre semanal” en Chofer para ver el cierre provisorio de la semana activa sin esperar al sábado.
@@ -46,13 +46,14 @@ Cambios:
 - Cierre con comprobante simplificado: quien debe pagar sube foto; la app sigue operando con cartel hasta resolver; David puede pagar desde Admin y el chofer confirma para ocultar aviso.
 - Corrección: Admin y Chofer usan la misma fecha efectiva por chofer; el modo prueba de fecha del iPhone también aplica al panel Admin para ese chofer.
 - Herramienta Admin: reset total de lanzamiento que elimina choferes, vehículos y toda actividad, conservando únicamente el usuario admin.
-- Bloqueo de cierres anteriores al alta: ningún chofer puede recibir cierre, deuda, comprobante o pago de una semana terminada antes de su fecha de creación.
+- v2.8.88: si un chofer no tiene fecha de alta, se repara automáticamente y no se buscan cierres históricos anteriores.
+- v2.8.87: cierre semanal estable en un solo documento, bloqueo por fecha de alta y cartel visible de fuente de fecha (iPhone/Firebase).
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.85 · Build 2026-06-07-BLOQUEO-CIERRES-ANTES-DE-ALTA</title>
+<title>EXPLORA v2.8.88 · Build 2026-06-07-CIERRE-ESTABLE-ALTA-SEGURA</title>
 <style>
 :root{
   --bg:#080808;
@@ -1145,6 +1146,40 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 .cierre-summary-grid.admin-extra-hidden{display:none!important}
 @media(max-width:430px){.admin-clean-row{grid-template-columns:1fr}.admin-summary-grid.admin-clean-summary-grid{grid-template-columns:1fr 1fr!important}.admin-cierre-mobile-action{min-width:88px!important}}
 
+
+/* EXPLORA v2.8.88 · FECHA VISIBLE + ALTA SEGURA */
+.fecha-source-badge{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  width:100%;
+  margin:8px 0 12px;
+  padding:9px 11px;
+  border-radius:14px;
+  background:rgba(59,130,246,.10);
+  border:1px solid rgba(59,130,246,.35);
+  color:#bfdbfe;
+  font-size:12px;
+  font-weight:900;
+  text-align:center;
+}
+.fecha-source-badge.firebase{
+  background:rgba(34,197,94,.10);
+  border-color:rgba(34,197,94,.35);
+  color:#86efac;
+}
+.fecha-source-badge.iphone{
+  background:rgba(245,158,11,.13);
+  border-color:rgba(245,158,11,.42);
+  color:#fbbf24;
+}
+.fecha-source-badge.local{
+  background:rgba(239,68,68,.11);
+  border-color:rgba(239,68,68,.35);
+  color:#fecaca;
+}
+
 </style>
 </head>
 <body>
@@ -1154,7 +1189,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.85</b> · Build 2026-06-07-BLOQUEO-CIERRES-ANTES-DE-ALTA</div>
+    <div class="build-version"><b>v2.8.88</b> · Build 2026-06-07-CIERRE-ESTABLE-ALTA-SEGURA</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1391,7 +1426,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.85</b> · FINAL-PRODUCCION-CIERRES-LIMPIOS</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.88</b> · CIERRE-ALTA-SEGURA</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -2899,57 +2934,6 @@ function daysBetween(a,b){
   return Math.floor((parseLocalDate(b) - parseLocalDate(a)) / 86400000);
 }
 
-function normalizarFechaAltaChofer(value){
-  if(!value) return "";
-  if(typeof value === "string"){
-    const m = value.match(/\d{4}-\d{2}-\d{2}/);
-    return m ? m[0] : "";
-  }
-  if(value && typeof value.toDate === "function"){
-    return formatDateLocal(value.toDate());
-  }
-  if(value && typeof value.seconds === "number"){
-    return formatDateLocal(new Date(value.seconds * 1000));
-  }
-  if(value instanceof Date && !isNaN(value.getTime())) return formatDateLocal(value);
-  return "";
-}
-
-function fechaAltaChoferDesdePerfil(perfil){
-  if(!perfil) return "";
-  return normalizarFechaAltaChofer(
-    perfil.fechaAlta ||
-    perfil.fechaCreacion ||
-    perfil.creadoFecha ||
-    perfil.createdAtFecha ||
-    perfil.creadoEn ||
-    perfil.createdAt ||
-    perfil.creado ||
-    ""
-  );
-}
-
-async function obtenerPerfilChoferSeguro(choferId, perfil=null){
-  if(perfil) return perfil;
-  if(!choferId) return null;
-  try{
-    const snap = await withTimeout(getDoc(doc(db,"choferes",choferId)), 2200, "No se pudo verificar fecha de alta del chofer.");
-    return snap.exists() ? {id:snap.id, ...snap.data()} : null;
-  }catch(e){
-    console.warn("No se pudo leer perfil del chofer para validar fecha de alta", e);
-    return null;
-  }
-}
-
-function periodoPermitidoPorAltaChofer(periodo, perfil){
-  if(!periodo) return false;
-  const alta = fechaAltaChoferDesdePerfil(perfil);
-  if(!alta) return true; // compatibilidad: usuarios viejos sin fecha de alta no se bloquean automáticamente
-  // Solo se permiten cierres cuya semana terminó el mismo día o después del alta del chofer.
-  // Ejemplo: chofer creado 2026-06-05 no puede recibir cierres con fin 2026-05-29.
-  return String(periodo.end || "") >= alta;
-}
-
 function isSaturday(dateStr){
   return parseLocalDate(dateStr).getDay() === 6;
 }
@@ -3025,25 +3009,17 @@ async function getPeriodoCierrePendienteNoConfirmado(choferId=currentUserId, dat
   // Detecta cierres pendientes para TODOS los choferes con la misma regla:
   // revisar semanas vencidas desde la más reciente hacia atrás y mostrar la primera
   // que no tenga cierre aceptado por el chofer.
-  // Regla de alta: nunca se piden cierres de semanas terminadas antes de crear al chofer.
   if(!choferId) return null;
 
-  const perfilChofer = await obtenerPerfilChoferSeguro(choferId, choferId === currentUserId ? currentProfile : null);
-
-  const cacheKey = `periodo_cierre_pendiente_v3_alta_${choferId}_${dateStr}_${fechaAltaChoferDesdePerfil(perfilChofer) || "sin_alta"}`;
+  const cacheKey = `periodo_cierre_pendiente_v2_${choferId}_${dateStr}`;
   const cached = cacheGet(cacheKey, 45 * 1000);
   if(cached && cached.periodoId){
     const p = periodoDesdeIdPago(cached.periodoId);
-    if(p && periodoCerradoYaVencido(p, dateStr) && periodoPermitidoPorAltaChofer(p, perfilChofer)) return p;
+    if(p && periodoCerradoYaVencido(p, dateStr)) return p;
   }
 
   let cursor = periodoAnterior(getPeriodoTrabajoActual(dateStr));
   for(let i=0; i<8; i++){
-    if(!periodoPermitidoPorAltaChofer(cursor, perfilChofer)){
-      // Como se revisa hacia atrás, si esta semana ya es anterior al alta, todas las anteriores también lo son.
-      cacheSet(cacheKey, {periodoId:""});
-      return null;
-    }
     if(!periodoCerradoYaVencido(cursor, dateStr)){
       cursor = periodoAnterior(cursor);
       continue;
@@ -3467,10 +3443,6 @@ async function getGanadorSemanalRapido(periodo){
 }
 
 async function calcularCierreSemanalUltraRapido(chofer, periodo){
-  const perfilChofer = await obtenerPerfilChoferSeguro(chofer, chofer === currentUserId ? currentProfile : null);
-  if(!periodoPermitidoPorAltaChofer(periodo, perfilChofer)){
-    return cierreDesdeAcumulado(chofer, periodo, {chofer, periodoId:periodo.id}, null, 0);
-  }
   const acumKey = `acum_sem_${chofer}_${periodo.id}`;
   let acumulado = cacheGet(acumKey, 60 * 60 * 1000) || null;
 
@@ -3532,10 +3504,6 @@ window.reconstruirCierreSemanal = async function(){
 }
 
 async function calcularCierreSemanalLiviano(chofer, periodo, forceRebuild=false){
-  const perfilChofer = await obtenerPerfilChoferSeguro(chofer, chofer === currentUserId ? currentProfile : null);
-  if(!periodoPermitidoPorAltaChofer(periodo, perfilChofer)){
-    return cierreDesdeAcumulado(chofer, periodo, {chofer, periodoId:periodo.id}, null, 0);
-  }
   let ganador = null;
   try{
     const rankingData = await calcularRankingSemanalLiviano(periodo);
@@ -3661,10 +3629,9 @@ function periodoDesdeIdPago(periodoId){
   return {start, end, closeDate:addDays(end,1), id:`${start}_${end}`, motor:"sabado_0001"};
 }
 
-function pagoPerteneceASemanaCerradaValida(p, fechaBase=today(), perfilChofer=null){
+function pagoPerteneceASemanaCerradaValida(p, fechaBase=today()){
   const periodo = periodoDesdeIdPago(p && p.periodoId);
   if(!periodo) return false;
-  if(!periodoPermitidoPorAltaChofer(periodo, perfilChofer)) return false;
   const actual = getPeriodoTrabajoActual(fechaBase);
   // Los comprobantes son de cierres ya cerrados: nunca deben apuntar a la semana actual o futura.
   // Esto elimina avisos creados por simulaciones/fechas manuales tipo domingo-domingo o períodos adelantados.
@@ -3698,12 +3665,12 @@ async function ocultarPagoInconsistente(p, motivo="Pago viejo/inconsistente"){
   }catch(e){ console.warn("No se pudo ocultar pago inconsistente", e); }
 }
 
-async function depurarPagosContraCierreReal(items, choferId, perfilChofer=null){
+async function depurarPagosContraCierreReal(items, choferId){
   const visibles = [];
   for(const p of (items || [])){
     if(!pagoPendienteVisibleOperativo(p)) continue;
     const periodo = periodoDesdeIdPago(p.periodoId);
-    if(!periodo || !periodoPermitidoPorAltaChofer(periodo, perfilChofer)) continue;
+    if(!periodo) continue;
     try{
       const c = await withTimeout(calcularCierreSemanalUltraRapido(choferId || p.chofer, periodo), 4500, "No se pudo validar el cierre.");
       const esperado = montoEsperadoPagoDesdeCierre(c, p.sentido);
@@ -3742,17 +3709,17 @@ async function getPagosPendientesChofer(force=false){
     snap.forEach(d=>{
       const p = {id:d.id, ...d.data()};
       if(!pagoPendienteVisibleOperativo(p)) return;
-      if(!pagoPerteneceASemanaCerradaValida(p, today(), currentProfile)) return;
+      if(!pagoPerteneceASemanaCerradaValida(p)) return;
       const pendientePago = p.pagado !== true;
       const davidPagoSinVisto = p.sentido === "david_a_chofer" && p.pagado === true && p.vistoPorChofer !== true;
       if(pendientePago || davidPagoSinVisto) items.push(p);
     });
-    const depurados = await depurarPagosContraCierreReal(items, currentUserId, currentProfile);
+    const depurados = await depurarPagosContraCierreReal(items, currentUserId);
     cacheSet(cacheKey, depurados);
     return depurados;
   }catch(e){
     console.warn("No se pudieron cargar pagos pendientes del chofer", e);
-    return (cached || []).filter(p=>pagoPendienteVisibleOperativo(p) && pagoPerteneceASemanaCerradaValida(p, today(), currentProfile)).slice(0,1);
+    return (cached || []).filter(p=>pagoPendienteVisibleOperativo(p) && pagoPerteneceASemanaCerradaValida(p)).slice(0,1);
   }
 }
 
@@ -5665,7 +5632,7 @@ async function calcularDeudaAcumuladaChofer(chofer, periodoActualId=""){
       const p = {id:d.id, ...d.data()};
       if(p.pagado === true) return;
       if(!pagoPendienteVisibleOperativo(p)) return;
-      if(!pagoPerteneceASemanaCerradaValida(p, today(), currentProfile)) return;
+      if(!pagoPerteneceASemanaCerradaValida(p)) return;
       if(periodoActualId && p.periodoId === periodoActualId) return;
       const monto = Number(p.monto || 0);
       if(p.sentido === "chofer_a_david"){
@@ -6217,7 +6184,7 @@ function seleccionarPagoPendienteMasAntiguo(pagos, choferId, perfilChofer=null){
   const fechaBase = fechaOperativaParaChofer(choferId, perfilChofer);
   return (pagos || [])
     .filter(p=>p && p.chofer === choferId && pagoPendienteVisibleOperativo(p) && (p.pagado !== true || (p.sentido === "david_a_chofer" && p.pagado === true && p.vistoPorChofer !== true)))
-    .filter(p=>pagoPerteneceASemanaCerradaValida(p, fechaBase, perfilChofer))
+    .filter(p=>pagoPerteneceASemanaCerradaValida(p, fechaBase))
     .sort((a,b)=>String(a.periodoId || "").localeCompare(String(b.periodoId || "")))[0] || null;
 }
 
@@ -6249,7 +6216,7 @@ async function cargarVehiculosAdminSimple(periodo){
       if(!p.chofer) return;
       const perfilPago = choferesPorId[p.chofer] || null;
       pagosPorChoferPeriodo[`${p.chofer}_${p.periodoId || ""}`] = p;
-      if(p.pagado !== true && pagoPerteneceASemanaCerradaValida(p, fechaOperativaParaChofer(p.chofer, perfilPago), perfilPago)){
+      if(p.pagado !== true && pagoPerteneceASemanaCerradaValida(p, fechaOperativaParaChofer(p.chofer, perfilPago))){
         if(!deudaPendientePorChofer[p.chofer]) deudaPendientePorChofer[p.chofer] = {choferDebe:0, davidDebe:0, itemsChofer:0, itemsDavid:0};
         const monto = Number(p.monto || 0);
         if(p.sentido === "chofer_a_david"){
@@ -6980,10 +6947,7 @@ window.crearChoferVehiculoAdmin = async function(){
       }, { merge:true }).catch(e=>console.warn("No se pudo limpiar chofer anterior", e));
     }
 
-    const choferRef = doc(db,"choferes",usuario);
-    const choferSnapActual = await getDoc(choferRef).catch(()=>null);
-    const choferYaExistia = !!(choferSnapActual && choferSnapActual.exists && choferSnapActual.exists());
-    const choferUpdate = {
+    await setDoc(doc(db,"choferes",usuario),{
       nombre,
       rol:"chofer",
       vehiculo: patente,
@@ -6991,17 +6955,14 @@ window.crearChoferVehiculoAdmin = async function(){
       activo:true,
       usuario,
       email:`${usuario}@explora.local`,
-      creadoPor: choferYaExistia ? (choferSnapActual.data().creadoPor || currentUserId || "admin") : (currentUserId || "admin"),
+      creadoPor: currentUserId || "admin",
+      fechaAlta: today(),
+      creadoFecha: today(),
+      fechaAltaBloqueoCierres: today(),
+      createdAt: serverTimestamp(),
       ultimaActividad:"sin registro",
       actualizado: serverTimestamp()
-    };
-    if(!choferYaExistia || !fechaAltaChoferDesdePerfil(choferSnapActual.data())){
-      choferUpdate.creadoFecha = today();
-      choferUpdate.fechaAlta = today();
-      choferUpdate.createdAtFecha = today();
-      choferUpdate.createdAt = serverTimestamp();
-    }
-    await setDoc(choferRef, choferUpdate, { merge:true });
+    }, { merge:true });
 
     const vehiculoCache = {
       ...(vehiculoExistente || {}),
@@ -7358,6 +7319,267 @@ window.eliminarChoferesDemoAdmin = async function(){
     if(box) msg(box,"No se pudieron eliminar choferes demo: " + e.message);
   }
 };
+
+
+// ===== EXPLORA v2.8.87 · CIERRE SEMANAL ESTABLE + FECHA VISIBLE =====
+// Este bloque deja una sola regla de cierre: un chofer + un período = un documento.
+// También impide pedir cierres anteriores a la fecha de alta del chofer.
+
+const EXPLORA_CIERRE_VERSION = "v2.8.88 · CIERRE-ESTABLE-ALTA-SEGURA";
+const perfilAltaCacheV287 = {};
+
+function fechaBadgeTextoV287(){
+  const fechaLocal = formatDateArgentina(new Date());
+  const fechaOperativa = today();
+  const usaIphone = choferTieneModoPruebaFecha();
+  if(usaIphone){
+    return {clase:"iphone", html:`🧪 FECHA IPHONE · ${fechaOperativa}<br><small>Modo prueba activo para este usuario</small>`};
+  }
+  if(String(trustedTodaySource || "").startsWith("server")){
+    return {clase:"firebase", html:`☁️ FECHA FIREBASE · ${fechaOperativa}<br><small>iPhone: ${fechaLocal}</small>`};
+  }
+  return {clase:"local", html:`⚠️ FECHA LOCAL/RESPALDO · ${fechaOperativa}<br><small>No se confirmó Firebase todavía</small>`};
+}
+
+function upsertFechaBadgeV287(containerId, insertAfterSelector=null){
+  const container = $(containerId);
+  if(!container) return;
+  let badge = container.querySelector(".fecha-source-badge");
+  if(!badge){
+    badge = document.createElement("div");
+    badge.className = "fecha-source-badge";
+    const after = insertAfterSelector ? container.querySelector(insertAfterSelector) : null;
+    if(after && after.parentNode === container){
+      after.insertAdjacentElement("afterend", badge);
+    }else{
+      container.insertBefore(badge, container.firstChild);
+    }
+  }
+  const info = fechaBadgeTextoV287();
+  badge.className = `fecha-source-badge ${info.clase}`;
+  badge.innerHTML = `${info.html}<br><small>${EXPLORA_CIERRE_VERSION}</small>`;
+}
+
+function renderFechaOperativaVisibleV287(){
+  try{ upsertFechaBadgeV287("loginView", ".build-version"); }catch(e){}
+  try{ upsertFechaBadgeV287("driverView", ".driver-b-topbar"); }catch(e){}
+  try{ upsertFechaBadgeV287("adminView", ".admin-mobile-topbar"); }catch(e){}
+}
+
+function normalizarFechaAltaV287(valor){
+  if(!valor) return "";
+  try{
+    if(valor && typeof valor.toDate === "function") return formatDateLocal(valor.toDate());
+    if(valor instanceof Date) return formatDateLocal(valor);
+    const s = String(valor || "").trim();
+    if(!s) return "";
+    const iso = s.match(/(20\d{2})[-\/](\d{1,2})[-\/](\d{1,2})/);
+    if(iso) return `${iso[1]}-${String(iso[2]).padStart(2,"0")}-${String(iso[3]).padStart(2,"0")}`;
+    const ar = s.match(/(\d{1,2})[-\/](\d{1,2})[-\/](20\d{2})/);
+    if(ar) return `${ar[3]}-${String(ar[2]).padStart(2,"0")}-${String(ar[1]).padStart(2,"0")}`;
+  }catch(e){}
+  return "";
+}
+
+function fechaAltaCrudaDesdePerfilV287(perfil){
+  if(!perfil) return "";
+  return normalizarFechaAltaV287(
+    perfil.fechaAltaBloqueoCierres ||
+    perfil.fechaAlta ||
+    perfil.creadoFecha ||
+    perfil.altaFecha ||
+    perfil.createdAt ||
+    perfil.creado ||
+    perfil.fechaCreacion
+  );
+}
+
+function fechaAltaFallbackSeguraV288(){
+  // Si un chofer viejo no tiene fecha de alta, NO se permite buscar cierres históricos.
+  // Usamos la fecha confiable de Firebase/caché si existe; si está en modo prueba y no hay caché,
+  // usamos la fecha operativa actual. Esto evita cierres basura de marzo/abril.
+  try{
+    const cache = cacheGet("trusted_today", 24 * 60 * 60 * 1000);
+    if(cache && cache.fecha) return String(cache.fecha);
+  }catch(e){}
+  return trustedTodayValue || formatDateArgentina(new Date());
+}
+
+function fechaAltaDesdePerfilV287(perfil){
+  const alta = fechaAltaCrudaDesdePerfilV287(perfil);
+  return alta || fechaAltaFallbackSeguraV288();
+}
+
+function perfilTieneFechaAltaV288(perfil){
+  return !!fechaAltaCrudaDesdePerfilV287(perfil);
+}
+
+async function repararFechaAltaSiFaltaV288(choferId, data){
+  if(!choferId || !data || perfilTieneFechaAltaV288(data)) return data;
+  const altaSegura = fechaAltaFallbackSeguraV288();
+  const reparado = {
+    ...data,
+    fechaAltaBloqueoCierres: altaSegura,
+    fechaAlta: data.fechaAlta || altaSegura,
+    creadoFecha: data.creadoFecha || altaSegura,
+    altaReparadaAutomaticamente: true,
+    altaReparadaEn: altaSegura
+  };
+  try{
+    await setDoc(doc(db,"choferes",choferId), {
+      fechaAltaBloqueoCierres: altaSegura,
+      fechaAlta: data.fechaAlta || altaSegura,
+      creadoFecha: data.creadoFecha || altaSegura,
+      altaReparadaAutomaticamente: true,
+      altaReparadaEn: altaSegura,
+      actualizado: serverTimestamp()
+    }, {merge:true});
+    if(currentUserId === choferId && currentProfile) currentProfile = {...currentProfile, ...reparado};
+  }catch(e){
+    console.warn("No se pudo reparar fecha de alta; se usará solo en memoria", choferId, e);
+  }
+  return reparado;
+}
+
+async function getPerfilChoferCierreV287(choferId){
+  if(!choferId) return null;
+  if(currentUserId === choferId && currentProfile){
+    currentProfile = await repararFechaAltaSiFaltaV288(choferId, currentProfile);
+    return currentProfile;
+  }
+  if(perfilAltaCacheV287[choferId]) return perfilAltaCacheV287[choferId];
+  try{
+    const snap = await withTimeout(getDoc(doc(db,"choferes",choferId)), 2500, "lectura fecha alta chofer");
+    let data = snap.exists() ? (snap.data() || {}) : null;
+    if(data) data = await repararFechaAltaSiFaltaV288(choferId, data);
+    if(data) perfilAltaCacheV287[choferId] = data;
+    return data;
+  }catch(e){
+    console.warn("No se pudo leer fecha alta del chofer", choferId, e);
+    return {fechaAltaBloqueoCierres:fechaAltaFallbackSeguraV288(), fechaAltaFallbackMemoria:true};
+  }
+}
+
+function cierrePermitidoPorAltaV287(periodo, perfil){
+  const alta = fechaAltaDesdePerfilV287(perfil);
+  if(!periodo || !periodo.closeDate) return false;
+  // Regla estricta: nunca pedir un cierre cuya fecha de cierre sea anterior al alta/fallback del usuario.
+  return String(periodo.closeDate) >= String(alta);
+}
+
+// En modo estable, sábado se considera día de cierre. Se elimina el problema de 00:00/00:01 para pruebas.
+afterSaturday0001 = function(dateStr = today()){
+  return isSaturday(dateStr);
+};
+
+// Unifica búsqueda: siempre mira el mismo documento cierres_semanales/{choferId_periodoId}
+// y devuelve el pendiente más antiguo permitido por fecha de alta.
+getPeriodoCierrePendienteNoConfirmado = async function(choferId=currentUserId, dateStr=fechaOperativaParaChofer(choferId,null)){
+  if(!choferId) return null;
+  const perfil = await getPerfilChoferCierreV287(choferId);
+  const fechaAlta = fechaAltaDesdePerfilV287(perfil);
+  const cacheKey = `periodo_cierre_pendiente_v287_${choferId}_${dateStr}_${fechaAlta || "sin_alta"}`;
+  const cached = cacheGet(cacheKey, 30 * 1000);
+  if(cached && cached.periodoId){
+    const p = periodoDesdeIdPago(cached.periodoId);
+    if(p && periodoCerradoYaVencido(p, dateStr) && cierrePermitidoPorAltaV287(p, perfil)) return p;
+  }
+
+  const periodos = [];
+  let cursor = getPeriodoCierrePendiente(dateStr) || periodoAnterior(getPeriodoTrabajoActual(dateStr));
+  for(let i=0; i<10 && cursor; i++){
+    if(periodoCerradoYaVencido(cursor, dateStr) && cierrePermitidoPorAltaV287(cursor, perfil)){
+      periodos.push(cursor);
+    }
+    cursor = periodoAnterior(cursor);
+  }
+  periodos.sort((a,b)=>String(a.start).localeCompare(String(b.start)));
+
+  for(const periodo of periodos){
+    const cierreId = `${choferId}_${periodo.id}`;
+    try{
+      const snap = await withTimeout(getDoc(doc(db,"cierres_semanales",cierreId)), 2500, "verificación cierre único");
+      const data = snap.exists() ? (snap.data() || {}) : null;
+      if(!data || !cierreSemanalAceptadoPorChofer(data)){
+        cacheSet(cacheKey, {periodoId:periodo.id}, 30 * 1000);
+        return periodo;
+      }
+    }catch(e){
+      console.warn("No se pudo verificar cierre único", cierreId, e);
+      return null;
+    }
+  }
+  return null;
+};
+
+// Cierre automático estable: calcula/reconstruye y muestra SIEMPRE un único cierre pendiente.
+checkCierreSemanalAutomatico = async function(){
+  if(!currentUserId) return;
+  renderFechaOperativaVisibleV287();
+  const dateStr = fechaOperativaParaChofer(currentUserId, currentProfile);
+  const periodo = await getPeriodoCierrePendienteNoConfirmado(currentUserId, dateStr).catch(()=>null);
+  if(!periodo) return;
+
+  const cierreId = `${currentUserId}_${periodo.id}`;
+  try{
+    let c = await withTimeout(calcularCierreSemanalLiviano(currentUserId, periodo, true), 18000, "cierre estable");
+    if(!c) c = cierreDesdeAcumulado(currentUserId, periodo, {}, null, await getPremioSemanal());
+
+    const sinMovimientos =
+      Number(c.cantidadViajes || 0) === 0 &&
+      Number(c.cantidadGastos || 0) === 0 &&
+      Number(c.totalFondoOperativo || 0) === 0 &&
+      Number(c.totalViajes || 0) === 0;
+
+    if(sinMovimientos){
+      c.premioAplicado = 0;
+      c.choferDebe = 0;
+      c.davidDebe = 0;
+      c.pagoSemanal = null;
+      c.sinActividad = true;
+    }else{
+      c.pagoSemanal = await getEstadoPagoSemanal(currentUserId, periodo.id).catch(()=>null);
+      if(!c.pagoSemanal && (Number(c.choferDebe || 0) > 0 || Number(c.davidDebe || 0) > 0)){
+        c.pagoSemanal = await asegurarPagoSemanalPendiente(c).catch(()=>null);
+      }
+    }
+
+    cierreSemanalPendiente = c;
+    cierreSemanalCache = {key:cierreId, data:c};
+    cacheSet(`cierre_sem_${cierreId}`, c, 60 * 1000);
+
+    if($("cierreSemanalModal") && $("cierreSemanalResumen")){
+      $("cierreSemanalModal").classList.remove("hidden");
+      renderCierreSemanal(c);
+    }
+  }catch(e){
+    console.warn("Cierre estable omitido para no trabar la app", e);
+  }
+};
+
+const _loadDriverV287 = loadDriver;
+loadDriver = async function(){
+  await _loadDriverV287.apply(this, arguments);
+  renderFechaOperativaVisibleV287();
+};
+
+const _loadAdminV287 = loadAdmin;
+loadAdmin = async function(){
+  await _loadAdminV287.apply(this, arguments);
+  renderFechaOperativaVisibleV287();
+};
+
+const _syncTrustedTodayV287 = syncTrustedToday;
+syncTrustedToday = async function(){
+  const r = await _syncTrustedTodayV287.apply(this, arguments);
+  renderFechaOperativaVisibleV287();
+  return r;
+};
+
+renderFechaOperativaVisibleV287();
+window.checkCierreSemanalAutomatico = checkCierreSemanalAutomatico;
+window.renderFechaOperativaVisibleV287 = renderFechaOperativaVisibleV287;
+
 
 </script>
 
