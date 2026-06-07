@@ -59,13 +59,14 @@ Cambios:
 - v2.8.97: la tarjeta Ganador semana pasada queda visible desde el inicio con estado vacío, sin esperar la carga diferida.
 - v2.8.98: Lanzar app desde cero también limpia caché/estado visual de Ganador semana pasada.
 - v2.8.99: Ganador semana pasada corregido con fallback por acumulados e histórico si la carga rápida no encuentra datos.
-- v2.8.100: Lanzar app desde cero muestra confirmación visual de ganador_semana_pasada eliminado y resetea la tarjeta al instante.
+- v2.8.101: Lanzar app desde cero muestra confirmación visual de ganador_semana_pasada eliminado y resetea la tarjeta al instante.
+- v2.8.101: historial persistente ultimo_ganador_semana para mostrar el ganador anterior aunque el ranking actual se reinicie.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.100 · Build 2026-06-07-RESET-GANADOR-VISIBLE</title>
+<title>EXPLORA v2.8.101 · Build 2026-06-07-HISTORIAL-GANADOR-SEMANAL</title>
 <style>
 :root{
   --bg:#080808;
@@ -1223,7 +1224,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.100</b> · Build 2026-06-07-RESET-GANADOR-VISIBLE</div>
+    <div class="build-version"><b>v2.8.101</b> · Build 2026-06-07-HISTORIAL-GANADOR-SEMANAL</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -3654,6 +3655,102 @@ window.openMiCierreSemanalPanel = async function(){
 }
 
 
+
+function ganadorSemanaPasadaDocRef(){
+  return doc(db,"configuracion","ultimo_ganador_semana");
+}
+
+function normalizarUltimoGanadorSemana(data){
+  if(!data) return null;
+  const ganador = data.ganador || {
+    id: data.ganadorId || data.id || "",
+    nombre: data.nombre || data.ganadorNombre || "Ganador",
+    facturacion: Number(data.facturacion || 0),
+    viajes: Number(data.viajes || 0),
+    derivaciones: Number(data.derivaciones || 0),
+    porcentaje: Number(data.porcentaje || 0)
+  };
+  if(!ganador || !ganador.id) return null;
+  const periodo = data.periodo || periodoDesdeIdGenerico(data.periodoId || "") || null;
+  if(!periodo || !periodo.id) return null;
+  return {
+    periodo,
+    ganador,
+    actualizado: data.actualizadoMs || Date.now(),
+    fuente: data.fuente || "ultimo_ganador_semana"
+  };
+}
+
+async function getUltimoGanadorSemanaPersistente(){
+  try{
+    const snap = await withTimeout(getDoc(ganadorSemanaPasadaDocRef()), 3000, "Último ganador tardó demasiado.");
+    if(!snap.exists()) return null;
+    return normalizarUltimoGanadorSemana(snap.data());
+  }catch(e){
+    console.warn("No se pudo leer ultimo_ganador_semana", e);
+    return null;
+  }
+}
+
+async function guardarUltimoGanadorSemana(periodo, ganador, fuente="cierre_semanal"){
+  try{
+    if(!periodo || !periodo.id || !ganadorSemanaPasadaValido(ganador)) return null;
+    const payload = {
+      periodoId: periodo.id,
+      periodoInicio: periodo.start || "",
+      periodoFin: periodo.end || "",
+      fechaCierre: periodo.closeDate || addDays(periodo.end, 1),
+      bono: 50000,
+      ganadorId: ganador.id || "",
+      ganadorNombre: ganador.nombre || ganador.id || "Ganador",
+      nombre: ganador.nombre || ganador.id || "Ganador",
+      facturacion: Number(ganador.facturacion || 0),
+      viajes: Number(ganador.viajes || 0),
+      derivaciones: Number(ganador.derivaciones || 0),
+      porcentaje: Number(ganador.porcentaje || 0),
+      ganador: {
+        id: ganador.id || "",
+        nombre: ganador.nombre || ganador.id || "Ganador",
+        facturacion: Number(ganador.facturacion || 0),
+        viajes: Number(ganador.viajes || 0),
+        derivaciones: Number(ganador.derivaciones || 0),
+        porcentaje: Number(ganador.porcentaje || 0)
+      },
+      fuente,
+      actualizadoMs: Date.now(),
+      actualizadoTexto: new Date().toLocaleString("es-AR"),
+      actualizado: serverTimestamp()
+    };
+    await setDoc(ganadorSemanaPasadaDocRef(), payload, {merge:true});
+    const result = normalizarUltimoGanadorSemana(payload);
+    cacheSet("ultimo_ganador_semana", result);
+    cacheSet(`ganador_semana_pasada_${periodo.id}`, result);
+    return result;
+  }catch(e){
+    console.warn("No se pudo guardar ultimo_ganador_semana", e);
+    return null;
+  }
+}
+
+async function guardarUltimoGanadorSemanaDesdeRanking(periodo, fuente="cierre_semanal"){
+  try{
+    const data = await withTimeout(calcularRankingSemanalLiviano(periodo), 6500, "Ranking para guardar ganador tardó demasiado.");
+    const ranking = (data && data.ranking) || [];
+    const ganador = data && data.ganadorBono ? data.ganadorBono : ranking.find(x=>!x.suspendidoBono);
+    if(!ganadorSemanaPasadaValido(ganador)) return null;
+    return await guardarUltimoGanadorSemana(periodo, ganador, fuente);
+  }catch(e){
+    console.warn("No se pudo guardar ganador desde ranking", e);
+    return null;
+  }
+}
+
+async function eliminarUltimoGanadorSemanaPersistente(){
+  try{ await deleteDoc(ganadorSemanaPasadaDocRef()); }catch(e){ console.warn("No se pudo borrar ultimo_ganador_semana", e); }
+  try{ await deleteDoc(doc(db,"sistema","ultimo_ganador_semana")); }catch(e){}
+  try{ cacheRemove("ultimo_ganador_semana"); }catch(e){}
+}
+
 async function getGanadorSemanalRapido(periodo){
   const key = `ganador_sem_${periodo.id}`;
   const cached = cacheGet(key, 10 * 60 * 1000);
@@ -3768,7 +3865,20 @@ async function getGanadorSemanaPasadaRapido(){
   const periodo = periodoSemanaPasadaVisible();
   const key = `ganador_semana_pasada_${periodo.id}`;
   const cached = cacheGet(key, 6 * 60 * 60 * 1000);
+  const cachedPersistente = cacheGet("ultimo_ganador_semana", 24 * 60 * 60 * 1000);
   if(cached && cached.periodo && cached.ganador) return cached;
+  if(cachedPersistente && cachedPersistente.periodo && cachedPersistente.ganador){
+    cacheSet(key, cachedPersistente);
+    return cachedPersistente;
+  }
+
+  // 0) Fuente estable de producción: último ganador guardado al cerrar semana.
+  const persistente = await getUltimoGanadorSemanaPersistente();
+  if(persistente && persistente.ganador){
+    cacheSet("ultimo_ganador_semana", persistente);
+    cacheSet(key, persistente);
+    return persistente;
+  }
 
   // 1) Intento principal: ranking real del período anterior, con más tiempo porque corre diferido.
   try{
@@ -3778,6 +3888,7 @@ async function getGanadorSemanaPasadaRapido(){
     if(ganadorSemanaPasadaValido(ganador)){
       const result = {periodo, ganador, actualizado:Date.now(), fuente:"ranking_periodo_anterior"};
       cacheSet(key, result);
+      guardarUltimoGanadorSemana(periodo, ganador, "ranking_periodo_anterior").catch(()=>{});
       return result;
     }
   }catch(e){
@@ -3788,6 +3899,7 @@ async function getGanadorSemanaPasadaRapido(){
   const porAcumulados = await getGanadorSemanaPasadaDesdeAcumulados(periodo);
   if(porAcumulados && porAcumulados.ganador){
     cacheSet(key, porAcumulados);
+    guardarUltimoGanadorSemana(porAcumulados.periodo || periodo, porAcumulados.ganador, "acumulados_fallback").catch(()=>{});
     return porAcumulados;
   }
 
@@ -3795,6 +3907,7 @@ async function getGanadorSemanaPasadaRapido(){
   const historico = await getUltimoGanadorHistoricoRapido(getPeriodoTrabajoActual(today()));
   if(historico && historico.ganador){
     cacheSet(key, historico);
+    guardarUltimoGanadorSemana(historico.periodo || periodo, historico.ganador, "historico_acumulados").catch(()=>{});
     return historico;
   }
 
@@ -3858,6 +3971,7 @@ function resetGanadorSemanaPasadaLocalState(){
       const k = localStorage.key(i);
       if(k && (
         k.includes("ganador_semana_pasada_") ||
+        k.includes("ultimo_ganador_semana") ||
         k.includes("ganador_sem_") ||
         k.includes("last_week_winner") ||
         k.includes("LastWeekWinner")
@@ -4806,6 +4920,7 @@ window.confirmarCierreSemanal = async function(){
 
   try{
     const c = cierreSemanalPendiente;
+    guardarUltimoGanadorSemanaDesdeRanking(c.periodo, "confirmar_cierre_semanal").catch(e=>console.warn("No se guardó último ganador semanal", e));
     const requiereComprobante = (Number(c.choferDebe || 0) > 0 || Number(c.davidDebe || 0) > 0) && !(c.pagoSemanal && c.pagoSemanal.pagado === true);
     if(requiereComprobante){
       c.pagoSemanal = await asegurarPagoSemanalPendiente(c).catch(()=>c.pagoSemanal || null);
@@ -7602,6 +7717,7 @@ window.resetearDatosOperativosAdmin = async function(){
         k.startsWith(CACHE_PREFIX) ||
         k.startsWith("explora_") ||
         k.includes("ganador_semana_pasada_") ||
+        k.includes("ultimo_ganador_semana") ||
         k.includes("ganador_sem_") ||
         k.includes("last_week_winner") ||
         k.includes("LastWeekWinner")
@@ -7609,7 +7725,9 @@ window.resetearDatosOperativosAdmin = async function(){
     }
     keys.forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
     localStorage.setItem("explora_reset_operativo_marca", marca);
+    await eliminarUltimoGanadorSemanaPersistente();
     resultado.ganador_semana_pasada = "eliminado ✅";
+    resultado.ultimo_ganador_semana = "eliminado ✅";
 
     periodoOperativoCache = null;
     cierreSemanalCache = null;
@@ -7771,6 +7889,7 @@ window.resetearAppLanzamientoAdmin = async function(){
         k.startsWith(CACHE_PREFIX) ||
         k.startsWith("explora_") ||
         k.includes("ganador_semana_pasada_") ||
+        k.includes("ultimo_ganador_semana") ||
         k.includes("ganador_sem_") ||
         k.includes("last_week_winner") ||
         k.includes("LastWeekWinner")
@@ -7778,7 +7897,9 @@ window.resetearAppLanzamientoAdmin = async function(){
     }
     keys.forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
     localStorage.setItem("explora_reset_operativo_marca", marca);
+    await eliminarUltimoGanadorSemanaPersistente();
     resultado.ganador_semana_pasada = "eliminado ✅";
+    resultado.ultimo_ganador_semana = "eliminado ✅";
 
     modoPruebaFechaConfig = {activo:false, choferes:{}, actualizadoTexto:""};
     periodoOperativoCache = null;
