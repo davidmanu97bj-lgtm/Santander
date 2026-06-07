@@ -2035,7 +2035,12 @@ function cierreDesdeAcumulado(chofer, periodo, acumulado, ganador, premioSemanal
   const reintegroFondoOperativoChofer = fondoPendienteDavid;
 
   const esGanador = ganador && ganador.id === chofer;
-  const premioAplicado = esGanador ? Number(premioSemanal || 0) : 0;
+  // Regla lanzamiento estable:
+  // El bono semanal solo se aplica si el chofer tuvo actividad real en la semana.
+  // Si viajes/facturación están en cero, el cierre se guarda como sin actividad,
+  // sin bono, sin pago y sin comprobante.
+  const tieneActividadParaBono = Number(cantidadViajes || 0) > 0 && Number(totalViajes || 0) > 0;
+  const premioAplicado = (esGanador && tieneActividadParaBono) ? Number(premioSemanal || 0) : 0;
 
   // David debe quedar con: fondo recuperado + su 50% del excedente neto.
   // Si ya cobró transferencia/tarjeta, eso se descuenta automáticamente.
@@ -2054,7 +2059,7 @@ function cierreDesdeAcumulado(chofer, periodo, acumulado, ganador, premioSemanal
     efectivoNetoChofer, cobrosDavid, cajaNetaDavid, reintegroFondoOperativoChofer, objetivoChofer, objetivoDavid,
     ganadorSemana: ganador ? ganador.nombre : "",
     ganadorId: ganador ? ganador.id : "",
-    premioSemanal: Number(premioSemanal || 0), premioAplicado, esGanador,
+    premioSemanal: Number(premioSemanal || 0), premioAplicado, esGanador, tieneActividadParaBono,
     diferenciaBase, diferenciaFinal, choferDebe, davidDebe
   };
 }
@@ -3612,7 +3617,7 @@ async function getPagosPendientesChofer(force=false){
       const davidPagoSinVisto = p.sentido === "david_a_chofer" && p.pagado === true && p.vistoPorChofer !== true;
       if(pendientePago || davidPagoSinVisto) items.push(p);
     });
-    items.sort((a,b)=>String(b.periodoId || "").localeCompare(String(a.periodoId || "")));
+    items.sort((a,b)=>String(a.periodoId || "").localeCompare(String(b.periodoId || "")));
     cacheSet(cacheKey, items);
     return items;
   }catch(e){
@@ -4358,7 +4363,9 @@ window.resolverCierrePendienteChofer = async function(periodoId=""){
     let periodo = periodoId ? periodoDesdeIdPago(periodoId) : null;
     if(!periodo){
       const pagos = await getPagosPendientesChofer(true).catch(()=>[]);
-      const pagoPendiente = (pagos || []).find(p=>p.sentido === "chofer_a_david" && p.pagado !== true) || (pagos || [])[0];
+      // Siempre resolver el cierre pendiente más antiguo primero.
+      // Evita que Admin y Chofer miren semanas distintas cuando quedaron cierres de prueba.
+      const pagoPendiente = (pagos || [])[0];
       if(pagoPendiente && pagoPendiente.periodoId) periodo = periodoDesdeIdPago(pagoPendiente.periodoId);
     }
     if(!periodo) periodo = await getPeriodoCierrePendienteNoConfirmado(currentUserId).catch(()=>null);
@@ -6075,6 +6082,14 @@ window.guardarPremioSemanalAdmin = async function(){
   await cargarPremioAdmin(periodo);
 }
 
+function seleccionarPagoPendienteMasAntiguo(pagos, choferId, perfilChofer=null){
+  const fechaBase = fechaOperativaParaChofer(choferId, perfilChofer);
+  return (pagos || [])
+    .filter(p=>p && p.chofer === choferId && (p.pagado !== true || (p.sentido === "david_a_chofer" && p.pagado === true && p.vistoPorChofer !== true)))
+    .filter(p=>pagoPerteneceASemanaCerradaValida(p, fechaBase))
+    .sort((a,b)=>String(a.periodoId || "").localeCompare(String(b.periodoId || "")))[0] || null;
+}
+
 async function cargarVehiculosAdminSimple(periodo){
   const [vehSnap, choferSnap, pagosSnap] = await Promise.all([
     withTimeout(getDocs(collection(db,"vehiculos")), 9000, "Tardó demasiado cargando vehículos."),
@@ -6093,10 +6108,12 @@ async function cargarVehiculosAdminSimple(periodo){
   });
 
   const pagosPorChoferPeriodo = {};
+  const pagosListaAdmin = [];
   const deudaPendientePorChofer = {};
   if(pagosSnap){
     pagosSnap.forEach(d=>{
       const p = {id:d.id,...d.data()};
+      pagosListaAdmin.push(p);
       if(!p.chofer) return;
       const perfilPago = choferesPorId[p.chofer] || null;
       pagosPorChoferPeriodo[`${p.chofer}_${p.periodoId || ""}`] = p;
@@ -6130,8 +6147,11 @@ async function cargarVehiculosAdminSimple(periodo){
     const tieneAlerta = !String(alertas || "").includes("Sin vencimientos");
     if(tieneAlerta) stats.vehiculosConAlertas++;
 
-    const periodoChofer = c ? getPeriodoAdminRevisionParaChofer(choferId, c) : periodo;
-    const pagoReal = choferId ? pagosPorChoferPeriodo[`${choferId}_${periodoChofer.id}`] : null;
+    const pagoPendientePrioritario = c ? seleccionarPagoPendienteMasAntiguo(pagosListaAdmin, choferId, c) : null;
+    const periodoChofer = pagoPendientePrioritario && pagoPendientePrioritario.periodoId
+      ? (periodoDesdeIdPago(pagoPendientePrioritario.periodoId) || getPeriodoAdminRevisionParaChofer(choferId, c))
+      : (c ? getPeriodoAdminRevisionParaChofer(choferId, c) : periodo);
+    const pagoReal = pagoPendientePrioritario || (choferId ? pagosPorChoferPeriodo[`${choferId}_${periodoChofer.id}`] : null);
     const deudaAcumuladaCard = choferId ? deudaPendientePorChofer[choferId] : null;
     const tieneDeudaAcumulada = !!(deudaAcumuladaCard && (Number(deudaAcumuladaCard.choferDebe || 0) > 0 || Number(deudaAcumuladaCard.davidDebe || 0) > 0));
     const estadoCache = c ? adminCierreEstadoDesdeCache(choferId, periodoChofer, pagoReal) : null;
@@ -6238,7 +6258,16 @@ window.calcularSemanaVehiculoAdmin = async function(vehiculoId, choferId){
   // Admin y chofer deben mirar exactamente el mismo período operativo.
   // Esto evita diferencias después de confirmar cierre un sábado o si el chofer ya pasó a una nueva semana activa.
   const perfilChofer = Object.values(adminChoferesPorVehiculoCache || {}).find(c=>c && c.id === choferId) || {id:choferId};
-  const periodo = getPeriodoAdminRevisionParaChofer(choferId, perfilChofer);
+  let periodo = getPeriodoAdminRevisionParaChofer(choferId, perfilChofer);
+  try{
+    const pagosSnap = await withTimeout(getDocs(query(collection(db,"pagos_semanales"), where("chofer","==",choferId))), 3500, "Pagos pendientes tardaron.");
+    const pagos = [];
+    pagosSnap.forEach(d=>pagos.push({id:d.id,...d.data()}));
+    const pagoPrioritario = seleccionarPagoPendienteMasAntiguo(pagos, choferId, perfilChofer);
+    if(pagoPrioritario && pagoPrioritario.periodoId){
+      periodo = periodoDesdeIdPago(pagoPrioritario.periodoId) || periodo;
+    }
+  }catch(e){ console.warn("No se pudo buscar pago pendiente prioritario", e); }
   const cacheKey = `admin_5050_${choferId}_${periodo.id}`;
   const cacheLocal = cacheGet(cacheKey, 10 * 60 * 1000);
 
@@ -6285,7 +6314,16 @@ window.reconstruirSemanaVehiculoAdmin = async function(vehiculoId, choferId){
   const box = $("adminCalc_" + safeId(vehiculoId));
   if(!box) return;
   const perfilChofer = Object.values(adminChoferesPorVehiculoCache || {}).find(c=>c && c.id === choferId) || {id:choferId};
-  const periodo = getPeriodoAdminRevisionParaChofer(choferId, perfilChofer);
+  let periodo = getPeriodoAdminRevisionParaChofer(choferId, perfilChofer);
+  try{
+    const pagosSnap = await withTimeout(getDocs(query(collection(db,"pagos_semanales"), where("chofer","==",choferId))), 3500, "Pagos pendientes tardaron.");
+    const pagos = [];
+    pagosSnap.forEach(d=>pagos.push({id:d.id,...d.data()}));
+    const pagoPrioritario = seleccionarPagoPendienteMasAntiguo(pagos, choferId, perfilChofer);
+    if(pagoPrioritario && pagoPrioritario.periodoId){
+      periodo = periodoDesdeIdPago(pagoPrioritario.periodoId) || periodo;
+    }
+  }catch(e){ console.warn("No se pudo buscar pago pendiente prioritario", e); }
   box.innerHTML = `<div class="msg ok">Reconstruyendo acumulado... Esto puede tardar solo esta vez.</div>`;
   try{
     const c = await withTimeout(calcularCierreSemanalLiviano(choferId, periodo, true), 15000, "La reconstrucción tardó demasiado. Revisá internet y probá otra vez.");
@@ -6300,6 +6338,12 @@ window.reconstruirSemanaVehiculoAdmin = async function(vehiculoId, choferId){
 }
 
 function renderResumenSemanalAdmin(vehiculoId,c,pago){
+  // Si el cierre recalculado quedó sin actividad, cualquier pago viejo de prueba
+  // queda ignorado visualmente para no volver a pedir comprobante ni bono.
+  if(cierreSinActividad(c)){
+    pago = {sentido:"sin_diferencia", monto:0, pagado:true, marcadoPor:"sistema", sinActividad:true};
+    c.choferDebe = 0; c.davidDebe = 0; c.premioAplicado = 0;
+  }
   const yaPagado = pago && pago.pagado === true;
 
   let tituloDeuda = "";
