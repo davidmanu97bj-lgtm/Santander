@@ -56,12 +56,13 @@ Cambios:
 - Optimización comprobantes 2026-06-07: imagen más liviana, timeout Storage menor y refresco pesado diferido para Admin/Chofer.
 - v2.8.95: comprobantes producción rápida: 750px/0.45, timeout Storage 4s, Admin no recarga todo después de subir y fecha técnica oculta para chofer.
 - v2.8.96: se agrega tarjeta visible de ganador de la semana pasada para Chofer y Admin, con caché y carga diferida.
+- v2.8.97: la tarjeta Ganador semana pasada queda visible desde el inicio con estado vacío, sin esperar la carga diferida.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.96 · Build 2026-06-07-GANADOR-SEMANA-PASADA</title>
+<title>EXPLORA v2.8.97 · Build 2026-06-07-GANADOR-VISIBLE-INICIO</title>
 <style>
 :root{
   --bg:#080808;
@@ -1219,7 +1220,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.96</b> · Build 2026-06-07-GANADOR-SEMANA-PASADA</div>
+    <div class="build-version"><b>v2.8.97</b> · Build 2026-06-07-GANADOR-VISIBLE-INICIO</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1261,12 +1262,12 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       </div>
     </div>
 
-    <div id="driverLastWeekWinnerCard" class="last-week-winner-card hidden">
+    <div id="driverLastWeekWinnerCard" class="last-week-winner-card">
       <h3>🏆 GANADOR SEMANA PASADA</h3>
       <div id="driverLastWeekWinnerContent">
         <div class="last-week-winner-body">
-          <div class="last-week-winner-icon">👑</div>
-          <div><b>Cargando...</b><small>Buscando último ranking cerrado.</small></div>
+          <div class="last-week-winner-icon">🏆</div>
+          <div><b>Aún no hay ganador anterior</b><small>Se actualizará automáticamente cuando haya ranking cerrado.</small></div>
         </div>
       </div>
     </div>
@@ -1486,12 +1487,12 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
           <div class="admin-summary-card yellow"><div class="admin-summary-icon">🔧</div><strong>...</strong><span>Vehículos con alertas</span></div>
           <div class="admin-summary-card yellow"><div class="admin-summary-icon">🚨</div><strong>...</strong><span>Por revisar</span></div>
         </div>
-        <div id="adminLastWeekWinnerCard" class="last-week-winner-card admin-last-week-winner-card hidden" onclick="adminShowSection('home')">
+        <div id="adminLastWeekWinnerCard" class="last-week-winner-card admin-last-week-winner-card" onclick="adminShowSection('home')">
           <h3>🏆 Último ganador del ranking</h3>
           <div id="adminLastWeekWinnerContent">
             <div class="last-week-winner-body">
-              <div class="last-week-winner-icon">👑</div>
-              <div><b>Cargando...</b><small>Buscando semana anterior cerrada.</small></div>
+              <div class="last-week-winner-icon">🏆</div>
+              <div><b>Aún no hay ganador anterior</b><small>Se actualizará automáticamente cuando haya ranking cerrado.</small></div>
             </div>
           </div>
         </div>
