@@ -1893,6 +1893,7 @@ function renderMiCierreSemanalRapido(c, stale=false){
     </div>
     ${resultado}
   `;
+  scrollToPanelEnd("miCierreSemanalPanel");
 }
 
 function limpiarCacheExploraViejo(maxAgeMs = 14 * 24 * 60 * 60 * 1000){
@@ -2646,6 +2647,20 @@ function scrollToOpenedPanel(target){
       try{ target.scrollIntoView(true); }catch(_){}
     }
   }, 80);
+}
+
+function scrollToPanelEnd(targetOrId){
+  const target = typeof targetOrId === "string" ? $(targetOrId) : targetOrId;
+  if(!target) return;
+  // Cuando una carga async reemplaza "Calculando/Cargando" por el resultado,
+  // baja hasta el final del panel para que el chofer vea el resultado/botón sin buscarlo.
+  setTimeout(()=>{
+    try{
+      target.scrollIntoView({behavior:"smooth", block:"end"});
+    }catch(e){
+      try{ window.scrollTo({top:target.offsetTop + target.offsetHeight, behavior:"smooth"}); }catch(_){}
+    }
+  }, 120);
 }
 
 function getKmDiarioId(){
@@ -3527,6 +3542,7 @@ window.openRankingPanel = async function(){
       const yoCache = yoIndexCache >= 0 ? cached.ranking[yoIndexCache] : null;
       if(liderCache) renderDriverLeaderBonus(cached, liderCache, yoCache, yoIndexCache);
       if(box) box.insertAdjacentHTML("afterbegin", `<div class="msg ok">Ranking abierto rápido. Actualizando en segundo plano...</div>`);
+      scrollToPanelEnd("rankingPanel");
     }else if(box){
       box.innerHTML = `<div class="msg ok">Calculando ranking rápido...</div>`;
     }
@@ -3539,6 +3555,7 @@ window.openRankingPanel = async function(){
       const yoIndex = data.ranking.findIndex(x=>x.id === currentUserId);
       const yo = yoIndex >= 0 ? data.ranking[yoIndex] : null;
       if(lider) renderDriverLeaderBonus(data, lider, yo, yoIndex);
+      scrollToPanelEnd("rankingPanel");
     }).catch(e=>{
       if(token !== rankingLoadToken) return;
       if(!cached && box) box.innerHTML = `<div class="msg err">No se pudo calcular ranking: ${e.message}</div>`;
@@ -3577,9 +3594,11 @@ window.openMiCierreSemanalPanel = async function(){
       if(token !== cierreLoadToken) return;
       if(!cached) box.innerHTML = `<div class="msg err">No se pudo calcular tu cierre semanal: ${e.message}</div>`;
       else box.insertAdjacentHTML("afterbegin", `<div class="msg err">No se pudo actualizar ahora. Se mantiene el último cierre guardado.</div>`);
+      scrollToPanelEnd("miCierreSemanalPanel");
     });
   }catch(e){
     box.innerHTML = `<div class="msg err">No se pudo abrir tu cierre semanal: ${e.message}</div>`;
+    scrollToPanelEnd("miCierreSemanalPanel");
   }
 }
 
