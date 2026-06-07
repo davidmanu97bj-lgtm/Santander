@@ -53,6 +53,7 @@ Cambios:
 - v2.8.91: cierre/bono corregido por saldo final: primero calcula 50/50, aplica bono y recién después decide quién paga, comprobante y elegibilidad. Evita falso “chofer debe pagar” cuando David debe pagar por bono.
 - v2.8.88: si un chofer no tiene fecha de alta, se repara automáticamente y no se buscan cierres históricos anteriores.
 - v2.8.87: cierre semanal estable en un solo documento, bloqueo por fecha de alta y cartel visible de fuente de fecha (iPhone/Firebase).
+- Optimización comprobantes 2026-06-07: imagen más liviana, timeout Storage menor y refresco pesado diferido para Admin/Chofer.
 -->
 <html lang="es">
 <head>
@@ -4000,11 +4001,13 @@ window.subirComprobantePendienteChofer = async function(periodoId, monto, inputI
     if(!file) throw new Error("Seleccioná una foto del comprobante antes de subir.");
     const btn = Array.from(document.querySelectorAll('button')).find(b => (b.getAttribute('onclick') || '').includes(inputId));
     const old = btn ? btn.textContent : "";
-    if(btn){ btn.disabled = true; btn.textContent = "Subiendo..."; }
+    if(btn){ btn.disabled = true; btn.textContent = "Preparando foto..."; }
+    await new Promise(r=>setTimeout(r, 40));
+    if(btn){ btn.textContent = "Subiendo..."; }
     await subirComprobantePago({chofer:currentUserId, periodoId, sentido:"chofer_a_david", monto, file, marcadoPor:"chofer"});
     cacheRemove("pagos_pendientes_chofer_" + currentUserId);
     cacheRemove("comprobantes_chofer_" + currentUserId);
-    await checkPagosPendientesChoferAutomatico();
+    setTimeout(()=>checkPagosPendientesChoferAutomatico().catch(e=>console.warn("Refresco comprobantes chofer diferido", e)), 250);
     alert("Comprobante cargado correctamente. Admin ya puede verlo.");
     if(btn){ btn.disabled = false; btn.textContent = old || "Subir comprobante"; }
   }catch(e){
@@ -4035,7 +4038,7 @@ function esArchivoImagenComprobante(file){
   return tipo.startsWith("image/") || /\.(jpg|jpeg|png|webp|heic|heif)$/i.test(nombre);
 }
 
-async function comprimirImagenComprobante(file, maxWidth=1200, quality=0.62){
+async function comprimirImagenComprobante(file, maxWidth=900, quality=0.50){
   if(!file) throw new Error("Seleccioná una foto del comprobante.");
   if(!esArchivoImagenComprobante(file)) throw new Error("El comprobante debe ser una imagen.");
 
@@ -4068,7 +4071,7 @@ async function comprimirImagenComprobante(file, maxWidth=1200, quality=0.62){
     reader.readAsDataURL(file);
   });
 
-  return await withTimeout(comprimido, 4500, "La compresión tardó demasiado.");
+  return await withTimeout(comprimido, 3000, "La compresión tardó demasiado.");
 }
 
 async function obtenerBlobComprobante(file){
@@ -4088,7 +4091,7 @@ function blobToDataURLComprobante(blob){
     reader.onload = ()=>resolve(String(reader.result || ""));
     reader.onerror = ()=>reject(new Error("No se pudo preparar la foto del comprobante."));
     reader.readAsDataURL(blob);
-  }), 6000, "La preparación del comprobante tardó demasiado.");
+  }), 4000, "La preparación del comprobante tardó demasiado.");
 }
 
 async function subirArchivoComprobanteStorage(ref, archivo){
@@ -4096,10 +4099,10 @@ async function subirArchivoComprobanteStorage(ref, archivo){
   // Por eso lo encerramos en timeout y, si falla, se guarda fallback en Firestore.
   await withTimeout(
     uploadBytes(ref, archivo.blob, {contentType:archivo.contentType || "image/jpeg"}),
-    15000,
+    7000,
     "Storage tardó demasiado o está bloqueado. Intento guardarlo en respaldo Firestore."
   );
-  return await withTimeout(getDownloadURL(ref), 8000, "El comprobante subió, pero no se pudo obtener el enlace.");
+  return await withTimeout(getDownloadURL(ref), 5000, "El comprobante subió, pero no se pudo obtener el enlace.");
 }
 
 async function subirComprobantePago({chofer, periodoId, sentido, monto, file, marcadoPor}){
@@ -4149,7 +4152,7 @@ async function subirComprobantePago({chofer, periodoId, sentido, monto, file, ma
     actualizado:serverTimestamp()
   };
 
-  await withTimeout(setDoc(doc(db,"comprobantes_pagos",id),data,{merge:true}), 10000, "El comprobante subió, pero no se pudo guardar el registro.");
+  await withTimeout(setDoc(doc(db,"comprobantes_pagos",id),data,{merge:true}), 7000, "El comprobante subió, pero no se pudo guardar el registro.");
   await withTimeout(setDoc(doc(db,"pagos_semanales",id),{
     chofer,
     periodoId,
@@ -4166,7 +4169,7 @@ async function subirComprobantePago({chofer, periodoId, sentido, monto, file, ma
     storageError,
     comprobanteObligatorio:true,
     actualizado:serverTimestamp()
-  },{merge:true}), 10000, "El comprobante subió, pero no se pudo marcar el pago como realizado.");
+  },{merge:true}), 7000, "El comprobante subió, pero no se pudo marcar el pago como realizado.");
 
   cacheRemove(`admin_5050_${chofer}_${periodoId}`);
   cacheRemove(`cierre_sem_${chofer}_${periodoId}`);
@@ -4296,8 +4299,11 @@ window.subirComprobantePagoChofer = async function(){
   try{
     if(!file) throw new Error("Seleccioná una foto del comprobante antes de subir.");
     btns.forEach(b=>{ if((b.textContent||"").includes("Subir comprobante")) b.disabled = true; });
-    if(clicked) clicked.textContent = "Subiendo comprobante...";
-    if($("cierreSemanalMsg")) msg($("cierreSemanalMsg"), "Subiendo comprobante... si Storage no responde, se guardará en respaldo seguro.", true);
+    if(clicked) clicked.textContent = "Preparando foto...";
+    if($("cierreSemanalMsg")) msg($("cierreSemanalMsg"), "Preparando comprobante liviano...", true);
+    await new Promise(r=>setTimeout(r, 40));
+    if(clicked) clicked.textContent = "Subiendo...";
+    if($("cierreSemanalMsg")) msg($("cierreSemanalMsg"), "Subiendo comprobante. Si Storage tarda, se usa respaldo rápido.", true);
     const pago = await subirComprobantePago({
       chofer:currentUserId,
       periodoId:c.periodo.id,
@@ -4326,15 +4332,21 @@ window.subirComprobantePagoAdmin = async function(chofer, periodoId, sentido, mo
   const clicked = Array.from(document.querySelectorAll('button')).find(b => (b.getAttribute('onclick') || '').includes(inputId));
   const oldText = clicked ? clicked.textContent : "";
   try{
-    if(clicked){ clicked.disabled = true; clicked.textContent = "Subiendo comprobante..."; }
-    if($("adminMsg")) msg($("adminMsg"), "Subiendo comprobante...", true);
+    if(!file) throw new Error("Seleccioná una foto del comprobante antes de subir.");
+    if(clicked){ clicked.disabled = true; clicked.textContent = "Preparando foto..."; }
+    if($("adminMsg")) msg($("adminMsg"), "Preparando comprobante liviano...", true);
+    await new Promise(r=>setTimeout(r, 40));
+    if(clicked) clicked.textContent = "Subiendo...";
+    if($("adminMsg")) msg($("adminMsg"), "Subiendo comprobante. Si Storage tarda, se usa respaldo rápido.", true);
     await subirComprobantePago({chofer, periodoId, sentido, monto, file, marcadoPor:"admin"});
     cacheRemove("comprobantes_admin_recientes");
     cacheRemove("pagos_pendientes_chofer_" + chofer);
     cacheRemove(`admin_5050_${chofer}_${periodoId}`);
-    if($("adminMsg")) msg($("adminMsg"), "Comprobante cargado. Al chofer le aparecerá “David ya te pagó” para aceptar y ocultar el aviso.", true);
-    await loadAdmin();
-    if($("adminComprobantesList") && $("adminComprobantesList").innerHTML.trim()) loadComprobantesAdmin(true).catch(()=>{});
+    if($("adminMsg")) msg($("adminMsg"), "Comprobante cargado. Actualizando la lista en segundo plano.", true);
+    setTimeout(()=>{
+      loadAdmin().catch(e=>console.warn("Refresco admin diferido", e));
+      if($("adminComprobantesList") && $("adminComprobantesList").innerHTML.trim()) loadComprobantesAdmin(true).catch(()=>{});
+    }, 250);
   }catch(e){
     if($("adminMsg")) msg($("adminMsg"), "No se pudo subir el comprobante: " + e.message);
     alert("No se pudo subir el comprobante: " + e.message);
