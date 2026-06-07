@@ -65,12 +65,13 @@ Cambios:
 - v2.8.103: sincronización espejo del último ganador en cada documento de chofer para que Chofer y Admin vean lo mismo aunque una colección no sea legible para chofer.
 - v2.8.104: ganador semana pasada unificado: Chofer lee primero su propio documento, Admin puede forzar resincronización visible y se reportan fallas por chofer.
 - v2.8.105: limpieza final de ganador semana pasada: una sola fuente oficial, una sola función de lectura para Admin/Chofer y cachés viejos eliminados.
+- v2.8.106: Chofer recibe botón igual al Admin para actualizar ganador actual y se refresca automáticamente desde el mismo ranking liviano.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.105 · Build 2026-06-07-GANADOR-OFICIAL-UNICO</title>
+<title>EXPLORA v2.8.106 · Build 2026-06-07-GANADOR-ACTUAL-CHOFER</title>
 <style>
 :root{
   --bg:#080808;
@@ -1228,7 +1229,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.105</b> · Build 2026-06-07-GANADOR-OFICIAL-UNICO</div>
+    <div class="build-version"><b>v2.8.106</b> · Build 2026-06-07-GANADOR-ACTUAL-CHOFER</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1264,6 +1265,8 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
           <small>Puesto por puntos: 1° · 0%</small>
         </div>
       </div>
+      <button class="btn-dark" style="margin-top:10px" type="button" onclick="actualizarGanadorActualChofer(true)">🏆 Actualizar ganador actual</button>
+      <div id="driverGanadorActualMsg"></div>
       <div class="driver-b-metrics">
         <div class="metric"><span>Viajes semana</span><strong id="todayTrips">0</strong><em>🧳</em></div>
         <div class="metric"><span>Facturación semana</span><strong id="todayTotal">$0</strong><em>📊</em></div>
@@ -2518,6 +2521,9 @@ async function loadDriver(){
     $("todayTotal").textContent = money(0);
   });
 
+  // Ganador actual: mismo cálculo liviano que usa el ranking/admin, automático y con botón manual visible.
+  setTimeout(()=>actualizarGanadorActualChofer(false).catch(e=>console.warn("Ganador actual chofer diferido", e)), 450);
+
   // Ganador semana pasada: carga diferida y con caché para no trabar celulares lentos.
   setTimeout(()=>loadGanadorSemanaPasadaChofer().catch(e=>console.warn("Ganador semana pasada diferido", e)), 350);
 
@@ -3580,6 +3586,58 @@ function renderDriverLeaderBonus(data, lider, yo, yoIndex){
     </div>
   `;
 }
+
+
+async function actualizarGanadorActualChofer(mostrarMsg=false){
+  const boxMsg = $("driverGanadorActualMsg");
+  try{
+    if(mostrarMsg && boxMsg) msg(boxMsg, "Actualizando ganador actual...", true);
+    const fechaBase = (currentUserId && typeof fechaOperativaParaChofer === "function")
+      ? fechaOperativaParaChofer(currentUserId, currentProfile || null)
+      : today();
+    const periodoRanking = getPeriodoTrabajoActual(fechaBase);
+    const cacheKey = `ranking_fast_${periodoRanking.id}`;
+    const cached = cacheGet(cacheKey, 2 * 60 * 1000);
+
+    if(cached && cached.ranking && cached.ranking.length){
+      const liderCache = cached.ranking[0];
+      const yoIndexCache = cached.ranking.findIndex(x=>x.id === currentUserId);
+      const yoCache = yoIndexCache >= 0 ? cached.ranking[yoIndexCache] : null;
+      renderDriverLeaderBonus(cached, liderCache, yoCache, yoIndexCache);
+    }
+
+    const data = await withTimeout(calcularRankingSemanalLiviano(periodoRanking), 7000, "Ranking actual tardó demasiado.");
+    cacheSet(cacheKey, data);
+    const lider = data && data.ranking && data.ranking.length ? data.ranking[0] : null;
+    const yoIndex = data && data.ranking ? data.ranking.findIndex(x=>x.id === currentUserId) : -1;
+    const yo = yoIndex >= 0 ? data.ranking[yoIndex] : null;
+
+    if(lider){
+      renderDriverLeaderBonus(data, lider, yo, yoIndex);
+      if(mostrarMsg && boxMsg){
+        const ganadorBono = data.ganadorBono || data.ranking.find(x=>!x.suspendidoBono) || lider;
+        msg(boxMsg, `Ganador actual actualizado: ${ganadorBono.nombre || ganadorBono.id}.`, true);
+      }
+    }else{
+      const target = $("driverLeaderContent");
+      if(target){
+        target.innerHTML = `
+          <div class="ranking-bonus-box">
+            <b>🏆 Ganador actual</b><br>
+            <div class="bonus-money">💰 Bono semanal: ${money(50000)}</div>
+            <small>Todavía no hay actividad suficiente en esta semana.</small>
+          </div>
+        `;
+      }
+      if(mostrarMsg && boxMsg) msg(boxMsg, "Todavía no hay ranking actual con actividad.", true);
+    }
+  }catch(e){
+    console.warn("No se pudo actualizar ganador actual chofer", e);
+    if(mostrarMsg && boxMsg) msg(boxMsg, "No se pudo actualizar ganador actual: " + (e.message || e));
+  }
+}
+
+window.actualizarGanadorActualChofer = actualizarGanadorActualChofer;
 
 window.openRankingPanel = async function(){
   showPanel("rankingPanel");
