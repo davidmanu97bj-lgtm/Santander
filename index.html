@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.84
-Build: 2026-06-07-FINAL-PRODUCCION-CIERRES-LIMPIOS-024
+Version: 2.8.85
+Build: 2026-06-07-BLOQUEO-CIERRES-ANTES-DE-ALTA-025
 Fecha: 06/06/2026
 Cambios:
 - Se agrega botón “Mi cierre semanal” en Chofer para ver el cierre provisorio de la semana activa sin esperar al sábado.
@@ -46,12 +46,13 @@ Cambios:
 - Cierre con comprobante simplificado: quien debe pagar sube foto; la app sigue operando con cartel hasta resolver; David puede pagar desde Admin y el chofer confirma para ocultar aviso.
 - Corrección: Admin y Chofer usan la misma fecha efectiva por chofer; el modo prueba de fecha del iPhone también aplica al panel Admin para ese chofer.
 - Herramienta Admin: reset total de lanzamiento que elimina choferes, vehículos y toda actividad, conservando únicamente el usuario admin.
+- Bloqueo de cierres anteriores al alta: ningún chofer puede recibir cierre, deuda, comprobante o pago de una semana terminada antes de su fecha de creación.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.84 · Build 2026-06-07-FINAL-PRODUCCION-CIERRES-LIMPIOS</title>
+<title>EXPLORA v2.8.85 · Build 2026-06-07-BLOQUEO-CIERRES-ANTES-DE-ALTA</title>
 <style>
 :root{
   --bg:#080808;
@@ -1153,7 +1154,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.84</b> · Build 2026-06-07-FINAL-PRODUCCION-CIERRES-LIMPIOS</div>
+    <div class="build-version"><b>v2.8.85</b> · Build 2026-06-07-BLOQUEO-CIERRES-ANTES-DE-ALTA</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1390,7 +1391,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.84</b> · FINAL-PRODUCCION-CIERRES-LIMPIOS</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.85</b> · FINAL-PRODUCCION-CIERRES-LIMPIOS</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -2898,6 +2899,57 @@ function daysBetween(a,b){
   return Math.floor((parseLocalDate(b) - parseLocalDate(a)) / 86400000);
 }
 
+function normalizarFechaAltaChofer(value){
+  if(!value) return "";
+  if(typeof value === "string"){
+    const m = value.match(/\d{4}-\d{2}-\d{2}/);
+    return m ? m[0] : "";
+  }
+  if(value && typeof value.toDate === "function"){
+    return formatDateLocal(value.toDate());
+  }
+  if(value && typeof value.seconds === "number"){
+    return formatDateLocal(new Date(value.seconds * 1000));
+  }
+  if(value instanceof Date && !isNaN(value.getTime())) return formatDateLocal(value);
+  return "";
+}
+
+function fechaAltaChoferDesdePerfil(perfil){
+  if(!perfil) return "";
+  return normalizarFechaAltaChofer(
+    perfil.fechaAlta ||
+    perfil.fechaCreacion ||
+    perfil.creadoFecha ||
+    perfil.createdAtFecha ||
+    perfil.creadoEn ||
+    perfil.createdAt ||
+    perfil.creado ||
+    ""
+  );
+}
+
+async function obtenerPerfilChoferSeguro(choferId, perfil=null){
+  if(perfil) return perfil;
+  if(!choferId) return null;
+  try{
+    const snap = await withTimeout(getDoc(doc(db,"choferes",choferId)), 2200, "No se pudo verificar fecha de alta del chofer.");
+    return snap.exists() ? {id:snap.id, ...snap.data()} : null;
+  }catch(e){
+    console.warn("No se pudo leer perfil del chofer para validar fecha de alta", e);
+    return null;
+  }
+}
+
+function periodoPermitidoPorAltaChofer(periodo, perfil){
+  if(!periodo) return false;
+  const alta = fechaAltaChoferDesdePerfil(perfil);
+  if(!alta) return true; // compatibilidad: usuarios viejos sin fecha de alta no se bloquean automáticamente
+  // Solo se permiten cierres cuya semana terminó el mismo día o después del alta del chofer.
+  // Ejemplo: chofer creado 2026-06-05 no puede recibir cierres con fin 2026-05-29.
+  return String(periodo.end || "") >= alta;
+}
+
 function isSaturday(dateStr){
   return parseLocalDate(dateStr).getDay() === 6;
 }
@@ -2973,17 +3025,25 @@ async function getPeriodoCierrePendienteNoConfirmado(choferId=currentUserId, dat
   // Detecta cierres pendientes para TODOS los choferes con la misma regla:
   // revisar semanas vencidas desde la más reciente hacia atrás y mostrar la primera
   // que no tenga cierre aceptado por el chofer.
+  // Regla de alta: nunca se piden cierres de semanas terminadas antes de crear al chofer.
   if(!choferId) return null;
 
-  const cacheKey = `periodo_cierre_pendiente_v2_${choferId}_${dateStr}`;
+  const perfilChofer = await obtenerPerfilChoferSeguro(choferId, choferId === currentUserId ? currentProfile : null);
+
+  const cacheKey = `periodo_cierre_pendiente_v3_alta_${choferId}_${dateStr}_${fechaAltaChoferDesdePerfil(perfilChofer) || "sin_alta"}`;
   const cached = cacheGet(cacheKey, 45 * 1000);
   if(cached && cached.periodoId){
     const p = periodoDesdeIdPago(cached.periodoId);
-    if(p && periodoCerradoYaVencido(p, dateStr)) return p;
+    if(p && periodoCerradoYaVencido(p, dateStr) && periodoPermitidoPorAltaChofer(p, perfilChofer)) return p;
   }
 
   let cursor = periodoAnterior(getPeriodoTrabajoActual(dateStr));
   for(let i=0; i<8; i++){
+    if(!periodoPermitidoPorAltaChofer(cursor, perfilChofer)){
+      // Como se revisa hacia atrás, si esta semana ya es anterior al alta, todas las anteriores también lo son.
+      cacheSet(cacheKey, {periodoId:""});
+      return null;
+    }
     if(!periodoCerradoYaVencido(cursor, dateStr)){
       cursor = periodoAnterior(cursor);
       continue;
@@ -3407,6 +3467,10 @@ async function getGanadorSemanalRapido(periodo){
 }
 
 async function calcularCierreSemanalUltraRapido(chofer, periodo){
+  const perfilChofer = await obtenerPerfilChoferSeguro(chofer, chofer === currentUserId ? currentProfile : null);
+  if(!periodoPermitidoPorAltaChofer(periodo, perfilChofer)){
+    return cierreDesdeAcumulado(chofer, periodo, {chofer, periodoId:periodo.id}, null, 0);
+  }
   const acumKey = `acum_sem_${chofer}_${periodo.id}`;
   let acumulado = cacheGet(acumKey, 60 * 60 * 1000) || null;
 
@@ -3468,6 +3532,10 @@ window.reconstruirCierreSemanal = async function(){
 }
 
 async function calcularCierreSemanalLiviano(chofer, periodo, forceRebuild=false){
+  const perfilChofer = await obtenerPerfilChoferSeguro(chofer, chofer === currentUserId ? currentProfile : null);
+  if(!periodoPermitidoPorAltaChofer(periodo, perfilChofer)){
+    return cierreDesdeAcumulado(chofer, periodo, {chofer, periodoId:periodo.id}, null, 0);
+  }
   let ganador = null;
   try{
     const rankingData = await calcularRankingSemanalLiviano(periodo);
@@ -3593,9 +3661,10 @@ function periodoDesdeIdPago(periodoId){
   return {start, end, closeDate:addDays(end,1), id:`${start}_${end}`, motor:"sabado_0001"};
 }
 
-function pagoPerteneceASemanaCerradaValida(p, fechaBase=today()){
+function pagoPerteneceASemanaCerradaValida(p, fechaBase=today(), perfilChofer=null){
   const periodo = periodoDesdeIdPago(p && p.periodoId);
   if(!periodo) return false;
+  if(!periodoPermitidoPorAltaChofer(periodo, perfilChofer)) return false;
   const actual = getPeriodoTrabajoActual(fechaBase);
   // Los comprobantes son de cierres ya cerrados: nunca deben apuntar a la semana actual o futura.
   // Esto elimina avisos creados por simulaciones/fechas manuales tipo domingo-domingo o períodos adelantados.
@@ -3629,12 +3698,12 @@ async function ocultarPagoInconsistente(p, motivo="Pago viejo/inconsistente"){
   }catch(e){ console.warn("No se pudo ocultar pago inconsistente", e); }
 }
 
-async function depurarPagosContraCierreReal(items, choferId){
+async function depurarPagosContraCierreReal(items, choferId, perfilChofer=null){
   const visibles = [];
   for(const p of (items || [])){
     if(!pagoPendienteVisibleOperativo(p)) continue;
     const periodo = periodoDesdeIdPago(p.periodoId);
-    if(!periodo) continue;
+    if(!periodo || !periodoPermitidoPorAltaChofer(periodo, perfilChofer)) continue;
     try{
       const c = await withTimeout(calcularCierreSemanalUltraRapido(choferId || p.chofer, periodo), 4500, "No se pudo validar el cierre.");
       const esperado = montoEsperadoPagoDesdeCierre(c, p.sentido);
@@ -3673,17 +3742,17 @@ async function getPagosPendientesChofer(force=false){
     snap.forEach(d=>{
       const p = {id:d.id, ...d.data()};
       if(!pagoPendienteVisibleOperativo(p)) return;
-      if(!pagoPerteneceASemanaCerradaValida(p)) return;
+      if(!pagoPerteneceASemanaCerradaValida(p, today(), currentProfile)) return;
       const pendientePago = p.pagado !== true;
       const davidPagoSinVisto = p.sentido === "david_a_chofer" && p.pagado === true && p.vistoPorChofer !== true;
       if(pendientePago || davidPagoSinVisto) items.push(p);
     });
-    const depurados = await depurarPagosContraCierreReal(items, currentUserId);
+    const depurados = await depurarPagosContraCierreReal(items, currentUserId, currentProfile);
     cacheSet(cacheKey, depurados);
     return depurados;
   }catch(e){
     console.warn("No se pudieron cargar pagos pendientes del chofer", e);
-    return (cached || []).filter(p=>pagoPendienteVisibleOperativo(p) && pagoPerteneceASemanaCerradaValida(p)).slice(0,1);
+    return (cached || []).filter(p=>pagoPendienteVisibleOperativo(p) && pagoPerteneceASemanaCerradaValida(p, today(), currentProfile)).slice(0,1);
   }
 }
 
@@ -5596,7 +5665,7 @@ async function calcularDeudaAcumuladaChofer(chofer, periodoActualId=""){
       const p = {id:d.id, ...d.data()};
       if(p.pagado === true) return;
       if(!pagoPendienteVisibleOperativo(p)) return;
-      if(!pagoPerteneceASemanaCerradaValida(p)) return;
+      if(!pagoPerteneceASemanaCerradaValida(p, today(), currentProfile)) return;
       if(periodoActualId && p.periodoId === periodoActualId) return;
       const monto = Number(p.monto || 0);
       if(p.sentido === "chofer_a_david"){
@@ -6148,7 +6217,7 @@ function seleccionarPagoPendienteMasAntiguo(pagos, choferId, perfilChofer=null){
   const fechaBase = fechaOperativaParaChofer(choferId, perfilChofer);
   return (pagos || [])
     .filter(p=>p && p.chofer === choferId && pagoPendienteVisibleOperativo(p) && (p.pagado !== true || (p.sentido === "david_a_chofer" && p.pagado === true && p.vistoPorChofer !== true)))
-    .filter(p=>pagoPerteneceASemanaCerradaValida(p, fechaBase))
+    .filter(p=>pagoPerteneceASemanaCerradaValida(p, fechaBase, perfilChofer))
     .sort((a,b)=>String(a.periodoId || "").localeCompare(String(b.periodoId || "")))[0] || null;
 }
 
@@ -6180,7 +6249,7 @@ async function cargarVehiculosAdminSimple(periodo){
       if(!p.chofer) return;
       const perfilPago = choferesPorId[p.chofer] || null;
       pagosPorChoferPeriodo[`${p.chofer}_${p.periodoId || ""}`] = p;
-      if(p.pagado !== true && pagoPerteneceASemanaCerradaValida(p, fechaOperativaParaChofer(p.chofer, perfilPago))){
+      if(p.pagado !== true && pagoPerteneceASemanaCerradaValida(p, fechaOperativaParaChofer(p.chofer, perfilPago), perfilPago)){
         if(!deudaPendientePorChofer[p.chofer]) deudaPendientePorChofer[p.chofer] = {choferDebe:0, davidDebe:0, itemsChofer:0, itemsDavid:0};
         const monto = Number(p.monto || 0);
         if(p.sentido === "chofer_a_david"){
@@ -6911,7 +6980,10 @@ window.crearChoferVehiculoAdmin = async function(){
       }, { merge:true }).catch(e=>console.warn("No se pudo limpiar chofer anterior", e));
     }
 
-    await setDoc(doc(db,"choferes",usuario),{
+    const choferRef = doc(db,"choferes",usuario);
+    const choferSnapActual = await getDoc(choferRef).catch(()=>null);
+    const choferYaExistia = !!(choferSnapActual && choferSnapActual.exists && choferSnapActual.exists());
+    const choferUpdate = {
       nombre,
       rol:"chofer",
       vehiculo: patente,
@@ -6919,10 +6991,17 @@ window.crearChoferVehiculoAdmin = async function(){
       activo:true,
       usuario,
       email:`${usuario}@explora.local`,
-      creadoPor: currentUserId || "admin",
+      creadoPor: choferYaExistia ? (choferSnapActual.data().creadoPor || currentUserId || "admin") : (currentUserId || "admin"),
       ultimaActividad:"sin registro",
       actualizado: serverTimestamp()
-    }, { merge:true });
+    };
+    if(!choferYaExistia || !fechaAltaChoferDesdePerfil(choferSnapActual.data())){
+      choferUpdate.creadoFecha = today();
+      choferUpdate.fechaAlta = today();
+      choferUpdate.createdAtFecha = today();
+      choferUpdate.createdAt = serverTimestamp();
+    }
+    await setDoc(choferRef, choferUpdate, { merge:true });
 
     const vehiculoCache = {
       ...(vehiculoExistente || {}),
