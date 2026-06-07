@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.81
+Version: 2.8.82
 Build: 2026-06-06-MODO-PRUEBA-FECHA-CHOFER-022
 Fecha: 06/06/2026
 Cambios:
@@ -41,13 +41,15 @@ Cambios:
 - Corrección: comprobantes con fallback Firestore si Storage queda bloqueado o tarda; muestra error real y nunca queda infinito en Subiendo.
 - Corrección: botón “Ver foto” abre visor interno compatible con Storage y respaldo Firestore, tanto en Admin como en Chofer.
 - Corrección: modo prueba fecha por chofer se resincroniza después de encontrar el ID real del chofer; ahora el cierre sábado/comprobante toma la fecha del iPhone del usuario autorizado.
+- Corrección crítica: si el acumulado rápido está en 0, el cierre obligatorio reconstruye viajes/gastos reales y ya no se autoacepta sin mostrar comprobante.
+- Regla lanzamiento: semana sin actividad también muestra cierre obligatorio, pero sin pedir comprobante y queda guardada como “sin actividad”.
 - Herramienta Admin: reset total de lanzamiento que elimina choferes, vehículos y toda actividad, conservando únicamente el usuario admin.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.81 · Build 2026-06-06-MODO-PRUEBA-FECHA-CHOFER-FIX</title>
+<title>EXPLORA v2.8.81 · Build 2026-06-07-CIERRE-COMPROBANTE-FIX</title>
 <style>
 :root{
   --bg:#080808;
@@ -1110,7 +1112,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.81</b> · Build 2026-06-06-MODO-PRUEBA-FECHA-CHOFER-FIX</div>
+    <div class="build-version"><b>v2.8.81</b> · Build 2026-06-07-CIERRE-COMPROBANTE-FIX</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -4037,20 +4039,38 @@ function renderComprobantesLista(box, items, soloPropios){
   }).join("");
 }
 
+function cierreSinActividad(c){
+  return !!c &&
+    Number(c.totalViajes || 0) === 0 &&
+    Number(c.cantidadViajes || 0) === 0 &&
+    Number(c.totalGastos || 0) === 0 &&
+    Number(c.cantidadGastos || 0) === 0 &&
+    Number(c.totalFondoOperativo || 0) === 0 &&
+    Number(c.cantidadFondoOperativo || 0) === 0 &&
+    Number(c.efectivo || 0) === 0 &&
+    Number(c.transferencia || 0) === 0 &&
+    Number(c.tarjeta || 0) === 0 &&
+    Number(c.choferDebe || 0) === 0 &&
+    Number(c.davidDebe || 0) === 0;
+}
+
 function renderCierreSemanal(c){
   const pago = c.pagoSemanal || null;
   const yaPagado = pago && pago.pagado === true;
   const puedeCerrarHoy = puedeCerrarPeriodo(c.periodo);
+  const sinActividad = cierreSinActividad(c);
 
   if((Number(c.choferDebe || 0) > 0 || Number(c.davidDebe || 0) > 0) && !(c.pagoSemanal && c.pagoSemanal.pagado === true)){
     asegurarPagoSemanalPendiente(c).catch(e=>console.warn("No se pudo guardar pago pendiente", e));
   }
 
-  const resultado = c.choferDebe > 0
-    ? `<div class="msg err"><b>El chofer debe depositar a David:</b><br>${money(c.choferDebe)}</div>`
-    : c.davidDebe > 0
-      ? `<div class="msg ok"><b>David debe transferir al chofer:</b><br>${money(c.davidDebe)}</div>`
-      : `<div class="msg ok"><b>Cierre equilibrado:</b><br>No hay diferencia.</div>`;
+  const resultado = sinActividad
+    ? `<div class="msg ok"><b>Semana sin actividad:</b><br>No hubo viajes, gastos ni fondo operativo. No se requiere comprobante.</div>`
+    : c.choferDebe > 0
+      ? `<div class="msg err"><b>El chofer debe depositar a David:</b><br>${money(c.choferDebe)}</div>`
+      : c.davidDebe > 0
+        ? `<div class="msg ok"><b>David debe transferir al chofer:</b><br>${money(c.davidDebe)}</div>`
+        : `<div class="msg ok"><b>Cierre equilibrado:</b><br>No hay diferencia.</div>`;
 
   let pagoHtml = "";
   if(yaPagado){
@@ -4067,10 +4087,13 @@ function renderCierreSemanal(c){
       pagoHtml = `<div class="pending-box" style="margin-top:10px">📎 David aún no cargó el comprobante. Podés seguir operando normalmente; esto no afecta tu bono porque el pago depende de David.</div>`;
     }
   }else{
-    pagoHtml = `<div class="paid-box" style="margin-top:10px">✅ Sin pago pendiente<br><small>Están equilibrados. La nueva semana ya está activa automáticamente.</small></div>`;
+    pagoHtml = sinActividad
+      ? `<div class="paid-box" style="margin-top:10px">✅ Cierre sin actividad<br><small>No se pide foto ni comprobante. Solo aceptá para dejar la semana cerrada y sincronizada.</small></div>`
+      : `<div class="paid-box" style="margin-top:10px">✅ Sin pago pendiente<br><small>Están equilibrados. La nueva semana ya está activa automáticamente.</small></div>`;
   }
 
   $("cierreSemanalResumen").innerHTML = `
+    ${sinActividad ? `<div class="paid-box">✅ Semana cerrada sin actividad<br><small>Debe aceptarse igual para que el motor semanal, ranking y comprobantes queden sincronizados.</small></div>` : ""}
     <div class="trip"><b>Período cerrado</b><br><small>${c.periodo.start} al ${c.periodo.end}</small><br><small>Cierre automático: ${c.periodo.closeDate} desde 00:01</small></div>
     <div class="trip"><b>Viajes</b><br><small>Cantidad: ${c.cantidadViajes}</small><br><b style="color:var(--gold)">${money(c.totalViajes)}</b></div>
     <div class="trip"><b>Medios de pago</b><br><small>Efectivo en mano del chofer: ${money(c.efectivo)}</small><br><small>Transferencia en cuenta David: ${money(c.transferencia)}</small><br><small>Tarjeta en cuenta David: ${money(c.tarjeta)}</small></div>
@@ -4087,12 +4110,14 @@ function renderCierreSemanal(c){
 
   if(cierreBtn){
     cierreBtn.disabled = false;
-    cierreBtn.textContent = "Aceptar resumen y continuar";
+    cierreBtn.textContent = sinActividad ? "Cerrar semana sin actividad" : "Aceptar resumen y continuar";
     cierreBtn.classList.remove("hidden");
   }
   if(volverBtn) volverBtn.classList.remove("hidden");
   if(msgBox){
-    msgBox.innerHTML = `<div class="msg ok">La nueva semana ya está activa automáticamente desde sábado 00:01. Este resumen queda guardado en el historial.</div>`;
+    msgBox.innerHTML = sinActividad
+      ? `<div class="msg ok">No se requiere comprobante porque la semana quedó en cero. Al cerrar, se guarda como semana sin actividad.</div>`
+      : `<div class="msg ok">La nueva semana ya está activa automáticamente desde sábado 00:01. Este resumen queda guardado en el historial.</div>`;
   }
 }
 
@@ -4117,6 +4142,7 @@ window.confirmarCierreSemanal = async function(){
       c.pagoSemanal = await asegurarPagoSemanalPendiente(c).catch(()=>c.pagoSemanal || null);
     }
     const cierreId = `${currentUserId}_${c.periodo.id}`;
+    const sinActividad = cierreSinActividad(c);
     const sinDiferencia = Number(c.choferDebe || 0) <= 0 && Number(c.davidDebe || 0) <= 0;
     const pagoAutomaticoSinDiferencia = sinDiferencia ? {
       chofer: currentUserId,
@@ -4160,6 +4186,9 @@ window.confirmarCierreSemanal = async function(){
       premioSemanal: Number(c.premioSemanal || 50000),
       premioAplicado: Number(c.premioAplicado || 0),
       pagoSemanal: c.pagoSemanal || pagoAutomaticoSinDiferencia || null,
+      sinActividad: sinActividad,
+      estadoCierre: sinActividad ? "sin_actividad" : "cerrado",
+      comprobanteRequerido: requiereComprobante,
       aceptadoPorChofer:true,
       actualizado: serverTimestamp()
     },{merge:true});
@@ -4184,7 +4213,7 @@ window.confirmarCierreSemanal = async function(){
   }finally{
     if(btn){
       btn.disabled = false;
-      btn.textContent = "Aceptar resumen y continuar";
+      btn.textContent = cierreSemanalPendiente && cierreSinActividad(cierreSemanalPendiente) ? "Cerrar semana sin actividad" : "Aceptar resumen y continuar";
     }
   }
 }
@@ -4197,34 +4226,32 @@ async function checkCierreSemanalAutomatico(){
   const cierreId = `${currentUserId}_${periodo.id}`;
 
   try{
-    const c = await withTimeout(calcularCierreSemanalUltraRapido(currentUserId, periodo), 6500, "cierre automático");
+    let c = await withTimeout(calcularCierreSemanalUltraRapido(currentUserId, periodo), 6500, "cierre automático");
 
-    // Si una semana vencida no tuvo viajes ni gastos, se marca cerrada automáticamente
-    // para no frenar al chofer ni repetir el mismo aviso vacío en cada apertura.
-    if(!c || (Number(c.cantidadViajes || 0) === 0 && Number(c.cantidadGastos || 0) === 0)){
-      await setDoc(doc(db,"cierres_semanales",cierreId),{
-        fechaConfirmacion: today(),
-        horaConfirmacion: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
-        periodoInicio: periodo.start,
-        periodoFin: periodo.end,
-        cierreObligatorio: periodo.closeDate,
-        periodoId: periodo.id,
-        motor:"sabado_0001",
-        chofer: currentUserId,
-        vehiculo: currentVehicle ? currentVehicle.id : "",
-        totalViajes:0,
-        cantidadViajes:0,
-        totalGastos:0,
-        cantidadGastos:0,
-        aceptadoPorChofer:true,
-        cerradoAutomaticoSinMovimientos:true,
-        actualizado: serverTimestamp()
-      },{merge:true});
-      cacheRemove(`periodo_cierre_pendiente_v2_${currentUserId}_${today()}`);
-      return;
+    // FIX LANZAMIENTO 2026-06-07:
+    // Antes, si el acumulado rápido todavía no existía o estaba en 0, el sistema podía
+    // marcar el cierre como aceptado automáticamente y por eso no aparecía la pantalla
+    // obligatoria ni el comprobante al probar cambiando la fecha del iPhone.
+    // Ahora, si el cálculo rápido da 0, se reconstruye desde viajes/gastos reales antes
+    // de decidir. Y aun si queda sin movimientos, se muestra el cierre para que el chofer
+    // lo acepte manualmente; no se salta más la pantalla de cierre semanal.
+    if(!c || (Number(c.cantidadViajes || 0) === 0 && Number(c.cantidadGastos || 0) === 0 && Number(c.totalFondoOperativo || 0) === 0)){
+      try{
+        const reconstruido = await withTimeout(calcularCierreSemanalLiviano(currentUserId, periodo, true), 18000, "reconstrucción de cierre automático");
+        if(reconstruido) c = reconstruido;
+      }catch(rebuildErr){
+        console.warn("No se pudo reconstruir cierre automático; se muestra el cálculo rápido", rebuildErr);
+      }
+    }
+
+    if(!c){
+      c = cierreDesdeAcumulado(currentUserId, periodo, {}, null, await getPremioSemanal());
     }
 
     c.pagoSemanal = await getEstadoPagoSemanal(currentUserId, periodo.id).catch(()=>null);
+    if(!c.pagoSemanal && (Number(c.choferDebe || 0) > 0 || Number(c.davidDebe || 0) > 0)){
+      c.pagoSemanal = await asegurarPagoSemanalPendiente(c).catch(()=>null);
+    }
     cierreSemanalPendiente = c;
     cierreSemanalCache = { key: cierreId, data: c };
     cacheSet(`cierre_sem_${cierreId}`, c);
