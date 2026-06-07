@@ -48,6 +48,7 @@ Cambios:
 - Herramienta Admin: reset total de lanzamiento que elimina choferes, vehículos y toda actividad, conservando únicamente el usuario admin.
 - v2.8.90: el cierre reconstruye por fecha real del viaje si el periodoId quedó viejo por simulación.
 - v2.8.90: modo prueba fuerza FECHA EFECTIVA = iPhone para ranking, cierres, bono y comprobantes.
+- v2.8.94: cierre semanal muestra solo Km recorridos de la semana en Chofer y Admin, reiniciado por período semanal.
 - v2.8.93: reparación lógica de fecha real, ranking con fecha efectiva y pagos viejos validados contra saldo final.
 - v2.8.91: cierre/bono corregido por saldo final: primero calcula 50/50, aplica bono y recién después decide quién paga, comprobante y elegibilidad. Evita falso “chofer debe pagar” cuando David debe pagar por bono.
 - v2.8.88: si un chofer no tiene fecha de alta, se repara automáticamente y no se buscan cierres históricos anteriores.
@@ -57,7 +58,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.93 · Build 2026-06-07-REPARACION-LOGICA-CIERRE</title>
+<title>EXPLORA v2.8.94 · Build 2026-06-07-KM-SEMANAL-CIERRE</title>
 <style>
 :root{
   --bg:#080808;
@@ -1193,7 +1194,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.93</b> · Build 2026-06-07-REPARACION-LOGICA-CIERRE</div>
+    <div class="build-version"><b>v2.8.94</b> · Build 2026-06-07-KM-SEMANAL-CIERRE</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1868,6 +1869,7 @@ function renderMiCierreSemanalRapido(c, stale=false){
     <div class="trip cierre-color-card">
       <div class="cierre-line cierre-facturacion"><span>Facturación</span><span>${money(c.totalViajes)}</span></div>
       <div class="cierre-line cierre-muted"><span>Viajes</span><span>${c.cantidadViajes}</span></div>
+      <div class="cierre-line cierre-muted"><span>Km recorridos</span><span>${kmRecorridosSemanaTexto(c)}</span></div>
     </div>
     <div class="trip cierre-color-card">
       <div class="cierre-line cierre-muted"><span>Efectivo chofer</span><span>${money(c.efectivo)}</span></div>
@@ -2655,6 +2657,48 @@ function getKmDiarioCacheKey(){
   return currentVehicle ? `km_diario_ok_${currentVehicle.id}_${today()}` : "";
 }
 
+
+function kmRecorridosSemanaTexto(c){
+  const km = Number(c && (c.kmRecorridosSemana ?? c.kmRecorridos ?? 0));
+  if(!Number.isFinite(km) || km <= 0) return "—";
+  return `${formatNumeroArg(Math.round(km))} km`;
+}
+
+async function getKmRecorridosSemana(chofer, periodo){
+  if(!chofer || !periodo) return null;
+  const key = `km_sem_${chofer}_${periodo.id}`;
+  const cached = cacheGet(key, 30 * 60 * 1000);
+  if(cached && typeof cached.valor !== "undefined") return cached.valor;
+
+  try{
+    const snap = await withTimeout(getDocs(query(
+      collection(db,"kilometrajes"),
+      where("chofer","==",chofer)
+    )), 2600, "Kilometraje semanal tardó demasiado.");
+
+    let total = 0;
+    let encontrados = 0;
+    snap.forEach(d=>{
+      const k = d.data() || {};
+      const fecha = String(k.fecha || "").slice(0,10);
+      const mismoPeriodo = k.periodoId ? k.periodoId === periodo.id : (fecha >= periodo.start && fecha <= periodo.end);
+      if(!mismoPeriodo) return;
+      const diferencia = Number(typeof k.diferencia !== "undefined" ? k.diferencia : (Number(k.kmActual || 0) - Number(k.kmAnterior || 0)));
+      if(Number.isFinite(diferencia) && diferencia > 0){
+        total += diferencia;
+        encontrados += 1;
+      }
+    });
+
+    const valor = encontrados ? total : null;
+    cacheSet(key, {valor, periodoId:periodo.id, chofer});
+    return valor;
+  }catch(e){
+    console.warn("No se pudo calcular km recorridos de la semana", e);
+    return cached && typeof cached.valor !== "undefined" ? cached.valor : null;
+  }
+}
+
 async function checkKmToday(){
   if(!currentVehicle || !currentUserId){
     kmTodaySaved = false;
@@ -2746,6 +2790,10 @@ window.saveDailyKm = async function(){
     const kmCacheKey = getKmDiarioCacheKey();
     if(kmCacheKey) cacheSet(kmCacheKey,{ok:true,fecha:today(),vehiculo:currentVehicle.id,km});
     cacheSet("vehiculo_" + currentVehicle.id, currentVehicle);
+    cacheRemove(`km_sem_${currentUserId}_${periodoOperativo.id}`);
+    cacheRemove(`cierre_sem_${currentUserId}_${periodoOperativo.id}`);
+    cacheRemove(`cierre_ultra_${currentUserId}_${periodoOperativo.id}`);
+    cacheRemove(`admin_5050_${currentUserId}_${periodoOperativo.id}`);
     $("kmInput").value = "";
     $("kmMsg").innerHTML = "";
     $("kmModal").classList.add("hidden");
@@ -3577,6 +3625,7 @@ async function calcularCierreSemanalUltraRapido(chofer, periodo){
   if(!acumulado){
     console.warn("Acumulado semanal inexistente; reconstrucción automática para", chofer, periodo.id);
     const cierreReconstruido = await calcularCierreSemanalLiviano(chofer, periodo, true);
+    cierreReconstruido.kmRecorridosSemana = await getKmRecorridosSemana(chofer, periodo).catch(()=>null);
     cierreReconstruido.pagoSemanal = await getEstadoPagoSemanal(chofer, periodo.id).catch(()=>null);
     cacheSet(`cierre_sem_${chofer}_${periodo.id}`, cierreReconstruido);
     return cierreReconstruido;
@@ -3589,6 +3638,7 @@ async function calcularCierreSemanalUltraRapido(chofer, periodo){
   ]);
 
   const cierre = cierreDesdeAcumulado(chofer, periodo, acumulado, ganador, premioSemanal);
+  cierre.kmRecorridosSemana = await getKmRecorridosSemana(chofer, periodo).catch(()=>null);
   cierre.pagoSemanal = pagoSemanal;
   return cierre;
 }
@@ -3632,7 +3682,9 @@ async function calcularCierreSemanalLiviano(chofer, periodo, forceRebuild=false)
       );
 
       if(acumuladoSnap.exists()){
-        return cierreDesdeAcumulado(chofer, periodo, acumuladoSnap.data(), ganador, premioSemanal);
+        const cierre = cierreDesdeAcumulado(chofer, periodo, acumuladoSnap.data(), ganador, premioSemanal);
+        cierre.kmRecorridosSemana = await getKmRecorridosSemana(chofer, periodo).catch(()=>null);
+        return cierre;
       }
     }catch(e){
       console.warn("No se pudo leer acumulado semanal; se usa cálculo de respaldo", e);
@@ -3642,7 +3694,9 @@ async function calcularCierreSemanalLiviano(chofer, periodo, forceRebuild=false)
   // Reparación real: recalcula desde viajes, gastos y derivaciones reales.
   // Se usa si falta el acumulado o si el usuario/admin fuerza reconstrucción.
   const acumulado = await recalcularAcumuladoSemanalChofer(chofer, periodo);
-  return cierreDesdeAcumulado(chofer, periodo, acumulado, ganador, premioSemanal);
+  const cierre = cierreDesdeAcumulado(chofer, periodo, acumulado, ganador, premioSemanal);
+  cierre.kmRecorridosSemana = await getKmRecorridosSemana(chofer, periodo).catch(()=>null);
+  return cierre;
 }
 
 
@@ -4425,7 +4479,7 @@ function renderCierreSemanal(c){
   $("cierreSemanalResumen").innerHTML = `
     ${sinActividad ? `<div class="paid-box">✅ Semana cerrada sin actividad<br><small>Debe aceptarse igual para que el motor semanal, ranking y comprobantes queden sincronizados.</small></div>` : ""}
     <div class="trip"><b>Período cerrado</b><br><small>${c.periodo.start} al ${c.periodo.end}</small><br><small>Cierre automático: ${c.periodo.closeDate} desde 00:01</small></div>
-    <div class="trip"><b>Viajes</b><br><small>Cantidad: ${c.cantidadViajes}</small><br><b style="color:var(--gold)">${money(c.totalViajes)}</b></div>
+    <div class="trip"><b>Viajes</b><br><small>Cantidad: ${c.cantidadViajes}</small><br><small>Km recorridos: ${kmRecorridosSemanaTexto(c)}</small><br><b style="color:var(--gold)">${money(c.totalViajes)}</b></div>
     <div class="trip"><b>Medios de pago</b><br><small>Efectivo en mano del chofer: ${money(c.efectivo)}</small><br><small>Transferencia en cuenta David: ${money(c.transferencia)}</small><br><small>Tarjeta en cuenta David: ${money(c.tarjeta)}</small></div>
     <div class="trip"><b>Gastos compartidos</b><br><small>Cantidad: ${c.cantidadGastos}</small><br><small>Pagados por chofer: ${money(c.totalGastosPagadosChofer || 0)}</small><br><small>Fondo operativo pagado por David: ${money(c.totalFondoOperativo || 0)}</small><br><small>Parte a recuperar al chofer: ${money(c.reintegroFondoOperativoChofer || 0)}</small><br><b style="color:var(--gold)">${money(c.totalGastos)}</b></div>
     <div class="trip"><b>Resultado 50/50</b><br><small>Neto: ${money(c.neto)}</small><br><small>Parte chofer: ${money(c.mitadChofer)}</small><br><small>Parte David: ${money(c.mitadDavid)}</small><br><small>Efectivo neto del chofer: ${money(c.efectivoNetoChofer)}</small><br><small>${textoDiferenciaAntesPremio(c)}</small></div>
@@ -6682,6 +6736,7 @@ function renderResumenSemanalAdmin(vehiculoId,c,pago){
         <div class="admin-cierre-simple-item"><span>Facturación</span><b>${money(c.totalViajes)}</b></div>
         <div class="admin-cierre-simple-item"><span>Gastos</span><b>${money(c.totalGastos)}</b></div>
         <div class="admin-cierre-simple-item"><span>Viajes</span><b>${Number(c.cantidadViajes || 0)}</b></div>
+        <div class="admin-cierre-simple-item"><span>Km recorridos</span><b>${kmRecorridosSemanaTexto(c)}</b></div>
         <div class="admin-cierre-simple-item"><span>Neto</span><b>${money(c.neto)}</b></div>
       </div>
 
