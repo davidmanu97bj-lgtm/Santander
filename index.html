@@ -46,7 +46,10 @@ Cambios:
 - Cierre con comprobante simplificado: quien debe pagar sube foto; la app sigue operando con cartel hasta resolver; David puede pagar desde Admin y el chofer confirma para ocultar aviso.
 - Corrección: Admin y Chofer usan la misma fecha efectiva por chofer; el modo prueba de fecha del iPhone también aplica al panel Admin para ese chofer.
 - Herramienta Admin: reset total de lanzamiento que elimina choferes, vehículos y toda actividad, conservando únicamente el usuario admin.
-- v2.8.89: modo prueba fuerza FECHA EFECTIVA = iPhone para ranking, cierres, bono y comprobantes.
+- v2.8.90: el cierre reconstruye por fecha real del viaje si el periodoId quedó viejo por simulación.
+- v2.8.90: modo prueba fuerza FECHA EFECTIVA = iPhone para ranking, cierres, bono y comprobantes.
+- v2.8.93: reparación lógica de fecha real, ranking con fecha efectiva y pagos viejos validados contra saldo final.
+- v2.8.91: cierre/bono corregido por saldo final: primero calcula 50/50, aplica bono y recién después decide quién paga, comprobante y elegibilidad. Evita falso “chofer debe pagar” cuando David debe pagar por bono.
 - v2.8.88: si un chofer no tiene fecha de alta, se repara automáticamente y no se buscan cierres históricos anteriores.
 - v2.8.87: cierre semanal estable en un solo documento, bloqueo por fecha de alta y cartel visible de fuente de fecha (iPhone/Firebase).
 -->
@@ -54,7 +57,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.89 · Build 2026-06-07-FECHA-EFECTIVA-IPHONE-PRUEBA</title>
+<title>EXPLORA v2.8.93 · Build 2026-06-07-REPARACION-LOGICA-CIERRE</title>
 <style>
 :root{
   --bg:#080808;
@@ -1148,7 +1151,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 @media(max-width:430px){.admin-clean-row{grid-template-columns:1fr}.admin-summary-grid.admin-clean-summary-grid{grid-template-columns:1fr 1fr!important}.admin-cierre-mobile-action{min-width:88px!important}}
 
 
-/* EXPLORA v2.8.89 · FECHA EFECTIVA IPHONE PARA PRUEBA */
+/* EXPLORA v2.8.90 · CIERRE RECONSTRUYE POR FECHA REAL */
 .fecha-source-badge{
   display:flex;
   align-items:center;
@@ -1190,7 +1193,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.89</b> · Build 2026-06-07-FECHA-EFECTIVA-IPHONE-PRUEBA</div>
+    <div class="build-version"><b>v2.8.93</b> · Build 2026-06-07-REPARACION-LOGICA-CIERRE</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1427,7 +1430,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.89</b> · FECHA-EFECTIVA-IPHONE</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.90</b> · CIERRE-POR-FECHA</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -1505,7 +1508,6 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
     <p class="note">Esta pantalla aparece al cerrar la semana. Si hay diferencia, quien debe pagar sube el comprobante. La app sigue funcionando, pero el cartel queda visible hasta resolver el pago.</p>
     <div id="cierreSemanalResumen"></div>
     <button id="confirmarCierreSemanalBtn" class="btn-gold" onclick="confirmarCierreSemanal()">Aceptar resumen y continuar</button>
-    <button id="volverAppCierreBtn" class="btn-dark hidden" style="margin-top:10px" onclick="cerrarCierreSemanalModal()">Volver a la app</button>
     <div id="cierreSemanalMsg"></div>
   </div>
 </div>
@@ -3052,12 +3054,13 @@ function getPeriodoSiguiente(periodo){
 }
 
 function perteneceAlPeriodo(data, periodo){
+  if(!data || !periodo) return false;
+  const fecha = String((data.fechaOperativa || data.fecha || data.creadoFecha || data.fechaServicio) || "").slice(0,10);
+  // Regla segura: si existe fecha real, la fecha manda.
+  // El periodoId queda solo como respaldo para documentos antiguos sin fecha.
+  if(fecha) return fecha >= periodo.start && fecha <= periodo.end;
   const periodoId = String(data.periodoId || "");
-  if(periodoId){
-    return periodoId === periodo.id;
-  }
-  const fecha = data.fecha || "";
-  return fecha >= periodo.start && fecha <= periodo.end;
+  return !!periodoId && periodoId === periodo.id;
 }
 
 function getPeriodoOperativoDesdePerfil(c, dateStr = today()){
@@ -3073,13 +3076,17 @@ async function getPeriodoOperativoChofer(choferId){
 }
 
 async function getPeriodoRankingVisible(){
-  // Ranking visible GLOBAL:
-  // Todos los choferes deben ver el mismo ranking y el mismo período activo,
-  // aunque un chofer todavía tenga pendiente aceptar el cierre anterior.
-  // El cierre pendiente se muestra en su modal/alerta, pero no debe arrastrar
-  // el ranking del perfil a una semana anterior porque genera diferencias
-  // entre perfiles de choferes.
-  return getPeriodoTrabajoActual(today());
+  // Ranking visible GLOBAL, pero usando la misma fecha efectiva que usa el cierre.
+  // En modo prueba/fecha iPhone evita que ranking y cierre miren semanas distintas.
+  let dateStr = today();
+  try{
+    if(typeof fechaOperativaParaChofer === "function" && currentUserId){
+      dateStr = fechaOperativaParaChofer(currentUserId, currentProfile || null);
+    }
+  }catch(e){
+    dateStr = today();
+  }
+  return getPeriodoTrabajoActual(dateStr);
 }
 
 async function getPremioSemana(periodo){
@@ -3181,6 +3188,108 @@ async function getDerivacionesAceptadasPorOrigenRapido(periodo){
   return cached || {};
 }
 
+
+async function calcularRankingSemanalBaseSinSuspensiones(periodo = getPeriodoTrabajoActual(today())){
+  const choferes = await getChoferesRankingActivosRapido();
+  const stats = {};
+  choferes.forEach(c=>{
+    stats[c.id] = {id:c.id,nombre:c.nombre || c.id,viajes:0,derivaciones:0,facturacion:0,porcentaje:0,actividad:0};
+  });
+
+  const derivacionesPromise = getDerivacionesAceptadasPorOrigenRapido(periodo).catch(e=>{
+    console.warn("Ranking base: derivaciones reales no disponibles", e);
+    return {};
+  });
+
+  try{
+    const acumSnap = await withTimeout(getDocs(query(
+      collection(db,"acumulados_semanales"),
+      where("periodoId","==",periodo.id)
+    )), 2200, "El ranking base tardó cargando acumulados.");
+
+    acumSnap.forEach(d=>{
+      const a = d.data();
+      const choferId = a.chofer || String(d.id).split("_")[0];
+      if(!stats[choferId]) return;
+      stats[choferId].viajes = Number(a.cantidadViajes || 0);
+      stats[choferId].facturacion = Number(a.totalViajes || 0);
+      stats[choferId].derivaciones = Number(a.derivaciones || 0);
+    });
+  }catch(e){
+    console.warn("Ranking base por acumulados no disponible", e);
+  }
+
+  const derivacionesReales = await derivacionesPromise;
+  Object.keys(derivacionesReales || {}).forEach(choferId=>{
+    if(!stats[choferId]) return;
+    stats[choferId].derivaciones = Math.max(Number(stats[choferId].derivaciones || 0), Number(derivacionesReales[choferId] || 0));
+  });
+
+  return calcularPorcentajeRanking(Object.values(stats));
+}
+
+async function validarPagoPendienteContraSaldoFinal(p){
+  // Blindaje crítico:
+  // Un pago pendiente solo puede suspender bono o pedir comprobante del chofer
+  // si después de aplicar el bono al ganador el saldo final sigue dando chofer_a_david.
+  // Evita el caso: efectivo 25.000 + bono 50.000 => David debe pagar 37.500,
+  // pero quedó guardado un pago viejo "Ariel debe pagar 12.500".
+  if(!p || p.pagado === true) return {valido:false, motivo:"pago ya resuelto"};
+  if(p.sentido !== "chofer_a_david") return {valido:true, motivo:"no suspende bono del chofer"};
+
+  const periodoPago = periodoDesdeIdPago(p.periodoId);
+  if(!periodoPago) return {valido:false, motivo:"período inválido"};
+
+  try{
+    const rankingBase = await calcularRankingSemanalBaseSinSuspensiones(periodoPago);
+    const ganadorBase = (rankingBase || [])[0] || null;
+    const premioSemanal = await getPremioSemana(periodoPago).catch(()=>50000);
+
+    let acumulado = null;
+    try{
+      const snap = await withTimeout(
+        getDoc(doc(db,"acumulados_semanales",`${p.chofer}_${periodoPago.id}`)),
+        2500,
+        "No se pudo validar acumulado del cierre."
+      );
+      if(snap.exists()) acumulado = snap.data();
+    }catch(e){
+      console.warn("No se pudo leer acumulado para validar pago; se reconstruye", e);
+    }
+
+    if(!acumulado){
+      acumulado = await withTimeout(
+        recalcularAcumuladoSemanalChofer(p.chofer, periodoPago, {timeoutViajes:6000, timeoutGastos:6000, timeoutFondos:5000}),
+        12000,
+        "No se pudo reconstruir saldo final del cierre."
+      );
+    }
+
+    const cierreReal = cierreDesdeAcumulado(p.chofer, periodoPago, acumulado || {}, ganadorBase, premioSemanal);
+    const esperadoChoferDebe = Number(cierreReal.choferDebe || 0);
+    const esperadoDavidDebe = Number(cierreReal.davidDebe || 0);
+
+    if(esperadoChoferDebe <= 0){
+      return {
+        valido:false,
+        motivo: esperadoDavidDebe > 0
+          ? `saldo final a favor del chofer: David debe ${esperadoDavidDebe}`
+          : "saldo final sin deuda del chofer"
+      };
+    }
+
+    if(Math.abs(Number(p.monto || 0) - esperadoChoferDebe) > 1){
+      return {valido:false, motivo:`monto pendiente ${Number(p.monto || 0)} no coincide con saldo final ${esperadoChoferDebe}`};
+    }
+
+    return {valido:true, motivo:"saldo final confirmado chofer_a_david"};
+  }catch(e){
+    console.warn("No se pudo validar pago contra saldo final; no se suspende para evitar falso negativo de bono", e);
+    return {valido:false, motivo:"validación no disponible"};
+  }
+}
+
+
 async function calcularRankingSemanalLiviano(periodo = getPeriodoTrabajoActual(today())){
   const cacheKey = `ranking_fast_${periodo.id}`;
   const choferes = await getChoferesRankingActivosRapido();
@@ -3191,10 +3300,6 @@ async function calcularRankingSemanalLiviano(periodo = getPeriodoTrabajoActual(t
 
   const derivacionesPromise = getDerivacionesAceptadasPorOrigenRapido(periodo).catch(e=>{
     console.warn("Ranking: derivaciones reales no disponibles", e);
-    return {};
-  });
-  const suspensionesPromise = getSuspensionesBono(periodo).catch(e=>{
-    console.warn("Ranking: suspensiones no disponibles", e);
     return {};
   });
 
@@ -3226,8 +3331,11 @@ async function calcularRankingSemanalLiviano(periodo = getPeriodoTrabajoActual(t
     stats[choferId].derivaciones = Math.max(Number(stats[choferId].derivaciones || 0), Number(derivacionesReales[choferId] || 0));
   });
 
-  const suspensionesBono = await suspensionesPromise;
   const arr = calcularPorcentajeRanking(Object.values(stats));
+  const suspensionesBono = await getSuspensionesBono(periodo, arr).catch(e=>{
+    console.warn("Ranking: suspensiones no disponibles", e);
+    return {};
+  });
   arr.forEach(x=>{
     const susp = suspensionesBono && suspensionesBono[x.id];
     x.suspendidoBono = !!susp;
@@ -3581,11 +3689,27 @@ async function asegurarPagoSemanalPendiente(c){
   if(!pagoBase) return null;
   const id = comprobanteId(pagoBase.chofer, pagoBase.periodoId);
   const actual = await getEstadoPagoSemanal(pagoBase.chofer, pagoBase.periodoId);
-  if(actual && actual.pagado === true) return actual;
+
+  // Si ya existe un pago viejo, solo se conserva si coincide con el saldo final
+  // después de aplicar el bono. Esto también valida pagos marcados como pagados:
+  // un comprobante viejo no puede seguir mostrando “Ariel debe pagar” si ahora David debe pagar.
+  const actualSentido = actual ? String(actual.sentido || "") : "";
+  const actualMonto = actual ? Number(actual.monto || 0) : 0;
+  const baseSentido = String(pagoBase.sentido || "");
+  const baseMonto = Number(pagoBase.monto || 0);
+  const coincideSaldoFinal = actual && actualSentido === baseSentido && Math.abs(actualMonto - baseMonto) <= 1;
+  if(actual && actual.pagado === true && coincideSaldoFinal) return actual;
+  if(actual && !coincideSaldoFinal){
+    await ocultarPagoInconsistente({...actual, id}, `Pago viejo ${actualSentido} ${actualMonto} reemplazado por saldo final ${baseSentido} ${baseMonto}.`);
+  }
+
   const data = {
     ...pagoBase,
     creadoFecha: actual && actual.creadoFecha ? actual.creadoFecha : today(),
     creadoHora: actual && actual.creadoHora ? actual.creadoHora : new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
+    oculto:false,
+    inconsistente:false,
+    archivado:false,
     actualizado: serverTimestamp()
   };
   await setDoc(doc(db,"pagos_semanales",id), data, {merge:true});
@@ -3599,18 +3723,26 @@ function pagoPendienteSuspendido(pago, dateStr=today()){
   return dateStr >= suspenderDesde;
 }
 
-async function getSuspensionesBono(periodo){
+async function getSuspensionesBono(periodo, rankingBase=[]){
   const cacheKey = `ranking_suspensiones_bono_${periodo.id}`;
   const cached = cacheGet(cacheKey, 2 * 60 * 1000);
   try{
     const snap = await withTimeout(getDocs(query(collection(db,"pagos_semanales"), where("afectaPeriodoBonoId","==",periodo.id))), 1400, "Suspensiones de bono tardaron.");
     const map = {};
+    const validaciones = [];
     snap.forEach(d=>{
-      const p = d.data();
-      if(pagoPendienteSuspendido(p)){
-        map[p.chofer] = {motivo:"Comprobante de cierre pendiente", pagoId:d.id, monto:Number(p.monto || 0), periodoId:p.periodoId};
-      }
+      const p = {...d.data(), id:d.id};
+      if(!pagoPendienteSuspendido(p)) return;
+      validaciones.push((async()=>{
+        const v = await validarPagoPendienteContraSaldoFinal(p);
+        if(v && v.valido){
+          map[p.chofer] = {motivo:"Comprobante de cierre pendiente", pagoId:d.id, monto:Number(p.monto || 0), periodoId:p.periodoId};
+        }else{
+          await ocultarPagoInconsistente(p, v && v.motivo ? v.motivo : "Pago pendiente no coincide con saldo final del cierre.");
+        }
+      })());
     });
+    await Promise.all(validaciones);
     cacheSet(cacheKey, map);
     return map;
   }catch(e){
@@ -3676,6 +3808,13 @@ async function depurarPagosContraCierreReal(items, choferId){
       const c = await withTimeout(calcularCierreSemanalUltraRapido(choferId || p.chofer, periodo), 4500, "No se pudo validar el cierre.");
       const esperado = montoEsperadoPagoDesdeCierre(c, p.sentido);
       const sinAct = cierreSinActividad(c);
+      if(p.sentido === "chofer_a_david"){
+        const validacionSaldoFinal = await validarPagoPendienteContraSaldoFinal(p);
+        if(!validacionSaldoFinal.valido){
+          await ocultarPagoInconsistente(p, validacionSaldoFinal.motivo || "El saldo final no deja deuda del chofer.");
+          continue;
+        }
+      }
       if(sinAct || esperado <= 0){
         await ocultarPagoInconsistente(p, sinAct ? "Cierre real sin actividad: no corresponde pago ni comprobante." : "El cierre real no tiene saldo pendiente.");
         continue;
@@ -4232,15 +4371,28 @@ function cierreSinActividad(c){
     Number(c.davidDebe || 0) === 0;
 }
 
+
+function textoDiferenciaAntesPremio(c){
+  const v = Number(c && c.diferenciaBase || 0);
+  if(Math.abs(v) < 1) return "Sin diferencia antes del premio";
+  if(v > 0) return `Antes del premio, el chofer debía a David: ${money(v)}`;
+  return `Antes del premio, David debía al chofer: ${money(Math.abs(v))}`;
+}
+
+function textoSaldoFinalCierre(c){
+  if(Number(c && c.choferDebe || 0) > 0) return `Saldo final: el chofer debe a David ${money(c.choferDebe)}`;
+  if(Number(c && c.davidDebe || 0) > 0) return `Saldo final: David debe al chofer ${money(c.davidDebe)}`;
+  return "Saldo final: cierre equilibrado";
+}
+
 function renderCierreSemanal(c){
   const pago = c.pagoSemanal || null;
   const yaPagado = pago && pago.pagado === true;
   const puedeCerrarHoy = puedeCerrarPeriodo(c.periodo);
   const sinActividad = cierreSinActividad(c);
 
-  if((Number(c.choferDebe || 0) > 0 || Number(c.davidDebe || 0) > 0) && !(c.pagoSemanal && c.pagoSemanal.pagado === true)){
-    asegurarPagoSemanalPendiente(c).catch(e=>console.warn("No se pudo guardar pago pendiente", e));
-  }
+  // Renderizar no debe crear ni modificar pagos en Firestore.
+  // Los pagos pendientes se crean al abrir/resolver/confirmar el cierre, no por pintar la pantalla.
 
   const resultado = sinActividad
     ? `<div class="msg ok"><b>Semana sin actividad:</b><br>No hubo viajes, gastos ni fondo operativo. No se requiere comprobante.</div>`
@@ -4276,14 +4428,13 @@ function renderCierreSemanal(c){
     <div class="trip"><b>Viajes</b><br><small>Cantidad: ${c.cantidadViajes}</small><br><b style="color:var(--gold)">${money(c.totalViajes)}</b></div>
     <div class="trip"><b>Medios de pago</b><br><small>Efectivo en mano del chofer: ${money(c.efectivo)}</small><br><small>Transferencia en cuenta David: ${money(c.transferencia)}</small><br><small>Tarjeta en cuenta David: ${money(c.tarjeta)}</small></div>
     <div class="trip"><b>Gastos compartidos</b><br><small>Cantidad: ${c.cantidadGastos}</small><br><small>Pagados por chofer: ${money(c.totalGastosPagadosChofer || 0)}</small><br><small>Fondo operativo pagado por David: ${money(c.totalFondoOperativo || 0)}</small><br><small>Parte a recuperar al chofer: ${money(c.reintegroFondoOperativoChofer || 0)}</small><br><b style="color:var(--gold)">${money(c.totalGastos)}</b></div>
-    <div class="trip"><b>Resultado 50/50</b><br><small>Neto: ${money(c.neto)}</small><br><small>Parte chofer: ${money(c.mitadChofer)}</small><br><small>Parte David: ${money(c.mitadDavid)}</small><br><small>Efectivo neto del chofer: ${money(c.efectivoNetoChofer)}</small><br><small>Diferencia antes de premio: ${money(c.diferenciaBase)}</small></div>
-    <div class="trip"><b>Premio semanal</b><br><small>Ganador elegible: ${c.ganadorSemana || "sin ganador"}</small><br><small>Bono configurado: ${money(c.premioSemanal || 50000)}</small><br><small>Aplicado a este chofer: ${money(c.premioAplicado)}</small></div>
+    <div class="trip"><b>Resultado 50/50</b><br><small>Neto: ${money(c.neto)}</small><br><small>Parte chofer: ${money(c.mitadChofer)}</small><br><small>Parte David: ${money(c.mitadDavid)}</small><br><small>Efectivo neto del chofer: ${money(c.efectivoNetoChofer)}</small><br><small>${textoDiferenciaAntesPremio(c)}</small></div>
+    <div class="trip"><b>Premio semanal</b><br><small>Ganador elegible: ${c.ganadorSemana || "sin ganador"}</small><br><small>Bono configurado: ${money(c.premioSemanal || 50000)}</small><br><small>Aplicado a este chofer: ${money(c.premioAplicado)}</small><br><small>${textoSaldoFinalCierre(c)}</small></div>
     ${resultado}
     ${pagoHtml}
   `;
 
   const cierreBtn = $("confirmarCierreSemanalBtn");
-  const volverBtn = $("volverAppCierreBtn");
   const msgBox = $("cierreSemanalMsg");
 
   if(cierreBtn){
@@ -4291,11 +4442,13 @@ function renderCierreSemanal(c){
     cierreBtn.textContent = sinActividad ? "Cerrar semana sin actividad" : (Number(c.choferDebe || 0) > 0 ? "Cerrar y dejar pago pendiente" : Number(c.davidDebe || 0) > 0 ? "Cerrar y esperar pago de David" : "Aceptar resumen y continuar");
     cierreBtn.classList.remove("hidden");
   }
-  if(volverBtn) volverBtn.classList.remove("hidden");
+  const davidDebePagar = Number(c.davidDebe || 0) > 0;
   if(msgBox){
-    msgBox.innerHTML = sinActividad
-      ? `<div class="msg ok">No se requiere comprobante porque la semana quedó en cero. Al cerrar, se guarda como semana sin actividad.</div>`
-      : `<div class="msg ok">La nueva semana ya está activa. Si hay pago pendiente, podés seguir operando y el aviso queda visible hasta que se cargue el comprobante.</div>`;
+    msgBox.innerHTML = davidDebePagar
+      ? ``
+      : sinActividad
+        ? `<div class="msg ok">No se requiere comprobante porque la semana quedó en cero. Al cerrar, se guarda como semana sin actividad.</div>`
+        : `<div class="msg ok">La nueva semana ya está activa. Si hay pago pendiente, podés seguir operando y el aviso queda visible hasta que se cargue el comprobante.</div>`;
   }
 }
 
@@ -7326,7 +7479,7 @@ window.eliminarChoferesDemoAdmin = async function(){
 // Este bloque deja una sola regla de cierre: un chofer + un período = un documento.
 // También impide pedir cierres anteriores a la fecha de alta del chofer.
 
-const EXPLORA_CIERRE_VERSION = "v2.8.89 · FECHA-EFECTIVA-IPHONE-PRUEBA";
+const EXPLORA_CIERRE_VERSION = "v2.8.90 · FECHA-EFECTIVA-IPHONE-PRUEBA";
 const perfilAltaCacheV287 = {};
 
 function fechaBadgeTextoV287(){
@@ -7579,7 +7732,7 @@ syncTrustedToday = async function(){
 
 
 
-// ===== EXPLORA v2.8.89 · FECHA EFECTIVA IPHONE PARA PRUEBA =====
+// ===== EXPLORA v2.8.90 · CIERRE RECONSTRUYE POR FECHA REAL =====
 // Mientras estés probando, toda la app trabaja con una sola fecha: la fecha del iPhone.
 // Firebase queda solo como referencia visual. Para producción, cambiar este valor a false.
 const EXPLORA_FECHA_EFECTIVA_IPHONE_PRUEBA = true;
@@ -7632,6 +7785,189 @@ window.EXPLORA_FECHA_EFECTIVA_IPHONE_PRUEBA = EXPLORA_FECHA_EFECTIVA_IPHONE_PRUE
 renderFechaOperativaVisibleV287();
 window.checkCierreSemanalAutomatico = checkCierreSemanalAutomatico;
 window.renderFechaOperativaVisibleV287 = renderFechaOperativaVisibleV287;
+
+
+// ===== EXPLORA v2.8.90 · CIERRE RECONSTRUYE POR FECHA REAL =====
+// Motivo: en simulación, un viaje puede quedar guardado con fecha correcta del iPhone
+// pero con un periodoId viejo por caché o por haber cambiado la fecha de prueba.
+// Desde esta versión, para reconstruir cierres, la fecha real del viaje/gasto también manda.
+// Ejemplo: si Ariel facturó el 2026-06-13 y luego se simula 2026-06-20,
+// el cierre 2026-06-13 al 2026-06-19 debe contar ese viaje aunque su periodoId viejo no coincida.
+const EXPLORA_BUILD_ACTUAL = "v2.8.90 · CIERRE-RECONSTRUYE-POR-FECHA";
+
+function fechaDocumentoParaPeriodoV290(data){
+  return String((data && (data.fechaOperativa || data.fecha || data.creadoFecha || data.fechaServicio)) || "").slice(0,10);
+}
+
+function perteneceAlPeriodoPorFechaV290(data, periodo){
+  if(!data || !periodo) return false;
+  const fecha = fechaDocumentoParaPeriodoV290(data);
+  return !!(fecha && fecha >= periodo.start && fecha <= periodo.end);
+}
+
+// Sobrescribe la función global usada por cierres, acumulados y validaciones.
+// Regla nueva: entra si coincide periodoId O si la fecha real cae dentro del período.
+// Esto corrige cierres en 0 cuando el viaje existe pero quedó con periodoId desfasado.
+perteneceAlPeriodo = function(data, periodo){
+  if(!data || !periodo) return false;
+  const fecha = fechaDocumentoParaPeriodoV290(data);
+  // Si hay fecha real, la fecha manda para evitar cierres dobles o semanas viejas por periodoId contaminado.
+  if(fecha) return fecha >= periodo.start && fecha <= periodo.end;
+  const periodoId = String(data.periodoId || "");
+  return !!periodoId && periodoId === periodo.id;
+};
+
+// En modo prueba conviene no reutilizar acumulados viejos: el cierre siempre debe reconstruirse
+// desde viajes/gastos/fondos reales del rango visible.
+const _calcularCierreSemanalUltraRapidoV290 = calcularCierreSemanalUltraRapido;
+calcularCierreSemanalUltraRapido = async function(chofer, periodo){
+  if(EXPLORA_FECHA_EFECTIVA_IPHONE_PRUEBA){
+    const cierre = await calcularCierreSemanalLiviano(chofer, periodo, true);
+    cierre.pagoSemanal = await getEstadoPagoSemanal(chofer, periodo.id).catch(()=>null);
+    return cierre;
+  }
+  return _calcularCierreSemanalUltraRapidoV290(chofer, periodo);
+};
+
+// Limpieza fuerte de cachés que pueden haber dejado el cierre en 0.
+try{
+  Object.keys(localStorage || {}).forEach(k=>{
+    const key = String(k);
+    if(key.includes("periodo_cierre_pendiente") || key.includes("cierre_sem_") || key.includes("acum_sem_") || key.includes("ranking_") || key.includes("admin_5050_")){
+      localStorage.removeItem(k);
+    }
+  });
+}catch(e){}
+
+window.calcularCierreSemanalUltraRapido = calcularCierreSemanalUltraRapido;
+window.perteneceAlPeriodo = perteneceAlPeriodo;
+window.EXPLORA_BUILD_ACTUAL = EXPLORA_BUILD_ACTUAL;
+
+
+// ===== EXPLORA v2.8.93 · CIERRE PENDIENTE PERSISTENTE =====
+// Motivo: el cierre obligatorio no debe existir solo el sábado de cierre.
+// Debe seguir apareciendo domingo, lunes o cualquier día posterior hasta que el chofer tome una acción
+// y el documento cierres_semanales/{chofer_periodo} quede con aceptadoPorChofer:true.
+const EXPLORA_BUILD_CIERRE_PERSISTENTE = "v2.8.93 · CIERRE-PENDIENTE-HASTA-ACCION";
+
+function getUltimoPeriodoCerradoPersistenteV293(dateStr = fechaOperativaParaChofer(currentUserId, currentProfile) || today()){
+  const activo = getPeriodoTrabajoActual(dateStr);
+  const previo = periodoAnterior(activo);
+  if(!previo) return null;
+  // Desde el sábado de cierre en adelante, la semana anterior queda obligatoriamente cerrable.
+  // Esto funciona también domingo/lunes, no solo el día exacto del cierre.
+  return String(dateStr) >= String(previo.closeDate) ? previo : null;
+}
+
+getPeriodoCierrePendiente = function(dateStr = fechaOperativaParaChofer(currentUserId, currentProfile) || today()){
+  return getUltimoPeriodoCerradoPersistenteV293(dateStr);
+};
+
+periodoCerradoYaVencido = function(periodo, dateStr = fechaOperativaParaChofer(currentUserId, currentProfile) || today()){
+  if(!periodo || !periodo.closeDate) return false;
+  return String(dateStr) >= String(periodo.closeDate);
+};
+
+function cierrePermitidoPorAltaPersistenteV293(periodo, perfil, dateStr){
+  if(!periodo || !periodo.closeDate) return false;
+  const alta = fechaAltaDesdePerfilV287(perfil);
+  // Regla normal: no pedir cierres anteriores al alta.
+  if(String(periodo.closeDate) >= String(alta)) return true;
+  // Respaldo seguro: si la fecha de alta fue reparada/fallback y cambia por simulación,
+  // no bloquear el último cierre vencido. Esto evita que el 20 aparezca y el 21 desaparezca.
+  const ultimo = getUltimoPeriodoCerradoPersistenteV293(dateStr);
+  return !!(ultimo && ultimo.id === periodo.id && (perfil && (perfil.altaReparadaAutomaticamente || perfil.fechaAltaFallbackMemoria)));
+}
+
+getPeriodoCierrePendienteNoConfirmado = async function(choferId=currentUserId, dateStr=fechaOperativaParaChofer(choferId,currentProfile)){
+  if(!choferId) return null;
+  dateStr = String(dateStr || today()).slice(0,10);
+  const perfil = await getPerfilChoferCierreV287(choferId);
+  const fechaAlta = fechaAltaDesdePerfilV287(perfil);
+  const cacheKey = `periodo_cierre_pendiente_v293_${choferId}_${dateStr}_${fechaAlta || "sin_alta"}`;
+  const cached = cacheGet(cacheKey, 15 * 1000);
+  if(cached && cached.periodoId){
+    const p = periodoDesdeIdPago(cached.periodoId);
+    if(p && periodoCerradoYaVencido(p, dateStr) && cierrePermitidoPorAltaPersistenteV293(p, perfil, dateStr)) return p;
+  }
+
+  const periodos = [];
+  let cursor = getUltimoPeriodoCerradoPersistenteV293(dateStr);
+  for(let i=0; i<12 && cursor; i++){
+    if(periodoCerradoYaVencido(cursor, dateStr) && cierrePermitidoPorAltaPersistenteV293(cursor, perfil, dateStr)){
+      periodos.push(cursor);
+    }
+    cursor = periodoAnterior(cursor);
+  }
+
+  // Se muestra primero el pendiente más viejo permitido para no saltar semanas.
+  periodos.sort((a,b)=>String(a.start).localeCompare(String(b.start)));
+
+  for(const periodo of periodos){
+    const cierreId = `${choferId}_${periodo.id}`;
+    try{
+      const snap = await withTimeout(getDoc(doc(db,"cierres_semanales",cierreId)), 3000, "verificación cierre persistente");
+      const data = snap.exists() ? (snap.data() || {}) : null;
+      if(!data || !cierreSemanalAceptadoPorChofer(data)){
+        cacheSet(cacheKey, {periodoId:periodo.id}, 15 * 1000);
+        return periodo;
+      }
+    }catch(e){
+      console.warn("No se pudo verificar cierre persistente", cierreId, e);
+      // Si falla la lectura, no inventamos aceptado. Mostramos el último cierre vencido para no saltear la acción.
+      if(periodo === periodos[periodos.length - 1]) return periodo;
+    }
+  }
+  return null;
+};
+
+checkCierreSemanalAutomatico = async function(){
+  if(!currentUserId) return;
+  renderFechaOperativaVisibleV287();
+  const dateStr = fechaOperativaParaChofer(currentUserId, currentProfile);
+  const periodo = await getPeriodoCierrePendienteNoConfirmado(currentUserId, dateStr).catch(()=>null);
+  if(!periodo) return;
+
+  const cierreId = `${currentUserId}_${periodo.id}`;
+  try{
+    let c = await withTimeout(calcularCierreSemanalLiviano(currentUserId, periodo, true), 18000, "cierre persistente");
+    if(!c) c = cierreDesdeAcumulado(currentUserId, periodo, {}, null, await getPremioSemanal());
+
+    const sinMovimientos =
+      Number(c.cantidadViajes || 0) === 0 &&
+      Number(c.cantidadGastos || 0) === 0 &&
+      Number(c.totalFondoOperativo || 0) === 0 &&
+      Number(c.totalViajes || 0) === 0;
+
+    if(sinMovimientos){
+      c.premioAplicado = 0;
+      c.choferDebe = 0;
+      c.davidDebe = 0;
+      c.pagoSemanal = null;
+      c.sinActividad = true;
+    }else{
+      c.pagoSemanal = await getEstadoPagoSemanal(currentUserId, periodo.id).catch(()=>null);
+      if(!c.pagoSemanal && (Number(c.choferDebe || 0) > 0 || Number(c.davidDebe || 0) > 0)){
+        c.pagoSemanal = await asegurarPagoSemanalPendiente(c).catch(()=>null);
+      }
+    }
+
+    cierreSemanalPendiente = c;
+    cierreSemanalCache = {key:cierreId, data:c};
+    cacheSet(`cierre_sem_${cierreId}`, c, 30 * 1000);
+
+    if($("cierreSemanalModal") && $("cierreSemanalResumen")){
+      $("cierreSemanalModal").classList.remove("hidden");
+      renderCierreSemanal(c);
+    }
+  }catch(e){
+    console.warn("Cierre persistente omitido para no trabar la app", e);
+  }
+};
+
+window.checkCierreSemanalAutomatico = checkCierreSemanalAutomatico;
+window.getPeriodoCierrePendienteNoConfirmado = getPeriodoCierrePendienteNoConfirmado;
+window.EXPLORA_BUILD_CIERRE_PERSISTENTE = EXPLORA_BUILD_CIERRE_PERSISTENTE;
 
 
 </script>
