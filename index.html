@@ -1266,24 +1266,16 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
           <small>Puesto por puntos: 1° · 0%</small>
         </div>
       </div>
-      <button class="btn-dark" style="margin-top:10px" type="button" onclick="actualizarGanadorActualChofer(true)">🏆 Actualizar ganador actual</button>
-      <div id="driverGanadorActualMsg"></div>
+      
       <div class="driver-b-metrics">
         <div class="metric"><span>Viajes semana</span><strong id="todayTrips">0</strong><em>🧳</em></div>
         <div class="metric"><span>Facturación semana</span><strong id="todayTotal">$0</strong><em>📊</em></div>
       </div>
     </div>
 
-    <div id="driverLastWeekWinnerCard" class="last-week-winner-card admin-last-week-winner-card">
-      <h3>🏆 Último ganador del ranking</h3>
-      <div id="driverLastWeekWinnerContent">
-        <div class="last-week-winner-body">
-          <div class="last-week-winner-icon">🏆</div>
-          <div><b>Cargando ganador...</b><small>Chofer y Admin usan la misma fuente.</small></div>
-        </div>
+    <div style="margin-top:10px;padding:10px 14px;border-radius:14px;background:rgba(212,175,55,.10);border:1px solid rgba(212,175,55,.25);font-weight:700">🏆 Último ganador: <span id="driverLastWinnerInline">Cargando...</span></div>
       </div>
-      <button class="btn-dark" style="margin-top:10px" type="button" onclick="loadGanadorSemanaPasadaChofer(true)">Actualizar</button>
-      <div id="driverLastWeekWinnerMsg"></div>
+      
     </div>
 
     <div id="derivationInbox" class="derivation-inbox hidden">
@@ -4183,6 +4175,10 @@ async function loadGanadorSemanaPasadaChofer(mostrarMsg=false){
   }
 
   renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",data || {periodo, ganador:null},"admin");
+  const inlineWinner = $("driverLastWinnerInline");
+  if(inlineWinner){
+    inlineWinner.textContent = (data && data.ganador) ? (data.ganador.nombre || data.ganador.id || "Sin datos") : "Sin datos";
+  }
   if(mostrarMsg && msgBox){
     if(data && data.ganador) msg(msgBox, `Actualizado: ${data.ganador.nombre || data.ganador.id}.`, true);
     else msg(msgBox, "No encontré ganador cerrado todavía.");
