@@ -1960,6 +1960,26 @@ setPersistence(auth, browserLocalPersistence).catch(e=>{
 const db = getFirestore(app);
 const storage = getStorage(app);
 
+// iPhone/Safari puede vaciar el input file si el panel se redibuja mientras vuelve de cámara/galería.
+// Guardamos la foto seleccionada en memoria por inputId para que no se pierda antes de subir.
+window.__exploraComprobanteFiles = window.__exploraComprobanteFiles || {};
+function guardarComprobanteSeleccionado(inputId, file){
+  if(!inputId || !file) return;
+  window.__exploraComprobanteFiles[inputId] = file;
+}
+function obtenerComprobanteSeleccionado(inputId){
+  const input = inputId ? $(inputId) : null;
+  const fileInput = input && input.files && input.files[0];
+  return fileInput || (window.__exploraComprobanteFiles && window.__exploraComprobanteFiles[inputId]) || null;
+}
+function limpiarComprobanteSeleccionado(inputId){
+  try{ if(inputId && window.__exploraComprobanteFiles) delete window.__exploraComprobanteFiles[inputId]; }catch(e){}
+}
+function nombreComprobanteSeleccionado(inputId){
+  const file = obtenerComprobanteSeleccionado(inputId);
+  return file ? (file.name || "foto_camara.jpg") : "";
+}
+
 
 /* EXPLORA v2.8.127 · Sesión persistente y restauración de pantalla
    - Firebase Auth ya usa browserLocalPersistence.
@@ -5432,7 +5452,7 @@ function renderPagosPendientesChofer(items){
 
 window.subirComprobantePendienteChofer = async function(periodoId, monto, inputId){
   const input = $(inputId);
-  const file = input && input.files && input.files[0];
+  const file = obtenerComprobanteSeleccionado(inputId);
   try{
     if(!file) throw new Error("Seleccioná una foto del comprobante antes de subir.");
     const btn = Array.from(document.querySelectorAll('button')).find(b => (b.getAttribute('onclick') || '').includes(inputId));
@@ -5706,7 +5726,7 @@ function uploadComprobanteHtml({inputId, buttonText, onClick, nota}){
       <b>📎 Comprobante obligatorio</b><br>
       <small>${nota || "Subí foto del comprobante para marcar el pago como realizado."}</small>
       <input id="${inputId}" class="file-input" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif" onchange="updateComprobanteFileName('${inputId}')" />
-      <small id="${inputId}_name">Ningún comprobante seleccionado.</small>
+      <small id="${inputId}_name">${nombreComprobanteSeleccionado(inputId) ? `Seleccionado: ${nombreComprobanteSeleccionado(inputId)}` : "Ningún comprobante seleccionado."}</small>
       <small>Podés elegir una foto desde galería o tomar una foto nueva.</small>
       <button type="button" class="btn-gold" style="margin-top:8px" onclick="${onClick}">${buttonText || "Subir comprobante y marcar pagado"}</button>
     </div>
@@ -5715,10 +5735,12 @@ function uploadComprobanteHtml({inputId, buttonText, onClick, nota}){
 
 window.updateComprobanteFileName = function(inputId){
   const input = $(inputId);
+  const file = obtenerComprobanteSeleccionado(inputId);
+  if(file) guardarComprobanteSeleccionado(inputId, file);
   const label = $(inputId + "_name");
   if(!label) return;
-  const file = input && input.files && input.files[0];
-  label.textContent = file ? `Seleccionado: ${file.name || "foto"}` : "Ningún comprobante seleccionado.";
+  const finalFile = obtenerComprobanteSeleccionado(inputId);
+  label.textContent = finalFile ? `Seleccionado: ${finalFile.name || "foto_camara.jpg"}` : "Ningún comprobante seleccionado.";
 };
 
 window.subirComprobantePagoChofer = async function(){
@@ -5728,7 +5750,7 @@ window.subirComprobantePagoChofer = async function(){
   }
   const c = cierreSemanalPendiente;
   const input = $("comprobantePagoChoferInput");
-  const file = input && input.files && input.files[0];
+  const file = obtenerComprobanteSeleccionado("comprobantePagoChoferInput");
   const btns = Array.from(document.querySelectorAll('button'));
   const clicked = btns.find(b => (b.getAttribute('onclick') || '').includes('subirComprobantePagoChofer'));
   const oldText = clicked ? clicked.textContent : "";
@@ -5748,6 +5770,7 @@ window.subirComprobantePagoChofer = async function(){
       file,
       marcadoPor:"chofer"
     });
+    limpiarComprobanteSeleccionado("comprobantePagoChoferInput");
     cierreSemanalPendiente.pagoSemanal = {...pago, pagado:true, fechaPago:pago.fecha, horaPago:pago.hora, comprobanteUrl:pago.url};
     cierreSemanalCache = {key:`${currentUserId}_${c.periodo.id}`, data:cierreSemanalPendiente};
     cacheRemove("comprobantes_chofer_" + currentUserId);
@@ -10291,7 +10314,7 @@ window.EXPLORA_BUILD_CIERRE_COMPROBANTE_OBLIGATORIO = EXPLORA_BUILD_CIERRE_COMPR
 
     window.subirComprobantePagoAdmin = async function(chofer, periodoId, sentido, monto, inputId){
       const input = document.getElementById(inputId);
-      const file = input && input.files && input.files[0];
+      const file = obtenerComprobanteSeleccionado(inputId);
       const clicked = Array.from(document.querySelectorAll("button")).find(b => (b.getAttribute("onclick") || "").includes(inputId));
       const oldText = clicked ? clicked.textContent : "";
 
@@ -10322,6 +10345,7 @@ window.EXPLORA_BUILD_CIERRE_COMPROBANTE_OBLIGATORIO = EXPLORA_BUILD_CIERRE_COMPR
           file,
           marcadoPor:"admin"
         });
+        limpiarComprobanteSeleccionado(inputId);
 
         let pago = await getEstadoPagoSemanal(chofer, periodoId).catch(()=>null);
         if(!pago){
