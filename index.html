@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.130
-Build: 2026-06-08-MODO-FECHA-IPHONE-TOTAL-130
+Version: 2.8.131
+Build: 2026-06-07-CIERRE-SEMANAL-ESTABLE-FECHA-VISIBLE-027
 Fecha: 06/06/2026
 Cambios:
 - v2.8.129: en Chofer la campana superior se reemplaza por botón Salir, cierra sesión y vuelve al login.
@@ -76,12 +76,13 @@ Cambios:
 - v2.8.128: sesión rápida por dispositivo; muestra splash EXPLORA al iniciar y usa sesión local para abrir la última pantalla mientras Firebase valida en segundo plano.
 - v2.8.128: sesión persistente sin parpadeo; el login queda oculto durante la restauración real de Firebase Auth.
 - v2.8.127: sesión persistente por celular; no vuelve a pedir usuario/contraseña si no se cerró sesión y restaura la última pantalla usada.
+- v2.8.130: ganador anterior en tiempo real: Admin escribe fuente oficial y Chofer escucha espejo público con onSnapshot. Modo prueba fecha iPhone activo para todo el archivo.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA · Login limpio producción</title>
+<title>EXPLORA · Cierre semanal estable</title>
 <style>
 :root{
   --bg:#080808;
@@ -2201,10 +2202,6 @@ let modoPruebaFechaConfig = {activo:false, choferes:{}, actualizadoTexto:""};
 const $ = id => document.getElementById(id);
 let trustedTodayValue = null;
 let trustedTodaySource = "server";
-// PRUEBA FINAL: modo fecha iPhone total.
-// Cuando está activo, ranking, ganador anterior, facturación, cierres, cargas y comprobantes
-// calculan período/fecha con la fecha del dispositivo, sin usar Firebase como fuente de fecha.
-const EXPLORA_MODO_FECHA_IPHONE_TOTAL = true;
 function formatDateArgentina(date){
   try{
     const parts = new Intl.DateTimeFormat("en-CA",{
@@ -2272,23 +2269,12 @@ function choferTieneModoPruebaFecha(userId = currentUserId){
   return choferTieneModoPruebaFechaPorDatos(userId, null);
 }
 
-function fechaIphoneActual(){
-  return formatDateArgentina(new Date());
-}
-
 function fechaOperativaParaChofer(choferId = currentUserId, perfil = null){
-  const localDay = fechaIphoneActual();
-  // Modo prueba final: toda la app toma la fecha del iPhone.
-  // Aplica igual para Admin y Chofer: ranking actual, ganador anterior, facturación, cierres, cargas y comprobantes.
-  if(typeof EXPLORA_MODO_FECHA_IPHONE_TOTAL !== "undefined" && EXPLORA_MODO_FECHA_IPHONE_TOTAL){
-    trustedTodayValue = localDay;
-    trustedTodaySource = "iphone-total";
-    return localDay;
-  }
-  // Regla anterior: si Admin habilitó modo prueba para un chofer específico,
+  // Regla unificada: si Admin habilitó modo prueba para un chofer,
   // Admin y Chofer calculan cierres de ese chofer con la misma fecha del iPhone.
-  if(choferTieneModoPruebaFechaPorDatos(choferId, perfil)) return localDay;
-  return trustedTodayValue || localDay;
+  // En producción, todos usan fecha confiable de Firebase.
+  if(choferTieneModoPruebaFechaPorDatos(choferId, perfil)) return formatDateArgentina(new Date());
+  return trustedTodayValue || formatDateArgentina(new Date());
 }
 
 function today(){
@@ -2345,14 +2331,8 @@ async function syncModoPruebaFecha(){
 }
 
 async function syncTrustedToday(){
-  const localDay = fechaIphoneActual();
+  const localDay = formatDateArgentina(new Date());
   try{
-    if(typeof EXPLORA_MODO_FECHA_IPHONE_TOTAL !== "undefined" && EXPLORA_MODO_FECHA_IPHONE_TOTAL){
-      trustedTodayValue = localDay;
-      trustedTodaySource = "iphone-total";
-      cacheRemove("trusted_today");
-      return localDay;
-    }
     if(choferTieneModoPruebaFecha()){
       trustedTodayValue = localDay;
       trustedTodaySource = "device-test-driver";
@@ -2471,33 +2451,6 @@ function cacheGet(key, maxAgeMs=86400000){
 function cacheRemove(key){
   try{ localStorage.removeItem(CACHE_PREFIX + key); }catch(e){}
 }
-
-(function limpiarCacheAlActivarFechaIphoneTotal(){
-  try{
-    if(typeof EXPLORA_MODO_FECHA_IPHONE_TOTAL === "undefined" || !EXPLORA_MODO_FECHA_IPHONE_TOTAL) return;
-    const flag = CACHE_PREFIX + "modo_fecha_iphone_total_130";
-    if(localStorage.getItem(flag) === "1") return;
-    const prefijos = [
-      CACHE_PREFIX + "trusted_today",
-      CACHE_PREFIX + "acum_sem_",
-      CACHE_PREFIX + "ranking_",
-      CACHE_PREFIX + "admin_",
-      CACHE_PREFIX + "today_",
-      CACHE_PREFIX + "cierres_",
-      CACHE_PREFIX + "cierre_sem_",
-      CACHE_PREFIX + "cierre_ultra_",
-      CACHE_PREFIX + "ganador_sem_",
-      CACHE_PREFIX + "ultimo_ganador_semana"
-    ];
-    const keys=[];
-    for(let i=0;i<localStorage.length;i++){
-      const k=localStorage.key(i);
-      if(k && prefijos.some(pref=>k.startsWith(pref))) keys.push(k);
-    }
-    keys.forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem(flag,"1");
-  }catch(e){}
-})();
 
 
 
@@ -4461,9 +4414,14 @@ window.openMiCierreSemanalPanel = async function(){
 
 
 function ganadorSemanaPasadaDocRef(){
-  // Fuente oficial única para Admin y Chofer.
-  // El espejo en choferes/{id}.ultimoGanadorSemana solo existe para permisos/lectura rápida del Chofer.
+  // Fuente oficial de escritura: Admin guarda acá.
+  // Chofer NO depende de esta lectura directa; escucha el espejo público con onSnapshot.
   return doc(db,"configuracion","ultimo_ganador_semana");
+}
+
+function ganadorSemanaPasadaPublicoRef(){
+  // Espejo público de lectura en tiempo real para Chofer. Debe tener reglas Firestore de lectura para usuarios logueados.
+  return doc(db,"publico","ultimo_ganador_semana");
 }
 
 function normalizarUltimoGanadorSemana(data){
@@ -4619,12 +4577,12 @@ async function guardarUltimoGanadorSemana(periodo, ganador, fuente="cierre_seman
     const payload = buildPayloadUltimoGanadorSemana(periodo, ganador, fuente);
     if(!payload) return null;
     limpiarCachesViejosGanadorSemana();
-    // Fuente oficial principal que ve Admin.
+    // Fuente oficial principal de Admin.
     await setDoc(ganadorSemanaPasadaDocRef(), payload, {merge:true});
-    // Espejos livianos: si las reglas de Firestore no dejan al Chofer leer configuracion,
-    // intentamos leer exactamente el mismo dato desde sistema/publico o desde su perfil.
+    // Espejo público: fuente de lectura en vivo del Chofer.
+    await setDoc(ganadorSemanaPasadaPublicoRef(), payload, {merge:true});
+    // Compatibilidad con builds viejos; no se usa como fuente principal.
     await setDoc(doc(db,"sistema","ultimo_ganador_semana"), payload, {merge:true}).catch(()=>null);
-    await setDoc(doc(db,"publico","ultimo_ganador_semana"), payload, {merge:true}).catch(()=>null);
     const result = cacheUltimoGanadorSemanaUnico(payload);
     await publicarUltimoGanadorEnChoferes(result).catch(()=>null);
     return result;
@@ -4661,8 +4619,8 @@ async function getUltimoGanadorSemanaOficial(){
   // Se prueban espejos equivalentes porque las reglas Firebase pueden permitir uno y bloquear otro.
   const refs = [
     ganadorSemanaPasadaDocRef(),
-    doc(db,"sistema","ultimo_ganador_semana"),
-    doc(db,"publico","ultimo_ganador_semana")
+    ganadorSemanaPasadaPublicoRef(),
+    doc(db,"sistema","ultimo_ganador_semana")
   ];
   for(const ref of refs){
     try{
@@ -4738,8 +4696,8 @@ async function eliminarUltimoGanadorSemanaPersistente(){
   // un ganador viejo desde caché o desde un espejo que quedó vivo por permisos.
   const refs = [
     ganadorSemanaPasadaDocRef(),
-    doc(db,"sistema","ultimo_ganador_semana"),
-    doc(db,"publico","ultimo_ganador_semana")
+    ganadorSemanaPasadaPublicoRef(),
+    doc(db,"sistema","ultimo_ganador_semana")
   ];
   for(const ref of refs){
     try{ await deleteDoc(ref); }catch(e){ console.warn("No se pudo borrar", ref && ref.path ? ref.path : ref, e); }
@@ -4978,6 +4936,99 @@ async function loadGanadorSemanaPasadaAdmin(){
   }
   return data;
 }
+
+
+let unsubscribeGanadorAnteriorChofer = null;
+let unsubscribeGanadorAnteriorAdmin = null;
+let ganadorAnteriorFallbackChoferHecho = false;
+let ganadorAnteriorFallbackAdminHecho = false;
+
+function pararListenerGanadorAnterior(modo="chofer"){
+  try{
+    if(modo === "admin" && unsubscribeGanadorAnteriorAdmin){
+      unsubscribeGanadorAnteriorAdmin();
+      unsubscribeGanadorAnteriorAdmin = null;
+    }
+    if(modo !== "admin" && unsubscribeGanadorAnteriorChofer){
+      unsubscribeGanadorAnteriorChofer();
+      unsubscribeGanadorAnteriorChofer = null;
+    }
+  }catch(e){ console.warn("No se pudo detener listener ganador anterior", e); }
+}
+
+function procesarSnapshotGanadorAnterior(snap, modo="chofer"){
+  const esAdmin = modo === "admin";
+  const boxId = esAdmin ? "adminLastWeekWinnerCard" : "driverLastWeekWinnerCard";
+  const contentId = esAdmin ? "adminLastWeekWinnerContent" : "driverLastWeekWinnerContent";
+  const periodo = periodoSemanaPasadaVisible();
+
+  if(!snap || !snap.exists()){
+    renderGanadorSemanaPasadaEn(boxId, contentId, {periodo, ganador:null}, modo);
+    return null;
+  }
+
+  const raw = snap.data() || {};
+  if(raw.eliminado === true || raw.reset === true || raw.ganador === null){
+    limpiarCachesViejosGanadorSemana();
+    try{ cacheRemove("ultimo_ganador_semana_oficial"); }catch(e){}
+    renderGanadorSemanaPasadaEn(boxId, contentId, {periodo, ganador:null}, modo);
+    return null;
+  }
+
+  const data = cacheUltimoGanadorSemanaUnico(raw);
+  renderGanadorSemanaPasadaEn(boxId, contentId, data || {periodo, ganador:null}, modo);
+  return data;
+}
+
+function iniciarListenerGanadorAnterior(modo="chofer"){
+  const esAdmin = modo === "admin";
+  const boxId = esAdmin ? "adminLastWeekWinnerCard" : "driverLastWeekWinnerCard";
+  const contentId = esAdmin ? "adminLastWeekWinnerContent" : "driverLastWeekWinnerContent";
+  const periodo = periodoSemanaPasadaVisible();
+
+  renderGanadorSemanaPasadaEn(boxId, contentId, {periodo, ganador:null, cargando:true}, modo);
+  pararListenerGanadorAnterior(modo);
+
+  const ref = esAdmin ? ganadorSemanaPasadaDocRef() : ganadorSemanaPasadaPublicoRef();
+  const asignar = esAdmin ? (fn)=>{ unsubscribeGanadorAnteriorAdmin = fn; } : (fn)=>{ unsubscribeGanadorAnteriorChofer = fn; };
+
+  try{
+    const unsub = onSnapshot(ref, async (snap)=>{
+      const data = procesarSnapshotGanadorAnterior(snap, modo);
+      if(!data || !data.ganador){
+        if(esAdmin && !ganadorAnteriorFallbackAdminHecho){
+          ganadorAnteriorFallbackAdminHecho = true;
+          setTimeout(()=>loadGanadorSemanaPasadaAdmin().catch(e=>console.warn("Fallback ganador anterior admin", e)), 650);
+        }
+        if(!esAdmin && !ganadorAnteriorFallbackChoferHecho){
+          ganadorAnteriorFallbackChoferHecho = true;
+          setTimeout(()=>loadGanadorSemanaPasadaChofer(false).catch(e=>console.warn("Fallback ganador anterior chofer", e)), 650);
+        }
+      }
+    }, async (e)=>{
+      console.warn("Listener ganador anterior falló", modo, e);
+      if(esAdmin){
+        if(!ganadorAnteriorFallbackAdminHecho){
+          ganadorAnteriorFallbackAdminHecho = true;
+          await loadGanadorSemanaPasadaAdmin().catch(err=>console.warn("Fallback ganador anterior admin", err));
+        }
+      }else{
+        if(!ganadorAnteriorFallbackChoferHecho){
+          ganadorAnteriorFallbackChoferHecho = true;
+          await loadGanadorSemanaPasadaChofer(false).catch(err=>console.warn("Fallback ganador anterior chofer", err));
+        }
+      }
+    });
+    asignar(unsub);
+  }catch(e){
+    console.warn("No se pudo iniciar listener ganador anterior", modo, e);
+    if(esAdmin) loadGanadorSemanaPasadaAdmin().catch(()=>null);
+    else loadGanadorSemanaPasadaChofer(false).catch(()=>null);
+  }
+}
+
+window.iniciarListenerGanadorAnterior = iniciarListenerGanadorAnterior;
+window.pararListenerGanadorAnterior = pararListenerGanadorAnterior;
 
 async function sincronizarUltimoGanadorSemanaAdmin(){
   if(!currentProfile || currentProfile.rol !== "admin") return msg($("adminToolsMsg"), "Solo Admin puede sincronizar el ganador.");
@@ -7303,10 +7354,7 @@ window.toggleAdminConfig = function(id){
 
 
 async function cargarModoPruebaFechaAdmin(force=false){
-  if(typeof EXPLORA_MODO_FECHA_IPHONE_TOTAL !== "undefined" && EXPLORA_MODO_FECHA_IPHONE_TOTAL){
-    const estado = $("modoPruebaFechaEstado");
-    if(estado) estado.innerHTML = `<div class="msg ok">📱 Modo fecha iPhone TOTAL activo.<br><small>Toda la app usa la fecha del dispositivo para ranking, ganador anterior, facturación, cierres, cargas y comprobantes.</small></div>`;
-  }else if(typeof EXPLORA_PRODUCCION_SEGURA !== "undefined" && EXPLORA_PRODUCCION_SEGURA){
+  if(typeof EXPLORA_PRODUCCION_SEGURA !== "undefined" && EXPLORA_PRODUCCION_SEGURA){
     const estado = $("modoPruebaFechaEstado");
     if(estado) estado.innerHTML = `<div class="msg ok">Producción: modo prueba de fecha desactivado. Todos usan fecha segura de Firebase.</div>`;
     return;
@@ -7367,7 +7415,7 @@ function limpiarCachesOperativosFecha(){
 }
 
 window.activarModoPruebaFechaChoferAdmin = async function(){
-  if((typeof EXPLORA_MODO_FECHA_IPHONE_TOTAL === "undefined" || !EXPLORA_MODO_FECHA_IPHONE_TOTAL) && typeof EXPLORA_PRODUCCION_SEGURA !== "undefined" && EXPLORA_PRODUCCION_SEGURA) return msg($("modoPruebaFechaMsg"),"Bloqueado en producción: modo prueba de fecha desactivado.");
+  if(typeof EXPLORA_PRODUCCION_SEGURA !== "undefined" && EXPLORA_PRODUCCION_SEGURA) return msg($("modoPruebaFechaMsg"),"Bloqueado en producción: modo prueba de fecha desactivado.");
   if(!currentProfile || currentProfile.rol !== "admin") return msg($("modoPruebaFechaMsg"),"Solo Admin puede activar modo prueba.");
   const sel = $("modoPruebaFechaChoferSelect");
   const choferId = String(sel && sel.value || "").trim();
@@ -7391,7 +7439,7 @@ window.activarModoPruebaFechaChoferAdmin = async function(){
 };
 
 window.desactivarModoPruebaFechaChoferAdmin = async function(){
-  if((typeof EXPLORA_MODO_FECHA_IPHONE_TOTAL === "undefined" || !EXPLORA_MODO_FECHA_IPHONE_TOTAL) && typeof EXPLORA_PRODUCCION_SEGURA !== "undefined" && EXPLORA_PRODUCCION_SEGURA) return msg($("modoPruebaFechaMsg"),"Producción: modo prueba ya está bloqueado.");
+  if(typeof EXPLORA_PRODUCCION_SEGURA !== "undefined" && EXPLORA_PRODUCCION_SEGURA) return msg($("modoPruebaFechaMsg"),"Producción: modo prueba ya está bloqueado.");
   if(!currentProfile || currentProfile.rol !== "admin") return msg($("modoPruebaFechaMsg"),"Solo Admin puede desactivar modo prueba.");
   const sel = $("modoPruebaFechaChoferSelect");
   const choferId = String(sel && sel.value || "").trim();
@@ -7785,7 +7833,7 @@ async function loadAdmin(){
   try{
     // Carga en paralelo y sin calcular ranking pesado al entrar.
     await Promise.all([cargarPremioAdmin(periodo), cargarVehiculosAdminSimple(periodo)]);
-    setTimeout(()=>loadGanadorSemanaPasadaAdmin().catch(e=>console.warn("Ganador semana pasada admin diferido", e)), 250);
+    setTimeout(()=>iniciarListenerGanadorAnterior("admin"), 250);
     setTimeout(()=>autoActualizarServiciosExploraAdmin(), 600);
     adminBaseLoadedAt = Date.now();
     if(adminMsg) msg(adminMsg,"Administrador actualizado.",true);
@@ -9100,7 +9148,7 @@ window.eliminarChoferesDemoAdmin = async function(){
 // Este bloque deja una sola regla de cierre: un chofer + un período = un documento.
 // También impide pedir cierres anteriores a la fecha de alta del chofer.
 
-const EXPLORA_CIERRE_VERSION = "v2.8.130 · FECHA-IPHONE-TOTAL";
+const EXPLORA_CIERRE_VERSION = "v2.8.90 · FECHA-EFECTIVA-IPHONE-PRUEBA";
 const perfilAltaCacheV287 = {};
 
 function fechaBadgeTextoV287(){
@@ -9359,7 +9407,7 @@ syncTrustedToday = async function(){
 
 
 // ===== EXPLORA v2.8.90 · CIERRE RECONSTRUYE POR FECHA REAL =====
-// PRODUCCIÓN: la app usa fecha segura de Firebase. La fecha del iPhone queda solo como respaldo visual.
+// MODO PRUEBA: todo el archivo usa fecha del iPhone para ranking, cierres, cargas, bono, comprobantes y ganador anterior.
 const EXPLORA_FECHA_EFECTIVA_IPHONE_PRUEBA = true;
 
 const _fechaOperativaParaChoferV289 = fechaOperativaParaChofer;
@@ -9418,7 +9466,7 @@ window.renderFechaOperativaVisibleV287 = renderFechaOperativaVisibleV287;
 // Desde esta versión, para reconstruir cierres, la fecha real del viaje/gasto también manda.
 // Ejemplo: si Ariel facturó el 2026-06-13 y luego se simula 2026-06-20,
 // el cierre 2026-06-13 al 2026-06-19 debe contar ese viaje aunque su periodoId viejo no coincida.
-const EXPLORA_BUILD_ACTUAL = "v2.8.130 · MODO-FECHA-IPHONE-TOTAL";
+const EXPLORA_BUILD_ACTUAL = "v2.8.124 · PRODUCCION-SEGURA";
 
 function fechaDocumentoParaPeriodoV290(data){
   return String((data && (data.fechaOperativa || data.fecha || data.creadoFecha || data.fechaServicio)) || "").slice(0,10);
@@ -9709,6 +9757,9 @@ loadDriver = async function(){
   // Derivaciones en tiempo real después de abrir: antes competía con cierre/login en teléfonos lentos.
   exploraRunIdle(()=>startDerivationInboxPolling(), 2200);
 
+  // Ganador anterior en tiempo real: escucha el espejo público sin bloquear el login.
+  exploraRunIdle(()=>iniciarListenerGanadorAnterior("chofer"), 2350);
+
   // Comprobantes/cierre siguen automáticos, pero diferidos para no congelar el inicio.
   setTimeout(()=>checkPagosPendientesChoferAutomatico().catch(e=>console.warn("Comprobantes pendientes diferidos", e)), 2600);
   setTimeout(()=>checkCierreSemanalAutomatico().catch(e=>console.warn("Cierre automático diferido", e)), 3600);
@@ -9757,6 +9808,383 @@ window.loadTodayTripsRapidoV294 = loadTodayTripsRapidoV294;
 window.EXPLORA_BUILD_OPTIMIZACION_GAMA_BAJA = EXPLORA_BUILD_OPTIMIZACION_GAMA_BAJA;
 
 
+
+// ===== EXPLORA v2.8.130 · CIERRE OBLIGATORIO HASTA COMPROBANTE =====
+// Corrección: si el chofer debe pagar a David, el cierre NO queda aceptado hasta subir comprobante.
+// Antes podía guardarse aceptadoPorChofer:true con comprobante pendiente y por eso no volvía a llamar el cierre obligatorio.
+const EXPLORA_BUILD_CIERRE_COMPROBANTE_OBLIGATORIO = "v2.8.130 · CIERRE-OBLIGATORIO-HASTA-COMPROBANTE";
+
+function cierreRequiereComprobanteChoferV2130(c){
+  if(!c) return false;
+  const choferDebe = Number(c.choferDebe || 0) > 0;
+  const pago = c.pagoSemanal || c.pago || null;
+  return choferDebe && !(pago && pago.pagado === true);
+}
+
+// Corrige el período anterior: su cierre real es el sábado siguiente al viernes de fin.
+// Esto evita que el motor tome como cierre el viernes y se salte pruebas por fecha iPhone.
+periodoAnterior = function(periodo){
+  const end = addDays(periodo.start, -1);
+  const start = addDays(end, -6);
+  const closeDate = addDays(end, 1);
+  return {start,end,closeDate,id:`${start}_${end}`, motor:"sabado_0001"};
+};
+
+// Un cierre con comprobante obligatorio del chofer pendiente sigue siendo pendiente,
+// aunque el resumen haya sido visto o cerrado una vez.
+cierreSemanalAceptadoPorChofer = function(data){
+  if(!data || data.aceptadoPorChofer !== true) return false;
+  const choferDebe = Number(data.choferDebe || 0) > 0;
+  const comprobanteRequerido = data.comprobanteRequerido === true || choferDebe;
+  const pago = data.pagoSemanal || null;
+  const pagoMarcado = pago && pago.pagado === true;
+  if(choferDebe && comprobanteRequerido && !pagoMarcado) return false;
+  return true;
+};
+
+const _confirmarCierreSemanalV2130 = window.confirmarCierreSemanal;
+window.confirmarCierreSemanal = async function(){
+  const c = cierreSemanalPendiente ? {...cierreSemanalPendiente} : null;
+  const requiereChofer = cierreRequiereComprobanteChoferV2130(c);
+  await _confirmarCierreSemanalV2130.apply(this, arguments);
+
+  if(requiereChofer && currentUserId && c && c.periodo && c.periodo.id){
+    const cierreId = `${currentUserId}_${c.periodo.id}`;
+    try{
+      await setDoc(doc(db,"cierres_semanales",cierreId),{
+        aceptadoPorChofer:false,
+        estadoCierre:"pendiente_comprobante_chofer",
+        comprobanteRequerido:true,
+        comprobantePendiente:true,
+        actualizado:serverTimestamp()
+      },{merge:true});
+      cacheRemove(`cierre_sem_${currentUserId}_${c.periodo.id}`);
+      cacheRemove("pagos_pendientes_chofer_" + currentUserId);
+      await checkPagosPendientesChoferAutomatico().catch(()=>{});
+    }catch(e){
+      console.warn("No se pudo mantener cierre obligatorio hasta comprobante", e);
+    }
+  }
+};
+
+const _subirComprobantePagoChoferV2130 = window.subirComprobantePagoChofer;
+window.subirComprobantePagoChofer = async function(){
+  const c = cierreSemanalPendiente ? {...cierreSemanalPendiente} : null;
+  await _subirComprobantePagoChoferV2130.apply(this, arguments);
+
+  // Si la carga terminó correctamente, el cierre recién ahí queda aceptado y deja de llamarse obligatorio.
+  try{
+    const pago = cierreSemanalPendiente && cierreSemanalPendiente.pagoSemanal;
+    if(currentUserId && c && c.periodo && c.periodo.id && pago && pago.pagado === true){
+      const cierreId = `${currentUserId}_${c.periodo.id}`;
+      await setDoc(doc(db,"cierres_semanales",cierreId),{
+        aceptadoPorChofer:true,
+        estadoCierre:"cerrado_con_comprobante",
+        comprobanteRequerido:false,
+        comprobantePendiente:false,
+        pagoSemanal:pago,
+        fechaConfirmacion:today(),
+        horaConfirmacion:new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
+        actualizado:serverTimestamp()
+      },{merge:true});
+      cacheRemove(`cierre_sem_${currentUserId}_${c.periodo.id}`);
+      cacheRemove("pagos_pendientes_chofer_" + currentUserId);
+      await checkPagosPendientesChoferAutomatico().catch(()=>{});
+    }
+  }catch(e){
+    console.warn("No se pudo cerrar el comprobante obligatorio", e);
+  }
+};
+
+// Revisión automática más agresiva para pruebas por fecha iPhone: al cargar, al volver a la pestaña
+// y al tocar Ranking se vuelve a verificar el cierre/comprobante obligatorio.
+function revisarCierreObligatorioV2130(){
+  if(!currentUserId || typeof checkCierreSemanalAutomatico !== "function") return;
+  checkCierreSemanalAutomatico().catch(e=>console.warn("Cierre obligatorio v2.8.130", e));
+}
+setTimeout(revisarCierreObligatorioV2130, 900);
+setTimeout(revisarCierreObligatorioV2130, 2800);
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden) setTimeout(revisarCierreObligatorioV2130, 350); });
+window.addEventListener("focus",()=>setTimeout(revisarCierreObligatorioV2130, 350));
+
+const _showPanelV2130 = window.showPanel;
+window.showPanel = function(id){
+  const r = _showPanelV2130.apply(this, arguments);
+  if(id === "rankingPanel" || id === "miCierreSemanalPanel" || id === "comprobantesPanel"){
+    setTimeout(revisarCierreObligatorioV2130, 250);
+  }
+  return r;
+};
+
+window.EXPLORA_BUILD_CIERRE_COMPROBANTE_OBLIGATORIO = EXPLORA_BUILD_CIERRE_COMPROBANTE_OBLIGATORIO;
+
+</script>
+
+<script>
+// ===== EXPLORA v2.8.131 · CIERRE SEMANAL SÁBADO + COMPROBANTE SEGÚN RESPONSABLE =====
+// Capa final dominante: el cierre queda visible hasta que se resuelva con comprobante
+// cuando debe pagar Chofer o debe pagar Admin/David.
+(function(){
+  const BUILD = "v2.8.131-cierre-sabado-comprobante-responsable";
+
+  function cierreTieneDeudaV2131(c){
+    return !!(c && (Number(c.choferDebe || 0) > 0 || Number(c.davidDebe || 0) > 0));
+  }
+  function cierreResponsablePagoV2131(c){
+    if(Number(c && c.choferDebe || 0) > 0) return "chofer";
+    if(Number(c && c.davidDebe || 0) > 0) return "admin";
+    return "ninguno";
+  }
+  function pagoResueltoV2131(pago){
+    return !!(pago && pago.pagado === true && (pago.comprobanteUrl || pago.url || pago.sentido === "sin_diferencia"));
+  }
+  function cierreResueltoV2131(data){
+    if(!data) return false;
+    const choferDebe = Number(data.choferDebe || 0) > 0;
+    const davidDebe = Number(data.davidDebe || 0) > 0;
+    if(data.sinActividad === true) return data.aceptadoPorChofer === true;
+    if(!choferDebe && !davidDebe) return data.aceptadoPorChofer === true;
+    return data.aceptadoPorChofer === true && pagoResueltoV2131(data.pagoSemanal || data.pago || null);
+  }
+
+  // El período pendiente es siempre la última semana vencida desde sábado 00:01 en adelante.
+  // Si hay semanas anteriores sin resolver, muestra primero la más vieja para no saltar cierres.
+  const _oldAceptado = window.cierreSemanalAceptadoPorChofer || cierreSemanalAceptadoPorChofer;
+  cierreSemanalAceptadoPorChofer = function(data){ return cierreResueltoV2131(data); };
+  window.cierreSemanalAceptadoPorChofer = cierreSemanalAceptadoPorChofer;
+
+  async function buscarPeriodoPendienteV2131(choferId, dateStr){
+    if(!choferId) return null;
+    dateStr = String(dateStr || (typeof fechaOperativaParaChofer === "function" ? fechaOperativaParaChofer(choferId, currentProfile) : today())).slice(0,10);
+    let perfil = null;
+    try{ perfil = await getPerfilChoferCierreV287(choferId); }catch(e){ perfil = currentProfile || null; }
+    let cursor = null;
+    try{ cursor = getPeriodoCierrePendiente(dateStr) || periodoAnterior(getPeriodoTrabajoActual(dateStr)); }
+    catch(e){ cursor = periodoAnterior(getPeriodoTrabajoActual(dateStr)); }
+    const pendientes = [];
+    for(let i=0;i<14 && cursor;i++){
+      const vencido = (typeof periodoCerradoYaVencido === "function") ? periodoCerradoYaVencido(cursor, dateStr) : String(dateStr) >= String(cursor.closeDate || "9999-99-99");
+      let permitido = vencido;
+      try{
+        if(typeof cierrePermitidoPorAltaPersistenteV293 === "function") permitido = cierrePermitidoPorAltaPersistenteV293(cursor, perfil, dateStr);
+      }catch(e){}
+      if(vencido && permitido) pendientes.push(cursor);
+      cursor = periodoAnterior(cursor);
+    }
+    pendientes.sort((a,b)=>String(a.start).localeCompare(String(b.start)));
+    for(const periodo of pendientes){
+      const cierreId = `${choferId}_${periodo.id}`;
+      try{
+        const snap = await withTimeout(getDoc(doc(db,"cierres_semanales",cierreId)), 3500, "verificar cierre semanal");
+        const data = snap.exists() ? (snap.data() || {}) : null;
+        if(!data || !cierreResueltoV2131(data)) return periodo;
+      }catch(e){
+        console.warn("No se pudo verificar cierre; se muestra para evitar saltear obligación", cierreId, e);
+        return periodo;
+      }
+    }
+    return null;
+  }
+
+  getPeriodoCierrePendienteNoConfirmado = async function(choferId=currentUserId, dateStr=(typeof fechaOperativaParaChofer === "function" ? fechaOperativaParaChofer(choferId,currentProfile) : today())){
+    return await buscarPeriodoPendienteV2131(choferId, dateStr);
+  };
+  window.getPeriodoCierrePendienteNoConfirmado = getPeriodoCierrePendienteNoConfirmado;
+
+  async function prepararCierreObligatorioV2131(choferId, periodo){
+    let c = null;
+    try{ c = await withTimeout(calcularCierreSemanalLiviano(choferId, periodo, true), 18000, "cierre semanal estable"); }
+    catch(e){
+      console.warn("Cierre liviano falló; intento ultra rápido", e);
+      c = await withTimeout(calcularCierreSemanalUltraRapido(choferId, periodo), 8000, "cierre semanal rápido");
+    }
+    if(!c) c = cierreDesdeAcumulado(choferId, periodo, {}, null, await getPremioSemanal());
+    const sinMovimientos = Number(c.cantidadViajes || 0) === 0 && Number(c.cantidadGastos || 0) === 0 && Number(c.totalFondoOperativo || 0) === 0 && Number(c.totalViajes || 0) === 0;
+    if(sinMovimientos){
+      c.sinActividad = true;
+      c.choferDebe = 0;
+      c.davidDebe = 0;
+      c.premioAplicado = 0;
+      c.pagoSemanal = null;
+    }else{
+      c.pagoSemanal = await getEstadoPagoSemanal(choferId, periodo.id).catch(()=>null);
+      if(!pagoResueltoV2131(c.pagoSemanal) && cierreTieneDeudaV2131(c)){
+        c.pagoSemanal = await asegurarPagoSemanalPendiente(c).catch(()=>c.pagoSemanal || null);
+      }
+    }
+    return c;
+  }
+
+  const _renderCierreSemanalV2131 = window.renderCierreSemanal || renderCierreSemanal;
+  renderCierreSemanal = function(c){
+    _renderCierreSemanalV2131(c);
+    const msgBox = document.getElementById("cierreSemanalMsg");
+    const btn = document.getElementById("confirmarCierreSemanalBtn");
+    const responsable = cierreResponsablePagoV2131(c);
+    const pago = c && c.pagoSemanal;
+    if(btn && cierreTieneDeudaV2131(c) && !pagoResueltoV2131(pago)){
+      btn.textContent = responsable === "chofer" ? "Mantener aviso hasta subir comprobante" : "Mantener aviso hasta pago de David";
+    }
+    if(msgBox && cierreTieneDeudaV2131(c) && !pagoResueltoV2131(pago)){
+      msgBox.innerHTML = responsable === "chofer"
+        ? `<div class="msg err"><b>⚠️ Cierre pendiente obligatorio</b><br>Este aviso queda en pantalla hasta que el chofer suba la foto del comprobante.</div>`
+        : `<div class="msg err"><b>⚠️ Cierre pendiente obligatorio</b><br>Este aviso queda en pantalla hasta que Admin/David suba la foto del comprobante de pago.</div>`;
+    }
+  };
+  window.renderCierreSemanal = renderCierreSemanal;
+
+  checkCierreSemanalAutomatico = async function(){
+    if(!currentUserId) return;
+    try{ if(typeof renderFechaOperativaVisibleV287 === "function") renderFechaOperativaVisibleV287(); }catch(e){}
+    const dateStr = typeof fechaOperativaParaChofer === "function" ? fechaOperativaParaChofer(currentUserId, currentProfile) : today();
+    const periodo = await buscarPeriodoPendienteV2131(currentUserId, dateStr);
+    if(!periodo) return;
+    const cierreId = `${currentUserId}_${periodo.id}`;
+    try{
+      const c = await prepararCierreObligatorioV2131(currentUserId, periodo);
+      cierreSemanalPendiente = c;
+      cierreSemanalCache = {key:cierreId, data:c};
+      cacheSet(`cierre_sem_${cierreId}`, c);
+      const modal = document.getElementById("cierreSemanalModal");
+      const resumen = document.getElementById("cierreSemanalResumen");
+      if(modal && resumen){
+        modal.classList.remove("hidden");
+        renderCierreSemanal(c);
+      }
+      setTimeout(()=>{ try{ checkPagosPendientesChoferAutomatico(); }catch(e){} }, 250);
+    }catch(e){ console.warn("No se pudo abrir cierre obligatorio", e); }
+  };
+  window.checkCierreSemanalAutomatico = checkCierreSemanalAutomatico;
+
+  const _confirmarBaseV2131 = window.confirmarCierreSemanal;
+  window.confirmarCierreSemanal = async function(){
+    const c = cierreSemanalPendiente;
+    if(!c || !c.periodo){
+      const modal = document.getElementById("cierreSemanalModal");
+      if(modal) modal.classList.add("hidden");
+      return;
+    }
+    const btn = document.getElementById("confirmarCierreSemanalBtn");
+    if(btn){ btn.disabled = true; btn.textContent = "Guardando cierre..."; }
+    try{
+      const responsable = cierreResponsablePagoV2131(c);
+      const deuda = cierreTieneDeudaV2131(c);
+      const pagoActual = c.pagoSemanal || await getEstadoPagoSemanal(currentUserId, c.periodo.id).catch(()=>null);
+      const pagado = pagoResueltoV2131(pagoActual);
+      if(deuda && !pagado){
+        const pagoPendiente = pagoActual || await asegurarPagoSemanalPendiente(c).catch(()=>null);
+        c.pagoSemanal = pagoPendiente;
+        const cierreId = `${currentUserId}_${c.periodo.id}`;
+        await setDoc(doc(db,"cierres_semanales",cierreId),{
+          fechaConfirmacion: today(),
+          horaConfirmacion: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
+          periodoInicio:c.periodo.start,
+          periodoFin:c.periodo.end,
+          cierreObligatorio:c.periodo.closeDate,
+          periodoId:c.periodo.id,
+          motor:"sabado_0001",
+          chofer:currentUserId,
+          vehiculo: currentVehicle ? currentVehicle.id : "",
+          totalViajes:Number(c.totalViajes || 0), cantidadViajes:Number(c.cantidadViajes || 0),
+          totalGastos:Number(c.totalGastos || 0), totalFondoOperativo:Number(c.totalFondoOperativo || 0),
+          efectivo:Number(c.efectivo || 0), transferencia:Number(c.transferencia || 0), tarjeta:Number(c.tarjeta || 0),
+          neto:Number(c.neto || 0), mitadChofer:Number(c.mitadChofer || 0), mitadDavid:Number(c.mitadDavid || 0),
+          choferDebe:Number(c.choferDebe || 0), davidDebe:Number(c.davidDebe || 0),
+          ganadorSemana:c.ganadorSemana || "", ganadorId:c.ganadorId || "",
+          premioSemanal:Number(c.premioSemanal || 50000), premioAplicado:Number(c.premioAplicado || 0),
+          pagoSemanal:pagoPendiente || null,
+          comprobanteRequerido:true,
+          comprobantePendiente:true,
+          responsableComprobante:responsable,
+          aceptadoPorChofer:false,
+          estadoCierre: responsable === "admin" ? "pendiente_comprobante_admin" : "pendiente_comprobante_chofer",
+          actualizado:serverTimestamp()
+        },{merge:true});
+        cacheRemove(`cierre_sem_${currentUserId}_${c.periodo.id}`);
+        cacheRemove("pagos_pendientes_chofer_" + currentUserId);
+        renderCierreSemanal(c);
+        if(responsable === "admin"){
+          const modal = document.getElementById("cierreSemanalModal");
+          if(modal) modal.classList.add("hidden");
+          await checkPagosPendientesChoferAutomatico().catch(()=>{});
+        }
+        return;
+      }
+      await _confirmarBaseV2131.apply(this, arguments);
+    }catch(e){
+      const box = document.getElementById("cierreSemanalMsg");
+      if(box) msg(box,"No se pudo guardar el cierre: " + e.message);
+    }finally{
+      if(btn){ btn.disabled = false; }
+    }
+  };
+
+  const _subirAdminV2131 = window.subirComprobantePagoAdmin;
+  window.subirComprobantePagoAdmin = async function(chofer, periodoId, sentido, monto, inputId){
+    await _subirAdminV2131.apply(this, arguments);
+    try{
+      if(sentido === "david_a_chofer"){
+        const pago = await getEstadoPagoSemanal(chofer, periodoId).catch(()=>null);
+        if(pagoResueltoV2131(pago)){
+          await setDoc(doc(db,"cierres_semanales",`${chofer}_${periodoId}`),{
+            aceptadoPorChofer:true,
+            estadoCierre:"cerrado_con_comprobante_admin",
+            comprobanteRequerido:false,
+            comprobantePendiente:false,
+            responsableComprobante:"admin",
+            pagoSemanal:pago,
+            fechaResolucion:today(),
+            horaResolucion:new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
+            actualizado:serverTimestamp()
+          },{merge:true});
+          cacheRemove(`cierre_sem_${chofer}_${periodoId}`);
+          cacheRemove("pagos_pendientes_chofer_" + chofer);
+          if(typeof loadAdmin === "function") setTimeout(()=>loadAdmin().catch(()=>{}), 350);
+        }
+      }
+    }catch(e){ console.warn("No se pudo cerrar el cierre luego del comprobante Admin", e); }
+  };
+
+  const _subirChoferV2131 = window.subirComprobantePagoChofer;
+  window.subirComprobantePagoChofer = async function(){
+    await _subirChoferV2131.apply(this, arguments);
+    try{
+      const c = cierreSemanalPendiente;
+      const pago = c && c.pagoSemanal;
+      if(currentUserId && c && c.periodo && pagoResueltoV2131(pago)){
+        await setDoc(doc(db,"cierres_semanales",`${currentUserId}_${c.periodo.id}`),{
+          aceptadoPorChofer:true,
+          estadoCierre:"cerrado_con_comprobante_chofer",
+          comprobanteRequerido:false,
+          comprobantePendiente:false,
+          responsableComprobante:"chofer",
+          pagoSemanal:pago,
+          fechaResolucion:today(),
+          horaResolucion:new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
+          actualizado:serverTimestamp()
+        },{merge:true});
+        cacheRemove(`cierre_sem_${currentUserId}_${c.periodo.id}`);
+        cacheRemove("pagos_pendientes_chofer_" + currentUserId);
+        cierreSemanalPendiente = null;
+        cierreSemanalCache = null;
+        const modal = document.getElementById("cierreSemanalModal");
+        if(modal) modal.classList.add("hidden");
+        await checkPagosPendientesChoferAutomatico().catch(()=>{});
+      }
+    }catch(e){ console.warn("No se pudo cerrar el cierre luego del comprobante Chofer", e); }
+  };
+
+  function recheckV2131(){
+    if(!currentUserId || typeof checkCierreSemanalAutomatico !== "function") return;
+    checkCierreSemanalAutomatico().catch(e=>console.warn("Revisión cierre " + BUILD, e));
+  }
+  setTimeout(recheckV2131, 700);
+  setTimeout(recheckV2131, 2200);
+  setTimeout(recheckV2131, 5200);
+  window.addEventListener("focus",()=>setTimeout(recheckV2131, 300));
+  document.addEventListener("visibilitychange",()=>{ if(!document.hidden) setTimeout(recheckV2131, 300); });
+  window.EXPLORA_BUILD_CIERRE_SABADO_COMPROBANTE_RESPONSABLE = BUILD;
+})();
 </script>
 
 <script>
