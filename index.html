@@ -67,12 +67,17 @@ Cambios:
 - v2.8.105: limpieza final de ganador semana pasada: una sola fuente oficial, una sola función de lectura para Admin/Chofer y cachés viejos eliminados.
 - v2.8.106: Chofer recibe botón igual al Admin para actualizar ganador actual y se refresca automáticamente desde el mismo ranking liviano.
 - v2.8.107: modificación radical ganador anterior: Chofer usa la misma tarjeta, misma lectura oficial y mismos espejos que Admin; se eliminan lecturas separadas como fuente principal.
+- v2.8.124: producción segura; modo fecha iPhone desactivado, herramientas destructivas bloqueadas y versión visible unificada.
+- v2.8.123: limpieza visual Chofer; se ocultan avisos verdes de ganador y métricas de viajes/facturación bajan debajo de ambos rankings.
+- v2.8.122: al abrir Ranking en Chofer se ejecuta automáticamente el mismo click real de actualizar ganador; botones manuales ocultos.
+- v2.8.121: Ganador en Chofer se automatiza simulando el botón real que funciona manualmente; mantiene botón visible como respaldo.
+- v2.8.126: limpieza visual Chofer; se elimina la barra inferior fija Inicio/Nuevo servicio/Cierre/Más y se deja visible solo Mi auto, Actualizar página y Cerrar sesión.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.106 · Build 2026-06-07-GANADOR-ACTUAL-CHOFER</title>
+<title>EXPLORA v2.8.124 · Build 2026-06-07-PRODUCCION-SEGURA</title>
 <style>
 :root{
   --bg:#080808;
@@ -94,6 +99,7 @@ body{
 }
 .app{max-width:520px;margin:auto;min-height:100vh;padding:22px}
 .hidden{display:none!important}
+.production-hidden{display:none!important}
 .logo{
   text-align:center;
   font-size:38px;
@@ -617,13 +623,15 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 .admin-mobile-topbar{position:sticky;top:0;z-index:8;margin:-22px -22px 14px;padding:18px 22px 12px;background:linear-gradient(180deg,rgba(5,5,5,.98),rgba(5,5,5,.82));backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.06)}
 .admin-logo-row{display:flex;align-items:center;justify-content:space-between;gap:12px}.admin-logo-mark{display:flex;align-items:center;gap:10px}.admin-logo-circle{width:38px;height:38px;border:2px solid var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:20px}.admin-logo-text{letter-spacing:5px;color:var(--gold);font-size:21px;font-weight:500;line-height:1}.admin-logo-sub{letter-spacing:4px;color:#d8d8d8;font-size:11px;margin-top:5px}
 .admin-bell{position:relative;width:auto!important;min-width:44px;padding:10px 12px!important;border-radius:14px!important;background:#171717!important;color:#ddd!important;border:1px solid #2b2b2b!important}.admin-bell-badge{position:absolute;right:-7px;top:-7px;background:#ef4444;color:white;border-radius:999px;min-width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;border:2px solid #080808}.admin-top-actions{display:flex;align-items:center;gap:8px}.admin-logout-btn{width:auto!important;min-width:64px!important;padding:10px 12px!important;border-radius:14px!important;background:#222!important;color:#fff!important;border:1px solid #333!important;font-size:13px!important;font-weight:900!important}
-.admin-section{display:block}.admin-section.hidden{display:none!important}.admin-card-soft{background:linear-gradient(180deg,rgba(25,25,25,.96),rgba(12,12,12,.96));border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:16px;margin:14px 0;box-shadow:0 14px 34px rgba(0,0,0,.32)}.admin-card-soft h2,.admin-card-soft h3{margin:0 0 10px}
+.admin-section{display:block}.admin-section.hidden{display:none!important}
+.production-hidden{display:none!important}.admin-card-soft{background:linear-gradient(180deg,rgba(25,25,25,.96),rgba(12,12,12,.96));border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:16px;margin:14px 0;box-shadow:0 14px 34px rgba(0,0,0,.32)}.admin-card-soft h2,.admin-card-soft h3{margin:0 0 10px}
 .admin-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0 4px}.admin-summary-card{position:relative;background:linear-gradient(180deg,#1b1b1b,#111);border:1px solid #292929;border-radius:18px;padding:14px 12px;min-height:112px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer}.admin-summary-card .admin-summary-icon{font-size:25px;line-height:1}.admin-summary-card strong{font-size:30px;line-height:1;margin-top:10px}.admin-summary-card span{color:#e7e7e7;font-size:13px;line-height:1.25}.admin-summary-card.red strong,.admin-summary-card.red .admin-summary-icon{color:#ff5548}.admin-summary-card.yellow strong,.admin-summary-card.yellow .admin-summary-icon{color:#f4b400}.admin-summary-card.green strong,.admin-summary-card.green .admin-summary-icon{color:#4ade80}.admin-mini-badge{position:absolute;right:10px;top:10px;min-width:22px;height:22px;border-radius:999px;background:#ef4444;color:white;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center}
 .admin-critical-banner{margin:10px 0 12px;padding:12px 14px;border-radius:16px;font-weight:900;background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.38);color:#fecaca}.admin-critical-banner.ok{background:rgba(34,197,94,.13);border-color:rgba(34,197,94,.35);color:#86efac}.admin-status-line{font-weight:900!important;text-transform:uppercase;letter-spacing:.2px}
 .admin-mobile-list-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.admin-mobile-list-title h3{margin:0}.admin-mobile-list-title button{width:auto;padding:10px 12px;font-size:13px}.admin-cierre-mobile-card{background:#151515;border:1px solid #292929;border-radius:18px;padding:14px;margin:10px 0}.admin-cierre-mobile-main{display:flex;align-items:center;gap:12px}.admin-driver-avatar{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;flex:0 0 auto;color:#fff;background:#2d2d2d}.admin-driver-avatar.red{background:#b91c1c}.admin-driver-avatar.green{background:#2f8f2f}.admin-driver-avatar.yellow{background:#c58a00}.admin-cierre-mobile-info{min-width:0;flex:1}.admin-cierre-mobile-info b{font-size:17px;display:block}.admin-cierre-mobile-info small{display:block;color:#bdbdbd;margin-top:2px}.admin-cierre-mobile-action{width:auto!important;min-width:104px;padding:11px 12px!important;border-radius:12px!important;font-size:14px!important}.admin-cierre-mobile-arrow{color:#999;font-size:28px;line-height:1}
 .admin-vehicle-alert-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#151515;border:1px solid #292929;border-radius:18px;padding:14px;margin:10px 0}.admin-vehicle-alert-row b{display:block}.admin-vehicle-alert-row small{display:block;color:#bbb;margin-top:3px}.admin-alert-km{background:rgba(212,175,55,.18);border:1px solid rgba(212,175,55,.35);color:#f4d46a;border-radius:999px;padding:8px 10px;font-weight:900;white-space:nowrap}
 .admin-bottom-nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:520px;z-index:19;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:rgba(8,8,8,.92);backdrop-filter:blur(14px);border-top:1px solid #242424;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}.admin-bottom-nav button{background:transparent;color:#aaa;border:0;border-radius:16px;padding:10px 6px;font-size:12px;min-height:58px}.admin-bottom-nav button b{display:block;font-size:23px;line-height:1;margin-bottom:4px}.admin-bottom-nav button.active{background:rgba(212,175,55,.18);color:var(--gold)}
 .admin-config-card{background:#151515;border:1px solid #292929;border-radius:18px;margin:10px 0;overflow:hidden}.admin-config-toggle{width:100%;background:#151515;color:#fff;border:0;border-radius:0;padding:15px;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:10px}.admin-config-toggle span{color:#999;font-size:22px}.admin-config-content{padding:0 15px 15px}.admin-config-content.hidden{display:none!important}
+.production-hidden{display:none!important}
 @media(max-width:390px){.app{padding:18px 14px}.admin-mobile-topbar{margin:-18px -14px 12px;padding:16px 14px 10px}.admin-summary-grid{gap:9px}.admin-summary-card{min-height:106px;padding:12px 10px}.admin-cierre-mobile-main{gap:9px}.admin-driver-avatar{width:42px;height:42px;font-size:18px}.admin-cierre-mobile-action{min-width:88px!important;font-size:13px!important}}
 
 
@@ -794,6 +802,8 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   padding:13px;
 }
 .driver-b-metrics .metric strong{font-size:28px}
+
+.driver-b-metrics .metric em{display:none!important;}
 .driver-b-metrics .metric em{
   position:absolute;
   right:13px;
@@ -1221,6 +1231,59 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   color:#fecaca;
 }
 
+/* EXPLORA v2.8.123 · Chofer ranking limpio */
+#driverGanadorActualMsg,
+#driverLastWeekWinnerMsg{
+  display:none!important;
+}
+.driver-b-metrics.driver-b-metrics-below-ranking{
+  margin-top:12px;
+  margin-bottom:14px;
+}
+
+/* EXPLORA v2.8.125 · producción con reset total de lanzamiento protegido */
+.driver-b-ranking .ranking-bonus-box{
+  cursor:pointer;
+  user-select:none;
+}
+.driver-b-ranking .ranking-bonus-box:after{
+  content:"↻"!important;
+  font-size:28px!important;
+  font-weight:900!important;
+  line-height:1!important;
+}
+.driver-b-ranking .ranking-bonus-box.refreshing:after{
+  content:"⟳"!important;
+}
+
+/* EXPLORA v2.8.126 · Menú Más limpio para producción */
+.driver-b-more-card{
+  display:none!important;
+}
+.driver-b-more-panel{
+  margin-top:12px!important;
+}
+.driver-b-more-panel h3{
+  display:none!important;
+}
+.driver-b-more-panel #btnMiAuto strong{
+  color:var(--driver-red)!important;
+}
+.driver-b-more-panel #btnActualizarPagina strong{
+  color:var(--driver-blue)!important;
+}
+
+/* EXPLORA v2.8.126 · Chofer sin barra inferior fija */
+.driver-mobile-b{
+  padding-bottom:24px!important;
+}
+.driver-b-bottom-nav{
+  display:none!important;
+}
+#driverMorePanel{
+  margin-top:12px;
+}
+
 </style>
 </head>
 <body>
@@ -1230,7 +1293,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.106</b> · Build 2026-06-07-GANADOR-ACTUAL-CHOFER</div>
+    <div class="build-version"><b>v2.8.124</b> · Build 2026-06-07-PRODUCCION-SEGURA</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1266,16 +1329,25 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
           <small>Puesto por puntos: 1° · 0%</small>
         </div>
       </div>
-      
-      <div class="driver-b-metrics">
-        <div class="metric"><span>Viajes semana</span><strong id="todayTrips">0</strong><em>🧳</em></div>
-        <div class="metric"><span>Facturación semana</span><strong id="todayTotal">$0</strong><em>📊</em></div>
-      </div>
+      <button id="btnActualizarGanadorActualChofer" class="btn-dark" style="display:none!important;margin-top:10px" type="button" onclick="actualizarGanadorActualChofer(true)">🏆 Actualizar ganador actual</button>
+      <div id="driverGanadorActualMsg"></div>
     </div>
 
-    <div style="margin-top:10px;padding:10px 14px;border-radius:14px;background:rgba(212,175,55,.10);border:1px solid rgba(212,175,55,.25);font-weight:700">🏆 Último ganador: <span id="driverLastWinnerInline">Cargando...</span></div>
+    <div id="driverLastWeekWinnerCard" class="last-week-winner-card admin-last-week-winner-card">
+      <h3>🏆 Último ganador del ranking</h3>
+      <div id="driverLastWeekWinnerContent">
+        <div class="last-week-winner-body">
+          <div class="last-week-winner-icon">🏆</div>
+          <div><b>Cargando ganador...</b><small>Chofer y Admin usan la misma fuente.</small></div>
+        </div>
       </div>
-      
+      <button id="btnActualizarUltimoGanadorChofer" class="btn-dark" style="display:none!important;margin-top:10px" type="button" onclick="loadGanadorSemanaPasadaChofer(true)">Actualizar</button>
+      <div id="driverLastWeekWinnerMsg"></div>
+    </div>
+
+    <div class="driver-b-metrics driver-b-metrics-below-ranking">
+      <div class="metric"><span>Viajes realizados</span><strong id="todayTrips">0</strong><em>🧳</em></div>
+      <div class="metric"><span>Facturación semana</span><strong id="todayTotal">$0</strong><em>📊</em></div>
     </div>
 
     <div id="derivationInbox" class="derivation-inbox hidden">
@@ -1305,12 +1377,6 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <button id="btnRanking" type="button" onclick="openRankingPanel()"><span class="gold">🏆</span><strong>Ranking</strong></button>
       <button id="btnComprobantes" type="button" onclick="showPanel('comprobantesPanel')"><span class="orange">📎</span><strong>Comprobantes</strong></button>
     </div>
-
-    <button class="driver-b-more-card" type="button" onclick="showPanel('driverMorePanel')">
-      <span>•••</span>
-      <div><strong>Más opciones</strong><small>Ranking, Historial, Mi auto, Comprobantes y más</small></div>
-      <b>›</b>
-    </button>
 
     <div id="servicePanel" class="card hidden">
       <h3>Nuevo servicio</h3>
@@ -1450,22 +1516,12 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div id="historyList"></div>
     </div>
 
-    <div id="driverMorePanel" class="card hidden driver-b-more-panel">
-      <h3>Más opciones</h3>
-      <button type="button" onclick="openRankingPanel()"><span>🏆</span><strong>Ranking</strong><b>›</b></button>
-      <button type="button" onclick="showPanel('historyPanel')"><span>📋</span><strong>Historial hoy</strong><b>›</b></button>
+    <div id="driverMorePanel" class="card driver-b-more-panel">
       <button id="btnMiAuto" type="button" onclick="showPanel('miAutoPanel')"><span>🚗</span><strong>Mi auto <small id="miAutoBadge" class="mi-auto-badge hidden">⚙️</small></strong><b>›</b></button>
-      <button type="button" onclick="showPanel('comprobantesPanel')"><span>📎</span><strong>Comprobantes</strong><b>›</b></button>
       <button id="btnActualizarPagina" type="button" onclick="refrescarPagina()"><span>🔄</span><strong>Actualizar página<small>Sincronizar datos</small></strong><b>›</b></button>
       <button type="button" class="driver-b-logout-row" onclick="logout()"><span>↪</span><strong>Cerrar sesión</strong><b>›</b></button>
     </div>
 
-    <div class="driver-b-bottom-nav">
-      <button type="button" onclick="showPanel(''); window.scrollTo({top:0,behavior:'smooth'})"><span>🏠</span>Inicio</button>
-      <button type="button" onclick="openNewService()"><span>📄</span>Nuevo servicio</button>
-      <button type="button" onclick="openMiCierreSemanalPanel()"><span>📊</span>Cierre</button>
-      <button type="button" onclick="showPanel('driverMorePanel')"><span>•••</span>Más</button>
-    </div>
   </section>
 
   <section id="adminView" class="hidden">
@@ -1543,9 +1599,9 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigAlta')"><b>👤 Alta / reasignación de chofer y vehículo</b><span>›</span></button><div id="adminConfigAlta" class="admin-config-content hidden"><p class="note">Crea el usuario real y guarda el chofer. Si la patente ya existe, la app reasigna ese auto al nuevo chofer sin borrar “Mi auto”, km actual, service, correa ni cubiertas.</p><label>Nombre del chofer</label><input id="nuevoChoferNombre" placeholder="Ej: Marcelo" /><label>Usuario</label><input id="nuevoChoferUsuario" placeholder="Ej: marcelo" autocapitalize="none" /><div class="price-note">Entrará como usuario: marcelo / Firebase usa marcelo@explora.local</div><label>Contraseña</label><input id="nuevoChoferPass" type="password" placeholder="Mínimo 6 caracteres" /><label>Patente / ID del vehículo</label><input id="nuevoVehiculoPatente" placeholder="Ej: AG123CD" autocapitalize="characters" /><label>Modelo del vehículo</label><input id="nuevoVehiculoModelo" placeholder="Ej: Fiat Cronos 2024" /><div class="row"><div><label>Km actual</label><input id="nuevoVehiculoKm" type="text" inputmode="numeric" data-number-format="true" placeholder="Ej: 165.867" /></div><div><label>Último aceite km</label><input id="nuevoVehiculoAceite" type="text" inputmode="numeric" data-number-format="true" placeholder="Opcional" /></div></div><button class="btn-gold" onclick="crearChoferVehiculoAdmin()">Crear / reasignar chofer y vehículo</button><div id="nuevoChoferMsg"></div></div></div>
 
 
-      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigModoPruebaFecha')"><b>🧪 Modo prueba de fecha por chofer</b><span>›</span></button><div id="adminConfigModoPruebaFecha" class="admin-config-content hidden"><p class="note">Para probar el cierre obligatorio con comprobante desde un usuario chofer real. Solo el chofer habilitado usa la fecha de su iPhone. Todos los demás siguen con fecha segura de Firebase.</p><label>Chofer para probar</label><select id="modoPruebaFechaChoferSelect"></select><div class="row"><button class="btn-gold" onclick="activarModoPruebaFechaChoferAdmin()">Activar prueba</button><button class="btn-red" onclick="desactivarModoPruebaFechaChoferAdmin()">Desactivar</button></div><button class="btn-dark" style="margin-top:10px" onclick="cargarModoPruebaFechaAdmin(true)">Actualizar estado</button><div id="modoPruebaFechaMsg"></div><div id="modoPruebaFechaEstado" class="note" style="margin-top:12px">Tocá actualizar para ver el estado.</div></div></div>
+      <div class="admin-config-card production-hidden" data-produccion="modo-prueba-fecha-bloqueado"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigModoPruebaFecha')"><b>🧪 Modo prueba de fecha por chofer</b><span>›</span></button><div id="adminConfigModoPruebaFecha" class="admin-config-content hidden"><p class="note">Bloqueado en producción. La app usa fecha segura de Firebase.</p><div id="modoPruebaFechaMsg"></div><div id="modoPruebaFechaEstado" class="note" style="margin-top:12px">Modo producción activo.</div></div></div>
 
-      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigHerramientas')"><b>🛠️ Herramientas</b><span>›</span></button><div id="adminConfigHerramientas" class="admin-config-content hidden"><button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios EXPLORA</button><button class="btn-dark" style="margin-top:10px" onclick="verificarYRepararAcumuladosAdmin()">Verificar / reparar acumulados actuales</button><button class="btn-dark" style="margin-top:10px" onclick="sincronizarUltimoGanadorSemanaAdmin()">🏆 Sincronizar ganador anterior con choferes</button><button class="btn-red" style="margin-top:10px" onclick="resetearAppLanzamientoAdmin()">🧨 Lanzar app desde cero / borrar todo menos Admin</button><button class="btn-red" style="margin-top:10px" onclick="resetearDatosOperativosAdmin()">🧹 Resetear solo datos operativos</button><button class="btn-red" style="margin-top:10px" onclick="eliminarChoferesDemoAdmin()">Eliminar choferes demo anteriores</button><div id="adminToolsMsg"></div></div></div>
+      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigHerramientas')"><b>🛠️ Herramientas</b><span>›</span></button><div id="adminConfigHerramientas" class="admin-config-content hidden"><button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios EXPLORA</button><button class="btn-dark" style="margin-top:10px" onclick="verificarYRepararAcumuladosAdmin()">Verificar / reparar acumulados actuales</button><button class="btn-dark" style="margin-top:10px" onclick="sincronizarUltimoGanadorSemanaAdmin()">🏆 Sincronizar ganador anterior con choferes</button><button class="btn-red" style="margin-top:14px" onclick="resetearAppLanzamientoAdmin()">🧨 Lanzar app desde cero / borrar todo menos Admin</button><div class="msg err" style="margin-top:10px"><b>Producción:</b> este botón se usa una sola vez antes de entregar la app. Borra choferes, vehículos y actividad, pero conserva el Admin actual. Pide doble confirmación y la palabra LANZAR.</div><div id="adminToolsMsg"></div></div></div>
     </div>
 
     <div class="admin-bottom-nav"><button id="adminNavHome" class="active" onclick="adminShowSection('home')"><b>⌂</b>Inicio</button><button id="adminNavVehicles" onclick="adminShowSection('vehicles')"><b>🚗</b>Vehículos</button><button id="adminNavConfig" onclick="adminShowSection('config')"><b>⚙️</b>Configuración</button></div>
@@ -2476,6 +2532,59 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
   }
 });
 
+function autoClickGanadorChofer(origen="auto"){
+  try{
+    const btnActual = $("btnActualizarGanadorActualChofer");
+    const btnUltimo = $("btnActualizarUltimoGanadorChofer");
+
+    if(btnActual){
+      console.log("Auto-click ganador actual chofer", origen);
+      btnActual.click();
+    }else{
+      console.warn("No existe btnActualizarGanadorActualChofer", origen);
+    }
+
+    // Separado unos milisegundos para respetar el mismo flujo manual y no pisar renderizados.
+    setTimeout(()=>{
+      try{
+        const b = $("btnActualizarUltimoGanadorChofer");
+        if(b){
+          console.log("Auto-click último ganador chofer", origen);
+          b.click();
+        }else{
+          console.warn("No existe btnActualizarUltimoGanadorChofer", origen);
+        }
+      }catch(e){ console.warn("Falló auto-click último ganador", e); }
+    }, 450);
+  }catch(e){
+    console.warn("Falló auto-click ganador chofer", e);
+  }
+}
+window.autoClickGanadorChofer = autoClickGanadorChofer;
+
+function actualizarRankingYGanadorDesdeTarjeta(origen="tarjeta_ranking"){
+  const box = document.querySelector('#driverLeaderContent .ranking-bonus-box');
+  try{
+    if(box) box.classList.add('refreshing');
+    // Usa exactamente el mismo flujo que ya funciona al tocar Ranking: ranking actual + último ganador.
+    autoClickGanadorChofer(origen);
+    setTimeout(()=>autoClickGanadorChofer(origen + '_reintento_900ms'), 900);
+  }catch(e){
+    console.warn('No se pudo refrescar ranking/ganador desde tarjeta', e);
+  }finally{
+    setTimeout(()=>{ try{ if(box) box.classList.remove('refreshing'); }catch(_e){} }, 1600);
+  }
+}
+window.actualizarRankingYGanadorDesdeTarjeta = actualizarRankingYGanadorDesdeTarjeta;
+
+// Delegación robusta: aunque el ranking se re-renderice, la tarjeta mantiene el click.
+document.addEventListener('click', function(e){
+  const card = e.target && e.target.closest ? e.target.closest('#driverLeaderContent .ranking-bonus-box') : null;
+  if(!card) return;
+  if(e.target.closest && e.target.closest('button')) return;
+  actualizarRankingYGanadorDesdeTarjeta('tap_tarjeta_bono');
+});
+
 async function loadDriver(){
   $("driverName").textContent = currentProfile.nombre || currentUserId;
   if(choferTieneModoPruebaFecha()){
@@ -2516,11 +2625,8 @@ async function loadDriver(){
     $("todayTotal").textContent = money(0);
   });
 
-  // Ganador actual: mismo cálculo liviano que usa el ranking/admin, automático y con botón manual visible.
-  setTimeout(()=>actualizarGanadorActualChofer(false).catch(e=>console.warn("Ganador actual chofer diferido", e)), 450);
-
-  // Ganador semana pasada: carga diferida y con caché para no trabar celulares lentos.
-  setTimeout(()=>loadGanadorSemanaPasadaChofer().catch(e=>console.warn("Ganador semana pasada diferido", e)), 350);
+  // v2.8.122: no actualiza ganador al iniciar para evitar fallos de carga temprana.
+  // Se actualiza al tocar Ranking, usando el mismo click real que ya funciona manualmente.
 
   // El vehículo se refresca en segundo plano. No bloquea la pantalla principal.
   getDoc(doc(db,"vehiculos",vehicleId)).then(vSnap=>{
@@ -3637,6 +3743,13 @@ window.loadGanadorSemanaPasadaChofer = loadGanadorSemanaPasadaChofer;
 
 window.openRankingPanel = async function(){
   showPanel("rankingPanel");
+
+  // v2.8.122: al entrar a Ranking, dispara el mismo botón real que funcionaba manualmente.
+  // Primer intento inmediato: conserva el gesto del usuario que tocó Ranking.
+  autoClickGanadorChofer("ranking_inmediato");
+  // Segundo intento corto: por si el panel terminó de renderizar un momento después.
+  setTimeout(()=>autoClickGanadorChofer("ranking_reintento_900ms"), 900);
+
   const token = ++rankingLoadToken;
   const box = $("driverRankingList");
   try{
@@ -4175,10 +4288,6 @@ async function loadGanadorSemanaPasadaChofer(mostrarMsg=false){
   }
 
   renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",data || {periodo, ganador:null},"admin");
-  const inlineWinner = $("driverLastWinnerInline");
-  if(inlineWinner){
-    inlineWinner.textContent = (data && data.ganador) ? (data.ganador.nombre || data.ganador.id || "Sin datos") : "Sin datos";
-  }
   if(mostrarMsg && msgBox){
     if(data && data.ganador) msg(msgBox, `Actualizado: ${data.ganador.nombre || data.ganador.id}.`, true);
     else msg(msgBox, "No encontré ganador cerrado todavía.");
@@ -6525,6 +6634,11 @@ window.toggleAdminConfig = function(id){
 
 
 async function cargarModoPruebaFechaAdmin(force=false){
+  if(typeof EXPLORA_PRODUCCION_SEGURA !== "undefined" && EXPLORA_PRODUCCION_SEGURA){
+    const estado = $("modoPruebaFechaEstado");
+    if(estado) estado.innerHTML = `<div class="msg ok">Producción: modo prueba de fecha desactivado. Todos usan fecha segura de Firebase.</div>`;
+    return;
+  }
   if(!currentProfile || currentProfile.rol !== "admin") return;
   const sel = $("modoPruebaFechaChoferSelect");
   const estado = $("modoPruebaFechaEstado");
@@ -6581,6 +6695,7 @@ function limpiarCachesOperativosFecha(){
 }
 
 window.activarModoPruebaFechaChoferAdmin = async function(){
+  if(typeof EXPLORA_PRODUCCION_SEGURA !== "undefined" && EXPLORA_PRODUCCION_SEGURA) return msg($("modoPruebaFechaMsg"),"Bloqueado en producción: modo prueba de fecha desactivado.");
   if(!currentProfile || currentProfile.rol !== "admin") return msg($("modoPruebaFechaMsg"),"Solo Admin puede activar modo prueba.");
   const sel = $("modoPruebaFechaChoferSelect");
   const choferId = String(sel && sel.value || "").trim();
@@ -6604,6 +6719,7 @@ window.activarModoPruebaFechaChoferAdmin = async function(){
 };
 
 window.desactivarModoPruebaFechaChoferAdmin = async function(){
+  if(typeof EXPLORA_PRODUCCION_SEGURA !== "undefined" && EXPLORA_PRODUCCION_SEGURA) return msg($("modoPruebaFechaMsg"),"Producción: modo prueba ya está bloqueado.");
   if(!currentProfile || currentProfile.rol !== "admin") return msg($("modoPruebaFechaMsg"),"Solo Admin puede desactivar modo prueba.");
   const sel = $("modoPruebaFechaChoferSelect");
   const choferId = String(sel && sel.value || "").trim();
@@ -7924,8 +8040,18 @@ async function borrarColeccionCompleta(nombreColeccion, opciones={}){
   return docs.length;
 }
 
+
+// ===== EXPLORA v2.8.125 · PRODUCCIÓN CON RESET DE LANZAMIENTO PROTEGIDO =====
+// En producción se bloquean limpiezas accidentales, pero se permite el reset total inicial solo para Admin.
+const EXPLORA_PRODUCCION_SEGURA = true;
+const EXPLORA_PERMITIR_RESET_TOTAL_LANZAMIENTO = true;
+
 window.resetearDatosOperativosAdmin = async function(){
   const box = $("adminToolsMsg");
+  if(EXPLORA_PRODUCCION_SEGURA){
+    if(box) msg(box,"Bloqueado en producción: el reset operativo no está disponible.");
+    return;
+  }
   if(!currentProfile || currentProfile.rol !== "admin"){
     if(box) msg(box,"Solo Admin puede resetear datos operativos.");
     return;
@@ -8076,17 +8202,31 @@ async function limpiarConfiguracionDeActividadLanzamiento(opciones={}){
 
 window.resetearAppLanzamientoAdmin = async function(){
   const box = $("adminToolsMsg");
+
   if(!currentProfile || currentProfile.rol !== "admin"){
     if(box) msg(box,"Solo Admin puede lanzar el reset total.");
     return;
   }
 
-  const adminId = currentUserId || "admin";
+  if(EXPLORA_PRODUCCION_SEGURA && !EXPLORA_PERMITIR_RESET_TOTAL_LANZAMIENTO){
+    if(box) msg(box,"Bloqueado en producción: el reset total no está disponible.");
+    return;
+  }
+
+  // ID real del documento Admin que debe conservarse.
+  // En algunas instalaciones el login por email no coincide exactamente con el ID del documento,
+  // por eso se usa currentUserId ya corregido por el buscador de choferes.
+  const adminId = String(currentUserId || "admin").trim();
+  if(!adminId){
+    if(box) msg(box,"No se pudo identificar el Admin actual. Cerrá sesión y volvé a entrar como Admin.");
+    return;
+  }
+
   const aviso = "RESET TOTAL DE LANZAMIENTO\n\nSe BORRA de Firebase:\n- todos los choferes excepto el Admin actual\n- todos los vehículos\n- viajes y gastos\n- cierres, pagos y comprobantes\n- fondos operativos\n- derivaciones\n- acumulados/ranking\n- fechas de prueba y registros de fecha\n\nSe CONSERVA:\n- el usuario Admin actual\n- tarifas/servicios base\n\nLos usuarios Auth de chofer que existían pueden quedar en Authentication, pero sin documento de chofer no podrán entrar a la app.";
   if(!confirm(aviso)) return;
 
   const escrito = prompt('Para confirmar escribí exactamente: LANZAR');
-  if(escrito !== "LANZAR"){
+  if(String(escrito || "").trim().toUpperCase() !== "LANZAR"){
     if(box) msg(box,"Reset total cancelado. No se borró nada.",true);
     return;
   }
@@ -8114,62 +8254,91 @@ window.resetearAppLanzamientoAdmin = async function(){
   ];
 
   const resultado = {};
+  const errores = [];
+
+  async function ejecutarPaso(nombre, fn){
+    try{
+      const valor = await fn();
+      resultado[nombre] = valor;
+      return valor;
+    }catch(e){
+      const texto = (e && e.message) ? e.message : String(e || "error desconocido");
+      resultado[nombre] = "ERROR: " + texto;
+      errores.push(`${nombre}: ${texto}`);
+      console.error("Reset lanzamiento - error en", nombre, e);
+      if(box) msg(box,`⚠️ Error en ${nombre}: ${texto}<br>Continuando con el resto...`,false);
+      return null;
+    }
+  }
+
   try{
     if(box) msg(box,"Iniciando reset total de lanzamiento...",true);
 
-    const adminRef = doc(db,"choferes",adminId);
-    await setDoc(adminRef,{
-      ...(currentProfile || {}),
-      rol:"admin",
-      activo:true,
-      ultimoResetTotalLanzamiento: today(),
-      actualizado: serverTimestamp()
-    },{merge:true});
+    // Guardar/reforzar el Admin antes de borrar otros documentos.
+    await ejecutarPaso("admin_conservado", async()=>{
+      const adminRef = doc(db,"choferes",adminId);
+      await setDoc(adminRef,{
+        ...(currentProfile || {}),
+        rol:"admin",
+        activo:true,
+        ultimoResetTotalLanzamiento: today(),
+        actualizado: serverTimestamp()
+      },{merge:true});
+      return adminId;
+    });
 
     for(const nombre of coleccionesBorrarCompleto){
       if(box) msg(box,`Borrando ${nombre}...`,true);
-      resultado[nombre] = await borrarColeccionCompleta(nombre, {
+      await ejecutarPaso(nombre, ()=>borrarColeccionCompleta(nombre, {
         batchSize: 20,
         onProgress:(col,borrados,total)=>{
           if(box && total > 20) msg(box,`Borrando ${col}: ${borrados}/${total}...`,true);
         }
-      });
+      }));
     }
 
     if(box) msg(box,"Borrando choferes y conservando Admin...",true);
-    resultado.choferes = await borrarColeccionExcepto("choferes", [adminId], {
+    await ejecutarPaso("choferes", ()=>borrarColeccionExcepto("choferes", [adminId], {
       batchSize: 20,
       onProgress:(col,borrados,total)=>{
         if(box && total > 20) msg(box,`Borrando ${col}: ${borrados}/${total}...`,true);
       }
-    });
+    }));
 
-    if(box) msg(box,"Limpiando configuraciones de actividad y modo prueba...",true);
-    resultado.configuracion_actividad = await limpiarConfiguracionDeActividadLanzamiento({
+    // No borrar toda configuración de golpe si falla una regla: limpiar solo lo operativo y luego recrear lo necesario.
+    if(box) msg(box,"Limpiando configuraciones operativas...",true);
+    await ejecutarPaso("configuracion_actividad", ()=>limpiarConfiguracionDeActividadLanzamiento({
       batchSize: 20,
       onProgress:(col,borrados,total)=>{
         if(box && total > 20) msg(box,`Borrando ${col}: ${borrados}/${total}...`,true);
       }
-    });
+    }));
 
     const marca = `${Date.now()}_${today()}_reset_total`;
-    await setDoc(doc(db,"configuracion","reset_operativo"),{
-      marca,
-      tipo:"reset_total_lanzamiento",
-      fecha: today(),
-      realizadoPor: adminId,
-      conservaAdmin: adminId,
-      actualizadoTexto: new Date().toLocaleString("es-AR"),
-      actualizado: serverTimestamp(),
-      colecciones: resultado
-    },{merge:true});
+    await ejecutarPaso("reset_operativo", async()=>{
+      await setDoc(doc(db,"configuracion","reset_operativo"),{
+        marca,
+        tipo:"reset_total_lanzamiento",
+        fecha: today(),
+        realizadoPor: adminId,
+        conservaAdmin: adminId,
+        actualizadoTexto: new Date().toLocaleString("es-AR"),
+        actualizado: serverTimestamp(),
+        colecciones: resultado,
+        errores
+      },{merge:true});
+      return "guardado ✅";
+    });
 
-    await setDoc(doc(db,"configuracion","modo_prueba_fecha_choferes"),{
-      activo:false,
-      choferes:{},
-      actualizadoTexto: new Date().toLocaleString("es-AR"),
-      actualizado: serverTimestamp()
-    },{merge:true});
+    await ejecutarPaso("modo_prueba_fecha_choferes", async()=>{
+      await setDoc(doc(db,"configuracion","modo_prueba_fecha_choferes"),{
+        activo:false,
+        choferes:{},
+        actualizadoTexto: new Date().toLocaleString("es-AR"),
+        actualizado: serverTimestamp()
+      },{merge:true});
+      return "desactivado ✅";
+    });
 
     const keys = [];
     for(let i=0;i<localStorage.length;i++){
@@ -8187,9 +8356,13 @@ window.resetearAppLanzamientoAdmin = async function(){
     }
     keys.forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
     localStorage.setItem("explora_reset_operativo_marca", marca);
-    await eliminarUltimoGanadorSemanaPersistente();
-    resultado.ganador_semana_pasada = "eliminado ✅";
-    resultado.ultimo_ganador_semana = "eliminado ✅";
+
+    await ejecutarPaso("ganador_semana_pasada", async()=>{
+      await eliminarUltimoGanadorSemanaPersistente();
+      return "eliminado ✅";
+    });
+
+    resultado.ultimo_ganador_semana = resultado.ganador_semana_pasada || "eliminado ✅";
 
     modoPruebaFechaConfig = {activo:false, choferes:{}, actualizadoTexto:""};
     periodoOperativoCache = null;
@@ -8202,7 +8375,11 @@ window.resetearAppLanzamientoAdmin = async function(){
     resetGanadorSemanaPasadaLocalState();
 
     const detalle = Object.entries(resultado).map(([k,v])=>`${k}: ${v}`).join("<br>");
-    if(box) msg(box,`✅ Reset total completo. La app quedó lista para lanzamiento.<br><br>${detalle}<br><br><small>Se conservó el Admin actual: <b>${adminId}</b>. Ahora podés crear los choferes desde Alta / reasignación.</small>`,true);
+    const avisoErrores = errores.length
+      ? `<br><br><b>⚠️ Algunos pasos tuvieron error:</b><br>${errores.join("<br>")}<br><small>Revisá reglas/permisos de Firestore si alguna colección no se borró.</small>`
+      : "";
+
+    if(box) msg(box,`✅ Reset total finalizado. La app quedó lista para lanzamiento.<br><br>${detalle}${avisoErrores}<br><br><small>Se conservó el Admin actual: <b>${adminId}</b>. Ahora podés crear los choferes desde Alta / reasignación.</small>`,true);
     setTimeout(()=>loadAdmin().catch(e=>console.warn("No se pudo refrescar Admin tras reset total", e)), 300);
   }catch(e){
     if(box) msg(box,"No se pudo completar el reset total: " + (e.message || e));
@@ -8211,9 +8388,12 @@ window.resetearAppLanzamientoAdmin = async function(){
   }
 };
 
-
 window.eliminarChoferesDemoAdmin = async function(){
   const box = $("adminToolsMsg");
+  if(EXPLORA_PRODUCCION_SEGURA){
+    if(box) msg(box,"Bloqueado en producción: eliminación masiva de choferes no disponible.");
+    return;
+  }
   const ok = confirm("¿Eliminar choferes demo anteriores? Esta acción solo borra registros marcados como demo o IDs que empiecen con demo/prueba/test.");
   if(!ok) return;
   try{
@@ -8507,9 +8687,8 @@ syncTrustedToday = async function(){
 
 
 // ===== EXPLORA v2.8.90 · CIERRE RECONSTRUYE POR FECHA REAL =====
-// Mientras estés probando, toda la app trabaja con una sola fecha: la fecha del iPhone.
-// Firebase queda solo como referencia visual. Para producción, cambiar este valor a false.
-const EXPLORA_FECHA_EFECTIVA_IPHONE_PRUEBA = true;
+// PRODUCCIÓN: la app usa fecha segura de Firebase. La fecha del iPhone queda solo como respaldo visual.
+const EXPLORA_FECHA_EFECTIVA_IPHONE_PRUEBA = false;
 
 const _fechaOperativaParaChoferV289 = fechaOperativaParaChofer;
 fechaOperativaParaChofer = function(choferId = currentUserId, perfil = null){
@@ -8567,7 +8746,7 @@ window.renderFechaOperativaVisibleV287 = renderFechaOperativaVisibleV287;
 // Desde esta versión, para reconstruir cierres, la fecha real del viaje/gasto también manda.
 // Ejemplo: si Ariel facturó el 2026-06-13 y luego se simula 2026-06-20,
 // el cierre 2026-06-13 al 2026-06-19 debe contar ese viaje aunque su periodoId viejo no coincida.
-const EXPLORA_BUILD_ACTUAL = "v2.8.90 · CIERRE-RECONSTRUYE-POR-FECHA";
+const EXPLORA_BUILD_ACTUAL = "v2.8.124 · PRODUCCION-SEGURA";
 
 function fechaDocumentoParaPeriodoV290(data){
   return String((data && (data.fechaOperativa || data.fecha || data.creadoFecha || data.fechaServicio)) || "").slice(0,10);
