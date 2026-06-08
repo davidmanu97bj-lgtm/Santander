@@ -100,6 +100,7 @@ body{
 }
 .app{max-width:520px;margin:auto;min-height:100vh;padding:22px}
 .hidden{display:none!important}
+.auth-boot #loginView{display:none!important}
 .production-hidden{display:none!important}
 .logo{
   text-align:center;
@@ -1287,7 +1288,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
 </style>
 </head>
-<body>
+<body class="auth-boot">
 
 <div class="app">
 
@@ -1672,6 +1673,14 @@ const EXPLORA_SESSION_VERSION = "v2.8.127";
 const EXPLORA_SESSION_PREFIX = "explora_sesion_";
 const EXPLORA_SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 let exploraRestaurandoPantalla = false;
+
+function exploraOcultarLoginDuranteSesion(){
+  try{ document.body.classList.add("auth-boot"); }catch(e){}
+}
+
+function exploraMostrarLoginSiNoHaySesion(){
+  try{ document.body.classList.remove("auth-boot"); }catch(e){}
+}
 
 function exploraSessionKey(suffix, userId=currentUserId){
   const id = String(userId || "anonimo").trim().toLowerCase() || "anonimo";
@@ -2570,7 +2579,11 @@ async function aplicarResetOperativoLocalSiCorresponde(){
 }
 
 onAuthStateChanged(auth, async (firebaseUser)=>{
-  if(!firebaseUser) return;
+  if(!firebaseUser){
+    exploraMostrarLoginSiNoHaySesion();
+    return;
+  }
+  exploraOcultarLoginDuranteSesion();
 
   const email = (firebaseUser.email || "").trim().toLowerCase();
   const username = email.split("@")[0].trim().toLowerCase();
@@ -2580,6 +2593,7 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
   if(exploraSesionExpirada(username)){
     exploraLimpiarSesionLocal();
     await signOut(auth);
+    exploraMostrarLoginSiNoHaySesion();
     msg($("loginMsg"), "La sesión venció por seguridad. Ingresá nuevamente.");
     return;
   }
@@ -2608,6 +2622,7 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
       });
 
       if(!encontrado){
+        exploraMostrarLoginSiNoHaySesion();
         msg($("loginMsg"), `Usuario autenticado (${username}) pero no encontrado en Firestore.`);
         return;
       }
@@ -2647,6 +2662,7 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
     }
 
   }catch(e){
+    exploraMostrarLoginSiNoHaySesion();
     msg($("loginMsg"),"Error leyendo Firestore: " + e.message);
   }
 });
