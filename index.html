@@ -5,6 +5,7 @@ Version: 2.8.87
 Build: 2026-06-07-CIERRE-SEMANAL-ESTABLE-FECHA-VISIBLE-027
 Fecha: 06/06/2026
 Cambios:
+- v2.8.129: en Chofer la campana superior se reemplaza por botón Salir, cierra sesión y vuelve al login.
 - Se agrega botón “Mi cierre semanal” en Chofer para ver el cierre provisorio de la semana activa sin esperar al sábado.
 - Corrección Fondo Operativo 50/50: el cierre compara caja real de David y caja real del chofer contra el 50/50 neto. Transferencia/tarjeta pueden compensar total o parcialmente el fondo operativo pagado por David.
 - Se agrega Fondo Operativo 50/50 en Admin: se carga separado de gastos del chofer, impacta como gasto compartido y genera deuda acumulada por cierres pendientes.
@@ -72,6 +73,7 @@ Cambios:
 - v2.8.122: al abrir Ranking en Chofer se ejecuta automáticamente el mismo click real de actualizar ganador; botones manuales ocultos.
 - v2.8.121: Ganador en Chofer se automatiza simulando el botón real que funciona manualmente; mantiene botón visible como respaldo.
 - v2.8.126: limpieza visual Chofer; se elimina la barra inferior fija Inicio/Nuevo servicio/Cierre/Más y se deja visible solo Mi auto, Actualizar página y Cerrar sesión.
+- v2.8.128: sesión rápida por dispositivo; muestra splash EXPLORA al iniciar y usa sesión local para abrir la última pantalla mientras Firebase valida en segundo plano.
 - v2.8.128: sesión persistente sin parpadeo; el login queda oculto durante la restauración real de Firebase Auth.
 - v2.8.127: sesión persistente por celular; no vuelve a pedir usuario/contraseña si no se cerró sesión y restaura la última pantalla usada.
 -->
@@ -79,7 +81,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.128 · Build 2026-06-07-PRODUCCION-SESION-SIN-LOGIN-PREVIEW</title>
+<title>EXPLORA v2.8.129 · Build 2026-06-07-CHOFER-CAMPANA-SALIR-LOGIN</title>
 <style>
 :root{
   --bg:#080808;
@@ -103,8 +105,76 @@ body{
 .hidden{display:none!important}
 .auth-boot #loginView{display:none!important}
 .auth-checking #loginView{display:none!important}
-.auth-checking .app{visibility:hidden}
-.auth-ready .app{visibility:visible}
+.auth-checking:not(.auth-local-ready) .app{visibility:hidden}
+.auth-ready .app,.auth-local-ready .app{visibility:visible}
+#authSplash{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:radial-gradient(circle at top,#171717,#050505 68%);
+  color:#fff;
+  opacity:1;
+  transition:opacity .18s ease;
+}
+.auth-splash-card{
+  text-align:center;
+  padding:28px 24px;
+  min-width:250px;
+}
+.auth-splash-logo{
+  color:var(--gold);
+  letter-spacing:9px;
+  font-size:34px;
+  font-weight:300;
+  text-shadow:0 0 18px rgba(212,175,55,.32);
+}
+.auth-splash-logo span{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:34px;
+  height:34px;
+  border:1.8px solid rgba(212,175,55,.9);
+  border-radius:50%;
+  font-size:19px;
+  letter-spacing:0;
+  margin:0 2px;
+}
+.auth-splash-text{
+  margin-top:12px;
+  color:#d8d8d8;
+  font-size:14px;
+  font-weight:800;
+  letter-spacing:.3px;
+}
+.auth-splash-loader{
+  width:38px;
+  height:3px;
+  border-radius:999px;
+  overflow:hidden;
+  background:#252525;
+  margin:18px auto 0;
+}
+.auth-splash-loader:before{
+  content:"";
+  display:block;
+  width:45%;
+  height:100%;
+  border-radius:999px;
+  background:var(--gold);
+  animation:authSplashMove .85s infinite ease-in-out;
+}
+@keyframes authSplashMove{
+  0%{transform:translateX(-115%)}
+  100%{transform:translateX(255%)}
+}
+.auth-ready #authSplash,.auth-local-ready #authSplash{
+  opacity:0;
+  pointer-events:none;
+}
 .production-hidden{display:none!important}
 .logo{
   text-align:center;
@@ -726,6 +796,19 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   color:#f3d77a!important;
   border:1px solid rgba(212,175,55,.25)!important;
 }
+.driver-b-logout-top{
+  width:auto!important;
+  min-width:64px!important;
+  height:42px!important;
+  padding:0 12px!important;
+  border-radius:999px!important;
+  font-size:13px!important;
+  font-weight:900!important;
+  letter-spacing:.2px;
+  background:rgba(58,16,16,.82)!important;
+  color:#fecaca!important;
+  border:1px solid rgba(239,68,68,.38)!important;
+}
 .driver-b-profile{
   display:flex;
   align-items:center;
@@ -1294,12 +1377,20 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 </head>
 <body class="auth-boot auth-checking">
 
+<div id="authSplash" aria-live="polite">
+  <div class="auth-splash-card">
+    <div class="auth-splash-logo">EXPL<span>⌖</span>RA</div>
+    <div class="auth-splash-text">Ingresando...</div>
+    <div class="auth-splash-loader"></div>
+  </div>
+</div>
+
 <div class="app">
 
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.124</b> · Build 2026-06-07-PRODUCCION-SEGURA</div>
+    <div class="build-version"><b>v2.8.129</b> · Build 2026-06-07-CHOFER-CAMPANA-SALIR-LOGIN</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1313,7 +1404,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="driverView" class="hidden driver-mobile-b">
     <div class="driver-b-topbar">
       <div class="driver-b-logo">EXPL<span>⌖</span>RA</div>
-      <button class="driver-b-bell" type="button" onclick="showPanel('driverMorePanel')">🔔</button>
+      <button class="driver-b-bell driver-b-logout-top" type="button" onclick="logout()" aria-label="Salir de la app">Salir</button>
     </div>
 
     <div class="driver-b-profile">
@@ -1673,7 +1764,7 @@ const storage = getStorage(app);
    - Firebase Auth ya usa browserLocalPersistence.
    - Este bloque agrega control local por dispositivo: último acceso, expiración a 30 días
      y última pantalla usada por Admin/Chofer. No guarda contraseñas. */
-const EXPLORA_SESSION_VERSION = "v2.8.127";
+const EXPLORA_SESSION_VERSION = "v2.8.128";
 const EXPLORA_SESSION_PREFIX = "explora_sesion_";
 const EXPLORA_SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 let exploraRestaurandoPantalla = false;
@@ -1695,6 +1786,10 @@ function exploraMarcarAppLista(){
 function exploraMostrarLoginSiNoHaySesion(){
   try{
     document.body.classList.remove("auth-boot");
+    document.body.classList.remove("auth-local-ready");
+    if($("driverView")) $("driverView").classList.add("hidden");
+    if($("adminView")) $("adminView").classList.add("hidden");
+    if($("loginView")) $("loginView").classList.remove("hidden");
     exploraMarcarAppLista();
   }catch(e){}
 }
@@ -1787,7 +1882,7 @@ function exploraRestaurarPantallaDriver(){
     setTimeout(()=>{
       try{ showPanel(id); }catch(e){ console.warn("No se pudo restaurar pantalla chofer", e); }
       finally{ exploraRestaurandoPantalla = false; }
-    }, 650);
+    }, 80);
   }catch(e){ exploraRestaurandoPantalla = false; }
 }
 
@@ -1800,14 +1895,89 @@ function exploraRestaurarPantallaAdmin(){
     setTimeout(()=>{
       try{ adminShowSection(section); }catch(e){ console.warn("No se pudo restaurar sección Admin", e); }
       finally{ exploraRestaurandoPantalla = false; }
-    }, 650);
+    }, 80);
   }catch(e){ exploraRestaurandoPantalla = false; }
+}
+
+function exploraBuscarSesionLocalVigente(){
+  try{
+    const ultimo = localStorage.getItem(`${EXPLORA_SESSION_PREFIX}ultimo_uid`);
+    const candidatos = [];
+    if(ultimo) candidatos.push(ultimo);
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(k && k.startsWith(`${EXPLORA_SESSION_PREFIX}activa_`)){
+        candidatos.push(k.replace(`${EXPLORA_SESSION_PREFIX}activa_`, ""));
+      }
+    }
+    const vistos = new Set();
+    for(const rawId of candidatos){
+      const id = String(rawId || "").trim().toLowerCase();
+      if(!id || vistos.has(id)) continue;
+      vistos.add(id);
+      const raw = localStorage.getItem(exploraSessionKey("activa", id));
+      if(!raw) continue;
+      const data = JSON.parse(raw);
+      const ultimoAcceso = Number(data.ultimoAcceso || 0);
+      if(ultimoAcceso && Date.now() - ultimoAcceso > EXPLORA_SESSION_MAX_AGE_MS) continue;
+      return {uid:id, data};
+    }
+  }catch(e){ console.warn("No se pudo leer sesión local rápida", e); }
+  return null;
+}
+
+function exploraMostrarPantallaLocalRapida(){
+  const sesion = exploraBuscarSesionLocalVigente();
+  if(!sesion || !sesion.uid) return false;
+  try{
+    currentUserId = sesion.uid;
+    currentProfile = {
+      rol: sesion.data.rol || "chofer",
+      nombre: sesion.data.nombre || sesion.uid
+    };
+
+    const login = $("loginView");
+    const driver = $("driverView");
+    const admin = $("adminView");
+    if(login) login.classList.add("hidden");
+
+    if(currentProfile.rol === "admin"){
+      if(driver) driver.classList.add("hidden");
+      if(admin) admin.classList.remove("hidden");
+      const section = localStorage.getItem(exploraSessionKey("ultima_admin", sesion.uid)) || "home";
+      ["home","vehicles","config"].forEach(sec=>{
+        const box = $(`admin${sec.charAt(0).toUpperCase()+sec.slice(1)}Section`);
+        if(box) box.classList.toggle("hidden", sec !== section);
+      });
+    }else{
+      if(admin) admin.classList.add("hidden");
+      if(driver) driver.classList.remove("hidden");
+      if($("driverName")) $("driverName").textContent = currentProfile.nombre || sesion.uid;
+      const id = localStorage.getItem(exploraSessionKey("ultima_driver", sesion.uid));
+      const permitidas = ["servicePanel","derivePanel","expensePanel","rankingPanel","miCierreSemanalPanel","historyPanel","miAutoPanel","comprobantesPanel","driverMorePanel"];
+      if(id && permitidas.includes(id) && $(id)){
+        permitidas.forEach(p=>{ const panel = $(p); if(panel) panel.classList.add("hidden"); });
+        $(id).classList.remove("hidden");
+      }
+    }
+
+    document.body.classList.add("auth-local-ready");
+    exploraMarcarAppLista();
+    return true;
+  }catch(e){
+    console.warn("No se pudo abrir sesión local rápida", e);
+    return false;
+  }
 }
 
 let currentUserId = null;
 let currentProfile = null;
 let currentVehicle = null;
 let services = [];
+
+// Abre visualmente la última pantalla al instante con la sesión local.
+// Firebase confirma la sesión real en segundo plano unos instantes después.
+exploraMostrarPantallaLocalRapida();
 let kmTodaySaved = false;
 let adminGastosHoyTotal = 0;
 let adminGastosPorVehiculo = {};
