@@ -1821,7 +1821,7 @@ function exploraMostrarLoginSoloSiAuthRealmenteNoExiste(){
       }
     }catch(e){}
     exploraMostrarLoginSiNoHaySesion();
-  }, 250);
+  }, 80);
 }
 
 function exploraSessionKey(suffix, userId=currentUserId){
@@ -2829,9 +2829,15 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
   }
 
   try{
-    await syncModoPruebaFecha();
-    await syncTrustedToday();
-    await aplicarResetOperativoLocalSiCorresponde();
+    // Inicio rápido: no bloquea el splash esperando sincronizaciones pesadas.
+    // Se abre la app apenas Firestore confirma el perfil; fecha/reset se actualizan en segundo plano.
+    setTimeout(()=>{
+      Promise.allSettled([
+        syncModoPruebaFecha(),
+        syncTrustedToday(),
+        aplicarResetOperativoLocalSiCorresponde()
+      ]).catch(()=>{});
+    }, 0);
     let snap = await getDoc(doc(db, "choferes", username));
 
     if(!snap.exists()){
@@ -2859,18 +2865,20 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
       currentUserId = idEncontrado;
       currentProfile = encontrado;
 
-      // Corrección crítica: el modo prueba se había sincronizado con el usuario del email.
-      // Al encontrar el ID real del chofer, se sincroniza de nuevo para que today() use
-      // la fecha del iPhone si Admin autorizó a ese chofer.
-      await syncModoPruebaFecha();
-      await syncTrustedToday();
+      // Corrección crítica: al encontrar el ID real del chofer, la fecha se resincroniza
+      // en segundo plano para no demorar el ingreso visual.
+      setTimeout(()=>{
+        Promise.allSettled([syncModoPruebaFecha(), syncTrustedToday()]).catch(()=>{});
+      }, 0);
 
     }else{
       currentProfile = snap.data();
 
-      // Asegura que el modo prueba también quede ligado al documento real del chofer.
-      await syncModoPruebaFecha();
-      await syncTrustedToday();
+      // Asegura que el modo prueba también quede ligado al documento real del chofer,
+      // sin bloquear el splash ni la entrada a la app.
+      setTimeout(()=>{
+        Promise.allSettled([syncModoPruebaFecha(), syncTrustedToday()]).catch(()=>{});
+      }, 0);
     }
 
     exploraGuardarSesionLocal(firebaseUser, currentProfile);
@@ -2888,8 +2896,9 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
     }else{
       $("driverView").classList.remove("hidden");
       exploraMarcarAppLista();
-      await loadDriver();
-      exploraRestaurarPantallaDriver();
+      loadDriver().then(()=>{
+        exploraRestaurarPantallaDriver();
+      }).catch(e=>msg($("driverMsg"),"Error cargando chofer: " + e.message));
     }
 
   }catch(e){
