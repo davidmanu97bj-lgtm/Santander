@@ -8330,7 +8330,20 @@ window.crearChoferVehiculoAdmin = async function(){
     }catch(eAuth){
       const code = String(eAuth.code || "");
       if(code.includes("email-already-in-use")){
-        usuarioAuthCreado = false; // El usuario ya existe: se continúa con la reasignación segura en Firestore.
+        // IMPORTANTE: si el email ya existe en Firebase Auth, el HTML no puede cambiar
+        // esa contraseña. Antes se seguía igual y luego el chofer veía
+        // “Usuario o contraseña incorrectos” porque Firebase conservaba la clave vieja.
+        // Ahora se valida que la contraseña ingresada sea la contraseña real existente.
+        usuarioAuthCreado = false;
+        try{
+          const secondaryAuth = getAuth(secondaryApp);
+          await signInWithEmailAndPassword(secondaryAuth, `${usuario}@explora.local`, pass);
+          await signOut(secondaryAuth).catch(()=>{});
+        }catch(eLoginExistente){
+          const err = new Error(`El usuario ${usuario} ya existe en Firebase Auth, pero la contraseña ingresada no coincide con la contraseña real existente. Usá la contraseña anterior, elegí otro usuario o eliminá/restablecé ese usuario desde Firebase Authentication.`);
+          err.code = "explora/auth-existente-password-distinta";
+          throw err;
+        }
       }else{
         throw eAuth;
       }
