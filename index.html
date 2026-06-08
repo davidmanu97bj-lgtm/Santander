@@ -10601,5 +10601,87 @@ setTimeout(function(){
 
 
 
+
+
+<script>
+/* ===== EXPLORA v2.8.135 · ADMIN-MODAL-BLOCK-DOM-FIX =====
+   Blindaje final para iPhone/Admin:
+   - Detecta Admin por DOM, no por variable de módulo.
+   - Oculta inmediatamente el modal de cierre obligatorio si la vista visible es Admin.
+   - Evita que el refresco posterior a subir comprobante vuelva a abrir el modal.
+*/
+(function(){
+  const BUILD = "v2.8.135-admin-modal-block-dom-fix";
+  let adminModalBlockUntil = 0;
+
+  function visible(el){
+    if(!el) return false;
+    if(el.classList && el.classList.contains('hidden')) return false;
+    const st = getComputedStyle(el);
+    return st.display !== 'none' && st.visibility !== 'hidden' && st.opacity !== '0';
+  }
+
+  function isAdminDom(){
+    const admin = document.getElementById('adminView');
+    const driver = document.getElementById('driverView');
+    if(visible(admin) && !visible(driver)) return true;
+    const txt = (document.body && document.body.innerText || '').slice(0,800).toLowerCase();
+    return txt.includes('explora') && txt.includes('admin') && txt.includes('configuración');
+  }
+
+  function hideAdminCierreModal(){
+    if(!isAdminDom() && Date.now() > adminModalBlockUntil) return;
+    const modal = document.getElementById('cierreSemanalModal');
+    if(modal && !modal.classList.contains('hidden')) modal.classList.add('hidden');
+    const resumen = document.getElementById('cierreSemanalResumen');
+    const msg = document.getElementById('cierreSemanalMsg');
+    if(resumen && isAdminDom()) resumen.innerHTML = '';
+    if(msg && isAdminDom()) msg.innerHTML = '';
+  }
+
+  window.EXPLORA_bloquearModalCierreAdmin = function(ms){
+    adminModalBlockUntil = Date.now() + (ms || 12000);
+    hideAdminCierreModal();
+  };
+
+  const oldClick = document.addEventListener;
+  document.addEventListener('click', function(ev){
+    try{
+      const btn = ev.target && ev.target.closest && ev.target.closest('button');
+      const tx = btn ? (btn.textContent || '').toLowerCase() : '';
+      if(isAdminDom() && (tx.includes('subir comprobante') || tx.includes('cerrar'))){
+        window.EXPLORA_bloquearModalCierreAdmin(20000);
+      }
+    }catch(e){}
+  }, true);
+
+  const mo = new MutationObserver(()=>{
+    try{ hideAdminCierreModal(); }catch(e){}
+  });
+  mo.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style']});
+
+  [0,100,250,500,900,1500,2500,4000,6500,10000,15000].forEach(ms=>setTimeout(hideAdminCierreModal,ms));
+  window.addEventListener('focus',()=>setTimeout(hideAdminCierreModal,80));
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) setTimeout(hideAdminCierreModal,80); });
+
+  const prevUpload = window.subirComprobantePagoAdmin;
+  if(typeof prevUpload === 'function'){
+    window.subirComprobantePagoAdmin = async function(){
+      window.EXPLORA_bloquearModalCierreAdmin(30000);
+      try{
+        return await prevUpload.apply(this, arguments);
+      }finally{
+        window.EXPLORA_bloquearModalCierreAdmin(30000);
+        setTimeout(hideAdminCierreModal,150);
+        setTimeout(hideAdminCierreModal,800);
+        setTimeout(hideAdminCierreModal,2500);
+      }
+    };
+  }
+
+  window.EXPLORA_BUILD_ADMIN_MODAL_BLOCK_DOM_FIX = BUILD;
+})();
+</script>
+
 </body>
 </html>
