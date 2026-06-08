@@ -2753,6 +2753,7 @@ async function aplicarResetOperativoLocalSiCorresponde(){
     const prefijosOperativos = [
       CACHE_PREFIX + "acum_sem_",
       CACHE_PREFIX + "ranking_",
+      CACHE_PREFIX + "ganador_",
       CACHE_PREFIX + "admin_",
       CACHE_PREFIX + "today_",
       CACHE_PREFIX + "comprobantes_",
@@ -2763,10 +2764,20 @@ async function aplicarResetOperativoLocalSiCorresponde(){
     const keys = [];
     for(let i=0;i<localStorage.length;i++){
       const k = localStorage.key(i);
-      if(k && prefijosOperativos.some(pref=>k.startsWith(pref))) keys.push(k);
+      if(k && (
+        prefijosOperativos.some(pref=>k.startsWith(pref)) ||
+        k.includes("ultimo_ganador_semana") ||
+        k.includes("ganador_semana_pasada") ||
+        k.includes("ganador_sem_") ||
+        k.includes("last_week_winner") ||
+        k.includes("LastWeekWinner")
+      )) keys.push(k);
     }
     keys.forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
 
+    if(currentProfile && currentProfile.ultimoGanadorSemana){
+      try{ delete currentProfile.ultimoGanadorSemana; }catch(e){ currentProfile.ultimoGanadorSemana = null; }
+    }
     periodoOperativoCache = null;
     cierreSemanalCache = null;
     derivationInboxSignature = "";
@@ -2774,6 +2785,7 @@ async function aplicarResetOperativoLocalSiCorresponde(){
     adminVehiculosKmLoadedAt = 0;
     miAutoLoadedAt = 0;
     localStorage.setItem(localKey, marca);
+    try{ resetGanadorSemanaPasadaLocalState(); }catch(e){}
   }catch(e){
     console.warn("No se pudo aplicar reset operativo local", e);
   }
@@ -4374,7 +4386,13 @@ async function getUltimoGanadorSemanaOficial(){
     try{
       const snap = await withTimeout(getDoc(ref), 3000, "Último ganador oficial tardó demasiado.");
       if(snap.exists()){
-        const normalizado = normalizarUltimoGanadorSemana(snap.data());
+        const raw = snap.data() || {};
+        if(raw.eliminado === true || raw.reset === true || raw.ganador === null){
+          limpiarCachesViejosGanadorSemana();
+          try{ cacheRemove("ultimo_ganador_semana_oficial"); }catch(e){}
+          return null;
+        }
+        const normalizado = normalizarUltimoGanadorSemana(raw);
         if(normalizado && normalizado.ganador) return cacheUltimoGanadorSemanaUnico(normalizado);
       }
     }catch(e){
@@ -4420,16 +4438,44 @@ async function guardarUltimoGanadorSemanaDesdeRanking(periodo, fuente="cierre_se
 }
 
 async function eliminarUltimoGanadorSemanaPersistente(){
-  try{ await deleteDoc(ganadorSemanaPasadaDocRef()); }catch(e){ console.warn("No se pudo borrar ultimo_ganador_semana", e); }
-  try{ await deleteDoc(doc(db,"sistema","ultimo_ganador_semana")); }catch(e){}
+  const limpieza = {
+    eliminado:true,
+    ganador:null,
+    ganadorId:"",
+    ganadorNombre:"",
+    nombre:"",
+    periodo:null,
+    periodoId:"",
+    fuente:"reset_lanzamiento",
+    actualizadoMs:Date.now(),
+    actualizadoTexto:new Date().toLocaleString("es-AR"),
+    actualizado:serverTimestamp()
+  };
+
+  // Borrar y además dejar una marca vacía. Esto evita que otro dispositivo vuelva a mostrar
+  // un ganador viejo desde caché o desde un espejo que quedó vivo por permisos.
+  const refs = [
+    ganadorSemanaPasadaDocRef(),
+    doc(db,"sistema","ultimo_ganador_semana"),
+    doc(db,"publico","ultimo_ganador_semana")
+  ];
+  for(const ref of refs){
+    try{ await deleteDoc(ref); }catch(e){ console.warn("No se pudo borrar", ref && ref.path ? ref.path : ref, e); }
+    try{ await setDoc(ref, limpieza, {merge:false}); }catch(e){ console.warn("No se pudo marcar vacío", ref && ref.path ? ref.path : ref, e); }
+  }
+
   try{
-    const snap = await withTimeout(getDocs(collection(db,"choferes")), 4500, "Limpiar ganador en choferes tardó demasiado.");
+    const snap = await withTimeout(getDocs(collection(db,"choferes")), 6500, "Limpiar ganador en choferes tardó demasiado.");
     const tareas = [];
     snap.forEach(d=>{
-      tareas.push(updateDoc(doc(db,"choferes",d.id), {ultimoGanadorSemana: deleteField()}).catch(()=>{}));
+      tareas.push(setDoc(doc(db,"choferes",d.id), {ultimoGanadorSemana: deleteField()}, {merge:true}).catch(e=>console.warn("No se pudo limpiar ganador en", d.id, e)));
     });
     await Promise.all(tareas);
   }catch(e){ console.warn("No se pudo limpiar ganador en perfiles de chofer", e); }
+
+  if(currentProfile && currentProfile.ultimoGanadorSemana){
+    try{ delete currentProfile.ultimoGanadorSemana; }catch(e){ currentProfile.ultimoGanadorSemana = null; }
+  }
   limpiarCachesViejosGanadorSemana();
   try{ cacheRemove("ultimo_ganador_semana_oficial"); }catch(e){}
 }
