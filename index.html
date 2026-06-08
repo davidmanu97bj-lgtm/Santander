@@ -6,6 +6,7 @@ Build: 2026-06-07-CIERRE-SEMANAL-ESTABLE-FECHA-VISIBLE-027
 Fecha: 06/06/2026
 Cambios:
 - v2.8.130: splash EXPLORA estabilizado; sin mensaje verde, sin salto del logo y validación inicial más rápida.
+- v2.8.130: Alta de chofer bloquea usuarios existentes en Firebase Auth; no reutiliza contraseñas viejas. Lanzar app avisa que no borra Authentication.
 - v2.8.129: en Chofer la campana superior se reemplaza por botón Salir, cierra sesión y vuelve al login.
 - Se agrega botón “Mi cierre semanal” en Chofer para ver el cierre provisorio de la semana activa sin esperar al sábado.
 - Corrección Fondo Operativo 50/50: el cierre compara caja real de David y caja real del chofer contra el 50/50 neto. Transferencia/tarjeta pueden compensar total o parcialmente el fondo operativo pagado por David.
@@ -1709,7 +1710,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
       <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigMensual')"><b>📊 Resumen mensual por auto</b><span>›</span></button><div id="adminConfigMensual" class="admin-config-content hidden"><p class="note">Se carga solo cuando lo pedís. Sirve para revisar cuánto facturó y gastó cada auto por mes sin hacer lento el administrador.</p><label>Mes</label><input id="adminMesInput" type="month" /><label>Vehículo</label><select id="adminMesVehiculoSelect"></select><button class="btn-gold" onclick="calcularResumenMensualAdmin()">Ver resumen mensual</button><div id="adminMensualResultado"></div></div></div>
 
-      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigAlta')"><b>👤 Alta / reasignación de chofer y vehículo</b><span>›</span></button><div id="adminConfigAlta" class="admin-config-content hidden"><p class="note">Crea el usuario real y guarda el chofer. Si la patente ya existe, la app reasigna ese auto al nuevo chofer sin borrar “Mi auto”, km actual, service, correa ni cubiertas.</p><label>Nombre del chofer</label><input id="nuevoChoferNombre" placeholder="Ej: Marcelo" /><label>Usuario</label><input id="nuevoChoferUsuario" placeholder="Ej: marcelo" autocapitalize="none" /><div class="price-note">Entrará como usuario: marcelo / Firebase usa marcelo@explora.local</div><label>Contraseña</label><input id="nuevoChoferPass" type="password" placeholder="Mínimo 6 caracteres" /><label>Patente / ID del vehículo</label><input id="nuevoVehiculoPatente" placeholder="Ej: AG123CD" autocapitalize="characters" /><label>Modelo del vehículo</label><input id="nuevoVehiculoModelo" placeholder="Ej: Fiat Cronos 2024" /><div class="row"><div><label>Km actual</label><input id="nuevoVehiculoKm" type="text" inputmode="numeric" data-number-format="true" placeholder="Ej: 165.867" /></div><div><label>Último aceite km</label><input id="nuevoVehiculoAceite" type="text" inputmode="numeric" data-number-format="true" placeholder="Opcional" /></div></div><button class="btn-gold" onclick="crearChoferVehiculoAdmin()">Crear / reasignar chofer y vehículo</button><div id="nuevoChoferMsg"></div></div></div>
+      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigAlta')"><b>👤 Alta / reasignación de chofer y vehículo</b><span>›</span></button><div id="adminConfigAlta" class="admin-config-content hidden"><p class="note">Crea el usuario real y guarda el chofer. Si el usuario ya existe en Firebase Auth, la app lo bloquea para evitar contraseña vieja. Si la patente ya existe, la app reasigna ese auto al nuevo chofer sin borrar “Mi auto”, km actual, service, correa ni cubiertas.</p><label>Nombre del chofer</label><input id="nuevoChoferNombre" placeholder="Ej: Marcelo" /><label>Usuario</label><input id="nuevoChoferUsuario" placeholder="Ej: marcelo" autocapitalize="none" /><div class="price-note">Entrará como usuario: marcelo / Firebase usa marcelo@explora.local</div><label>Contraseña</label><input id="nuevoChoferPass" type="password" placeholder="Mínimo 6 caracteres" /><label>Patente / ID del vehículo</label><input id="nuevoVehiculoPatente" placeholder="Ej: AG123CD" autocapitalize="characters" /><label>Modelo del vehículo</label><input id="nuevoVehiculoModelo" placeholder="Ej: Fiat Cronos 2024" /><div class="row"><div><label>Km actual</label><input id="nuevoVehiculoKm" type="text" inputmode="numeric" data-number-format="true" placeholder="Ej: 165.867" /></div><div><label>Último aceite km</label><input id="nuevoVehiculoAceite" type="text" inputmode="numeric" data-number-format="true" placeholder="Opcional" /></div></div><button class="btn-gold" onclick="crearChoferVehiculoAdmin()">Crear / reasignar chofer y vehículo</button><div id="nuevoChoferMsg"></div></div></div>
 
 
       <div class="admin-config-card production-hidden" data-produccion="modo-prueba-fecha-bloqueado"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigModoPruebaFecha')"><b>🧪 Modo prueba de fecha por chofer</b><span>›</span></button><div id="adminConfigModoPruebaFecha" class="admin-config-content hidden"><p class="note">Bloqueado en producción. La app usa fecha segura de Firebase.</p><div id="modoPruebaFechaMsg"></div><div id="modoPruebaFechaEstado" class="note" style="margin-top:12px">Modo producción activo.</div></div></div>
@@ -8330,20 +8331,14 @@ window.crearChoferVehiculoAdmin = async function(){
     }catch(eAuth){
       const code = String(eAuth.code || "");
       if(code.includes("email-already-in-use")){
-        // IMPORTANTE: si el email ya existe en Firebase Auth, el HTML no puede cambiar
-        // esa contraseña. Antes se seguía igual y luego el chofer veía
-        // “Usuario o contraseña incorrectos” porque Firebase conservaba la clave vieja.
-        // Ahora se valida que la contraseña ingresada sea la contraseña real existente.
-        usuarioAuthCreado = false;
-        try{
-          const secondaryAuth = getAuth(secondaryApp);
-          await signInWithEmailAndPassword(secondaryAuth, `${usuario}@explora.local`, pass);
-          await signOut(secondaryAuth).catch(()=>{});
-        }catch(eLoginExistente){
-          const err = new Error(`El usuario ${usuario} ya existe en Firebase Auth, pero la contraseña ingresada no coincide con la contraseña real existente. Usá la contraseña anterior, elegí otro usuario o eliminá/restablecé ese usuario desde Firebase Authentication.`);
-          err.code = "explora/auth-existente-password-distinta";
-          throw err;
-        }
+        // PRODUCCIÓN SEGURA:
+        // No se reutilizan usuarios existentes de Firebase Auth.
+        // El HTML no puede borrar ni cambiar la contraseña de un usuario Auth ya creado.
+        // Si seguimos creando/reasignando en Firestore, el chofer queda con contraseña vieja
+        // y aparece “contraseña incorrecta”. Por eso se corta antes de guardar Firestore.
+        const err = new Error(`El usuario ${usuario} ya existe en Firebase Authentication. No se reutilizó ni se reasignó nada. Para usar ese usuario, primero eliminá/restablecé ${usuario}@explora.local desde Firebase Console > Authentication > Users, o elegí otro usuario nuevo.`);
+        err.code = "explora/auth-usuario-existente-bloqueado";
+        throw err;
       }else{
         throw eAuth;
       }
@@ -8413,7 +8408,7 @@ window.crearChoferVehiculoAdmin = async function(){
     adminBaseLoadedAt = 0;
     adminVehiculosKmLoadedAt = 0;
 
-    const estadoUsuario = usuarioAuthCreado ? "Usuario nuevo creado" : "Usuario existente reutilizado";
+    const estadoUsuario = "Usuario nuevo creado";
     const estadoVehiculo = vehiculoExistente ? "Vehículo existente reasignado sin borrar Mi auto" : "Vehículo nuevo creado";
     const anteriorHtml = esReasignacion ? `<br><b>Chofer anterior:</b> ${choferAnterior}` : "";
 
@@ -8432,6 +8427,7 @@ window.crearChoferVehiculoAdmin = async function(){
     const code = String(e.code || "");
     if(code.includes("operation-not-allowed")) texto = "Firebase Authentication no permite Email/Password. Activá Email/Password en Firebase Console > Authentication > Sign-in method.";
     if(code.includes("weak-password")) texto = "La contraseña es muy débil. Usá mínimo 6 caracteres.";
+    if(code.includes("auth-usuario-existente-bloqueado")) texto = texto + "<br><br><small>Esto confirma que Lanzar app borró Firestore/localStorage, pero no puede borrar Firebase Authentication desde el HTML. Ese borrado se hace manualmente en Firebase Console o con una Cloud Function/Admin SDK.</small>";
     msg(box,"No se pudo crear/reasignar el chofer: " + texto);
   }finally{
     if(secondaryApp) await deleteApp(secondaryApp).catch(()=>{});
@@ -8805,7 +8801,7 @@ window.resetearAppLanzamientoAdmin = async function(){
       ? `<br><br><b>⚠️ Algunos pasos tuvieron error:</b><br>${errores.join("<br>")}<br><small>Revisá reglas/permisos de Firestore si alguna colección no se borró.</small>`
       : "";
 
-    if(box) msg(box,`✅ Reset total finalizado. La app quedó lista para lanzamiento.<br><br>${detalle}${avisoErrores}<br><br><small>Se conservó el Admin actual: <b>${adminId}</b>. Ahora podés crear los choferes desde Alta / reasignación.</small>`,true);
+    if(box) msg(box,`✅ Reset total finalizado. La app quedó lista para lanzamiento.<br><br>${detalle}${avisoErrores}<br><br><small>Se conservó el Admin actual: <b>${adminId}</b>. Ahora podés crear los choferes desde Alta / reasignación.</small><br><br><b>⚠️ Importante:</b> por seguridad Firebase no permite borrar usuarios de Authentication desde este HTML. Si antes existían choferes en Authentication, eliminálos manualmente en Firebase Console > Authentication > Users antes de recrearlos, o usá usuarios nuevos.</small>`,true);
     setTimeout(()=>loadAdmin().catch(e=>console.warn("No se pudo refrescar Admin tras reset total", e)), 300);
   }catch(e){
     if(box) msg(box,"No se pudo completar el reset total: " + (e.message || e));
