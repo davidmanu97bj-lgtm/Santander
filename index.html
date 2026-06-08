@@ -6,6 +6,7 @@ Build: 2026-06-07-CIERRE-SEMANAL-ESTABLE-FECHA-VISIBLE-027
 Fecha: 06/06/2026
 Cambios:
 - v2.8.129: en Chofer la campana superior se reemplaza por botón Salir, cierra sesión y vuelve al login.
+- v2.8.130: Splash Firebase limpio; se oculta la app durante validación real y el logo EXPLORA sale con fundido suave.
 - Se agrega botón “Mi cierre semanal” en Chofer para ver el cierre provisorio de la semana activa sin esperar al sábado.
 - Corrección Fondo Operativo 50/50: el cierre compara caja real de David y caja real del chofer contra el 50/50 neto. Transferencia/tarjeta pueden compensar total o parcialmente el fondo operativo pagado por David.
 - Se agrega Fondo Operativo 50/50 en Admin: se carga separado de gastos del chofer, impacta como gasto compartido y genera deuda acumulada por cierres pendientes.
@@ -81,7 +82,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.129 · Build 2026-06-07-CHOFER-CAMPANA-SALIR-LOGIN</title>
+<title>EXPLORA v2.8.130 · Build 2026-06-07-SPLASH-FIREBASE-LIMPIO</title>
 <style>
 :root{
   --bg:#080808;
@@ -105,8 +106,15 @@ body{
 .hidden{display:none!important}
 .auth-boot #loginView{display:none!important}
 .auth-checking #loginView{display:none!important}
-.auth-checking:not(.auth-local-ready) .app{visibility:hidden}
-.auth-ready .app,.auth-local-ready .app{visibility:visible}
+/* v2.8.130: durante la validación real de Firebase se ve solo #authSplash.
+   La app puede prearmarse por caché local, pero queda invisible hasta auth-ready. */
+.auth-checking .app{visibility:hidden!important}
+.auth-ready .app{visibility:visible}
+.auth-local-ready:not(.auth-checking) .app{visibility:visible}
+.auth-checking #loginMsg,
+.auth-checking .msg.ok{
+  display:none!important;
+}
 #authSplash{
   position:fixed;
   inset:0;
@@ -117,7 +125,7 @@ body{
   background:radial-gradient(circle at top,#171717,#050505 68%);
   color:#fff;
   opacity:1;
-  transition:opacity .18s ease;
+  transition:opacity .2s ease;
 }
 .auth-splash-card{
   text-align:center;
@@ -1778,7 +1786,9 @@ function exploraOcultarLoginDuranteSesion(){
 
 function exploraMarcarAppLista(){
   try{
+    // Quita el splash con fundido suave (CSS 200 ms) recién cuando Firebase terminó.
     document.body.classList.remove("auth-checking");
+    document.body.classList.remove("auth-local-ready");
     document.body.classList.add("auth-ready");
   }catch(e){}
 }
@@ -1961,8 +1971,9 @@ function exploraMostrarPantallaLocalRapida(){
       }
     }
 
+    // v2.8.130: la sesión local solo prepara la pantalla detrás del splash.
+    // No se muestra la app ni el login hasta que Firebase confirme la sesión real.
     document.body.classList.add("auth-local-ready");
-    exploraMarcarAppLista();
     return true;
   }catch(e){
     console.warn("No se pudo abrir sesión local rápida", e);
