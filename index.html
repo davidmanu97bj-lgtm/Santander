@@ -5,8 +5,6 @@ Version: 2.8.87
 Build: 2026-06-07-CIERRE-SEMANAL-ESTABLE-FECHA-VISIBLE-027
 Fecha: 06/06/2026
 Cambios:
-- v2.8.130: splash EXPLORA estabilizado; sin mensaje verde, sin salto del logo y validación inicial más rápida.
-- v2.8.130: Alta de chofer bloquea usuarios existentes en Firebase Auth; no reutiliza contraseñas viejas. Lanzar app avisa que no borra Authentication.
 - v2.8.129: en Chofer la campana superior se reemplaza por botón Salir, cierra sesión y vuelve al login.
 - Se agrega botón “Mi cierre semanal” en Chofer para ver el cierre provisorio de la semana activa sin esperar al sábado.
 - Corrección Fondo Operativo 50/50: el cierre compara caja real de David y caja real del chofer contra el 50/50 neto. Transferencia/tarjeta pueden compensar total o parcialmente el fondo operativo pagado por David.
@@ -83,7 +81,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.130 · Build 2026-06-07-SPLASH-RAPIDO-SIN-BOTON-VERDE</title>
+<title>EXPLORA v2.8.131 · Build 2026-06-07-AUTH-ALTA-USUARIOS-CORREGIDA</title>
 <style>
 :root{
   --bg:#080808;
@@ -119,32 +117,19 @@ body{
   background:radial-gradient(circle at top,#171717,#050505 68%);
   color:#fff;
   opacity:1;
-  visibility:visible;
-  transform:translateZ(0);
-  backface-visibility:hidden;
-  will-change:opacity;
-  transition:opacity .16s ease, visibility 0s linear .16s;
+  transition:opacity .18s ease;
 }
 .auth-splash-card{
   text-align:center;
   padding:28px 24px;
   min-width:250px;
-  min-height:128px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  transform:translateZ(0);
 }
 .auth-splash-logo{
   color:var(--gold);
   letter-spacing:9px;
   font-size:34px;
   font-weight:300;
-  line-height:1;
   text-shadow:0 0 18px rgba(212,175,55,.32);
-  transform:translateZ(0);
-  backface-visibility:hidden;
 }
 .auth-splash-logo span{
   display:inline-flex;
@@ -159,7 +144,11 @@ body{
   margin:0 2px;
 }
 .auth-splash-text{
-  display:none!important;
+  margin-top:12px;
+  color:#d8d8d8;
+  font-size:14px;
+  font-weight:800;
+  letter-spacing:.3px;
 }
 .auth-splash-loader{
   width:38px;
@@ -184,13 +173,7 @@ body{
 }
 .auth-ready #authSplash,.auth-local-ready #authSplash{
   opacity:0;
-  visibility:hidden;
   pointer-events:none;
-}
-/* Evita que el mensaje verde del login aparezca detrás o antes del splash */
-#loginMsg .ok,
-#loginMsg .msg.ok{
-  display:none!important;
 }
 .production-hidden{display:none!important}
 .logo{
@@ -1390,6 +1373,31 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   margin-top:12px;
 }
 
+
+/* v2.8.131 · Splash estable y login sin cartel verde intermedio */
+#authSplash{
+  height:100dvh;
+  min-height:100svh;
+  transform:none!important;
+}
+.auth-splash-card,.auth-splash-logo{
+  transform:none!important;
+  animation:none!important;
+  will-change:opacity;
+}
+#loginMsg .msg.ok.auth-progress-hidden{
+  display:none!important;
+}
+
+
+
+/* EXPLORA · Login limpio producción: oculta información técnica de fecha/versión */
+#loginView .build-version,
+#loginView .fecha-source-badge,
+.fecha-source-badge{
+  display:none!important;
+}
+
 </style>
 </head>
 <body class="auth-boot auth-checking">
@@ -1407,7 +1415,6 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
-    <div class="build-version"><b>v2.8.129</b> · Build 2026-06-07-CHOFER-CAMPANA-SALIR-LOGIN</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1710,12 +1717,12 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
       <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigMensual')"><b>📊 Resumen mensual por auto</b><span>›</span></button><div id="adminConfigMensual" class="admin-config-content hidden"><p class="note">Se carga solo cuando lo pedís. Sirve para revisar cuánto facturó y gastó cada auto por mes sin hacer lento el administrador.</p><label>Mes</label><input id="adminMesInput" type="month" /><label>Vehículo</label><select id="adminMesVehiculoSelect"></select><button class="btn-gold" onclick="calcularResumenMensualAdmin()">Ver resumen mensual</button><div id="adminMensualResultado"></div></div></div>
 
-      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigAlta')"><b>👤 Alta / reasignación de chofer y vehículo</b><span>›</span></button><div id="adminConfigAlta" class="admin-config-content hidden"><p class="note">Crea el usuario real y guarda el chofer. Si el usuario ya existe en Firebase Auth, la app lo bloquea para evitar contraseña vieja. Si la patente ya existe, la app reasigna ese auto al nuevo chofer sin borrar “Mi auto”, km actual, service, correa ni cubiertas.</p><label>Nombre del chofer</label><input id="nuevoChoferNombre" placeholder="Ej: Marcelo" /><label>Usuario</label><input id="nuevoChoferUsuario" placeholder="Ej: marcelo" autocapitalize="none" /><div class="price-note">Entrará como usuario: marcelo / Firebase usa marcelo@explora.local</div><label>Contraseña</label><input id="nuevoChoferPass" type="password" placeholder="Mínimo 6 caracteres" /><label>Patente / ID del vehículo</label><input id="nuevoVehiculoPatente" placeholder="Ej: AG123CD" autocapitalize="characters" /><label>Modelo del vehículo</label><input id="nuevoVehiculoModelo" placeholder="Ej: Fiat Cronos 2024" /><div class="row"><div><label>Km actual</label><input id="nuevoVehiculoKm" type="text" inputmode="numeric" data-number-format="true" placeholder="Ej: 165.867" /></div><div><label>Último aceite km</label><input id="nuevoVehiculoAceite" type="text" inputmode="numeric" data-number-format="true" placeholder="Opcional" /></div></div><button class="btn-gold" onclick="crearChoferVehiculoAdmin()">Crear / reasignar chofer y vehículo</button><div id="nuevoChoferMsg"></div></div></div>
+      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigAlta')"><b>👤 Alta / reasignación de chofer y vehículo</b><span>›</span></button><div id="adminConfigAlta" class="admin-config-content hidden"><p class="note">Crea el usuario real y guarda el chofer. Si la patente ya existe, la app reasigna ese auto al nuevo chofer sin borrar “Mi auto”, km actual, service, correa ni cubiertas.</p><label>Nombre del chofer</label><input id="nuevoChoferNombre" placeholder="Ej: Marcelo" /><label>Usuario</label><input id="nuevoChoferUsuario" placeholder="Ej: marcelo" autocapitalize="none" /><div class="price-note">Entrará como usuario: marcelo / Firebase usa marcelo@explora.local</div><label>Contraseña</label><input id="nuevoChoferPass" type="password" placeholder="Mínimo 6 caracteres" /><label>Patente / ID del vehículo</label><input id="nuevoVehiculoPatente" placeholder="Ej: AG123CD" autocapitalize="characters" /><label>Modelo del vehículo</label><input id="nuevoVehiculoModelo" placeholder="Ej: Fiat Cronos 2024" /><div class="row"><div><label>Km actual</label><input id="nuevoVehiculoKm" type="text" inputmode="numeric" data-number-format="true" placeholder="Ej: 165.867" /></div><div><label>Último aceite km</label><input id="nuevoVehiculoAceite" type="text" inputmode="numeric" data-number-format="true" placeholder="Opcional" /></div></div><button class="btn-gold" onclick="crearChoferVehiculoAdmin()">Crear / reasignar chofer y vehículo</button><div id="nuevoChoferMsg"></div></div></div>
 
 
       <div class="admin-config-card production-hidden" data-produccion="modo-prueba-fecha-bloqueado"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigModoPruebaFecha')"><b>🧪 Modo prueba de fecha por chofer</b><span>›</span></button><div id="adminConfigModoPruebaFecha" class="admin-config-content hidden"><p class="note">Bloqueado en producción. La app usa fecha segura de Firebase.</p><div id="modoPruebaFechaMsg"></div><div id="modoPruebaFechaEstado" class="note" style="margin-top:12px">Modo producción activo.</div></div></div>
 
-      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigHerramientas')"><b>🛠️ Herramientas</b><span>›</span></button><div id="adminConfigHerramientas" class="admin-config-content hidden"><button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios EXPLORA</button><button class="btn-dark" style="margin-top:10px" onclick="verificarYRepararAcumuladosAdmin()">Verificar / reparar acumulados actuales</button><button class="btn-dark" style="margin-top:10px" onclick="sincronizarUltimoGanadorSemanaAdmin()">🏆 Sincronizar ganador anterior con choferes</button><button class="btn-red" style="margin-top:14px" onclick="resetearAppLanzamientoAdmin()">🧨 Lanzar app desde cero / borrar todo menos Admin</button><div class="msg err" style="margin-top:10px"><b>Producción:</b> este botón se usa una sola vez antes de entregar la app. Borra choferes, vehículos y actividad, pero conserva el Admin actual. Pide doble confirmación y la palabra LANZAR.</div><div id="adminToolsMsg"></div></div></div>
+      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigHerramientas')"><b>🛠️ Herramientas</b><span>›</span></button><div id="adminConfigHerramientas" class="admin-config-content hidden"><button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios EXPLORA</button><button class="btn-dark" style="margin-top:10px" onclick="verificarYRepararAcumuladosAdmin()">Verificar / reparar acumulados actuales</button><button class="btn-dark" style="margin-top:10px" onclick="sincronizarUltimoGanadorSemanaAdmin()">🏆 Sincronizar ganador anterior con choferes</button><button class="btn-red" style="margin-top:14px" onclick="resetearAppLanzamientoAdmin()">🧨 Lanzar app desde cero / borrar todo menos Admin</button><div class="msg err" style="margin-top:10px"><b>Producción:</b> este botón se usa una sola vez antes de entregar la app. Borra Firestore: choferes, vehículos y actividad, pero conserva el Admin actual. Firebase Authentication debe limpiarse desde Firebase Console si querés borrar usuarios y contraseñas viejas. Pide doble confirmación y la palabra LANZAR.</div><div id="adminToolsMsg"></div></div></div>
     </div>
 
     <div class="admin-bottom-nav"><button id="adminNavHome" class="active" onclick="adminShowSection('home')"><b>⌂</b>Inicio</button><button id="adminNavVehicles" onclick="adminShowSection('vehicles')"><b>🚗</b>Vehículos</button><button id="adminNavConfig" onclick="adminShowSection('config')"><b>⚙️</b>Configuración</button></div>
@@ -1822,7 +1829,7 @@ function exploraMostrarLoginSoloSiAuthRealmenteNoExiste(){
       }
     }catch(e){}
     exploraMostrarLoginSiNoHaySesion();
-  }, 80);
+  }, 900);
 }
 
 function exploraSessionKey(suffix, userId=currentUserId){
@@ -2731,20 +2738,22 @@ function withTimeout(promise, ms, label){
 }
 
 window.login = async function(){
-  const user = $("loginUser").value.trim().toLowerCase();
-  const pass = $("loginPass").value.trim();
+  const rawUser = String($("loginUser")?.value || "").trim().toLowerCase();
+  const pass = String($("loginPass")?.value || "").trim();
+  const user = normalizarUsuarioExplora(rawUser);
+  const email = rawUser.includes("@") ? rawUser : `${user}@explora.local`;
 
   if(!user || !pass){
     return msg($("loginMsg"),"Ingrese usuario y contraseña.");
   }
 
-  // No mostrar cartel verde de validación: durante Firebase queda solo el splash EXPLORA.
-  try{ if($("loginMsg")) $("loginMsg").innerHTML = ""; }catch(e){}
+  // No mostrar cartel verde de "Ingresando...". El usuario solo ve el splash EXPLORA si Firebase demora.
+  if($("loginMsg")) $("loginMsg").innerHTML = "";
 
   try{
-    await signInWithEmailAndPassword(auth, `${user}@explora.local`, pass);
+    await signInWithEmailAndPassword(auth, email, pass);
   }catch(e){
-    msg($("loginMsg"),"Usuario o contraseña incorrectos.");
+    msg($("loginMsg"),`Usuario o contraseña incorrectos.<br><small>Se intentó ingresar como: ${email}</small>`);
   }
 }
 
@@ -2830,15 +2839,9 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
   }
 
   try{
-    // Inicio rápido: no bloquea el splash esperando sincronizaciones pesadas.
-    // Se abre la app apenas Firestore confirma el perfil; fecha/reset se actualizan en segundo plano.
-    setTimeout(()=>{
-      Promise.allSettled([
-        syncModoPruebaFecha(),
-        syncTrustedToday(),
-        aplicarResetOperativoLocalSiCorresponde()
-      ]).catch(()=>{});
-    }, 0);
+    await syncModoPruebaFecha();
+    await syncTrustedToday();
+    await aplicarResetOperativoLocalSiCorresponde();
     let snap = await getDoc(doc(db, "choferes", username));
 
     if(!snap.exists()){
@@ -2859,27 +2862,31 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
       });
 
       if(!encontrado){
-        msg($("loginMsg"), `Usuario autenticado (${username}) pero no encontrado en Firestore.`);
+        // Auth existe, pero no hay perfil en Firestore. Evita splash infinito y vuelve al login.
+        await signOut(auth).catch(()=>{});
+        currentUserId = null;
+        currentProfile = null;
+        exploraLimpiarSesionLocal();
+        exploraMostrarLoginSiNoHaySesion();
+        msg($("loginMsg"), `Usuario autenticado (${username}) pero no tiene perfil creado en EXPLORA.<br><small>Crealo desde Admin o usá un usuario que exista en choferes/admin.</small>`);
         return;
       }
 
       currentUserId = idEncontrado;
       currentProfile = encontrado;
 
-      // Corrección crítica: al encontrar el ID real del chofer, la fecha se resincroniza
-      // en segundo plano para no demorar el ingreso visual.
-      setTimeout(()=>{
-        Promise.allSettled([syncModoPruebaFecha(), syncTrustedToday()]).catch(()=>{});
-      }, 0);
+      // Corrección crítica: el modo prueba se había sincronizado con el usuario del email.
+      // Al encontrar el ID real del chofer, se sincroniza de nuevo para que today() use
+      // la fecha del iPhone si Admin autorizó a ese chofer.
+      await syncModoPruebaFecha();
+      await syncTrustedToday();
 
     }else{
       currentProfile = snap.data();
 
-      // Asegura que el modo prueba también quede ligado al documento real del chofer,
-      // sin bloquear el splash ni la entrada a la app.
-      setTimeout(()=>{
-        Promise.allSettled([syncModoPruebaFecha(), syncTrustedToday()]).catch(()=>{});
-      }, 0);
+      // Asegura que el modo prueba también quede ligado al documento real del chofer.
+      await syncModoPruebaFecha();
+      await syncTrustedToday();
     }
 
     exploraGuardarSesionLocal(firebaseUser, currentProfile);
@@ -2897,9 +2904,8 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
     }else{
       $("driverView").classList.remove("hidden");
       exploraMarcarAppLista();
-      loadDriver().then(()=>{
-        exploraRestaurarPantallaDriver();
-      }).catch(e=>msg($("driverMsg"),"Error cargando chofer: " + e.message));
+      await loadDriver();
+      exploraRestaurarPantallaDriver();
     }
 
   }catch(e){
@@ -8322,26 +8328,19 @@ window.crearChoferVehiculoAdmin = async function(){
     const choferAnterior = String((vehiculoExistente && vehiculoExistente.chofer) || "").trim();
     const esReasignacion = !!(vehiculoExistente && choferAnterior && choferAnterior !== usuario);
 
-    let usuarioAuthCreado = true;
+    let usuarioAuthCreado = false;
     try{
       secondaryApp = initializeApp(firebaseConfig, "crearUsuario_" + Date.now());
       const secondaryAuth = getAuth(secondaryApp);
       await createUserWithEmailAndPassword(secondaryAuth, `${usuario}@explora.local`, pass);
+      usuarioAuthCreado = true;
       await signOut(secondaryAuth).catch(()=>{});
     }catch(eAuth){
       const code = String(eAuth.code || "");
       if(code.includes("email-already-in-use")){
-        // PRODUCCIÓN SEGURA:
-        // No se reutilizan usuarios existentes de Firebase Auth.
-        // El HTML no puede borrar ni cambiar la contraseña de un usuario Auth ya creado.
-        // Si seguimos creando/reasignando en Firestore, el chofer queda con contraseña vieja
-        // y aparece “contraseña incorrecta”. Por eso se corta antes de guardar Firestore.
-        const err = new Error(`El usuario ${usuario} ya existe en Firebase Authentication. No se reutilizó ni se reasignó nada. Para usar ese usuario, primero eliminá/restablecé ${usuario}@explora.local desde Firebase Console > Authentication > Users, o elegí otro usuario nuevo.`);
-        err.code = "explora/auth-usuario-existente-bloqueado";
-        throw err;
-      }else{
-        throw eAuth;
+        throw new Error(`El usuario ${usuario}@explora.local ya existe en Firebase Authentication. Eliminá ese usuario en Firebase Auth o usá otro nombre. No se guardó el chofer para evitar contraseñas viejas.`);
       }
+      throw eAuth;
     }
 
     // Reasignación segura:
@@ -8408,7 +8407,7 @@ window.crearChoferVehiculoAdmin = async function(){
     adminBaseLoadedAt = 0;
     adminVehiculosKmLoadedAt = 0;
 
-    const estadoUsuario = "Usuario nuevo creado";
+    const estadoUsuario = "Usuario nuevo creado correctamente en Firebase Auth";
     const estadoVehiculo = vehiculoExistente ? "Vehículo existente reasignado sin borrar Mi auto" : "Vehículo nuevo creado";
     const anteriorHtml = esReasignacion ? `<br><b>Chofer anterior:</b> ${choferAnterior}` : "";
 
@@ -8427,7 +8426,6 @@ window.crearChoferVehiculoAdmin = async function(){
     const code = String(e.code || "");
     if(code.includes("operation-not-allowed")) texto = "Firebase Authentication no permite Email/Password. Activá Email/Password en Firebase Console > Authentication > Sign-in method.";
     if(code.includes("weak-password")) texto = "La contraseña es muy débil. Usá mínimo 6 caracteres.";
-    if(code.includes("auth-usuario-existente-bloqueado")) texto = texto + "<br><br><small>Esto confirma que Lanzar app borró Firestore/localStorage, pero no puede borrar Firebase Authentication desde el HTML. Ese borrado se hace manualmente en Firebase Console o con una Cloud Function/Admin SDK.</small>";
     msg(box,"No se pudo crear/reasignar el chofer: " + texto);
   }finally{
     if(secondaryApp) await deleteApp(secondaryApp).catch(()=>{});
@@ -8801,7 +8799,7 @@ window.resetearAppLanzamientoAdmin = async function(){
       ? `<br><br><b>⚠️ Algunos pasos tuvieron error:</b><br>${errores.join("<br>")}<br><small>Revisá reglas/permisos de Firestore si alguna colección no se borró.</small>`
       : "";
 
-    if(box) msg(box,`✅ Reset total finalizado. La app quedó lista para lanzamiento.<br><br>${detalle}${avisoErrores}<br><br><small>Se conservó el Admin actual: <b>${adminId}</b>. Ahora podés crear los choferes desde Alta / reasignación.</small><br><br><b>⚠️ Importante:</b> por seguridad Firebase no permite borrar usuarios de Authentication desde este HTML. Si antes existían choferes en Authentication, eliminálos manualmente en Firebase Console > Authentication > Users antes de recrearlos, o usá usuarios nuevos.</small>`,true);
+    if(box) msg(box,`✅ Reset total finalizado. La app quedó lista para lanzamiento.<br><br>${detalle}${avisoErrores}<br><br><small>Se conservó el Admin actual: <b>${adminId}</b>. Ahora podés crear los choferes desde Alta / reasignación.</small>`,true);
     setTimeout(()=>loadAdmin().catch(e=>console.warn("No se pudo refrescar Admin tras reset total", e)), 300);
   }catch(e){
     if(box) msg(box,"No se pudo completar el reset total: " + (e.message || e));
