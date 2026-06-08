@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.131
-Build: 2026-06-07-CIERRE-SEMANAL-ESTABLE-FECHA-VISIBLE-027
+Version: 2.8.133
+Build: 2026-06-08-CIERRE-UNICO-SIN-DOBLE-MODAL-ADMIN-FIX-133
 Fecha: 06/06/2026
 Cambios:
 - v2.8.129: en Chofer la campana superior se reemplaza por botón Salir, cierra sesión y vuelve al login.
@@ -10185,6 +10185,204 @@ window.EXPLORA_BUILD_CIERRE_COMPROBANTE_OBLIGATORIO = EXPLORA_BUILD_CIERRE_COMPR
   document.addEventListener("visibilitychange",()=>{ if(!document.hidden) setTimeout(recheckV2131, 300); });
   window.EXPLORA_BUILD_CIERRE_SABADO_COMPROBANTE_RESPONSABLE = BUILD;
 })();
+
+  /* ===== EXPLORA v2.8.133 · CIERRE-UNICO-SIN-DOBLE-MODAL =====
+     - El Admin nunca recibe el modal obligatorio de chofer.
+     - El chofer puede cerrar/aceptar el aviso una vez por período y seguir trabajando;
+       queda el cartel persistente, pero no vuelve a abrirse el modal en cada acción.
+     - El botón Admin "Subir comprobante y cerrar" usa el motor interno del módulo y marca
+       el cierre como resuelto.
+  */
+  (function(){
+    const BUILD = "v2.8.133-cierre-unico-sin-doble-modal";
+    let cierreCheckEnCursoV2133 = false;
+    let ultimoModalOcultoV2133 = "";
+
+    function esAdminActualV2133(){
+      try{
+        return !!(currentProfile && String(currentProfile.rol || "").toLowerCase() === "admin");
+      }catch(e){ return false; }
+    }
+
+    function cierreTieneDeudaFixV2133(c){
+      return !!(c && (Number(c.choferDebe || 0) > 0 || Number(c.davidDebe || 0) > 0));
+    }
+
+    function pagoResueltoFixV2133(pago){
+      return !!(pago && pago.pagado === true && (pago.comprobanteUrl || pago.url || pago.sentido === "sin_diferencia"));
+    }
+
+    function keyCierreV2133(uid, periodoId){
+      return `explora_cierre_modal_aceptado_${uid || ""}_${periodoId || ""}`;
+    }
+
+    function setCierreAceptadoSesionV2133(uid, periodoId){
+      try{ sessionStorage.setItem(keyCierreV2133(uid, periodoId), String(Date.now())); }catch(e){}
+    }
+
+    function cierreAceptadoSesionV2133(uid, periodoId){
+      try{
+        const t = Number(sessionStorage.getItem(keyCierreV2133(uid, periodoId)) || 0);
+        // Evita que el modal reaparezca en cada botón durante la sesión de trabajo.
+        return t > 0 && (Date.now() - t) < 12 * 60 * 60 * 1000;
+      }catch(e){ return false; }
+    }
+
+    function ocultarModalCierreV2133(){
+      try{
+        const modal = document.getElementById("cierreSemanalModal");
+        if(modal) modal.classList.add("hidden");
+      }catch(e){}
+    }
+
+    const _checkCierreSemanalAutomaticoV2133 = checkCierreSemanalAutomatico;
+    checkCierreSemanalAutomatico = async function(){
+      if(!currentUserId) return;
+      if(esAdminActualV2133()){
+        cierreSemanalPendiente = null;
+        cierreSemanalCache = null;
+        ocultarModalCierreV2133();
+        return;
+      }
+      if(cierreCheckEnCursoV2133) return;
+      cierreCheckEnCursoV2133 = true;
+      try{
+        await _checkCierreSemanalAutomaticoV2133.apply(this, arguments);
+        const c = cierreSemanalPendiente;
+        const periodoId = c && c.periodo && c.periodo.id;
+        const pago = c && (c.pagoSemanal || c.pago || null);
+        if(periodoId && cierreTieneDeudaFixV2133(c) && !pagoResueltoFixV2133(pago) && cierreAceptadoSesionV2133(currentUserId, periodoId)){
+          ocultarModalCierreV2133();
+          ultimoModalOcultoV2133 = `${currentUserId}_${periodoId}`;
+          try{ checkPagosPendientesChoferAutomatico(); }catch(e){}
+        }
+      }finally{
+        cierreCheckEnCursoV2133 = false;
+      }
+    };
+    window.checkCierreSemanalAutomatico = checkCierreSemanalAutomatico;
+
+    const _confirmarCierreSemanalV2133 = window.confirmarCierreSemanal;
+    window.confirmarCierreSemanal = async function(){
+      const c = cierreSemanalPendiente;
+      const periodoId = c && c.periodo && c.periodo.id;
+      const pago = c && (c.pagoSemanal || c.pago || null);
+      const deudaPendiente = periodoId && cierreTieneDeudaFixV2133(c) && !pagoResueltoFixV2133(pago);
+      try{
+        await _confirmarCierreSemanalV2133.apply(this, arguments);
+      }finally{
+        if(deudaPendiente && currentUserId){
+          setCierreAceptadoSesionV2133(currentUserId, periodoId);
+          ocultarModalCierreV2133();
+          try{ checkPagosPendientesChoferAutomatico(); }catch(e){}
+        }
+      }
+    };
+
+    const _showPanelV2133 = window.showPanel;
+    window.showPanel = function(id){
+      const r = _showPanelV2133 ? _showPanelV2133.apply(this, arguments) : undefined;
+      // No abrir el modal obligatorio al tocar cada función. El cartel persistente sigue activo.
+      if(!esAdminActualV2133()){
+        setTimeout(()=>{ try{ checkPagosPendientesChoferAutomatico(); }catch(e){} }, 250);
+      }
+      return r;
+    };
+
+    window.subirComprobantePagoAdmin = async function(chofer, periodoId, sentido, monto, inputId){
+      const input = document.getElementById(inputId);
+      const file = input && input.files && input.files[0];
+      const clicked = Array.from(document.querySelectorAll("button")).find(b => (b.getAttribute("onclick") || "").includes(inputId));
+      const oldText = clicked ? clicked.textContent : "";
+
+      function setAdminMsg(texto, ok){
+        const box = document.getElementById("adminMsg") || document.getElementById("adminCierresMsg");
+        if(box && typeof msg === "function") msg(box, texto, !!ok);
+        else if(box) box.innerHTML = `<div class="msg ${ok ? "ok" : "err"}">${texto}</div>`;
+      }
+
+      try{
+        if(!esAdminActualV2133()) throw new Error("Solo Admin puede cerrar este pago.");
+        if(!chofer || !periodoId) throw new Error("Falta chofer o período para guardar el comprobante.");
+        if(!file) throw new Error("Seleccioná una foto del comprobante antes de subir.");
+        if(typeof subirComprobantePago !== "function") throw new Error("No se encontró el motor de comprobantes.");
+
+        if(clicked){ clicked.disabled = true; clicked.textContent = "Preparando foto..."; }
+        setAdminMsg("Preparando comprobante...", true);
+        await new Promise(r=>setTimeout(r, 40));
+
+        if(clicked) clicked.textContent = "Subiendo comprobante...";
+        setAdminMsg("Subiendo comprobante y cerrando pago...", true);
+
+        const pagoSubido = await subirComprobantePago({
+          chofer,
+          periodoId,
+          sentido,
+          monto:Number(monto || 0),
+          file,
+          marcadoPor:"admin"
+        });
+
+        let pago = await getEstadoPagoSemanal(chofer, periodoId).catch(()=>null);
+        if(!pago){
+          pago = {
+            chofer,
+            periodoId,
+            sentido,
+            monto:Number(monto || 0),
+            pagado:true,
+            marcadoPor:"admin",
+            fechaPago:pagoSubido.fecha,
+            horaPago:pagoSubido.hora,
+            comprobanteUrl:pagoSubido.url || pagoSubido.comprobanteUrl || "",
+            comprobantePath:pagoSubido.storagePath || "",
+            guardadoEn:pagoSubido.guardadoEn || "",
+            comprobanteObligatorio:true
+          };
+        }
+
+        await setDoc(doc(db,"cierres_semanales",`${chofer}_${periodoId}`),{
+          aceptadoPorChofer:true,
+          estadoCierre:"cerrado_con_comprobante_admin",
+          comprobanteRequerido:false,
+          comprobantePendiente:false,
+          responsableComprobante:"admin",
+          pagoSemanal:pago,
+          fechaResolucion:today(),
+          horaResolucion:new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
+          actualizado:serverTimestamp()
+        },{merge:true});
+
+        cacheRemove("comprobantes_admin_recientes");
+        cacheRemove("pagos_pendientes_chofer_" + chofer);
+        cacheRemove(`admin_5050_${chofer}_${periodoId}`);
+        cacheRemove(`cierre_sem_${chofer}_${periodoId}`);
+
+        setAdminMsg("✅ Comprobante cargado y cierre marcado como cerrado.", true);
+        if(clicked){ clicked.textContent = "✅ Cerrado"; }
+
+        setTimeout(()=>{
+          try{
+            if(typeof loadAdmin === "function") loadAdmin().catch(()=>{});
+            else if(typeof cargarAdminCierres === "function") cargarAdminCierres(true).catch(()=>{});
+          }catch(e){}
+        }, 250);
+
+      }catch(e){
+        const mensaje = "No se pudo subir el comprobante: " + (e && e.message ? e.message : e);
+        setAdminMsg(mensaje, false);
+        alert(mensaje);
+        if(clicked){ clicked.disabled = false; clicked.textContent = oldText || "Subir comprobante y cerrar"; }
+      }
+    };
+
+    setTimeout(()=>{ if(esAdminActualV2133()) ocultarModalCierreV2133(); }, 300);
+    setTimeout(()=>{ if(esAdminActualV2133()) ocultarModalCierreV2133(); }, 1800);
+    setTimeout(()=>{ if(esAdminActualV2133()) ocultarModalCierreV2133(); }, 5200);
+
+    window.EXPLORA_BUILD_CIERRE_UNICO_SIN_DOBLE_MODAL = BUILD;
+  })();
+
 </script>
 
 <script>
@@ -10201,135 +10399,7 @@ setTimeout(function(){
 </script>
 
 
-<script>
-/* ===== EXPLORA v2.8.132 · ADMIN-COMPROBANTE-FIX =====
-   - Admin no abre cierre obligatorio como chofer.
-   - Subir comprobante desde Admin cierra el pago/cierre directamente y refresca la tarjeta.
-*/
-(function(){
-  const BUILD = "v2.8.132-admin-comprobante-fix";
 
-  function esAdminActualV2132(){
-    try{ return !!(window.currentProfile && window.currentProfile.rol === "admin"); }
-    catch(e){ return false; }
-  }
-
-  function ocultarModalCierreChoferEnAdminV2132(){
-    try{
-      const modal = document.getElementById("cierreSemanalModal");
-      if(modal) modal.classList.add("hidden");
-      window.cierreSemanalPendiente = null;
-      window.cierreSemanalCache = null;
-    }catch(e){}
-  }
-
-  const _checkCierreSemanalAutomaticoV2132 = window.checkCierreSemanalAutomatico;
-  window.checkCierreSemanalAutomatico = async function(){
-    if(esAdminActualV2132()){
-      ocultarModalCierreChoferEnAdminV2132();
-      return;
-    }
-    if(typeof _checkCierreSemanalAutomaticoV2132 === "function"){
-      return _checkCierreSemanalAutomaticoV2132.apply(this, arguments);
-    }
-  };
-  try{ checkCierreSemanalAutomatico = window.checkCierreSemanalAutomatico; }catch(e){}
-
-  function setAdminMsgV2132(texto, ok){
-    try{
-      const box = document.getElementById("adminMsg") || document.getElementById("adminCierresMsg");
-      if(box && typeof msg === "function") msg(box, texto, !!ok);
-      else if(box) box.innerHTML = `<div class="msg ${ok ? "ok" : "err"}">${texto}</div>`;
-    }catch(e){}
-  }
-
-  window.subirComprobantePagoAdmin = async function(chofer, periodoId, sentido, monto, inputId){
-    const input = document.getElementById(inputId);
-    const file = input && input.files && input.files[0];
-    const clicked = Array.from(document.querySelectorAll("button")).find(b => (b.getAttribute("onclick") || "").includes(inputId));
-    const oldText = clicked ? clicked.textContent : "";
-
-    try{
-      if(!esAdminActualV2132()) throw new Error("Solo Admin puede cerrar este pago.");
-      if(!chofer || !periodoId) throw new Error("Falta chofer o período para guardar el comprobante.");
-      if(!file) throw new Error("Seleccioná una foto del comprobante antes de subir.");
-      if(typeof subirComprobantePago !== "function") throw new Error("No se encontró el motor de comprobantes.");
-
-      if(clicked){ clicked.disabled = true; clicked.textContent = "Preparando foto..."; }
-      setAdminMsgV2132("Preparando comprobante...", true);
-      await new Promise(r=>setTimeout(r, 40));
-
-      if(clicked) clicked.textContent = "Subiendo comprobante...";
-      setAdminMsgV2132("Subiendo comprobante y cerrando pago...", true);
-
-      const pagoSubido = await subirComprobantePago({
-        chofer,
-        periodoId,
-        sentido,
-        monto:Number(monto || 0),
-        file,
-        marcadoPor:"admin"
-      });
-
-      const pago = await getEstadoPagoSemanal(chofer, periodoId).catch(()=>({
-        chofer,
-        periodoId,
-        sentido,
-        monto:Number(monto || 0),
-        pagado:true,
-        marcadoPor:"admin",
-        fechaPago:pagoSubido.fecha,
-        horaPago:pagoSubido.hora,
-        comprobanteUrl:pagoSubido.url || pagoSubido.comprobanteUrl || "",
-        comprobantePath:pagoSubido.storagePath || "",
-        guardadoEn:pagoSubido.guardadoEn || "",
-        comprobanteObligatorio:true
-      }));
-
-      await setDoc(doc(db,"cierres_semanales",`${chofer}_${periodoId}`),{
-        aceptadoPorChofer:true,
-        estadoCierre:"cerrado_con_comprobante_admin",
-        comprobanteRequerido:false,
-        comprobantePendiente:false,
-        responsableComprobante:"admin",
-        pagoSemanal:pago || null,
-        fechaResolucion: typeof today === "function" ? today() : new Date().toISOString().slice(0,10),
-        horaResolucion:new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
-        actualizado:serverTimestamp()
-      },{merge:true});
-
-      try{ cacheRemove("comprobantes_admin_recientes"); }catch(e){}
-      try{ cacheRemove("pagos_pendientes_chofer_" + chofer); }catch(e){}
-      try{ cacheRemove(`admin_5050_${chofer}_${periodoId}`); }catch(e){}
-      try{ cacheRemove(`cierre_sem_${chofer}_${periodoId}`); }catch(e){}
-
-      setAdminMsgV2132("✅ Comprobante cargado y cierre marcado como cerrado.", true);
-      if(clicked){ clicked.textContent = "✅ Cerrado"; }
-
-      setTimeout(()=>{
-        try{
-          if(typeof loadAdmin === "function") loadAdmin().catch(()=>{});
-          else if(typeof cargarAdminCierres === "function") cargarAdminCierres(true).catch(()=>{});
-        }catch(e){}
-      }, 250);
-
-    }catch(e){
-      setAdminMsgV2132("No se pudo subir el comprobante: " + (e && e.message ? e.message : e), false);
-      alert("No se pudo subir el comprobante: " + (e && e.message ? e.message : e));
-      if(clicked){ clicked.disabled = false; clicked.textContent = oldText || "Subir comprobante y cerrar"; }
-      return;
-    }
-  };
-
-  setTimeout(()=>{ if(esAdminActualV2132()) ocultarModalCierreChoferEnAdminV2132(); }, 300);
-  setTimeout(()=>{ if(esAdminActualV2132()) ocultarModalCierreChoferEnAdminV2132(); }, 1800);
-  setTimeout(()=>{ if(esAdminActualV2132()) ocultarModalCierreChoferEnAdminV2132(); }, 5200);
-  window.addEventListener("focus",()=>setTimeout(()=>{ if(esAdminActualV2132()) ocultarModalCierreChoferEnAdminV2132(); }, 250));
-  document.addEventListener("visibilitychange",()=>{ if(!document.hidden) setTimeout(()=>{ if(esAdminActualV2132()) ocultarModalCierreChoferEnAdminV2132(); }, 250); });
-
-  window.EXPLORA_BUILD_ADMIN_COMPROBANTE_FIX = BUILD;
-})();
-</script>
 
 </body>
 </html>
