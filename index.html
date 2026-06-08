@@ -1827,7 +1827,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.132</b> · ADMIN-COMPROBANTE-FIX</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.134</b> · ADMIN-COMPROBANTE-DIRECTO-FIX</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -10420,6 +10420,182 @@ setTimeout(function(){
   }
 }, 1500);
 
+
+
+  /* ===== EXPLORA v2.8.134 · ADMIN-COMPROBANTE-DIRECTO-FIX =====
+     Corrige iPhone/Safari y Admin:
+     - Admin nunca debe ver el modal obligatorio de Chofer.
+     - El comprobante de Admin se guarda directo en Firestore inline, sin depender de Storage.
+     - El botón no queda pegado en "Subiendo...": tiene timeout y restaura estado.
+     - Al guardar, marca pagos_semanales y cierres_semanales como resueltos.
+  */
+  (function(){
+    const BUILD = "v2.8.134-admin-comprobante-directo-fix";
+
+    function esAdminActualV2134(){
+      try{ return !!(currentProfile && String(currentProfile.rol || "").toLowerCase() === "admin"); }
+      catch(e){ return false; }
+    }
+
+    function ocultarModalCierreAdminV2134(){
+      try{
+        if(esAdminActualV2134()){
+          cierreSemanalPendiente = null;
+          cierreSemanalCache = null;
+          const modal = document.getElementById("cierreSemanalModal");
+          if(modal) modal.classList.add("hidden");
+          const msgBox = document.getElementById("cierreSemanalMsg");
+          if(msgBox) msgBox.innerHTML = "";
+        }
+      }catch(e){}
+    }
+
+    const _checkCierreSemanalAutomaticoV2134 = checkCierreSemanalAutomatico;
+    checkCierreSemanalAutomatico = async function(){
+      if(esAdminActualV2134()){
+        ocultarModalCierreAdminV2134();
+        return;
+      }
+      return _checkCierreSemanalAutomaticoV2134.apply(this, arguments);
+    };
+    window.checkCierreSemanalAutomatico = checkCierreSemanalAutomatico;
+
+    function setAdminMsgV2134(texto, ok){
+      const box = document.getElementById("adminMsg") || document.getElementById("adminCierresMsg");
+      if(box && typeof msg === "function") msg(box, texto, !!ok);
+      else if(box) box.innerHTML = `<div class="msg ${ok ? "ok" : "err"}">${texto}</div>`;
+    }
+
+    function archivoADataURLV2134(file){
+      return withTimeout(new Promise((resolve,reject)=>{
+        const reader = new FileReader();
+        reader.onload = ()=>resolve(String(reader.result || ""));
+        reader.onerror = ()=>reject(new Error("No se pudo leer la foto seleccionada."));
+        reader.readAsDataURL(file);
+      }), 12000, "El iPhone tardó demasiado preparando la foto. Probá una captura más liviana.");
+    }
+
+    async function guardarComprobanteAdminDirectoV2134({chofer, periodoId, sentido, monto, file}){
+      if(!chofer || !periodoId) throw new Error("Falta chofer o período.");
+      if(!file) throw new Error("Seleccioná una foto del comprobante antes de subir.");
+      if(!esArchivoImagenComprobante(file)) throw new Error("El comprobante debe ser una imagen.");
+
+      let dataUrl = "";
+      try{
+        const archivo = await obtenerBlobComprobante(file);
+        dataUrl = await blobToDataURLComprobante(archivo.blob);
+      }catch(e){
+        console.warn("Compresión falló; uso archivo original", e);
+        dataUrl = await archivoADataURLV2134(file);
+      }
+
+      if(!dataUrl || !dataUrl.startsWith("data:image/")) throw new Error("No se pudo preparar la imagen del comprobante.");
+      if(dataUrl.length > 900000) throw new Error("La foto quedó demasiado pesada para guardarla rápido. Sacá una captura/foto más liviana.");
+
+      const id = `${chofer}_${periodoId}`;
+      const fechaPago = today();
+      const horaPago = new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"});
+      const basePago = {
+        id,
+        chofer,
+        periodoId,
+        sentido,
+        monto:Number(monto || 0),
+        marcadoPor:"admin",
+        fecha:fechaPago,
+        hora:horaPago,
+        fechaPago,
+        horaPago,
+        url:dataUrl,
+        comprobanteUrl:dataUrl,
+        comprobantePath:`firestore_inline_admin/${id}`,
+        storagePath:`firestore_inline_admin/${id}`,
+        guardadoEn:"firestore_inline_admin",
+        estado:"cargado",
+        pagado:true,
+        vistoPorChofer: sentido === "david_a_chofer" ? false : true,
+        comprobanteObligatorio:true,
+        actualizado:serverTimestamp()
+      };
+
+      await withTimeout(setDoc(doc(db,"comprobantes_pagos",id), basePago, {merge:true}), 9000, "No se pudo guardar el comprobante.");
+      await withTimeout(setDoc(doc(db,"pagos_semanales",id), basePago, {merge:true}), 9000, "No se pudo marcar el pago como realizado.");
+      await withTimeout(setDoc(doc(db,"cierres_semanales",id), {
+        aceptadoPorChofer:true,
+        estadoCierre:"cerrado_con_comprobante_admin",
+        comprobanteRequerido:false,
+        comprobantePendiente:false,
+        responsableComprobante:"admin",
+        pagoSemanal:basePago,
+        fechaResolucion:fechaPago,
+        horaResolucion:horaPago,
+        actualizado:serverTimestamp()
+      }, {merge:true}), 9000, "El comprobante se guardó, pero no se pudo cerrar el cierre semanal.");
+
+      cacheRemove("comprobantes_admin_recientes");
+      cacheRemove("pagos_pendientes_chofer_" + chofer);
+      cacheRemove(`admin_5050_${chofer}_${periodoId}`);
+      cacheRemove(`cierre_sem_${chofer}_${periodoId}`);
+      return basePago;
+    }
+
+    window.subirComprobantePagoAdmin = async function(chofer, periodoId, sentido, monto, inputId){
+      const file = obtenerComprobanteSeleccionado(inputId) || (document.getElementById(inputId) && document.getElementById(inputId).files && document.getElementById(inputId).files[0]);
+      const clicked = Array.from(document.querySelectorAll("button")).find(b => (b.getAttribute("onclick") || "").includes(inputId));
+      const oldText = clicked ? clicked.textContent : "";
+      let watchdog = null;
+      try{
+        ocultarModalCierreAdminV2134();
+        if(!esAdminActualV2134()) throw new Error("Solo Admin puede cerrar este pago.");
+        if(!file) throw new Error("Seleccioná una foto del comprobante antes de subir.");
+
+        if(clicked){
+          clicked.disabled = true;
+          clicked.textContent = "Preparando foto...";
+          watchdog = setTimeout(()=>{
+            try{
+              clicked.disabled = false;
+              clicked.textContent = oldText || "Subir comprobante y cerrar";
+              setAdminMsgV2134("La subida tardó demasiado. Probá nuevamente con una foto más liviana.", false);
+            }catch(e){}
+          }, 26000);
+        }
+
+        setAdminMsgV2134("Preparando comprobante en el iPhone...", true);
+        await new Promise(r=>setTimeout(r, 60));
+        if(clicked) clicked.textContent = "Guardando...";
+        setAdminMsgV2134("Guardando comprobante y cerrando el pago...", true);
+
+        await guardarComprobanteAdminDirectoV2134({chofer, periodoId, sentido, monto, file});
+        limpiarComprobanteSeleccionado(inputId);
+        const input = document.getElementById(inputId);
+        if(input) input.value = "";
+
+        if(watchdog) clearTimeout(watchdog);
+        setAdminMsgV2134("✅ Comprobante guardado y cierre cerrado.", true);
+        if(clicked){ clicked.disabled = true; clicked.textContent = "✅ Cerrado"; }
+        ocultarModalCierreAdminV2134();
+
+        setTimeout(()=>{
+          try{
+            ocultarModalCierreAdminV2134();
+            if(typeof loadAdmin === "function") loadAdmin().catch(()=>{});
+          }catch(e){}
+        }, 350);
+      }catch(e){
+        if(watchdog) clearTimeout(watchdog);
+        const mensaje = "No se pudo subir el comprobante: " + (e && e.message ? e.message : e);
+        setAdminMsgV2134(mensaje, false);
+        alert(mensaje);
+        if(clicked){ clicked.disabled = false; clicked.textContent = oldText || "Subir comprobante y cerrar"; }
+      }
+    };
+
+    [120,700,1800,3600,7000].forEach(ms=>setTimeout(ocultarModalCierreAdminV2134, ms));
+    window.addEventListener("focus",()=>setTimeout(ocultarModalCierreAdminV2134, 150));
+    document.addEventListener("visibilitychange",()=>{ if(!document.hidden) setTimeout(ocultarModalCierreAdminV2134, 150); });
+    window.EXPLORA_BUILD_ADMIN_COMPROBANTE_DIRECTO_FIX = BUILD;
+  })();
 </script>
 
 
