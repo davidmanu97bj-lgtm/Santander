@@ -81,7 +81,7 @@ Cambios:
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.131 · Build 2026-06-07-AUTH-ALTA-USUARIOS-CORREGIDA</title>
+<title>EXPLORA · Login limpio producción</title>
 <style>
 :root{
   --bg:#080808;
@@ -1390,11 +1390,20 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 }
 
 
-
-/* EXPLORA · Login limpio producción: oculta información técnica de fecha/versión */
+/* EXPLORA · Login producción limpio */
 #loginView .build-version,
 #loginView .fecha-source-badge,
-.fecha-source-badge{
+#loginView [id*="fecha"],
+#loginView [id*="Fecha"],
+#loginView [class*="fecha"],
+#loginView [class*="Fecha"]{
+  display:none!important;
+}
+#loginView .subtitle{
+  margin-bottom:24px!important;
+}
+#loginMsg .msg.ok,
+#loginMsg .ok{
   display:none!important;
 }
 
@@ -1405,7 +1414,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 <div id="authSplash" aria-live="polite">
   <div class="auth-splash-card">
     <div class="auth-splash-logo">EXPL<span>⌖</span>RA</div>
-    <div class="auth-splash-text">Ingresando...</div>
+    <div class="auth-splash-text">EXPLORA</div>
     <div class="auth-splash-loader"></div>
   </div>
 </div>
@@ -1414,7 +1423,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
-    <div class="subtitle">Control Operativo · SEMANAL 50/50</div>
+    <div class="subtitle">Viajes y Servicios</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
