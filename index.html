@@ -72,12 +72,13 @@ Cambios:
 - v2.8.122: al abrir Ranking en Chofer se ejecuta automáticamente el mismo click real de actualizar ganador; botones manuales ocultos.
 - v2.8.121: Ganador en Chofer se automatiza simulando el botón real que funciona manualmente; mantiene botón visible como respaldo.
 - v2.8.126: limpieza visual Chofer; se elimina la barra inferior fija Inicio/Nuevo servicio/Cierre/Más y se deja visible solo Mi auto, Actualizar página y Cerrar sesión.
+- v2.8.127: sesión persistente por celular; no vuelve a pedir usuario/contraseña si no se cerró sesión y restaura la última pantalla usada.
 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>EXPLORA v2.8.124 · Build 2026-06-07-PRODUCCION-SEGURA</title>
+<title>EXPLORA v2.8.127 · Build 2026-06-07-PRODUCCION-SESION-PERSISTENTE</title>
 <style>
 :root{
   --bg:#080808;
@@ -1662,6 +1663,107 @@ setPersistence(auth, browserLocalPersistence).catch(e=>{
 const db = getFirestore(app);
 const storage = getStorage(app);
 
+
+/* EXPLORA v2.8.127 · Sesión persistente y restauración de pantalla
+   - Firebase Auth ya usa browserLocalPersistence.
+   - Este bloque agrega control local por dispositivo: último acceso, expiración a 30 días
+     y última pantalla usada por Admin/Chofer. No guarda contraseñas. */
+const EXPLORA_SESSION_VERSION = "v2.8.127";
+const EXPLORA_SESSION_PREFIX = "explora_sesion_";
+const EXPLORA_SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+let exploraRestaurandoPantalla = false;
+
+function exploraSessionKey(suffix, userId=currentUserId){
+  const id = String(userId || "anonimo").trim().toLowerCase() || "anonimo";
+  return `${EXPLORA_SESSION_PREFIX}${suffix}_${id}`;
+}
+
+function exploraGuardarSesionLocal(firebaseUser, perfil=null){
+  try{
+    const uid = String(currentUserId || (firebaseUser && firebaseUser.email ? firebaseUser.email.split("@")[0] : "")).trim().toLowerCase();
+    if(!uid) return;
+    const data = {
+      version: EXPLORA_SESSION_VERSION,
+      uid,
+      rol: perfil && perfil.rol ? perfil.rol : "",
+      nombre: perfil && perfil.nombre ? perfil.nombre : "",
+      email: firebaseUser && firebaseUser.email ? firebaseUser.email : "",
+      ultimoAcceso: Date.now()
+    };
+    localStorage.setItem(exploraSessionKey("activa", uid), JSON.stringify(data));
+    localStorage.setItem(`${EXPLORA_SESSION_PREFIX}ultimo_uid`, uid);
+  }catch(e){ console.warn("No se pudo guardar sesión local", e); }
+}
+
+function exploraSesionExpirada(userId=currentUserId){
+  try{
+    const raw = localStorage.getItem(exploraSessionKey("activa", userId));
+    if(!raw) return false;
+    const data = JSON.parse(raw);
+    const ultimo = Number(data.ultimoAcceso || 0);
+    return !!ultimo && (Date.now() - ultimo > EXPLORA_SESSION_MAX_AGE_MS);
+  }catch(e){ return false; }
+}
+
+function exploraActualizarUltimoAcceso(userId=currentUserId){
+  try{
+    const key = exploraSessionKey("activa", userId);
+    const data = JSON.parse(localStorage.getItem(key) || "{}");
+    data.ultimoAcceso = Date.now();
+    data.version = EXPLORA_SESSION_VERSION;
+    localStorage.setItem(key, JSON.stringify(data));
+  }catch(e){}
+}
+
+function exploraGuardarUltimaPantalla(tipo, id){
+  try{
+    if(exploraRestaurandoPantalla) return;
+    if(!currentUserId || !id) return;
+    localStorage.setItem(exploraSessionKey(`ultima_${tipo}`), String(id));
+    localStorage.setItem(exploraSessionKey("ultimo_movimiento"), String(Date.now()));
+  }catch(e){ console.warn("No se pudo guardar última pantalla", e); }
+}
+
+function exploraLimpiarSesionLocal(){
+  try{
+    const uid = currentUserId || localStorage.getItem(`${EXPLORA_SESSION_PREFIX}ultimo_uid`) || "";
+    const keys = [];
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(k && k.startsWith(EXPLORA_SESSION_PREFIX)){
+        if(!uid || k.includes(`_${uid}`) || k.endsWith("ultimo_uid")) keys.push(k);
+      }
+    }
+    keys.forEach(k=>localStorage.removeItem(k));
+  }catch(e){ console.warn("No se pudo limpiar sesión local", e); }
+}
+
+function exploraRestaurarPantallaDriver(){
+  try{
+    const id = localStorage.getItem(exploraSessionKey("ultima_driver"));
+    const permitidas = ["servicePanel","derivePanel","expensePanel","rankingPanel","miCierreSemanalPanel","historyPanel","miAutoPanel","comprobantesPanel","driverMorePanel"];
+    if(!id || !permitidas.includes(id) || !$(id)) return;
+    exploraRestaurandoPantalla = true;
+    setTimeout(()=>{
+      try{ showPanel(id); }catch(e){ console.warn("No se pudo restaurar pantalla chofer", e); }
+      finally{ exploraRestaurandoPantalla = false; }
+    }, 650);
+  }catch(e){ exploraRestaurandoPantalla = false; }
+}
+
+function exploraRestaurarPantallaAdmin(){
+  try{
+    const section = localStorage.getItem(exploraSessionKey("ultima_admin"));
+    const permitidas = ["home","vehicles","config"];
+    if(!section || !permitidas.includes(section)) return;
+    exploraRestaurandoPantalla = true;
+    setTimeout(()=>{
+      try{ adminShowSection(section); }catch(e){ console.warn("No se pudo restaurar sección Admin", e); }
+      finally{ exploraRestaurandoPantalla = false; }
+    }, 650);
+  }catch(e){ exploraRestaurandoPantalla = false; }
+}
+
 let currentUserId = null;
 let currentProfile = null;
 let currentVehicle = null;
@@ -2418,7 +2520,12 @@ window.login = async function(){
   }
 }
 
-window.logout = async function(){ if(derivationUnsubscribe) derivationUnsubscribe(); await signOut(auth); location.reload(); }
+window.logout = async function(){
+  if(derivationUnsubscribe) derivationUnsubscribe();
+  exploraLimpiarSesionLocal();
+  await signOut(auth);
+  location.reload();
+}
 
 
 async function aplicarResetOperativoLocalSiCorresponde(){
@@ -2470,6 +2577,13 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
 
   currentUserId = username;
 
+  if(exploraSesionExpirada(username)){
+    exploraLimpiarSesionLocal();
+    await signOut(auth);
+    msg($("loginMsg"), "La sesión venció por seguridad. Ingresá nuevamente.");
+    return;
+  }
+
   try{
     await syncModoPruebaFecha();
     await syncTrustedToday();
@@ -2515,6 +2629,9 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
       await syncTrustedToday();
     }
 
+    exploraGuardarSesionLocal(firebaseUser, currentProfile);
+    exploraActualizarUltimoAcceso(currentUserId);
+
     $("loginView").classList.add("hidden");
 
     if(currentProfile.rol === "admin"){
@@ -2522,9 +2639,11 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
       if($("adminVehiculosResumen")) $("adminVehiculosResumen").innerHTML = `<p class="note">Panel abierto. Tocá “Actualizar administrador” si necesitás refrescar datos.</p>`;
       if($("adminGanadorSemana")) $("adminGanadorSemana").innerHTML = `<p class="note">Premio y ganador se cargan bajo demanda para abrir más rápido.</p>`;
       setTimeout(()=>loadAdmin().catch(e=>msg($("adminMsg"),"Error cargando administrador: " + e.message)), 250);
+      exploraRestaurarPantallaAdmin();
     }else{
       $("driverView").classList.remove("hidden");
       await loadDriver();
+      exploraRestaurarPantallaDriver();
     }
 
   }catch(e){
@@ -2996,6 +3115,8 @@ window.showPanel = function(id){
   if(target){
     target.classList.remove("hidden");
     scrollToOpenedPanel(target);
+    exploraGuardarUltimaPantalla("driver", id);
+    exploraActualizarUltimoAcceso(currentUserId);
   }
 
   // Carga bajo demanda: estas pantallas ya no frenan el login.
@@ -6619,6 +6740,8 @@ window.adminShowSection = function(section){
   if(navHome) navHome.classList.toggle("active", section === "home");
   if(navVehicles) navVehicles.classList.toggle("active", section === "vehicles");
   if(navConfig) navConfig.classList.toggle("active", section === "config");
+  exploraGuardarUltimaPantalla("admin", section);
+  exploraActualizarUltimoAcceso(currentUserId);
   if(section === "vehicles") cargarAdminVehiculosKm(false).catch(e=>console.warn("No se pudo cargar vehículos", e));
   if(section === "config") setTimeout(()=>cargarModoPruebaFechaAdmin(false).catch(e=>console.warn("No se pudo cargar modo prueba fecha", e)), 200);
 };
