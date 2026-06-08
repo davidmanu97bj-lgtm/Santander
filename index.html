@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.87
-Build: 2026-06-07-CIERRE-SEMANAL-ESTABLE-FECHA-VISIBLE-027
+Version: 2.8.130
+Build: 2026-06-08-MODO-FECHA-IPHONE-TOTAL-130
 Fecha: 06/06/2026
 Cambios:
 - v2.8.129: en Chofer la campana superior se reemplaza por botón Salir, cierra sesión y vuelve al login.
@@ -1362,6 +1362,56 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   color:var(--driver-blue)!important;
 }
 
+
+
+/* EXPLORA · Ranking con imagen inicial y actualizada */
+.ranking-state-visual{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  margin:0 0 8px;
+}
+.ranking-state-visual.pending{
+  min-height:auto;
+}
+.ranking-state-visual .ranking-visual-main{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:3px;
+  width:100%;
+  padding:2px 0 4px;
+}
+.ranking-visual-icon{
+  width:46px;
+  height:46px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:28px;
+  line-height:1;
+  margin:0 auto 2px;
+  background:rgba(212,175,55,.12);
+  border:1px solid rgba(212,175,55,.34);
+  filter:drop-shadow(0 0 10px rgba(247,201,67,.22));
+}
+.ranking-visual-title{
+  display:none;
+}
+.ranking-visual-sub{
+  color:#cbd5e1;
+  font-size:12px;
+  font-weight:800;
+}
+.ranking-state-visual.loaded{
+  display:none!important;
+}
+.ranking-podium{
+  display:none!important;
+}
+
 /* EXPLORA v2.8.126 · Chofer sin barra inferior fija */
 .driver-mobile-b{
   padding-bottom:24px!important;
@@ -1405,6 +1455,118 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 #loginMsg .msg.ok,
 #loginMsg .ok{
   display:none!important;
+}
+
+
+/* EXPLORA · Ranking opción 2 final: trofeo pequeño */
+#driverLeaderContent .ranking-state-visual.pending{
+  min-height:0!important;
+  height:auto!important;
+  margin:0 0 6px!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+}
+#driverLeaderContent .ranking-state-visual.pending:before{
+  display:none!important;
+}
+#driverLeaderContent .ranking-state-visual.pending .ranking-visual-main{
+  padding:0 0 4px!important;
+  gap:2px!important;
+}
+#driverLeaderContent .ranking-state-visual.pending .ranking-visual-icon{
+  width:46px!important;
+  height:46px!important;
+  font-size:28px!important;
+  margin:0 auto 2px!important;
+}
+#driverLeaderContent .ranking-state-visual.pending .ranking-visual-title{
+  display:none!important;
+}
+#driverLeaderContent .ranking-state-visual.pending .ranking-visual-sub{
+  font-size:12px!important;
+  line-height:1.2!important;
+}
+#driverLeaderContent .ranking-state-visual.loaded,
+#driverLeaderContent .ranking-podium{
+  display:none!important;
+}
+
+
+
+/* EXPLORA · Ranking corregido: el bloque debe mostrar líder cuando hay ranking */
+#driverLeaderContent .ranking-state-visual.pending{
+  min-height:0!important;
+  height:auto!important;
+  margin:0 0 6px!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+}
+#driverLeaderContent .ranking-state-visual.pending:before{
+  display:none!important;
+}
+#driverLeaderContent .ranking-state-visual.pending .ranking-visual-main{
+  padding:0!important;
+  gap:3px!important;
+}
+#driverLeaderContent .ranking-state-visual.pending .ranking-visual-icon{
+  width:46px!important;
+  height:46px!important;
+  font-size:28px!important;
+  margin:0 auto 2px!important;
+}
+#driverLeaderContent .ranking-state-visual.pending .ranking-visual-title{
+  display:none!important;
+}
+#driverLeaderContent .ranking-state-visual.pending .ranking-visual-sub{
+  display:block!important;
+  color:#ffffff!important;
+  font-size:14px!important;
+  font-weight:900!important;
+}
+#driverLeaderContent .ranking-bonus-box .bonus-money{
+  color:#f7c943!important;
+  font-weight:900!important;
+}
+#driverLeaderContent .ranking-bonus-box > b{
+  display:block!important;
+}
+#driverLeaderContent .ranking-bonus-box > small{
+  display:block!important;
+}
+#driverLeaderContent .ranking-state-visual.loaded,
+#driverLeaderContent .ranking-podium{
+  display:none!important;
+}
+
+
+/* EXPLORA · Métricas chofer compactas */
+.driver-mobile-b .driver-b-metrics{
+  gap:8px!important;
+  margin-top:8px!important;
+}
+.driver-mobile-b .driver-b-metrics .metric{
+  min-height:58px!important;
+  height:58px!important;
+  padding:9px 12px!important;
+  border-radius:15px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+}
+.driver-mobile-b .driver-b-metrics .metric span{
+  font-size:12px!important;
+  line-height:1.1!important;
+  margin-bottom:3px!important;
+}
+.driver-mobile-b .driver-b-metrics .metric strong{
+  font-size:24px!important;
+  line-height:1!important;
 }
 
 </style>
@@ -1454,9 +1616,14 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <h3>🏆 RANKING SEMANAL</h3>
       <div id="driverLeaderContent">
         <div class="ranking-bonus-box">
-          <b>👑 Vas ganando el bono</b><br>
+          <div class="ranking-state-visual pending" aria-label="Ranking pendiente de actualización">
+            <div class="ranking-visual-main">
+              <div class="ranking-visual-icon">🏆</div>
+              <div class="ranking-visual-title">Ranking pendiente</div>
+              <div class="ranking-visual-sub">Actualiza para ver posiciones</div>
+            </div>
+          </div>
           <div class="bonus-money">💰 Bono semanal: $50.000</div>
-          <small>Puesto por puntos: 1° · 0%</small>
         </div>
       </div>
       <button id="btnActualizarGanadorActualChofer" class="btn-dark" style="display:none!important;margin-top:10px" type="button" onclick="actualizarGanadorActualChofer(true)">🏆 Actualizar ganador actual</button>
@@ -2034,6 +2201,10 @@ let modoPruebaFechaConfig = {activo:false, choferes:{}, actualizadoTexto:""};
 const $ = id => document.getElementById(id);
 let trustedTodayValue = null;
 let trustedTodaySource = "server";
+// PRUEBA FINAL: modo fecha iPhone total.
+// Cuando está activo, ranking, ganador anterior, facturación, cierres, cargas y comprobantes
+// calculan período/fecha con la fecha del dispositivo, sin usar Firebase como fuente de fecha.
+const EXPLORA_MODO_FECHA_IPHONE_TOTAL = true;
 function formatDateArgentina(date){
   try{
     const parts = new Intl.DateTimeFormat("en-CA",{
@@ -2101,12 +2272,23 @@ function choferTieneModoPruebaFecha(userId = currentUserId){
   return choferTieneModoPruebaFechaPorDatos(userId, null);
 }
 
+function fechaIphoneActual(){
+  return formatDateArgentina(new Date());
+}
+
 function fechaOperativaParaChofer(choferId = currentUserId, perfil = null){
-  // Regla unificada: si Admin habilitó modo prueba para un chofer,
+  const localDay = fechaIphoneActual();
+  // Modo prueba final: toda la app toma la fecha del iPhone.
+  // Aplica igual para Admin y Chofer: ranking actual, ganador anterior, facturación, cierres, cargas y comprobantes.
+  if(typeof EXPLORA_MODO_FECHA_IPHONE_TOTAL !== "undefined" && EXPLORA_MODO_FECHA_IPHONE_TOTAL){
+    trustedTodayValue = localDay;
+    trustedTodaySource = "iphone-total";
+    return localDay;
+  }
+  // Regla anterior: si Admin habilitó modo prueba para un chofer específico,
   // Admin y Chofer calculan cierres de ese chofer con la misma fecha del iPhone.
-  // En producción, todos usan fecha confiable de Firebase.
-  if(choferTieneModoPruebaFechaPorDatos(choferId, perfil)) return formatDateArgentina(new Date());
-  return trustedTodayValue || formatDateArgentina(new Date());
+  if(choferTieneModoPruebaFechaPorDatos(choferId, perfil)) return localDay;
+  return trustedTodayValue || localDay;
 }
 
 function today(){
@@ -2163,8 +2345,14 @@ async function syncModoPruebaFecha(){
 }
 
 async function syncTrustedToday(){
-  const localDay = formatDateArgentina(new Date());
+  const localDay = fechaIphoneActual();
   try{
+    if(typeof EXPLORA_MODO_FECHA_IPHONE_TOTAL !== "undefined" && EXPLORA_MODO_FECHA_IPHONE_TOTAL){
+      trustedTodayValue = localDay;
+      trustedTodaySource = "iphone-total";
+      cacheRemove("trusted_today");
+      return localDay;
+    }
     if(choferTieneModoPruebaFecha()){
       trustedTodayValue = localDay;
       trustedTodaySource = "device-test-driver";
@@ -2283,6 +2471,33 @@ function cacheGet(key, maxAgeMs=86400000){
 function cacheRemove(key){
   try{ localStorage.removeItem(CACHE_PREFIX + key); }catch(e){}
 }
+
+(function limpiarCacheAlActivarFechaIphoneTotal(){
+  try{
+    if(typeof EXPLORA_MODO_FECHA_IPHONE_TOTAL === "undefined" || !EXPLORA_MODO_FECHA_IPHONE_TOTAL) return;
+    const flag = CACHE_PREFIX + "modo_fecha_iphone_total_130";
+    if(localStorage.getItem(flag) === "1") return;
+    const prefijos = [
+      CACHE_PREFIX + "trusted_today",
+      CACHE_PREFIX + "acum_sem_",
+      CACHE_PREFIX + "ranking_",
+      CACHE_PREFIX + "admin_",
+      CACHE_PREFIX + "today_",
+      CACHE_PREFIX + "cierres_",
+      CACHE_PREFIX + "cierre_sem_",
+      CACHE_PREFIX + "cierre_ultra_",
+      CACHE_PREFIX + "ganador_sem_",
+      CACHE_PREFIX + "ultimo_ganador_semana"
+    ];
+    const keys=[];
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(k && prefijos.some(pref=>k.startsWith(pref))) keys.push(k);
+    }
+    keys.forEach(k=>localStorage.removeItem(k));
+    localStorage.setItem(flag,"1");
+  }catch(e){}
+})();
 
 
 
@@ -4027,16 +4242,31 @@ function renderRankingLiviano(data,targetId){
   target.innerHTML = html;
 }
 
+
+function escapeRankingText(value){
+  return String(value == null ? "" : value)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+function rankingVisualActualizado(ranking=[]){
+  return "";
+}
+
 function renderDriverLeaderBonus(data, lider, yo, yoIndex){
   const target = $("driverLeaderContent");
   if(!target || !lider) return;
 
   const bono = money(50000);
+  const visualRanking = rankingVisualActualizado(data.ranking || []);
   const ganadorBono = data.ganadorBono || (data.ranking || []).find(x=>!x.suspendidoBono) || null;
 
   if(yo && yo.suspendidoBono){
     target.innerHTML = `
       <div class="ranking-bonus-box">
+        ${visualRanking}
         <b>🚫 No elegible para bono semanal</b><br>
         <div class="bonus-money">💰 Bono semanal: ${bono}</div>
         <small>Motivo: ${yo.motivoSuspension || 'comprobante pendiente'}.</small><br>
@@ -4050,6 +4280,7 @@ function renderDriverLeaderBonus(data, lider, yo, yoIndex){
   if(yo && ganadorBono && ganadorBono.id === currentUserId){
     target.innerHTML = `
       <div class="ranking-bonus-box">
+        ${visualRanking}
         <b>👑 Vas ganando el bono</b><br>
         <div class="bonus-money">💰 Bono semanal: ${bono}</div>
         <small>Puesto por puntos: ${yoIndex + 1}° · ${yo.porcentaje}%</small>
@@ -4063,6 +4294,7 @@ function renderDriverLeaderBonus(data, lider, yo, yoIndex){
     const medalla = yoIndex === 0 ? "🥇" : yoIndex === 1 ? "🥈" : (yoIndex === 2 ? "🥉" : "🏁");
     target.innerHTML = `
       <div class="ranking-bonus-box">
+        ${visualRanking}
         <b>${medalla} Vas ${yoIndex + 1}°</b><br>
         <div class="bonus-money">💰 Bono semanal: ${bono}</div>
         <small>Ganador provisional del bono: ${ganadorBono ? ganadorBono.nombre : 'sin elegible'}.</small><br>
@@ -4074,6 +4306,7 @@ function renderDriverLeaderBonus(data, lider, yo, yoIndex){
 
   target.innerHTML = `
     <div class="ranking-bonus-box">
+      ${visualRanking}
       <b>🏆 Ranking semanal</b><br>
       <div class="bonus-money">💰 Bono semanal: ${bono}</div>
       <small>Tocá Ranking para actualizar tu posición.</small>
@@ -4117,6 +4350,13 @@ async function actualizarGanadorActualChofer(mostrarMsg=false){
       if(target){
         target.innerHTML = `
           <div class="ranking-bonus-box">
+            <div class="ranking-state-visual pending" aria-label="Sin actividad de ranking">
+              <div class="ranking-visual-main">
+                <div class="ranking-visual-icon">🏆</div>
+                <div class="ranking-visual-title">Sin ranking todavía</div>
+                <div class="ranking-visual-sub">Cuando haya actividad se mostrará el podio</div>
+              </div>
+            </div>
             <b>🏆 Ganador actual</b><br>
             <div class="bonus-money">💰 Bono semanal: ${money(50000)}</div>
             <small>Todavía no hay actividad suficiente en esta semana.</small>
@@ -7063,7 +7303,10 @@ window.toggleAdminConfig = function(id){
 
 
 async function cargarModoPruebaFechaAdmin(force=false){
-  if(typeof EXPLORA_PRODUCCION_SEGURA !== "undefined" && EXPLORA_PRODUCCION_SEGURA){
+  if(typeof EXPLORA_MODO_FECHA_IPHONE_TOTAL !== "undefined" && EXPLORA_MODO_FECHA_IPHONE_TOTAL){
+    const estado = $("modoPruebaFechaEstado");
+    if(estado) estado.innerHTML = `<div class="msg ok">📱 Modo fecha iPhone TOTAL activo.<br><small>Toda la app usa la fecha del dispositivo para ranking, ganador anterior, facturación, cierres, cargas y comprobantes.</small></div>`;
+  }else if(typeof EXPLORA_PRODUCCION_SEGURA !== "undefined" && EXPLORA_PRODUCCION_SEGURA){
     const estado = $("modoPruebaFechaEstado");
     if(estado) estado.innerHTML = `<div class="msg ok">Producción: modo prueba de fecha desactivado. Todos usan fecha segura de Firebase.</div>`;
     return;
@@ -7124,7 +7367,7 @@ function limpiarCachesOperativosFecha(){
 }
 
 window.activarModoPruebaFechaChoferAdmin = async function(){
-  if(typeof EXPLORA_PRODUCCION_SEGURA !== "undefined" && EXPLORA_PRODUCCION_SEGURA) return msg($("modoPruebaFechaMsg"),"Bloqueado en producción: modo prueba de fecha desactivado.");
+  if((typeof EXPLORA_MODO_FECHA_IPHONE_TOTAL === "undefined" || !EXPLORA_MODO_FECHA_IPHONE_TOTAL) && typeof EXPLORA_PRODUCCION_SEGURA !== "undefined" && EXPLORA_PRODUCCION_SEGURA) return msg($("modoPruebaFechaMsg"),"Bloqueado en producción: modo prueba de fecha desactivado.");
   if(!currentProfile || currentProfile.rol !== "admin") return msg($("modoPruebaFechaMsg"),"Solo Admin puede activar modo prueba.");
   const sel = $("modoPruebaFechaChoferSelect");
   const choferId = String(sel && sel.value || "").trim();
@@ -7148,7 +7391,7 @@ window.activarModoPruebaFechaChoferAdmin = async function(){
 };
 
 window.desactivarModoPruebaFechaChoferAdmin = async function(){
-  if(typeof EXPLORA_PRODUCCION_SEGURA !== "undefined" && EXPLORA_PRODUCCION_SEGURA) return msg($("modoPruebaFechaMsg"),"Producción: modo prueba ya está bloqueado.");
+  if((typeof EXPLORA_MODO_FECHA_IPHONE_TOTAL === "undefined" || !EXPLORA_MODO_FECHA_IPHONE_TOTAL) && typeof EXPLORA_PRODUCCION_SEGURA !== "undefined" && EXPLORA_PRODUCCION_SEGURA) return msg($("modoPruebaFechaMsg"),"Producción: modo prueba ya está bloqueado.");
   if(!currentProfile || currentProfile.rol !== "admin") return msg($("modoPruebaFechaMsg"),"Solo Admin puede desactivar modo prueba.");
   const sel = $("modoPruebaFechaChoferSelect");
   const choferId = String(sel && sel.value || "").trim();
@@ -8857,7 +9100,7 @@ window.eliminarChoferesDemoAdmin = async function(){
 // Este bloque deja una sola regla de cierre: un chofer + un período = un documento.
 // También impide pedir cierres anteriores a la fecha de alta del chofer.
 
-const EXPLORA_CIERRE_VERSION = "v2.8.90 · FECHA-EFECTIVA-IPHONE-PRUEBA";
+const EXPLORA_CIERRE_VERSION = "v2.8.130 · FECHA-IPHONE-TOTAL";
 const perfilAltaCacheV287 = {};
 
 function fechaBadgeTextoV287(){
@@ -9117,7 +9360,7 @@ syncTrustedToday = async function(){
 
 // ===== EXPLORA v2.8.90 · CIERRE RECONSTRUYE POR FECHA REAL =====
 // PRODUCCIÓN: la app usa fecha segura de Firebase. La fecha del iPhone queda solo como respaldo visual.
-const EXPLORA_FECHA_EFECTIVA_IPHONE_PRUEBA = false;
+const EXPLORA_FECHA_EFECTIVA_IPHONE_PRUEBA = true;
 
 const _fechaOperativaParaChoferV289 = fechaOperativaParaChofer;
 fechaOperativaParaChofer = function(choferId = currentUserId, perfil = null){
@@ -9175,7 +9418,7 @@ window.renderFechaOperativaVisibleV287 = renderFechaOperativaVisibleV287;
 // Desde esta versión, para reconstruir cierres, la fecha real del viaje/gasto también manda.
 // Ejemplo: si Ariel facturó el 2026-06-13 y luego se simula 2026-06-20,
 // el cierre 2026-06-13 al 2026-06-19 debe contar ese viaje aunque su periodoId viejo no coincida.
-const EXPLORA_BUILD_ACTUAL = "v2.8.124 · PRODUCCION-SEGURA";
+const EXPLORA_BUILD_ACTUAL = "v2.8.130 · MODO-FECHA-IPHONE-TOTAL";
 
 function fechaDocumentoParaPeriodoV290(data){
   return String((data && (data.fechaOperativa || data.fecha || data.creadoFecha || data.fechaServicio)) || "").slice(0,10);
