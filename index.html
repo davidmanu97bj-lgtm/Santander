@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.139
+Version: 2.8.140
 Build: 2026-06-09-ARRANQUE-VISUAL-SIN-PANTALLA-NEGRA-137
 Fecha: 06/06/2026
 Cambios:
@@ -78,6 +78,7 @@ Cambios:
 - v2.8.127: sesión persistente por celular; no vuelve a pedir usuario/contraseña si no se cerró sesión y restaura la última pantalla usada.
 - v2.8.130: ganador anterior en tiempo real: Admin escribe fuente oficial y Chofer escucha espejo público con onSnapshot. Modo prueba fecha iPhone activo para todo el archivo.
 - v2.8.139: corrección de sintaxis en último ganador desde cierres; elimina fragmento viejo roto y evita splash infinito.
+- v2.8.140: último ganador lee cierres cerrados con ganadorId aunque el bono esté aplicado en otro cierre, publica fuente oficial única.
 -->
 <html lang="es">
 <head>
@@ -1461,7 +1462,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
 
 
-/* EXPLORA v2.8.139 · versión visible unificada */
+/* EXPLORA v2.8.140 · versión visible unificada */
 .explora-version-badge{
   display:block!important;
   color:#8f8f8f;
@@ -1635,7 +1636,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Viajes y Servicios</div>
-    <div class="explora-version-badge"><b>v2.8.139</b> · FIX-SPLASH-CIERRES</div>
+    <div class="explora-version-badge"><b>v2.8.140</b> · GANADOR-DESDE-CIERRES</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1649,7 +1650,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="driverView" class="hidden driver-mobile-b">
     <div class="driver-b-topbar">
       <div class="driver-b-logo">EXPL<span>⌖</span>RA</div>
-      <div class="explora-version-badge"><b>v2.8.139</b> · FIX-SPLASH-CIERRES</div>
+      <div class="explora-version-badge"><b>v2.8.140</b> · GANADOR-DESDE-CIERRES</div>
       <button class="driver-b-bell driver-b-logout-top" type="button" onclick="logout()" aria-label="Salir de la app">Salir</button>
     </div>
 
@@ -1866,7 +1867,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.139</b> · FIX-SPLASH-CIERRES</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.140</b> · GANADOR-DESDE-CIERRES</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -4535,7 +4536,7 @@ function limpiarCachesViejosGanadorSemana(){
 }
 
 function buildPayloadUltimoGanadorSemana(periodo, ganador, fuente="cierre_semanal"){
-  if(!periodo || !periodo.id || !ganadorSemanaPasadaValido(ganador)) return null;
+  if(!periodo || !periodo.id || !ganador || !ganador.id) return null;
   const g = {
     id: ganador.id || "",
     nombre: ganador.nombre || ganador.id || "Ganador",
@@ -4701,8 +4702,10 @@ async function getUltimoGanadorSemanaOficial(){
 
 
 async function getUltimoGanadorDesdeCierresSemanales(){
-  // v2.8.139: fuente quirúrgica del último ganador.
-  // No reconstruye ranking. Lee cierres_semanales ya cerrados donde el bono quedó aplicado.
+  // v2.8.140: fuente quirúrgica del último ganador.
+  // Lee cierres_semanales ya cerrados. Si el cierre de cualquier chofer trae ganadorId/ganadorSemana,
+  // toma ese ganador del período anterior y lo publica como fuente oficial única.
+  // No reconstruye ranking ni inventa ganador si ningún cierre cerrado trae ganadorId.
   try{
     const baseFecha = (()=>{
       try{
@@ -4714,47 +4717,84 @@ async function getUltimoGanadorDesdeCierresSemanales(){
     })();
     const periodoActivo = getPeriodoTrabajoActual(baseFecha);
     const snap = await withTimeout(getDocs(collection(db,"cierres_semanales")), 6500, "Cierres semanales tardaron demasiado.");
-    const candidatos = [];
+    const candidatosPorPeriodo = {};
+
     snap.forEach(d=>{
       const c = d.data() || {};
-      const periodoId = c.periodoId || "";
+      const periodoId = c.periodoId || (c.periodo && c.periodo.id) || "";
       if(!periodoId) return;
-      // Nunca toma la semana activa ni semanas posteriores a la fecha operativa del iPhone.
+      // Nunca toma semana activa ni futura según fecha operativa del iPhone.
       if(periodoActivo && periodoActivo.id && periodoId >= periodoActivo.id) return;
-      const ganadorId = c.ganadorId || "";
-      const ganadorNombre = c.ganadorSemana || c.ganadorNombre || c.nombreGanador || ganadorId;
-      const premioAplicado = Number(c.premioAplicado || 0);
-      const cerrado = c.estadoCierre === "cerrado" || c.aceptadoPorChofer === true || c.fechaConfirmacion;
-      const tieneActividad = Number(c.totalViajes || 0) > 0 || Number(c.cantidadViajes || 0) > 0;
-      if(!cerrado || !ganadorId || premioAplicado <= 0 || !tieneActividad) return;
-      const periodo = {
+
+      const cerrado = c.estadoCierre === "cerrado" || c.estadoCierre === "sin_actividad" || c.aceptadoPorChofer === true || !!c.fechaConfirmacion;
+      if(!cerrado) return;
+
+      const ganadorId = c.ganadorId || (c.ganador && c.ganador.id) || "";
+      if(!ganadorId) return;
+
+      const ganadorNombre = c.ganadorSemana || c.ganadorNombre || c.nombreGanador || (c.ganador && c.ganador.nombre) || ganadorId;
+      const periodo = c.periodo && c.periodo.id ? c.periodo : {
         start: c.periodoInicio || String(periodoId).split("_")[0] || "",
         end: c.periodoFin || String(periodoId).split("_")[1] || "",
         closeDate: c.cierreObligatorio || addDays(c.periodoFin || String(periodoId).split("_")[1], 1),
         id: periodoId,
         motor: c.motor || "sabado_0001"
       };
-      candidatos.push({
+
+      const prioridad =
+        (Number(c.premioAplicado || 0) > 0 ? 40 : 0) +
+        (c.esGanador === true ? 30 : 0) +
+        (String(c.chofer || "") === String(ganadorId) ? 20 : 0) +
+        (Number(c.totalViajes || 0) > 0 ? 10 : 0);
+
+      const candidato = {
         periodo,
         ganador:{
           id: ganadorId,
           nombre: ganadorNombre || ganadorId,
-          facturacion: Number(c.totalViajes || 0),
-          viajes: Number(c.cantidadViajes || 0),
+          facturacion: String(c.chofer || "") === String(ganadorId) ? Number(c.totalViajes || 0) : 0,
+          viajes: String(c.chofer || "") === String(ganadorId) ? Number(c.cantidadViajes || 0) : 0,
           derivaciones: Number(c.derivaciones || 0),
           porcentaje: Number(c.porcentaje || 0)
         },
-        bono: Number(c.premioSemanal || premioAplicado || 50000),
-        premioAplicado,
+        bono: Number(c.premioSemanal || c.premioAplicado || 50000),
+        premioAplicado: Number(c.premioAplicado || 0),
         cierreId: d.id,
+        prioridad,
         actualizado: c.actualizado || c.fechaConfirmacion || Date.now(),
         actualizadoMs: Date.now(),
-        fuente:"cierres_semanales_bono_aplicado"
-      });
+        fuente:"cierres_semanales_ganador_cerrado"
+      };
+
+      const existente = candidatosPorPeriodo[periodoId];
+      if(!existente || candidato.prioridad > existente.prioridad){
+        candidatosPorPeriodo[periodoId] = candidato;
+      }
     });
-    candidatos.sort((a,b)=>String(b.periodo.id || "").localeCompare(String(a.periodo.id || "")));
+
+    const candidatos = Object.values(candidatosPorPeriodo)
+      .sort((a,b)=>String(b.periodo.id || "").localeCompare(String(a.periodo.id || "")) || Number(b.prioridad || 0) - Number(a.prioridad || 0));
+
     const elegido = candidatos[0] || null;
     if(!elegido) return null;
+
+    // Si el cierre que encontramos no es el documento del ganador, completamos métricas desde acumulados_semanales.
+    if(Number(elegido.ganador.facturacion || 0) <= 0 && elegido.ganador.id && elegido.periodo && elegido.periodo.id){
+      try{
+        const accSnap = await withTimeout(getDoc(doc(db,"acumulados_semanales",`${elegido.ganador.id}_${elegido.periodo.id}`)), 2500, "Acumulado del ganador tardó demasiado.");
+        if(accSnap.exists()){
+          const a = accSnap.data() || {};
+          elegido.ganador.facturacion = Number(a.totalViajes || 0);
+          elegido.ganador.viajes = Number(a.cantidadViajes || 0);
+          elegido.ganador.derivaciones = Number(a.derivaciones || 0);
+          elegido.ganador.porcentaje = Number(a.porcentaje || elegido.ganador.porcentaje || 0);
+          elegido.ganador.nombre = a.nombre || a.choferNombre || elegido.ganador.nombre;
+        }
+      }catch(e){
+        console.warn("No se pudo completar métricas del ganador desde acumulados", e);
+      }
+    }
+
     return cacheUltimoGanadorSemanaUnico(elegido);
   }catch(e){
     console.warn("No se pudo leer último ganador desde cierres semanales", e);
@@ -4763,11 +4803,18 @@ async function getUltimoGanadorDesdeCierresSemanales(){
 }
 
 async function getUltimoGanadorSemanaUnico({preferirChofer=false, reconstruirSiFalta=true}={}){
-  // v2.8.139: corrección quirúrgica de sintaxis.
-  // Fuente única prioritaria = cierres_semanales cerrados con bono aplicado.
-  // No reconstruye desde ranking. Si no hay cierre cerrado con premioAplicado, no inventa ganador.
+  // v2.8.140: una sola fuente visible.
+  // 1) Si ya existe publicado en publico/configuracion, lo usa.
+  // 2) Si no existe, lee cierres cerrados con ganadorId y publica ese resultado.
+  // No reconstruye ranking ni usa botón manual.
+  const oficial = await getUltimoGanadorSemanaOficial();
+  if(oficial && oficial.ganador) return oficial;
+
   const desdeCierres = await getUltimoGanadorDesdeCierresSemanales();
-  if(desdeCierres && desdeCierres.ganador) return desdeCierres;
+  if(desdeCierres && desdeCierres.ganador){
+    await guardarUltimoGanadorSemana(desdeCierres.periodo, desdeCierres.ganador, desdeCierres.fuente || "cierres_semanales_ganador_cerrado").catch(e=>console.warn("No se pudo publicar último ganador desde cierres", e));
+    return desdeCierres;
+  }
   return null;
 }
 
@@ -10054,7 +10101,7 @@ window.EXPLORA_BUILD_CIERRE_COMPROBANTE_OBLIGATORIO = EXPLORA_BUILD_CIERRE_COMPR
 
 // ===== EXPLORA v2.8.135 · SPLASH 1s + RANKING/GANADOR AUTO LIVIANO =====
 // Cambio quirúrgico: no modifica cierres, comprobantes, servicios, derivaciones ni lógica financiera.
-const EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = "v2.8.139 · FIX-SPLASH-CIERRES";
+const EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = "v2.8.140 · GANADOR-DESDE-CIERRES";
 const EXPLORA_SPLASH_MAX_MS_135 = 1000;
 const EXPLORA_RANKING_AUTO_INTERVAL_MS_135 = 120000;
 const EXPLORA_GANADOR_AUTO_INTERVAL_MS_135 = 120000;
