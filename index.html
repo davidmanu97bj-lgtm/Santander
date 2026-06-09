@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.133
-Build: 2026-06-08-CIERRE-UNICO-SIN-DOBLE-MODAL-ADMIN-FIX-133
+Version: 2.8.136
+Build: 2026-06-09-AUTH-EXISTENTE-REUTILIZABLE-VERSION-VISIBLE-136
 Fecha: 06/06/2026
 Cambios:
 - v2.8.129: en Chofer la campana superior se reemplaza por botón Salir, cierra sesión y vuelve al login.
@@ -1459,6 +1459,35 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 }
 
 
+
+/* EXPLORA v2.8.136 · versión visible unificada */
+.explora-version-badge{
+  display:block!important;
+  color:#8f8f8f;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.25px;
+  text-align:center;
+  margin:6px 0 12px;
+}
+.explora-version-badge b{color:var(--gold);font-weight:900}
+.admin-logo-mark .explora-version-badge{
+  text-align:left;
+  margin:5px 0 0;
+  font-size:11px;
+}
+.driver-b-topbar .explora-version-badge{
+  position:absolute;
+  left:22px;
+  top:54px;
+  margin:0;
+  text-align:left;
+  font-size:10px;
+}
+@media(max-width:430px){
+  .driver-b-topbar .explora-version-badge{left:14px;top:50px;font-size:9.5px}
+}
+
 /* EXPLORA · Login producción limpio */
 #loginView .build-version,
 #loginView .fecha-source-badge,
@@ -1605,6 +1634,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Viajes y Servicios</div>
+    <div class="explora-version-badge"><b>v2.8.136</b> · AUTH-REUTILIZABLE</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1618,6 +1648,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="driverView" class="hidden driver-mobile-b">
     <div class="driver-b-topbar">
       <div class="driver-b-logo">EXPL<span>⌖</span>RA</div>
+      <div class="explora-version-badge"><b>v2.8.136</b> · AUTH-REUTILIZABLE</div>
       <button class="driver-b-bell driver-b-logout-top" type="button" onclick="logout()" aria-label="Salir de la app">Salir</button>
     </div>
 
@@ -1834,7 +1865,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="build-version" style="text-align:left;margin:5px 0 0"><b>v2.8.134</b> · ADMIN-COMPROBANTE-DIRECTO-FIX</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.136</b> · AUTH-REUTILIZABLE</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -8640,19 +8671,32 @@ window.crearChoferVehiculoAdmin = async function(){
     const choferAnterior = String((vehiculoExistente && vehiculoExistente.chofer) || "").trim();
     const esReasignacion = !!(vehiculoExistente && choferAnterior && choferAnterior !== usuario);
 
-    let usuarioAuthCreado = false;
+    let usuarioAuthEstado = "nuevo";
     try{
       secondaryApp = initializeApp(firebaseConfig, "crearUsuario_" + Date.now());
       const secondaryAuth = getAuth(secondaryApp);
-      await createUserWithEmailAndPassword(secondaryAuth, `${usuario}@explora.local`, pass);
-      usuarioAuthCreado = true;
-      await signOut(secondaryAuth).catch(()=>{});
-    }catch(eAuth){
-      const code = String(eAuth.code || "");
-      if(code.includes("email-already-in-use")){
-        throw new Error(`El usuario ${usuario}@explora.local ya existe en Firebase Authentication. Eliminá ese usuario en Firebase Auth o usá otro nombre. No se guardó el chofer para evitar contraseñas viejas.`);
+      try{
+        await createUserWithEmailAndPassword(secondaryAuth, `${usuario}@explora.local`, pass);
+        usuarioAuthEstado = "nuevo";
+      }catch(eAuth){
+        const code = String(eAuth.code || "");
+        if(code.includes("email-already-in-use")){
+          // v2.8.136: si el usuario ya existe en Firebase Auth, no se bloquea el alta.
+          // Se reutiliza la cuenta existente solo si la contraseña ingresada valida correctamente.
+          // Desde una app web no se puede borrar/resetear usuarios Auth ajenos sin Admin SDK.
+          try{
+            await signInWithEmailAndPassword(secondaryAuth, `${usuario}@explora.local`, pass);
+            usuarioAuthEstado = "existente_reutilizado";
+          }catch(eLoginExistente){
+            throw new Error(`El usuario ${usuario}@explora.local ya existe en Firebase Authentication, pero la contraseña ingresada no coincide con la cuenta existente. Para reutilizarlo, ingresá su contraseña actual o resetealo desde Firebase Auth. No se guardó el chofer para evitar accesos con contraseña desconocida.`);
+          }
+        }else{
+          throw eAuth;
+        }
       }
-      throw eAuth;
+      await signOut(secondaryAuth).catch(()=>{});
+    }catch(eAuthFinal){
+      throw eAuthFinal;
     }
 
     // Reasignación segura:
@@ -8719,7 +8763,7 @@ window.crearChoferVehiculoAdmin = async function(){
     adminBaseLoadedAt = 0;
     adminVehiculosKmLoadedAt = 0;
 
-    const estadoUsuario = "Usuario nuevo creado correctamente en Firebase Auth";
+    const estadoUsuario = usuarioAuthEstado === "existente_reutilizado" ? "Usuario existente reutilizado correctamente en Firebase Auth" : "Usuario nuevo creado correctamente en Firebase Auth";
     const estadoVehiculo = vehiculoExistente ? "Vehículo existente reasignado sin borrar Mi auto" : "Vehículo nuevo creado";
     const anteriorHtml = esReasignacion ? `<br><b>Chofer anterior:</b> ${choferAnterior}` : "";
 
@@ -9936,7 +9980,7 @@ window.EXPLORA_BUILD_CIERRE_COMPROBANTE_OBLIGATORIO = EXPLORA_BUILD_CIERRE_COMPR
 
 // ===== EXPLORA v2.8.135 · SPLASH 1s + RANKING/GANADOR AUTO LIVIANO =====
 // Cambio quirúrgico: no modifica cierres, comprobantes, servicios, derivaciones ni lógica financiera.
-const EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = "v2.8.135 · SPLASH-1S-RANKING-AUTO-SIN-BOTON-GANADOR";
+const EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = "v2.8.136 · AUTH-EXISTENTE-REUTILIZABLE-VERSION-VISIBLE";
 const EXPLORA_SPLASH_MAX_MS_135 = 1000;
 const EXPLORA_RANKING_AUTO_INTERVAL_MS_135 = 120000;
 const EXPLORA_GANADOR_AUTO_INTERVAL_MS_135 = 120000;
