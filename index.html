@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.141
+Version: 2.8.142
 Build: 2026-06-09-ARRANQUE-VISUAL-SIN-PANTALLA-NEGRA-137
 Fecha: 06/06/2026
 Cambios:
@@ -79,6 +79,7 @@ Cambios:
 - v2.8.130: ganador anterior en tiempo real: Admin escribe fuente oficial y Chofer escucha espejo público con onSnapshot. Modo prueba fecha iPhone activo para todo el archivo.
 - v2.8.139: corrección de sintaxis en último ganador desde cierres; elimina fragmento viejo roto y evita splash infinito.
 - v2.8.141: Admin comprobante estable; un solo motor final para subir comprobante y cerrar con compresión reforzada y error visible real.
+- v2.8.142: Admin comprobante cierre visual fix; render reconoce pagoSemanal/estadoCierre y getEstadoPagoSemanal usa fallback desde cierres_semanales. Se elimina motor Admin viejo duplicado.
 -->
 <html lang="es">
 <head>
@@ -1462,7 +1463,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
 
 
-/* EXPLORA v2.8.141 · versión visible unificada */
+/* EXPLORA v2.8.142 · versión visible unificada */
 .explora-version-badge{
   display:block!important;
   color:#8f8f8f;
@@ -1636,7 +1637,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Viajes y Servicios</div>
-    <div class="explora-version-badge"><b>v2.8.141</b> · COMPROBANTE-ADMIN-ESTABLE</div>
+    <div class="explora-version-badge"><b>v2.8.142</b> · ADMIN-COMPROBANTE-CIERRE-VISUAL-FIX</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1650,7 +1651,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="driverView" class="hidden driver-mobile-b">
     <div class="driver-b-topbar">
       <div class="driver-b-logo">EXPL<span>⌖</span>RA</div>
-      <div class="explora-version-badge"><b>v2.8.141</b> · COMPROBANTE-ADMIN-ESTABLE</div>
+      <div class="explora-version-badge"><b>v2.8.142</b> · ADMIN-COMPROBANTE-CIERRE-VISUAL-FIX</div>
       <button class="driver-b-bell driver-b-logout-top" type="button" onclick="logout()" aria-label="Salir de la app">Salir</button>
     </div>
 
@@ -1867,7 +1868,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.141</b> · COMPROBANTE-ADMIN-ESTABLE</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.142</b> · ADMIN-COMPROBANTE-CIERRE-VISUAL-FIX</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -5916,34 +5917,8 @@ window.subirComprobantePagoChofer = async function(){
   }
 }
 
-window.subirComprobantePagoAdmin = async function(chofer, periodoId, sentido, monto, inputId){
-  const file = $(inputId) && $(inputId).files[0];
-  const clicked = Array.from(document.querySelectorAll('button')).find(b => (b.getAttribute('onclick') || '').includes(inputId));
-  const oldText = clicked ? clicked.textContent : "";
-  try{
-    if(!file) throw new Error("Seleccioná una foto del comprobante antes de subir.");
-    if(clicked){ clicked.disabled = true; clicked.textContent = "Preparando foto..."; }
-    if($("adminMsg")) msg($("adminMsg"), "Preparando comprobante liviano...", true);
-    await new Promise(r=>setTimeout(r, 40));
-    if(clicked) clicked.textContent = "Subiendo...";
-    if($("adminMsg")) msg($("adminMsg"), "Subiendo comprobante. Si Storage tarda, se usa respaldo rápido.", true);
-    await subirComprobantePago({chofer, periodoId, sentido, monto, file, marcadoPor:"admin"});
-    cacheRemove("comprobantes_admin_recientes");
-    cacheRemove("pagos_pendientes_chofer_" + chofer);
-    cacheRemove(`admin_5050_${chofer}_${periodoId}`);
-    if($("adminMsg")) msg($("adminMsg"), "Comprobante cargado. Actualizando comprobantes sin recargar todo Admin.", true);
-    // Producción rápida: no llamar loadAdmin() completo después de subir una foto.
-    // Solo se refresca la lista de comprobantes si está abierta.
-    setTimeout(()=>{
-      if($("adminComprobantesList") && $("adminComprobantesList").innerHTML.trim()) loadComprobantesAdmin(true).catch(()=>{});
-    }, 120);
-  }catch(e){
-    if($("adminMsg")) msg($("adminMsg"), "No se pudo subir el comprobante: " + e.message);
-    alert("No se pudo subir el comprobante: " + e.message);
-  }finally{
-    if(clicked){ clicked.disabled = false; clicked.textContent = oldText || "Subir comprobante"; }
-  }
-}
+/* v2.8.142: motor viejo Admin de comprobantes eliminado.
+   La función final estable queda definida una sola vez en el bloque ADMIN-COMPROBANTE-CIERRE-VISUAL-FIX. */
 
 async function loadComprobantesChofer(force=false){
   const box = $("comprobantesChoferList");
@@ -8339,7 +8314,20 @@ function renderResumenSemanalAdmin(vehiculoId,c,pago){
     c.choferDebe = 0; c.davidDebe = 0; c.premioAplicado = 0;
     c.deudaAcumulada = null;
   }
-  const yaPagado = pago && pago.pagado === true;
+  const pagoDesdeCierre = (c && c.pagoSemanal && c.pagoSemanal.pagado === true) ? c.pagoSemanal : null;
+  const estadoCierreCerrado = c && ["cerrado_con_comprobante_admin","cerrado_con_comprobante_chofer","cerrado_sin_diferencia","cerrado_sin_actividad"].includes(String(c.estadoCierre || ""));
+  if(!pago && pagoDesdeCierre) pago = pagoDesdeCierre;
+  const yaPagado = !!((pago && pago.pagado === true) || pagoDesdeCierre || estadoCierreCerrado);
+  if(yaPagado && !pago){
+    pago = pagoDesdeCierre || {
+      id:`${c.chofer}_${c.periodo && c.periodo.id ? c.periodo.id : ""}`,
+      chofer:c.chofer,
+      periodoId:c.periodo && c.periodo.id ? c.periodo.id : "",
+      pagado:true,
+      comprobanteUrl:c.comprobanteUrl || "",
+      url:c.url || ""
+    };
+  }
 
   let tituloDeuda = "";
   let montoDeuda = 0;
@@ -8443,10 +8431,29 @@ function renderResumenSemanalAdmin(vehiculoId,c,pago){
   `;
 }
 async function getEstadoPagoSemanal(chofer, periodoId){
+  const id = `${chofer}_${periodoId}`;
   try{
-    const snap = await getDoc(doc(db,"pagos_semanales",`${chofer}_${periodoId}`));
-    return snap.exists() ? snap.data() : null;
-  }catch(e){ return null; }
+    const snap = await getDoc(doc(db,"pagos_semanales",id));
+    if(snap.exists() && snap.data() && snap.data().pagado === true) return snap.data();
+  }catch(e){}
+  try{
+    const cierreSnap = await getDoc(doc(db,"cierres_semanales",id));
+    if(cierreSnap.exists()){
+      const cierre = cierreSnap.data() || {};
+      const pago = cierre.pagoSemanal || null;
+      const estadoCerrado = ["cerrado_con_comprobante_admin","cerrado_con_comprobante_chofer","cerrado_sin_diferencia","cerrado_sin_actividad"].includes(String(cierre.estadoCierre || ""));
+      if(pago && pago.pagado === true) return {...pago, id:pago.id || id, chofer:pago.chofer || chofer, periodoId:pago.periodoId || periodoId};
+      if(estadoCerrado){
+        return {
+          id, chofer, periodoId, pagado:true, marcadoPor:cierre.responsableComprobante || "sistema",
+          sentido:cierre.sentido || "sin_diferencia", monto:Number(cierre.monto || 0),
+          comprobanteUrl:cierre.comprobanteUrl || "", url:cierre.url || "",
+          estadoCierre:cierre.estadoCierre
+        };
+      }
+    }
+  }catch(e){}
+  return null;
 }
 
 window.marcarPagoSemanalAdmin = async function(chofer, periodoId, sentido, monto){
@@ -10101,7 +10108,7 @@ window.EXPLORA_BUILD_CIERRE_COMPROBANTE_OBLIGATORIO = EXPLORA_BUILD_CIERRE_COMPR
 
 // ===== EXPLORA v2.8.135 · SPLASH 1s + RANKING/GANADOR AUTO LIVIANO =====
 // Cambio quirúrgico: no modifica cierres, comprobantes, servicios, derivaciones ni lógica financiera.
-const EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = "v2.8.141 · COMPROBANTE-ADMIN-ESTABLE";
+const EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = "v2.8.142 · ADMIN-COMPROBANTE-CIERRE-VISUAL-FIX";
 const EXPLORA_SPLASH_MAX_MS_135 = 1000;
 const EXPLORA_RANKING_AUTO_INTERVAL_MS_135 = 120000;
 const EXPLORA_GANADOR_AUTO_INTERVAL_MS_135 = 120000;
@@ -10442,31 +10449,7 @@ window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135
     }
   };
 
-  const _subirAdminV2131 = window.subirComprobantePagoAdmin;
-  window.subirComprobantePagoAdmin = async function(chofer, periodoId, sentido, monto, inputId){
-    await _subirAdminV2131.apply(this, arguments);
-    try{
-      if(sentido === "david_a_chofer"){
-        const pago = await getEstadoPagoSemanal(chofer, periodoId).catch(()=>null);
-        if(pagoResueltoV2131(pago)){
-          await setDoc(doc(db,"cierres_semanales",`${chofer}_${periodoId}`),{
-            aceptadoPorChofer:true,
-            estadoCierre:"cerrado_con_comprobante_admin",
-            comprobanteRequerido:false,
-            comprobantePendiente:false,
-            responsableComprobante:"admin",
-            pagoSemanal:pago,
-            fechaResolucion:today(),
-            horaResolucion:new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
-            actualizado:serverTimestamp()
-          },{merge:true});
-          cacheRemove(`cierre_sem_${chofer}_${periodoId}`);
-          cacheRemove("pagos_pendientes_chofer_" + chofer);
-          if(typeof loadAdmin === "function") setTimeout(()=>loadAdmin().catch(()=>{}), 350);
-        }
-      }
-    }catch(e){ console.warn("No se pudo cerrar el cierre luego del comprobante Admin", e); }
-  };
+  /* v2.8.142: wrapper viejo Admin v2.131 eliminado para evitar doble cierre/render. */
 
   const _subirChoferV2131 = window.subirComprobantePagoChofer;
   window.subirComprobantePagoChofer = async function(){
@@ -10731,7 +10714,7 @@ setTimeout(function(){
      - Si falla, deja el error visible y no simula cierre.
   */
   (function(){
-    const BUILD = "v2.8.141-admin-comprobante-estable";
+    const BUILD = "v2.8.142-admin-comprobante-cierre-visual-fix";
 
     function esAdminActualV2141(){
       try{ return !!(currentProfile && String(currentProfile.rol || "").toLowerCase() === "admin"); }
