@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.137
+Version: 2.8.138
 Build: 2026-06-09-ARRANQUE-VISUAL-SIN-PANTALLA-NEGRA-137
 Fecha: 06/06/2026
 Cambios:
@@ -77,6 +77,7 @@ Cambios:
 - v2.8.128: sesión persistente sin parpadeo; el login queda oculto durante la restauración real de Firebase Auth.
 - v2.8.127: sesión persistente por celular; no vuelve a pedir usuario/contraseña si no se cerró sesión y restaura la última pantalla usada.
 - v2.8.130: ganador anterior en tiempo real: Admin escribe fuente oficial y Chofer escucha espejo público con onSnapshot. Modo prueba fecha iPhone activo para todo el archivo.
+- v2.8.138: último ganador del ranking lee primero cierres_semanales cerrados con bono aplicado; no reconstruye ranking ni inventa ganador si no hay cierre cerrado.
 -->
 <html lang="es">
 <head>
@@ -1460,7 +1461,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
 
 
-/* EXPLORA v2.8.137 · versión visible unificada */
+/* EXPLORA v2.8.138 · versión visible unificada */
 .explora-version-badge{
   display:block!important;
   color:#8f8f8f;
@@ -1634,7 +1635,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Viajes y Servicios</div>
-    <div class="explora-version-badge"><b>v2.8.137</b> · ARRANQUE-VISUAL</div>
+    <div class="explora-version-badge"><b>v2.8.138</b> · GANADOR-DESDE-CIERRES</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1648,7 +1649,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="driverView" class="hidden driver-mobile-b">
     <div class="driver-b-topbar">
       <div class="driver-b-logo">EXPL<span>⌖</span>RA</div>
-      <div class="explora-version-badge"><b>v2.8.137</b> · ARRANQUE-VISUAL</div>
+      <div class="explora-version-badge"><b>v2.8.138</b> · GANADOR-DESDE-CIERRES</div>
       <button class="driver-b-bell driver-b-logout-top" type="button" onclick="logout()" aria-label="Salir de la app">Salir</button>
     </div>
 
@@ -1865,7 +1866,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.137</b> · ARRANQUE-VISUAL</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.138</b> · GANADOR-DESDE-CIERRES</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -4698,27 +4699,77 @@ async function getUltimoGanadorSemanaOficial(){
   return null;
 }
 
-async function getUltimoGanadorSemanaUnico({preferirChofer=false, reconstruirSiFalta=true}={}){
-  // Misma función para Admin y Chofer. Chofer puede leer primero su espejo por permisos.
-  if(preferirChofer && (!currentProfile || currentProfile.rol !== "admin")){
-    const desdeChofer = await getUltimoGanadorDesdeChoferActual();
-    if(desdeChofer && desdeChofer.ganador) return desdeChofer;
+
+async function getUltimoGanadorDesdeCierresSemanales(){
+  // v2.8.138: fuente quirúrgica del último ganador.
+  // No reconstruye ranking. Lee cierres_semanales ya cerrados donde el bono quedó aplicado.
+  try{
+    const baseFecha = (()=>{
+      try{
+        if(currentUserId && typeof fechaOperativaParaChofer === "function"){
+          return fechaOperativaParaChofer(currentUserId, currentProfile || null);
+        }
+      }catch(e){}
+      return today();
+    })();
+    const periodoActivo = getPeriodoTrabajoActual(baseFecha);
+    const snap = await withTimeout(getDocs(collection(db,"cierres_semanales")), 6500, "Cierres semanales tardaron demasiado.");
+    const candidatos = [];
+    snap.forEach(d=>{
+      const c = d.data() || {};
+      const periodoId = c.periodoId || "";
+      if(!periodoId) return;
+      // Nunca toma la semana activa ni semanas posteriores a la fecha operativa del iPhone.
+      if(periodoActivo && periodoActivo.id && periodoId >= periodoActivo.id) return;
+      const ganadorId = c.ganadorId || "";
+      const ganadorNombre = c.ganadorSemana || c.ganadorNombre || c.nombreGanador || ganadorId;
+      const premioAplicado = Number(c.premioAplicado || 0);
+      const cerrado = c.estadoCierre === "cerrado" || c.aceptadoPorChofer === true || c.fechaConfirmacion;
+      const tieneActividad = Number(c.totalViajes || 0) > 0 || Number(c.cantidadViajes || 0) > 0;
+      if(!cerrado || !ganadorId || premioAplicado <= 0 || !tieneActividad) return;
+      const periodo = {
+        start: c.periodoInicio || String(periodoId).split("_")[0] || "",
+        end: c.periodoFin || String(periodoId).split("_")[1] || "",
+        closeDate: c.cierreObligatorio || addDays(c.periodoFin || String(periodoId).split("_")[1], 1),
+        id: periodoId,
+        motor: c.motor || "sabado_0001"
+      };
+      candidatos.push({
+        periodo,
+        ganador:{
+          id: ganadorId,
+          nombre: ganadorNombre || ganadorId,
+          facturacion: Number(c.totalViajes || 0),
+          viajes: Number(c.cantidadViajes || 0),
+          derivaciones: Number(c.derivaciones || 0),
+          porcentaje: Number(c.porcentaje || 0)
+        },
+        bono: Number(c.premioSemanal || premioAplicado || 50000),
+        premioAplicado,
+        cierreId: d.id,
+        actualizado: c.actualizado || c.fechaConfirmacion || Date.now(),
+        actualizadoMs: Date.now(),
+        fuente:"cierres_semanales_bono_aplicado"
+      });
+    });
+    candidatos.sort((a,b)=>String(b.periodo.id || "").localeCompare(String(a.periodo.id || "")));
+    const elegido = candidatos[0] || null;
+    if(!elegido) return null;
+    return cacheUltimoGanadorSemanaUnico(elegido);
+  }catch(e){
+    console.warn("No se pudo leer último ganador desde cierres semanales", e);
+    return null;
   }
-
-  const oficial = await getUltimoGanadorSemanaOficial();
-  if(oficial && oficial.ganador) return oficial;
-
-  if(!preferirChofer && (!currentProfile || currentProfile.rol !== "admin")){
-    const desdeChofer = await getUltimoGanadorDesdeChoferActual();
-    if(desdeChofer && desdeChofer.ganador) return desdeChofer;
-  }
-
-  const cache = cacheGet("ultimo_ganador_semana_oficial", 24 * 60 * 60 * 1000);
-  if(cache && cache.periodo && cache.ganador) return cache;
-
-  if(!reconstruirSiFalta) return null;
-  return await reconstruirYGuardarUltimoGanadorSemana();
 }
+
+async function getUltimoGanadorSemanaUnico({preferirChofer=false, reconstruirSiFalta=true}={}){
+  // v2.8.138: fuente única prioritaria = cierres_semanales cerrados con bono aplicado.
+  // No reconstruye desde ranking. Si no hay cierre cerrado con premioAplicado, no inventa ganador.
+  const desdeCierres = await getUltimoGanadorDesdeCierresSemanales();
+  if(desdeCierres && desdeCierres.ganador) return desdeCierres;
+
+  return null;
+
 
 async function guardarUltimoGanadorSemanaDesdeRanking(periodo, fuente="cierre_semanal"){
   try{
@@ -4974,7 +5025,7 @@ async function loadGanadorSemanaPasadaAdmin(){
 
   // Cuando Admin lo ve, lo republica automáticamente en todos los espejos para que Chofer vea lo mismo.
   if(data && data.ganador){
-    await guardarUltimoGanadorSemana(data.periodo, data.ganador, "auto_admin_misma_fuente").catch(()=>null);
+    await guardarUltimoGanadorSemana(data.periodo, data.ganador, data.fuente || "cierres_semanales_bono_aplicado").catch(()=>null);
     const reporte = await publicarUltimoGanadorEnChoferes(data).catch(()=>null);
     if(reporte && reporte.fail > 0 && $("adminMsg")){
       msg($("adminMsg"), `Ganador visible en Admin, pero no se copió a todos los choferes (${reporte.ok}/${reporte.total}). Revisá permisos Firebase.`);
@@ -5022,7 +5073,13 @@ function procesarSnapshotGanadorAnterior(snap, modo="chofer"){
   }
 
   const data = cacheUltimoGanadorSemanaUnico(raw);
-  renderGanadorSemanaPasadaEn(boxId, contentId, data || {periodo, ganador:null}, modo);
+  // v2.8.138: el listener público solo acepta datos publicados desde cierres semanales.
+  // Evita mostrar ganadores reconstruidos por ranking viejo o caché histórica.
+  if(!data || data.fuente !== "cierres_semanales_bono_aplicado"){
+    renderGanadorSemanaPasadaEn(boxId, contentId, {periodo, ganador:null}, modo);
+    return null;
+  }
+  renderGanadorSemanaPasadaEn(boxId, contentId, data, modo);
   return data;
 }
 
@@ -5046,7 +5103,10 @@ function iniciarListenerGanadorAnterior(modo="chofer"){
           ganadorAnteriorFallbackAdminHecho = true;
           setTimeout(()=>loadGanadorSemanaPasadaAdmin().catch(e=>console.warn("Fallback ganador anterior admin", e)), 650);
         }
-        // Chofer no reconstruye ni fuerza lectura extra: evita parpadeo y semanas futuras.
+        if(!esAdmin && !ganadorAnteriorFallbackChoferHecho){
+          ganadorAnteriorFallbackChoferHecho = true;
+          setTimeout(()=>loadGanadorSemanaPasadaChofer().catch(e=>console.warn("Lectura ganador desde cierres chofer", e)), 650);
+        }
       }
     }, async (e)=>{
       console.warn("Listener ganador anterior falló", modo, e);
@@ -5056,7 +5116,10 @@ function iniciarListenerGanadorAnterior(modo="chofer"){
           await loadGanadorSemanaPasadaAdmin().catch(err=>console.warn("Fallback ganador anterior admin", err));
         }
       }else{
-        // Chofer sin fallback de reconstrucción: queda esperando la fuente oficial/espejo.
+        if(!ganadorAnteriorFallbackChoferHecho){
+          ganadorAnteriorFallbackChoferHecho = true;
+          await loadGanadorSemanaPasadaChofer().catch(err=>console.warn("Lectura ganador desde cierres chofer", err));
+        }
       }
     });
     asignar(unsub);
@@ -5077,7 +5140,7 @@ async function sincronizarUltimoGanadorSemanaAdmin(){
     const data = await getUltimoGanadorSemanaUnico({preferirChofer:false, reconstruirSiFalta:true});
     if(!data || !data.ganador) return msg($("adminToolsMsg"), "No hay ganador anterior para sincronizar todavía.");
     renderGanadorSemanaPasadaEn("adminLastWeekWinnerCard","adminLastWeekWinnerContent",data,"admin");
-    await guardarUltimoGanadorSemana(data.periodo, data.ganador, "sync_manual_admin");
+    await guardarUltimoGanadorSemana(data.periodo, data.ganador, data.fuente || "cierres_semanales_bono_aplicado");
     const reporte = await publicarUltimoGanadorEnChoferes(data, true);
     if(reporte.fail === 0){
       msg($("adminToolsMsg"), `Listo: ${data.ganador.nombre || data.ganador.id} quedó sincronizado con ${reporte.ok}/${reporte.total} choferes.`, true);
@@ -6033,7 +6096,6 @@ window.confirmarCierreSemanal = async function(){
 
   try{
     const c = cierreSemanalPendiente;
-    guardarUltimoGanadorSemanaDesdeRanking(c.periodo, "confirmar_cierre_semanal").catch(e=>console.warn("No se guardó último ganador semanal", e));
     const requiereComprobante = (Number(c.choferDebe || 0) > 0 || Number(c.davidDebe || 0) > 0) && !(c.pagoSemanal && c.pagoSemanal.pagado === true);
     if(requiereComprobante){
       c.pagoSemanal = await asegurarPagoSemanalPendiente(c).catch(()=>c.pagoSemanal || null);
@@ -6089,6 +6151,18 @@ window.confirmarCierreSemanal = async function(){
       aceptadoPorChofer:true,
       actualizado: serverTimestamp()
     },{merge:true});
+
+    if(Number(c.premioAplicado || 0) > 0 && c.ganadorId){
+      guardarUltimoGanadorSemana(c.periodo, {
+        id: c.ganadorId,
+        nombre: c.ganadorSemana || c.ganadorId,
+        facturacion: Number(c.totalViajes || 0),
+        viajes: Number(c.cantidadViajes || 0),
+        derivaciones: Number(c.derivaciones || 0),
+        porcentaje: Number(c.porcentaje || 0)
+      }, "cierres_semanales_bono_aplicado").catch(e=>console.warn("No se publicó último ganador desde cierre", e));
+    }
+
 
     if(pagoAutomaticoSinDiferencia){
       await setDoc(doc(db,"pagos_semanales",comprobanteId(currentUserId,c.periodo.id)),{
@@ -9980,7 +10054,7 @@ window.EXPLORA_BUILD_CIERRE_COMPROBANTE_OBLIGATORIO = EXPLORA_BUILD_CIERRE_COMPR
 
 // ===== EXPLORA v2.8.135 · SPLASH 1s + RANKING/GANADOR AUTO LIVIANO =====
 // Cambio quirúrgico: no modifica cierres, comprobantes, servicios, derivaciones ni lógica financiera.
-const EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = "v2.8.137 · ARRANQUE-VISUAL-SIN-PANTALLA-NEGRA";
+const EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = "v2.8.138 · GANADOR-DESDE-CIERRES-SEMANALES";
 const EXPLORA_SPLASH_MAX_MS_135 = 1000;
 const EXPLORA_RANKING_AUTO_INTERVAL_MS_135 = 120000;
 const EXPLORA_GANADOR_AUTO_INTERVAL_MS_135 = 120000;
