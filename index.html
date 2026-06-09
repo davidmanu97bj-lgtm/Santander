@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.136
-Build: 2026-06-09-AUTH-EXISTENTE-REUTILIZABLE-VERSION-VISIBLE-136
+Version: 2.8.137
+Build: 2026-06-09-ARRANQUE-VISUAL-SIN-PANTALLA-NEGRA-137
 Fecha: 06/06/2026
 Cambios:
 - v2.8.129: en Chofer la campana superior se reemplaza por botón Salir, cierra sesión y vuelve al login.
@@ -1460,7 +1460,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
 
 
-/* EXPLORA v2.8.136 · versión visible unificada */
+/* EXPLORA v2.8.137 · versión visible unificada */
 .explora-version-badge{
   display:block!important;
   color:#8f8f8f;
@@ -1634,7 +1634,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Viajes y Servicios</div>
-    <div class="explora-version-badge"><b>v2.8.136</b> · AUTH-REUTILIZABLE</div>
+    <div class="explora-version-badge"><b>v2.8.137</b> · ARRANQUE-VISUAL</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1648,7 +1648,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="driverView" class="hidden driver-mobile-b">
     <div class="driver-b-topbar">
       <div class="driver-b-logo">EXPL<span>⌖</span>RA</div>
-      <div class="explora-version-badge"><b>v2.8.136</b> · AUTH-REUTILIZABLE</div>
+      <div class="explora-version-badge"><b>v2.8.137</b> · ARRANQUE-VISUAL</div>
       <button class="driver-b-bell driver-b-logout-top" type="button" onclick="logout()" aria-label="Salir de la app">Salir</button>
     </div>
 
@@ -1865,7 +1865,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.136</b> · AUTH-REUTILIZABLE</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.137</b> · ARRANQUE-VISUAL</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -3136,9 +3136,9 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
       exploraRestaurarPantallaAdmin();
     }else{
       $("driverView").classList.remove("hidden");
-      await loadDriver();
       exploraRestaurarPantallaDriver();
       exploraMarcarAppLista();
+      setTimeout(()=>loadDriver().catch(e=>msg($("driverMsg"),"Error cargando chofer: " + e.message)), 120);
     }
 
   }catch(e){
@@ -9980,7 +9980,7 @@ window.EXPLORA_BUILD_CIERRE_COMPROBANTE_OBLIGATORIO = EXPLORA_BUILD_CIERRE_COMPR
 
 // ===== EXPLORA v2.8.135 · SPLASH 1s + RANKING/GANADOR AUTO LIVIANO =====
 // Cambio quirúrgico: no modifica cierres, comprobantes, servicios, derivaciones ni lógica financiera.
-const EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = "v2.8.136 · AUTH-EXISTENTE-REUTILIZABLE-VERSION-VISIBLE";
+const EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = "v2.8.137 · ARRANQUE-VISUAL-SIN-PANTALLA-NEGRA";
 const EXPLORA_SPLASH_MAX_MS_135 = 1000;
 const EXPLORA_RANKING_AUTO_INTERVAL_MS_135 = 120000;
 const EXPLORA_GANADOR_AUTO_INTERVAL_MS_135 = 120000;
