@@ -1463,7 +1463,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
 
 
-/* EXPLORA v2.8.144 · versión visible unificada */
+/* EXPLORA v2.8.145 · versión visible unificada */
 .explora-version-badge{
   display:block!important;
   color:#8f8f8f;
@@ -1637,7 +1637,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Viajes y Servicios</div>
-    <div class="explora-version-badge"><b>v2.8.144</b> · ADMIN-COMPROBANTE-MODULE-FIX</div>
+    <div class="explora-version-badge"><b>v2.8.145</b> · ADMIN-COMPROBANTE-MODULE-FIX-REAL</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1651,7 +1651,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="driverView" class="hidden driver-mobile-b">
     <div class="driver-b-topbar">
       <div class="driver-b-logo">EXPL<span>⌖</span>RA</div>
-      <div class="explora-version-badge"><b>v2.8.144</b> · ADMIN-COMPROBANTE-MODULE-FIX</div>
+      <div class="explora-version-badge"><b>v2.8.145</b> · ADMIN-COMPROBANTE-MODULE-FIX-REAL</div>
       <button class="driver-b-bell driver-b-logout-top" type="button" onclick="logout()" aria-label="Salir de la app">Salir</button>
     </div>
 
@@ -1868,7 +1868,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.144</b> · ADMIN-COMPROBANTE-MODULE-FIX</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.145</b> · ADMIN-COMPROBANTE-MODULE-FIX-REAL</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -5917,7 +5917,7 @@ window.subirComprobantePagoChofer = async function(){
   }
 }
 
-/* v2.8.144: motor viejo Admin de comprobantes eliminado.
+/* v2.8.145: motor viejo Admin de comprobantes eliminado.
    La función final estable queda definida una sola vez en el bloque ADMIN-COMPROBANTE-CIERRE-VISUAL-FIX. */
 
 async function loadComprobantesChofer(force=false){
@@ -10108,7 +10108,7 @@ window.EXPLORA_BUILD_CIERRE_COMPROBANTE_OBLIGATORIO = EXPLORA_BUILD_CIERRE_COMPR
 
 // ===== EXPLORA v2.8.135 · SPLASH 1s + RANKING/GANADOR AUTO LIVIANO =====
 // Cambio quirúrgico: no modifica cierres, comprobantes, servicios, derivaciones ni lógica financiera.
-const EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = "v2.8.144 · ADMIN-COMPROBANTE-MODULE-FIX";
+const EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = "v2.8.145 · ADMIN-COMPROBANTE-MODULE-FIX-REAL";
 const EXPLORA_SPLASH_MAX_MS_135 = 1000;
 const EXPLORA_RANKING_AUTO_INTERVAL_MS_135 = 120000;
 const EXPLORA_GANADOR_AUTO_INTERVAL_MS_135 = 120000;
@@ -10248,365 +10248,9 @@ window.EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = EXPLORA_BUILD_SPLASH_RANKING_AUTO
 window.exploraActualizarRankingAutoLiviano135 = exploraActualizarRankingAutoLiviano135;
 window.exploraActualizarUltimoGanadorAuto135 = exploraActualizarUltimoGanadorAuto135;
 window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135;
-</script>
-
-<script>
-// ===== EXPLORA v2.8.131 · CIERRE SEMANAL SÁBADO + COMPROBANTE SEGÚN RESPONSABLE =====
-// Capa final dominante: el cierre queda visible hasta que se resuelva con comprobante
-// cuando debe pagar Chofer o debe pagar Admin/David.
-(function(){
-  const BUILD = "v2.8.131-cierre-sabado-comprobante-responsable";
-
-  function cierreTieneDeudaV2131(c){
-    return !!(c && (Number(c.choferDebe || 0) > 0 || Number(c.davidDebe || 0) > 0));
-  }
-  function cierreResponsablePagoV2131(c){
-    if(Number(c && c.choferDebe || 0) > 0) return "chofer";
-    if(Number(c && c.davidDebe || 0) > 0) return "admin";
-    return "ninguno";
-  }
-  function pagoResueltoV2131(pago){
-    return !!(pago && pago.pagado === true && (pago.comprobanteUrl || pago.url || pago.sentido === "sin_diferencia"));
-  }
-  function cierreResueltoV2131(data){
-    if(!data) return false;
-    const choferDebe = Number(data.choferDebe || 0) > 0;
-    const davidDebe = Number(data.davidDebe || 0) > 0;
-    if(data.sinActividad === true) return data.aceptadoPorChofer === true;
-    if(!choferDebe && !davidDebe) return data.aceptadoPorChofer === true;
-    return data.aceptadoPorChofer === true && pagoResueltoV2131(data.pagoSemanal || data.pago || null);
-  }
-
-  // El período pendiente es siempre la última semana vencida desde sábado 00:01 en adelante.
-  // Si hay semanas anteriores sin resolver, muestra primero la más vieja para no saltar cierres.
-  const _oldAceptado = window.cierreSemanalAceptadoPorChofer || cierreSemanalAceptadoPorChofer;
-  cierreSemanalAceptadoPorChofer = function(data){ return cierreResueltoV2131(data); };
-  window.cierreSemanalAceptadoPorChofer = cierreSemanalAceptadoPorChofer;
-
-  async function buscarPeriodoPendienteV2131(choferId, dateStr){
-    if(!choferId) return null;
-    dateStr = String(dateStr || (typeof fechaOperativaParaChofer === "function" ? fechaOperativaParaChofer(choferId, currentProfile) : today())).slice(0,10);
-    let perfil = null;
-    try{ perfil = await getPerfilChoferCierreV287(choferId); }catch(e){ perfil = currentProfile || null; }
-    let cursor = null;
-    try{ cursor = getPeriodoCierrePendiente(dateStr) || periodoAnterior(getPeriodoTrabajoActual(dateStr)); }
-    catch(e){ cursor = periodoAnterior(getPeriodoTrabajoActual(dateStr)); }
-    const pendientes = [];
-    for(let i=0;i<14 && cursor;i++){
-      const vencido = (typeof periodoCerradoYaVencido === "function") ? periodoCerradoYaVencido(cursor, dateStr) : String(dateStr) >= String(cursor.closeDate || "9999-99-99");
-      let permitido = vencido;
-      try{
-        if(typeof cierrePermitidoPorAltaPersistenteV293 === "function") permitido = cierrePermitidoPorAltaPersistenteV293(cursor, perfil, dateStr);
-      }catch(e){}
-      if(vencido && permitido) pendientes.push(cursor);
-      cursor = periodoAnterior(cursor);
-    }
-    pendientes.sort((a,b)=>String(a.start).localeCompare(String(b.start)));
-    for(const periodo of pendientes){
-      const cierreId = `${choferId}_${periodo.id}`;
-      try{
-        const snap = await withTimeout(getDoc(doc(db,"cierres_semanales",cierreId)), 3500, "verificar cierre semanal");
-        const data = snap.exists() ? (snap.data() || {}) : null;
-        if(!data || !cierreResueltoV2131(data)) return periodo;
-      }catch(e){
-        console.warn("No se pudo verificar cierre; se muestra para evitar saltear obligación", cierreId, e);
-        return periodo;
-      }
-    }
-    return null;
-  }
-
-  getPeriodoCierrePendienteNoConfirmado = async function(choferId=currentUserId, dateStr=(typeof fechaOperativaParaChofer === "function" ? fechaOperativaParaChofer(choferId,currentProfile) : today())){
-    return await buscarPeriodoPendienteV2131(choferId, dateStr);
-  };
-  window.getPeriodoCierrePendienteNoConfirmado = getPeriodoCierrePendienteNoConfirmado;
-
-  async function prepararCierreObligatorioV2131(choferId, periodo){
-    let c = null;
-    try{ c = await withTimeout(calcularCierreSemanalLiviano(choferId, periodo, true), 18000, "cierre semanal estable"); }
-    catch(e){
-      console.warn("Cierre liviano falló; intento ultra rápido", e);
-      c = await withTimeout(calcularCierreSemanalUltraRapido(choferId, periodo), 8000, "cierre semanal rápido");
-    }
-    if(!c) c = cierreDesdeAcumulado(choferId, periodo, {}, null, await getPremioSemanal());
-    const sinMovimientos = Number(c.cantidadViajes || 0) === 0 && Number(c.cantidadGastos || 0) === 0 && Number(c.totalFondoOperativo || 0) === 0 && Number(c.totalViajes || 0) === 0;
-    if(sinMovimientos){
-      c.sinActividad = true;
-      c.choferDebe = 0;
-      c.davidDebe = 0;
-      c.premioAplicado = 0;
-      c.pagoSemanal = null;
-    }else{
-      c.pagoSemanal = await getEstadoPagoSemanal(choferId, periodo.id).catch(()=>null);
-      if(!pagoResueltoV2131(c.pagoSemanal) && cierreTieneDeudaV2131(c)){
-        c.pagoSemanal = await asegurarPagoSemanalPendiente(c).catch(()=>c.pagoSemanal || null);
-      }
-    }
-    return c;
-  }
-
-  const _renderCierreSemanalV2131 = window.renderCierreSemanal || renderCierreSemanal;
-  renderCierreSemanal = function(c){
-    _renderCierreSemanalV2131(c);
-    const msgBox = document.getElementById("cierreSemanalMsg");
-    const btn = document.getElementById("confirmarCierreSemanalBtn");
-    const responsable = cierreResponsablePagoV2131(c);
-    const pago = c && c.pagoSemanal;
-    if(btn && cierreTieneDeudaV2131(c) && !pagoResueltoV2131(pago)){
-      btn.textContent = responsable === "chofer" ? "Mantener aviso hasta subir comprobante" : "Mantener aviso hasta pago de David";
-    }
-    if(msgBox && cierreTieneDeudaV2131(c) && !pagoResueltoV2131(pago)){
-      msgBox.innerHTML = responsable === "chofer"
-        ? `<div class="msg err"><b>⚠️ Cierre pendiente obligatorio</b><br>Este aviso queda en pantalla hasta que el chofer suba la foto del comprobante.</div>`
-        : `<div class="msg err"><b>⚠️ Cierre pendiente obligatorio</b><br>Este aviso queda en pantalla hasta que Admin/David suba la foto del comprobante de pago.</div>`;
-    }
-  };
-  window.renderCierreSemanal = renderCierreSemanal;
-
-  checkCierreSemanalAutomatico = async function(){
-    if(!currentUserId) return;
-    try{ if(typeof renderFechaOperativaVisibleV287 === "function") renderFechaOperativaVisibleV287(); }catch(e){}
-    const dateStr = typeof fechaOperativaParaChofer === "function" ? fechaOperativaParaChofer(currentUserId, currentProfile) : today();
-    const periodo = await buscarPeriodoPendienteV2131(currentUserId, dateStr);
-    if(!periodo) return;
-    const cierreId = `${currentUserId}_${periodo.id}`;
-    try{
-      const c = await prepararCierreObligatorioV2131(currentUserId, periodo);
-      cierreSemanalPendiente = c;
-      cierreSemanalCache = {key:cierreId, data:c};
-      cacheSet(`cierre_sem_${cierreId}`, c);
-      const modal = document.getElementById("cierreSemanalModal");
-      const resumen = document.getElementById("cierreSemanalResumen");
-      if(modal && resumen){
-        modal.classList.remove("hidden");
-        renderCierreSemanal(c);
-      }
-      setTimeout(()=>{ try{ checkPagosPendientesChoferAutomatico(); }catch(e){} }, 250);
-    }catch(e){ console.warn("No se pudo abrir cierre obligatorio", e); }
-  };
-  window.checkCierreSemanalAutomatico = checkCierreSemanalAutomatico;
-
-  const _confirmarBaseV2131 = window.confirmarCierreSemanal;
-  window.confirmarCierreSemanal = async function(){
-    const c = cierreSemanalPendiente;
-    if(!c || !c.periodo){
-      const modal = document.getElementById("cierreSemanalModal");
-      if(modal) modal.classList.add("hidden");
-      return;
-    }
-    const btn = document.getElementById("confirmarCierreSemanalBtn");
-    if(btn){ btn.disabled = true; btn.textContent = "Guardando cierre..."; }
-    try{
-      const responsable = cierreResponsablePagoV2131(c);
-      const deuda = cierreTieneDeudaV2131(c);
-      const pagoActual = c.pagoSemanal || await getEstadoPagoSemanal(currentUserId, c.periodo.id).catch(()=>null);
-      const pagado = pagoResueltoV2131(pagoActual);
-      if(deuda && !pagado){
-        const pagoPendiente = pagoActual || await asegurarPagoSemanalPendiente(c).catch(()=>null);
-        c.pagoSemanal = pagoPendiente;
-        const cierreId = `${currentUserId}_${c.periodo.id}`;
-        await setDoc(doc(db,"cierres_semanales",cierreId),{
-          fechaConfirmacion: today(),
-          horaConfirmacion: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
-          periodoInicio:c.periodo.start,
-          periodoFin:c.periodo.end,
-          cierreObligatorio:c.periodo.closeDate,
-          periodoId:c.periodo.id,
-          motor:"sabado_0001",
-          chofer:currentUserId,
-          vehiculo: currentVehicle ? currentVehicle.id : "",
-          totalViajes:Number(c.totalViajes || 0), cantidadViajes:Number(c.cantidadViajes || 0),
-          totalGastos:Number(c.totalGastos || 0), totalFondoOperativo:Number(c.totalFondoOperativo || 0),
-          efectivo:Number(c.efectivo || 0), transferencia:Number(c.transferencia || 0), tarjeta:Number(c.tarjeta || 0),
-          neto:Number(c.neto || 0), mitadChofer:Number(c.mitadChofer || 0), mitadDavid:Number(c.mitadDavid || 0),
-          choferDebe:Number(c.choferDebe || 0), davidDebe:Number(c.davidDebe || 0),
-          ganadorSemana:c.ganadorSemana || "", ganadorId:c.ganadorId || "",
-          premioSemanal:Number(c.premioSemanal || 50000), premioAplicado:Number(c.premioAplicado || 0),
-          pagoSemanal:pagoPendiente || null,
-          comprobanteRequerido:true,
-          comprobantePendiente:true,
-          responsableComprobante:responsable,
-          aceptadoPorChofer:false,
-          estadoCierre: responsable === "admin" ? "pendiente_comprobante_admin" : "pendiente_comprobante_chofer",
-          actualizado:serverTimestamp()
-        },{merge:true});
-        cacheRemove(`cierre_sem_${currentUserId}_${c.periodo.id}`);
-        cacheRemove("pagos_pendientes_chofer_" + currentUserId);
-        renderCierreSemanal(c);
-        if(responsable === "admin"){
-          const modal = document.getElementById("cierreSemanalModal");
-          if(modal) modal.classList.add("hidden");
-          await checkPagosPendientesChoferAutomatico().catch(()=>{});
-        }
-        return;
-      }
-      await _confirmarBaseV2131.apply(this, arguments);
-    }catch(e){
-      const box = document.getElementById("cierreSemanalMsg");
-      if(box) msg(box,"No se pudo guardar el cierre: " + e.message);
-    }finally{
-      if(btn){ btn.disabled = false; }
-    }
-  };
-
-  /* v2.8.144: wrapper viejo Admin v2.131 eliminado para evitar doble cierre/render. */
-
-  const _subirChoferV2131 = window.subirComprobantePagoChofer;
-  window.subirComprobantePagoChofer = async function(){
-    await _subirChoferV2131.apply(this, arguments);
-    try{
-      const c = cierreSemanalPendiente;
-      const pago = c && c.pagoSemanal;
-      if(currentUserId && c && c.periodo && pagoResueltoV2131(pago)){
-        await setDoc(doc(db,"cierres_semanales",`${currentUserId}_${c.periodo.id}`),{
-          aceptadoPorChofer:true,
-          estadoCierre:"cerrado_con_comprobante_chofer",
-          comprobanteRequerido:false,
-          comprobantePendiente:false,
-          responsableComprobante:"chofer",
-          pagoSemanal:pago,
-          fechaResolucion:today(),
-          horaResolucion:new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
-          actualizado:serverTimestamp()
-        },{merge:true});
-        cacheRemove(`cierre_sem_${currentUserId}_${c.periodo.id}`);
-        cacheRemove("pagos_pendientes_chofer_" + currentUserId);
-        cierreSemanalPendiente = null;
-        cierreSemanalCache = null;
-        const modal = document.getElementById("cierreSemanalModal");
-        if(modal) modal.classList.add("hidden");
-        await checkPagosPendientesChoferAutomatico().catch(()=>{});
-      }
-    }catch(e){ console.warn("No se pudo cerrar el cierre luego del comprobante Chofer", e); }
-  };
-
-  function recheckV2131(){
-    if(!currentUserId || typeof checkCierreSemanalAutomatico !== "function") return;
-    checkCierreSemanalAutomatico().catch(e=>console.warn("Revisión cierre " + BUILD, e));
-  }
-  setTimeout(recheckV2131, 700);
-  setTimeout(recheckV2131, 2200);
-  setTimeout(recheckV2131, 5200);
-  window.addEventListener("focus",()=>setTimeout(recheckV2131, 300));
-  document.addEventListener("visibilitychange",()=>{ if(!document.hidden) setTimeout(recheckV2131, 300); });
-  window.EXPLORA_BUILD_CIERRE_SABADO_COMPROBANTE_RESPONSABLE = BUILD;
-})();
-
-  /* ===== EXPLORA v2.8.133 · CIERRE-UNICO-SIN-DOBLE-MODAL =====
-     - El Admin nunca recibe el modal obligatorio de chofer.
-     - El chofer puede cerrar/aceptar el aviso una vez por período y seguir trabajando;
-       queda el cartel persistente, pero no vuelve a abrirse el modal en cada acción.
-     - El botón Admin "Subir comprobante y cerrar" usa el motor interno del módulo y marca
-       el cierre como resuelto.
-  */
-  (function(){
-    const BUILD = "v2.8.133-cierre-unico-sin-doble-modal";
-    let cierreCheckEnCursoV2133 = false;
-    let ultimoModalOcultoV2133 = "";
-
-    function esAdminActualV2133(){
-      try{
-        return !!(currentProfile && String(currentProfile.rol || "").toLowerCase() === "admin");
-      }catch(e){ return false; }
-    }
-
-    function cierreTieneDeudaFixV2133(c){
-      return !!(c && (Number(c.choferDebe || 0) > 0 || Number(c.davidDebe || 0) > 0));
-    }
-
-    function pagoResueltoFixV2133(pago){
-      return !!(pago && pago.pagado === true && (pago.comprobanteUrl || pago.url || pago.sentido === "sin_diferencia"));
-    }
-
-    function keyCierreV2133(uid, periodoId){
-      return `explora_cierre_modal_aceptado_${uid || ""}_${periodoId || ""}`;
-    }
-
-    function setCierreAceptadoSesionV2133(uid, periodoId){
-      try{ sessionStorage.setItem(keyCierreV2133(uid, periodoId), String(Date.now())); }catch(e){}
-    }
-
-    function cierreAceptadoSesionV2133(uid, periodoId){
-      try{
-        const t = Number(sessionStorage.getItem(keyCierreV2133(uid, periodoId)) || 0);
-        // Evita que el modal reaparezca en cada botón durante la sesión de trabajo.
-        return t > 0 && (Date.now() - t) < 12 * 60 * 60 * 1000;
-      }catch(e){ return false; }
-    }
-
-    function ocultarModalCierreV2133(){
-      try{
-        const modal = document.getElementById("cierreSemanalModal");
-        if(modal) modal.classList.add("hidden");
-      }catch(e){}
-    }
-
-    const _checkCierreSemanalAutomaticoV2133 = checkCierreSemanalAutomatico;
-    checkCierreSemanalAutomatico = async function(){
-      if(!currentUserId) return;
-      if(esAdminActualV2133()){
-        cierreSemanalPendiente = null;
-        cierreSemanalCache = null;
-        ocultarModalCierreV2133();
-        return;
-      }
-      if(cierreCheckEnCursoV2133) return;
-      cierreCheckEnCursoV2133 = true;
-      try{
-        await _checkCierreSemanalAutomaticoV2133.apply(this, arguments);
-        const c = cierreSemanalPendiente;
-        const periodoId = c && c.periodo && c.periodo.id;
-        const pago = c && (c.pagoSemanal || c.pago || null);
-        if(periodoId && cierreTieneDeudaFixV2133(c) && !pagoResueltoFixV2133(pago) && cierreAceptadoSesionV2133(currentUserId, periodoId)){
-          ocultarModalCierreV2133();
-          ultimoModalOcultoV2133 = `${currentUserId}_${periodoId}`;
-          try{ checkPagosPendientesChoferAutomatico(); }catch(e){}
-        }
-      }finally{
-        cierreCheckEnCursoV2133 = false;
-      }
-    };
-    window.checkCierreSemanalAutomatico = checkCierreSemanalAutomatico;
-
-    const _confirmarCierreSemanalV2133 = window.confirmarCierreSemanal;
-    window.confirmarCierreSemanal = async function(){
-      const c = cierreSemanalPendiente;
-      const periodoId = c && c.periodo && c.periodo.id;
-      const pago = c && (c.pagoSemanal || c.pago || null);
-      const deudaPendiente = periodoId && cierreTieneDeudaFixV2133(c) && !pagoResueltoFixV2133(pago);
-      try{
-        await _confirmarCierreSemanalV2133.apply(this, arguments);
-      }finally{
-        if(deudaPendiente && currentUserId){
-          setCierreAceptadoSesionV2133(currentUserId, periodoId);
-          ocultarModalCierreV2133();
-          try{ checkPagosPendientesChoferAutomatico(); }catch(e){}
-        }
-      }
-    };
-
-    const _showPanelV2133 = window.showPanel;
-    window.showPanel = function(id){
-      const r = _showPanelV2133 ? _showPanelV2133.apply(this, arguments) : undefined;
-      // No abrir el modal obligatorio al tocar cada función. El cartel persistente sigue activo.
-      if(!esAdminActualV2133()){
-        setTimeout(()=>{ try{ checkPagosPendientesChoferAutomatico(); }catch(e){} }, 250);
-      }
-      return r;
-    };
-
-    /* v2.8.144: función vieja subirComprobantePagoAdmin eliminada; queda solo el motor final ADMIN-COMPROBANTE-MODULE-FIX. */
 
 
-    setTimeout(()=>{ if(esAdminActualV2133()) ocultarModalCierreV2133(); }, 300);
-    setTimeout(()=>{ if(esAdminActualV2133()) ocultarModalCierreV2133(); }, 1800);
-    setTimeout(()=>{ if(esAdminActualV2133()) ocultarModalCierreV2133(); }, 5200);
-
-    window.EXPLORA_BUILD_CIERRE_UNICO_SIN_DOBLE_MODAL = BUILD;
-  })();
-
-
-  /* ===== EXPLORA v2.8.144 · ADMIN-COMPROBANTE-MODULE-FIX =====
+  /* ===== EXPLORA v2.8.145 · ADMIN-COMPROBANTE-MODULE-FIX-REAL-REAL =====
      Intervención quirúrgica dentro del script principal:
      - Un solo motor final para Admin.
      - Guarda comprobante inline en Firestore sin depender de Storage.
@@ -10614,7 +10258,7 @@ window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135
      - El botón inline llama window.subirComprobantePagoAdmin desde el módulo principal.
   */
   (function(){
-    const BUILD = "v2.8.144-admin-comprobante-module-fix";
+    const BUILD = "v2.8.145-admin-comprobante-module-fix";
 
     function esAdminActualV2144(){
       try{ return !!(currentProfile && String(currentProfile.rol || "").toLowerCase() === "admin"); }
@@ -10848,6 +10492,365 @@ window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135
     document.addEventListener("visibilitychange",()=>{ if(!document.hidden) setTimeout(ocultarModalCierreAdminV2144, 150); });
     window.EXPLORA_BUILD_ADMIN_COMPROBANTE_ESTABLE = BUILD;
   })();
+
+
+</script>
+
+<script>
+// ===== EXPLORA v2.8.131 · CIERRE SEMANAL SÁBADO + COMPROBANTE SEGÚN RESPONSABLE =====
+// Capa final dominante: el cierre queda visible hasta que se resuelva con comprobante
+// cuando debe pagar Chofer o debe pagar Admin/David.
+(function(){
+  const BUILD = "v2.8.131-cierre-sabado-comprobante-responsable";
+
+  function cierreTieneDeudaV2131(c){
+    return !!(c && (Number(c.choferDebe || 0) > 0 || Number(c.davidDebe || 0) > 0));
+  }
+  function cierreResponsablePagoV2131(c){
+    if(Number(c && c.choferDebe || 0) > 0) return "chofer";
+    if(Number(c && c.davidDebe || 0) > 0) return "admin";
+    return "ninguno";
+  }
+  function pagoResueltoV2131(pago){
+    return !!(pago && pago.pagado === true && (pago.comprobanteUrl || pago.url || pago.sentido === "sin_diferencia"));
+  }
+  function cierreResueltoV2131(data){
+    if(!data) return false;
+    const choferDebe = Number(data.choferDebe || 0) > 0;
+    const davidDebe = Number(data.davidDebe || 0) > 0;
+    if(data.sinActividad === true) return data.aceptadoPorChofer === true;
+    if(!choferDebe && !davidDebe) return data.aceptadoPorChofer === true;
+    return data.aceptadoPorChofer === true && pagoResueltoV2131(data.pagoSemanal || data.pago || null);
+  }
+
+  // El período pendiente es siempre la última semana vencida desde sábado 00:01 en adelante.
+  // Si hay semanas anteriores sin resolver, muestra primero la más vieja para no saltar cierres.
+  const _oldAceptado = window.cierreSemanalAceptadoPorChofer || cierreSemanalAceptadoPorChofer;
+  cierreSemanalAceptadoPorChofer = function(data){ return cierreResueltoV2131(data); };
+  window.cierreSemanalAceptadoPorChofer = cierreSemanalAceptadoPorChofer;
+
+  async function buscarPeriodoPendienteV2131(choferId, dateStr){
+    if(!choferId) return null;
+    dateStr = String(dateStr || (typeof fechaOperativaParaChofer === "function" ? fechaOperativaParaChofer(choferId, currentProfile) : today())).slice(0,10);
+    let perfil = null;
+    try{ perfil = await getPerfilChoferCierreV287(choferId); }catch(e){ perfil = currentProfile || null; }
+    let cursor = null;
+    try{ cursor = getPeriodoCierrePendiente(dateStr) || periodoAnterior(getPeriodoTrabajoActual(dateStr)); }
+    catch(e){ cursor = periodoAnterior(getPeriodoTrabajoActual(dateStr)); }
+    const pendientes = [];
+    for(let i=0;i<14 && cursor;i++){
+      const vencido = (typeof periodoCerradoYaVencido === "function") ? periodoCerradoYaVencido(cursor, dateStr) : String(dateStr) >= String(cursor.closeDate || "9999-99-99");
+      let permitido = vencido;
+      try{
+        if(typeof cierrePermitidoPorAltaPersistenteV293 === "function") permitido = cierrePermitidoPorAltaPersistenteV293(cursor, perfil, dateStr);
+      }catch(e){}
+      if(vencido && permitido) pendientes.push(cursor);
+      cursor = periodoAnterior(cursor);
+    }
+    pendientes.sort((a,b)=>String(a.start).localeCompare(String(b.start)));
+    for(const periodo of pendientes){
+      const cierreId = `${choferId}_${periodo.id}`;
+      try{
+        const snap = await withTimeout(getDoc(doc(db,"cierres_semanales",cierreId)), 3500, "verificar cierre semanal");
+        const data = snap.exists() ? (snap.data() || {}) : null;
+        if(!data || !cierreResueltoV2131(data)) return periodo;
+      }catch(e){
+        console.warn("No se pudo verificar cierre; se muestra para evitar saltear obligación", cierreId, e);
+        return periodo;
+      }
+    }
+    return null;
+  }
+
+  getPeriodoCierrePendienteNoConfirmado = async function(choferId=currentUserId, dateStr=(typeof fechaOperativaParaChofer === "function" ? fechaOperativaParaChofer(choferId,currentProfile) : today())){
+    return await buscarPeriodoPendienteV2131(choferId, dateStr);
+  };
+  window.getPeriodoCierrePendienteNoConfirmado = getPeriodoCierrePendienteNoConfirmado;
+
+  async function prepararCierreObligatorioV2131(choferId, periodo){
+    let c = null;
+    try{ c = await withTimeout(calcularCierreSemanalLiviano(choferId, periodo, true), 18000, "cierre semanal estable"); }
+    catch(e){
+      console.warn("Cierre liviano falló; intento ultra rápido", e);
+      c = await withTimeout(calcularCierreSemanalUltraRapido(choferId, periodo), 8000, "cierre semanal rápido");
+    }
+    if(!c) c = cierreDesdeAcumulado(choferId, periodo, {}, null, await getPremioSemanal());
+    const sinMovimientos = Number(c.cantidadViajes || 0) === 0 && Number(c.cantidadGastos || 0) === 0 && Number(c.totalFondoOperativo || 0) === 0 && Number(c.totalViajes || 0) === 0;
+    if(sinMovimientos){
+      c.sinActividad = true;
+      c.choferDebe = 0;
+      c.davidDebe = 0;
+      c.premioAplicado = 0;
+      c.pagoSemanal = null;
+    }else{
+      c.pagoSemanal = await getEstadoPagoSemanal(choferId, periodo.id).catch(()=>null);
+      if(!pagoResueltoV2131(c.pagoSemanal) && cierreTieneDeudaV2131(c)){
+        c.pagoSemanal = await asegurarPagoSemanalPendiente(c).catch(()=>c.pagoSemanal || null);
+      }
+    }
+    return c;
+  }
+
+  const _renderCierreSemanalV2131 = window.renderCierreSemanal || renderCierreSemanal;
+  renderCierreSemanal = function(c){
+    _renderCierreSemanalV2131(c);
+    const msgBox = document.getElementById("cierreSemanalMsg");
+    const btn = document.getElementById("confirmarCierreSemanalBtn");
+    const responsable = cierreResponsablePagoV2131(c);
+    const pago = c && c.pagoSemanal;
+    if(btn && cierreTieneDeudaV2131(c) && !pagoResueltoV2131(pago)){
+      btn.textContent = responsable === "chofer" ? "Mantener aviso hasta subir comprobante" : "Mantener aviso hasta pago de David";
+    }
+    if(msgBox && cierreTieneDeudaV2131(c) && !pagoResueltoV2131(pago)){
+      msgBox.innerHTML = responsable === "chofer"
+        ? `<div class="msg err"><b>⚠️ Cierre pendiente obligatorio</b><br>Este aviso queda en pantalla hasta que el chofer suba la foto del comprobante.</div>`
+        : `<div class="msg err"><b>⚠️ Cierre pendiente obligatorio</b><br>Este aviso queda en pantalla hasta que Admin/David suba la foto del comprobante de pago.</div>`;
+    }
+  };
+  window.renderCierreSemanal = renderCierreSemanal;
+
+  checkCierreSemanalAutomatico = async function(){
+    if(!currentUserId) return;
+    try{ if(typeof renderFechaOperativaVisibleV287 === "function") renderFechaOperativaVisibleV287(); }catch(e){}
+    const dateStr = typeof fechaOperativaParaChofer === "function" ? fechaOperativaParaChofer(currentUserId, currentProfile) : today();
+    const periodo = await buscarPeriodoPendienteV2131(currentUserId, dateStr);
+    if(!periodo) return;
+    const cierreId = `${currentUserId}_${periodo.id}`;
+    try{
+      const c = await prepararCierreObligatorioV2131(currentUserId, periodo);
+      cierreSemanalPendiente = c;
+      cierreSemanalCache = {key:cierreId, data:c};
+      cacheSet(`cierre_sem_${cierreId}`, c);
+      const modal = document.getElementById("cierreSemanalModal");
+      const resumen = document.getElementById("cierreSemanalResumen");
+      if(modal && resumen){
+        modal.classList.remove("hidden");
+        renderCierreSemanal(c);
+      }
+      setTimeout(()=>{ try{ checkPagosPendientesChoferAutomatico(); }catch(e){} }, 250);
+    }catch(e){ console.warn("No se pudo abrir cierre obligatorio", e); }
+  };
+  window.checkCierreSemanalAutomatico = checkCierreSemanalAutomatico;
+
+  const _confirmarBaseV2131 = window.confirmarCierreSemanal;
+  window.confirmarCierreSemanal = async function(){
+    const c = cierreSemanalPendiente;
+    if(!c || !c.periodo){
+      const modal = document.getElementById("cierreSemanalModal");
+      if(modal) modal.classList.add("hidden");
+      return;
+    }
+    const btn = document.getElementById("confirmarCierreSemanalBtn");
+    if(btn){ btn.disabled = true; btn.textContent = "Guardando cierre..."; }
+    try{
+      const responsable = cierreResponsablePagoV2131(c);
+      const deuda = cierreTieneDeudaV2131(c);
+      const pagoActual = c.pagoSemanal || await getEstadoPagoSemanal(currentUserId, c.periodo.id).catch(()=>null);
+      const pagado = pagoResueltoV2131(pagoActual);
+      if(deuda && !pagado){
+        const pagoPendiente = pagoActual || await asegurarPagoSemanalPendiente(c).catch(()=>null);
+        c.pagoSemanal = pagoPendiente;
+        const cierreId = `${currentUserId}_${c.periodo.id}`;
+        await setDoc(doc(db,"cierres_semanales",cierreId),{
+          fechaConfirmacion: today(),
+          horaConfirmacion: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
+          periodoInicio:c.periodo.start,
+          periodoFin:c.periodo.end,
+          cierreObligatorio:c.periodo.closeDate,
+          periodoId:c.periodo.id,
+          motor:"sabado_0001",
+          chofer:currentUserId,
+          vehiculo: currentVehicle ? currentVehicle.id : "",
+          totalViajes:Number(c.totalViajes || 0), cantidadViajes:Number(c.cantidadViajes || 0),
+          totalGastos:Number(c.totalGastos || 0), totalFondoOperativo:Number(c.totalFondoOperativo || 0),
+          efectivo:Number(c.efectivo || 0), transferencia:Number(c.transferencia || 0), tarjeta:Number(c.tarjeta || 0),
+          neto:Number(c.neto || 0), mitadChofer:Number(c.mitadChofer || 0), mitadDavid:Number(c.mitadDavid || 0),
+          choferDebe:Number(c.choferDebe || 0), davidDebe:Number(c.davidDebe || 0),
+          ganadorSemana:c.ganadorSemana || "", ganadorId:c.ganadorId || "",
+          premioSemanal:Number(c.premioSemanal || 50000), premioAplicado:Number(c.premioAplicado || 0),
+          pagoSemanal:pagoPendiente || null,
+          comprobanteRequerido:true,
+          comprobantePendiente:true,
+          responsableComprobante:responsable,
+          aceptadoPorChofer:false,
+          estadoCierre: responsable === "admin" ? "pendiente_comprobante_admin" : "pendiente_comprobante_chofer",
+          actualizado:serverTimestamp()
+        },{merge:true});
+        cacheRemove(`cierre_sem_${currentUserId}_${c.periodo.id}`);
+        cacheRemove("pagos_pendientes_chofer_" + currentUserId);
+        renderCierreSemanal(c);
+        if(responsable === "admin"){
+          const modal = document.getElementById("cierreSemanalModal");
+          if(modal) modal.classList.add("hidden");
+          await checkPagosPendientesChoferAutomatico().catch(()=>{});
+        }
+        return;
+      }
+      await _confirmarBaseV2131.apply(this, arguments);
+    }catch(e){
+      const box = document.getElementById("cierreSemanalMsg");
+      if(box) msg(box,"No se pudo guardar el cierre: " + e.message);
+    }finally{
+      if(btn){ btn.disabled = false; }
+    }
+  };
+
+  /* v2.8.145: wrapper viejo Admin v2.131 eliminado para evitar doble cierre/render. */
+
+  const _subirChoferV2131 = window.subirComprobantePagoChofer;
+  window.subirComprobantePagoChofer = async function(){
+    await _subirChoferV2131.apply(this, arguments);
+    try{
+      const c = cierreSemanalPendiente;
+      const pago = c && c.pagoSemanal;
+      if(currentUserId && c && c.periodo && pagoResueltoV2131(pago)){
+        await setDoc(doc(db,"cierres_semanales",`${currentUserId}_${c.periodo.id}`),{
+          aceptadoPorChofer:true,
+          estadoCierre:"cerrado_con_comprobante_chofer",
+          comprobanteRequerido:false,
+          comprobantePendiente:false,
+          responsableComprobante:"chofer",
+          pagoSemanal:pago,
+          fechaResolucion:today(),
+          horaResolucion:new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
+          actualizado:serverTimestamp()
+        },{merge:true});
+        cacheRemove(`cierre_sem_${currentUserId}_${c.periodo.id}`);
+        cacheRemove("pagos_pendientes_chofer_" + currentUserId);
+        cierreSemanalPendiente = null;
+        cierreSemanalCache = null;
+        const modal = document.getElementById("cierreSemanalModal");
+        if(modal) modal.classList.add("hidden");
+        await checkPagosPendientesChoferAutomatico().catch(()=>{});
+      }
+    }catch(e){ console.warn("No se pudo cerrar el cierre luego del comprobante Chofer", e); }
+  };
+
+  function recheckV2131(){
+    if(!currentUserId || typeof checkCierreSemanalAutomatico !== "function") return;
+    checkCierreSemanalAutomatico().catch(e=>console.warn("Revisión cierre " + BUILD, e));
+  }
+  setTimeout(recheckV2131, 700);
+  setTimeout(recheckV2131, 2200);
+  setTimeout(recheckV2131, 5200);
+  window.addEventListener("focus",()=>setTimeout(recheckV2131, 300));
+  document.addEventListener("visibilitychange",()=>{ if(!document.hidden) setTimeout(recheckV2131, 300); });
+  window.EXPLORA_BUILD_CIERRE_SABADO_COMPROBANTE_RESPONSABLE = BUILD;
+})();
+
+  /* ===== EXPLORA v2.8.133 · CIERRE-UNICO-SIN-DOBLE-MODAL =====
+     - El Admin nunca recibe el modal obligatorio de chofer.
+     - El chofer puede cerrar/aceptar el aviso una vez por período y seguir trabajando;
+       queda el cartel persistente, pero no vuelve a abrirse el modal en cada acción.
+     - El botón Admin "Subir comprobante y cerrar" usa el motor interno del módulo y marca
+       el cierre como resuelto.
+  */
+  (function(){
+    const BUILD = "v2.8.133-cierre-unico-sin-doble-modal";
+    let cierreCheckEnCursoV2133 = false;
+    let ultimoModalOcultoV2133 = "";
+
+    function esAdminActualV2133(){
+      try{
+        return !!(currentProfile && String(currentProfile.rol || "").toLowerCase() === "admin");
+      }catch(e){ return false; }
+    }
+
+    function cierreTieneDeudaFixV2133(c){
+      return !!(c && (Number(c.choferDebe || 0) > 0 || Number(c.davidDebe || 0) > 0));
+    }
+
+    function pagoResueltoFixV2133(pago){
+      return !!(pago && pago.pagado === true && (pago.comprobanteUrl || pago.url || pago.sentido === "sin_diferencia"));
+    }
+
+    function keyCierreV2133(uid, periodoId){
+      return `explora_cierre_modal_aceptado_${uid || ""}_${periodoId || ""}`;
+    }
+
+    function setCierreAceptadoSesionV2133(uid, periodoId){
+      try{ sessionStorage.setItem(keyCierreV2133(uid, periodoId), String(Date.now())); }catch(e){}
+    }
+
+    function cierreAceptadoSesionV2133(uid, periodoId){
+      try{
+        const t = Number(sessionStorage.getItem(keyCierreV2133(uid, periodoId)) || 0);
+        // Evita que el modal reaparezca en cada botón durante la sesión de trabajo.
+        return t > 0 && (Date.now() - t) < 12 * 60 * 60 * 1000;
+      }catch(e){ return false; }
+    }
+
+    function ocultarModalCierreV2133(){
+      try{
+        const modal = document.getElementById("cierreSemanalModal");
+        if(modal) modal.classList.add("hidden");
+      }catch(e){}
+    }
+
+    const _checkCierreSemanalAutomaticoV2133 = checkCierreSemanalAutomatico;
+    checkCierreSemanalAutomatico = async function(){
+      if(!currentUserId) return;
+      if(esAdminActualV2133()){
+        cierreSemanalPendiente = null;
+        cierreSemanalCache = null;
+        ocultarModalCierreV2133();
+        return;
+      }
+      if(cierreCheckEnCursoV2133) return;
+      cierreCheckEnCursoV2133 = true;
+      try{
+        await _checkCierreSemanalAutomaticoV2133.apply(this, arguments);
+        const c = cierreSemanalPendiente;
+        const periodoId = c && c.periodo && c.periodo.id;
+        const pago = c && (c.pagoSemanal || c.pago || null);
+        if(periodoId && cierreTieneDeudaFixV2133(c) && !pagoResueltoFixV2133(pago) && cierreAceptadoSesionV2133(currentUserId, periodoId)){
+          ocultarModalCierreV2133();
+          ultimoModalOcultoV2133 = `${currentUserId}_${periodoId}`;
+          try{ checkPagosPendientesChoferAutomatico(); }catch(e){}
+        }
+      }finally{
+        cierreCheckEnCursoV2133 = false;
+      }
+    };
+    window.checkCierreSemanalAutomatico = checkCierreSemanalAutomatico;
+
+    const _confirmarCierreSemanalV2133 = window.confirmarCierreSemanal;
+    window.confirmarCierreSemanal = async function(){
+      const c = cierreSemanalPendiente;
+      const periodoId = c && c.periodo && c.periodo.id;
+      const pago = c && (c.pagoSemanal || c.pago || null);
+      const deudaPendiente = periodoId && cierreTieneDeudaFixV2133(c) && !pagoResueltoFixV2133(pago);
+      try{
+        await _confirmarCierreSemanalV2133.apply(this, arguments);
+      }finally{
+        if(deudaPendiente && currentUserId){
+          setCierreAceptadoSesionV2133(currentUserId, periodoId);
+          ocultarModalCierreV2133();
+          try{ checkPagosPendientesChoferAutomatico(); }catch(e){}
+        }
+      }
+    };
+
+    const _showPanelV2133 = window.showPanel;
+    window.showPanel = function(id){
+      const r = _showPanelV2133 ? _showPanelV2133.apply(this, arguments) : undefined;
+      // No abrir el modal obligatorio al tocar cada función. El cartel persistente sigue activo.
+      if(!esAdminActualV2133()){
+        setTimeout(()=>{ try{ checkPagosPendientesChoferAutomatico(); }catch(e){} }, 250);
+      }
+      return r;
+    };
+
+    /* v2.8.145: función vieja subirComprobantePagoAdmin eliminada; queda solo el motor final ADMIN-COMPROBANTE-MODULE-FIX-REAL. */
+
+
+    setTimeout(()=>{ if(esAdminActualV2133()) ocultarModalCierreV2133(); }, 300);
+    setTimeout(()=>{ if(esAdminActualV2133()) ocultarModalCierreV2133(); }, 1800);
+    setTimeout(()=>{ if(esAdminActualV2133()) ocultarModalCierreV2133(); }, 5200);
+
+    window.EXPLORA_BUILD_CIERRE_UNICO_SIN_DOBLE_MODAL = BUILD;
+  })();
+
 
 </script>
 
