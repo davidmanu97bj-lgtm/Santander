@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.142
+Version: 2.8.144
 Build: 2026-06-09-ARRANQUE-VISUAL-SIN-PANTALLA-NEGRA-137
 Fecha: 06/06/2026
 Cambios:
@@ -1463,7 +1463,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
 
 
-/* EXPLORA v2.8.143 · versión visible unificada */
+/* EXPLORA v2.8.144 · versión visible unificada */
 .explora-version-badge{
   display:block!important;
   color:#8f8f8f;
@@ -1637,7 +1637,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Viajes y Servicios</div>
-    <div class="explora-version-badge"><b>v2.8.143</b> · ADMIN-COMPROBANTE-BOTON-FIX</div>
+    <div class="explora-version-badge"><b>v2.8.144</b> · ADMIN-COMPROBANTE-MODULE-FIX</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1651,7 +1651,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="driverView" class="hidden driver-mobile-b">
     <div class="driver-b-topbar">
       <div class="driver-b-logo">EXPL<span>⌖</span>RA</div>
-      <div class="explora-version-badge"><b>v2.8.143</b> · ADMIN-COMPROBANTE-BOTON-FIX</div>
+      <div class="explora-version-badge"><b>v2.8.144</b> · ADMIN-COMPROBANTE-MODULE-FIX</div>
       <button class="driver-b-bell driver-b-logout-top" type="button" onclick="logout()" aria-label="Salir de la app">Salir</button>
     </div>
 
@@ -1868,7 +1868,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.143</b> · ADMIN-COMPROBANTE-BOTON-FIX</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.144</b> · ADMIN-COMPROBANTE-MODULE-FIX</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -5917,7 +5917,7 @@ window.subirComprobantePagoChofer = async function(){
   }
 }
 
-/* v2.8.143: motor viejo Admin de comprobantes eliminado.
+/* v2.8.144: motor viejo Admin de comprobantes eliminado.
    La función final estable queda definida una sola vez en el bloque ADMIN-COMPROBANTE-CIERRE-VISUAL-FIX. */
 
 async function loadComprobantesChofer(force=false){
@@ -10108,7 +10108,7 @@ window.EXPLORA_BUILD_CIERRE_COMPROBANTE_OBLIGATORIO = EXPLORA_BUILD_CIERRE_COMPR
 
 // ===== EXPLORA v2.8.135 · SPLASH 1s + RANKING/GANADOR AUTO LIVIANO =====
 // Cambio quirúrgico: no modifica cierres, comprobantes, servicios, derivaciones ni lógica financiera.
-const EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = "v2.8.143 · ADMIN-COMPROBANTE-BOTON-FIX";
+const EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = "v2.8.144 · ADMIN-COMPROBANTE-MODULE-FIX";
 const EXPLORA_SPLASH_MAX_MS_135 = 1000;
 const EXPLORA_RANKING_AUTO_INTERVAL_MS_135 = 120000;
 const EXPLORA_GANADOR_AUTO_INTERVAL_MS_135 = 120000;
@@ -10449,7 +10449,7 @@ window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135
     }
   };
 
-  /* v2.8.143: wrapper viejo Admin v2.131 eliminado para evitar doble cierre/render. */
+  /* v2.8.144: wrapper viejo Admin v2.131 eliminado para evitar doble cierre/render. */
 
   const _subirChoferV2131 = window.subirComprobantePagoChofer;
   window.subirComprobantePagoChofer = async function(){
@@ -10595,7 +10595,7 @@ window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135
       return r;
     };
 
-    /* v2.8.143: función vieja subirComprobantePagoAdmin eliminada; queda solo el motor final ADMIN-COMPROBANTE-BOTON-FIX. */
+    /* v2.8.144: función vieja subirComprobantePagoAdmin eliminada; queda solo el motor final ADMIN-COMPROBANTE-MODULE-FIX. */
 
 
     setTimeout(()=>{ if(esAdminActualV2133()) ocultarModalCierreV2133(); }, 300);
@@ -10605,40 +10605,25 @@ window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135
     window.EXPLORA_BUILD_CIERRE_UNICO_SIN_DOBLE_MODAL = BUILD;
   })();
 
-</script>
 
-<script>
-setTimeout(function(){
-  var btn = document.querySelector('#loginView button');
-  if (btn && typeof window.login !== 'function') {
-    btn.addEventListener('click', function(){
-      var box = document.getElementById('loginMsg');
-      if (box) box.innerHTML = '<div class="msg err">Error cargando la app. Actualizá la página o revisá que el index.html se haya subido completo.</div>';
-    });
-  }
-}, 1500);
-
-
-
-  /* ===== EXPLORA v2.8.143 · ADMIN-COMPROBANTE-BOTON-FIX =====
-     Intervención quirúrgica sobre el botón Admin "Subir comprobante y cerrar":
+  /* ===== EXPLORA v2.8.144 · ADMIN-COMPROBANTE-MODULE-FIX =====
+     Intervención quirúrgica dentro del script principal:
      - Un solo motor final para Admin.
      - Guarda comprobante inline en Firestore sin depender de Storage.
-     - Compresión reforzada para iPhone.
      - Cierra pagos_semanales + cierres_semanales antes de refrescar Admin.
-     - Si falla, deja el error visible y no simula cierre.
+     - El botón inline llama window.subirComprobantePagoAdmin desde el módulo principal.
   */
   (function(){
-    const BUILD = "v2.8.143-admin-comprobante-boton-fix";
+    const BUILD = "v2.8.144-admin-comprobante-module-fix";
 
-    function esAdminActualV2141(){
+    function esAdminActualV2144(){
       try{ return !!(currentProfile && String(currentProfile.rol || "").toLowerCase() === "admin"); }
       catch(e){ return false; }
     }
 
-    function ocultarModalCierreAdminV2141(){
+    function ocultarModalCierreAdminV2144(){
       try{
-        if(esAdminActualV2141()){
+        if(esAdminActualV2144()){
           cierreSemanalPendiente = null;
           cierreSemanalCache = null;
           const modal = document.getElementById("cierreSemanalModal");
@@ -10649,23 +10634,23 @@ setTimeout(function(){
       }catch(e){}
     }
 
-    const _checkCierreSemanalAutomaticoV2141 = checkCierreSemanalAutomatico;
+    const _checkCierreSemanalAutomaticoV2144 = checkCierreSemanalAutomatico;
     checkCierreSemanalAutomatico = async function(){
-      if(esAdminActualV2141()){
-        ocultarModalCierreAdminV2141();
+      if(esAdminActualV2144()){
+        ocultarModalCierreAdminV2144();
         return;
       }
-      return _checkCierreSemanalAutomaticoV2141.apply(this, arguments);
+      return _checkCierreSemanalAutomaticoV2144.apply(this, arguments);
     };
     window.checkCierreSemanalAutomatico = checkCierreSemanalAutomatico;
 
-    function setAdminMsgV2141(texto, ok){
+    function setAdminMsgV2144(texto, ok){
       const box = document.getElementById("adminMsg") || document.getElementById("adminCierresMsg");
       if(box && typeof msg === "function") msg(box, texto, !!ok);
       else if(box) box.innerHTML = `<div class="msg ${ok ? "ok" : "err"}">${texto}</div>`;
     }
 
-    function dataURLToBlobV2141(dataUrl){
+    function dataURLToBlobV2144(dataUrl){
       const parts = String(dataUrl || "").split(",");
       const mime = (parts[0].match(/data:(.*?);base64/) || [])[1] || "image/jpeg";
       const bin = atob(parts[1] || "");
@@ -10674,7 +10659,7 @@ setTimeout(function(){
       return new Blob([arr], {type:mime});
     }
 
-    function leerArchivoDataURLV2141(file, timeoutMs){
+    function leerArchivoDataURLV2144(file, timeoutMs){
       return withTimeout(new Promise((resolve,reject)=>{
         const reader = new FileReader();
         reader.onload = ()=>resolve(String(reader.result || ""));
@@ -10683,11 +10668,11 @@ setTimeout(function(){
       }), timeoutMs || 12000, "El iPhone tardó demasiado preparando la foto. Probá con captura de pantalla.");
     }
 
-    async function comprimirAdminDataURLV2141(file){
+    async function comprimirAdminDataURLV2144(file){
       if(!file) throw new Error("Seleccioná una foto del comprobante antes de subir.");
       if(!esArchivoImagenComprobante(file)) throw new Error("El comprobante debe ser una imagen.");
 
-      const originalDataUrl = await leerArchivoDataURLV2141(file, 14000);
+      const originalDataUrl = await leerArchivoDataURLV2144(file, 14000);
       if(!originalDataUrl || !originalDataUrl.startsWith("data:image/")) throw new Error("No se pudo preparar la imagen del comprobante.");
 
       const intentos = [
@@ -10699,7 +10684,7 @@ setTimeout(function(){
       let ultimo = originalDataUrl;
       for(const cfg of intentos){
         try{
-          const blob = dataURLToBlobV2141(originalDataUrl);
+          const blob = dataURLToBlobV2144(originalDataUrl);
           const archivoTemp = new File([blob], "comprobante.jpg", {type:"image/jpeg"});
           const comprimido = await comprimirImagenComprobante(archivoTemp, cfg.max, cfg.q);
           const dataUrl = await blobToDataURLComprobante(comprimido);
@@ -10716,7 +10701,7 @@ setTimeout(function(){
       throw new Error("La foto quedó demasiado pesada para guardarla. Sacá una captura del comprobante o recortá la imagen y probá de nuevo.");
     }
 
-    async function guardarComprobanteAdminEstableV2141({chofer, periodoId, sentido, monto, file}){
+    async function guardarComprobanteAdminEstableV2144({chofer, periodoId, sentido, monto, file}){
       if(!chofer || !periodoId) throw new Error("Falta chofer o período.");
       if(!file) throw new Error("Seleccioná una foto del comprobante antes de subir.");
       if(!esArchivoImagenComprobante(file)) throw new Error("El comprobante debe ser una imagen.");
@@ -10724,7 +10709,7 @@ setTimeout(function(){
       const id = `${chofer}_${periodoId}`;
       const fechaPago = today();
       const horaPago = new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"});
-      const dataUrl = await comprimirAdminDataURLV2141(file);
+      const dataUrl = await comprimirAdminDataURLV2144(file);
 
       const basePago = {
         id,
@@ -10784,49 +10769,48 @@ setTimeout(function(){
       const oldText = clicked ? clicked.textContent : "";
       let watchdog = null;
       try{
-        ocultarModalCierreAdminV2141();
-        if(!esAdminActualV2141()) throw new Error("Solo Admin puede cerrar este pago.");
+        ocultarModalCierreAdminV2144();
+        if(!esAdminActualV2144()) throw new Error("Solo Admin puede cerrar este pago.");
         if(!file) throw new Error("Seleccioná una foto del comprobante antes de subir.");
 
         if(clicked){
           clicked.disabled = true;
           clicked.textContent = "Preparando foto...";
           watchdog = setTimeout(()=>{
-            try{ setAdminMsgV2141("La subida sigue procesando. No cierres la app; si vuelve el botón, probá con una captura más liviana.", false); }catch(e){}
+            try{ setAdminMsgV2144("La subida sigue procesando. No cierres la app; si vuelve el botón, probá con una captura más liviana.", false); }catch(e){}
           }, 18000);
         }
 
-        setAdminMsgV2141("Preparando comprobante liviano...", true);
+        setAdminMsgV2144("Preparando comprobante liviano...", true);
         await new Promise(r=>setTimeout(r, 40));
         if(clicked) clicked.textContent = "Guardando y cerrando...";
-        setAdminMsgV2141("Guardando comprobante y cerrando el pago en Firestore...", true);
+        setAdminMsgV2144("Guardando comprobante y cerrando el pago en Firestore...", true);
 
-        await guardarComprobanteAdminEstableV2141({chofer, periodoId, sentido, monto, file});
+        await guardarComprobanteAdminEstableV2144({chofer, periodoId, sentido, monto, file});
         limpiarComprobanteSeleccionado(inputId);
         if(input) input.value = "";
 
         if(watchdog) clearTimeout(watchdog);
-        setAdminMsgV2141("✅ Comprobante guardado y cierre cerrado.", true);
+        setAdminMsgV2144("✅ Comprobante guardado y cierre cerrado.", true);
         if(clicked){ clicked.disabled = true; clicked.textContent = "✅ Cerrado"; }
-        ocultarModalCierreAdminV2141();
+        ocultarModalCierreAdminV2144();
 
         setTimeout(()=>{
           try{
-            ocultarModalCierreAdminV2141();
-            if(typeof loadAdmin === "function") loadAdmin().catch(err=>setAdminMsgV2141("Comprobante cerrado. No se pudo refrescar Admin: " + err.message, false));
+            ocultarModalCierreAdminV2144();
+            if(typeof loadAdmin === "function") loadAdmin().catch(err=>setAdminMsgV2144("Comprobante cerrado. No se pudo refrescar Admin: " + err.message, false));
           }catch(e){}
         }, 550);
       }catch(e){
         if(watchdog) clearTimeout(watchdog);
         const mensaje = "No se pudo subir el comprobante: " + (e && e.message ? e.message : e);
-        setAdminMsgV2141(mensaje, false);
+        setAdminMsgV2144(mensaje, false);
         alert(mensaje);
         if(clicked){ clicked.disabled = false; clicked.textContent = oldText || "Subir comprobante y cerrar"; }
       }
     };
 
-
-    function ejecutarOnclickComprobanteAdminV2143(attr, btn){
+    function ejecutarOnclickComprobanteAdminV2144(attr, btn){
       if(!attr || !attr.includes("subirComprobantePagoAdmin")) return false;
       if(btn && btn.dataset && btn.dataset.exploraUploadBusy === "1") return true;
       try{
@@ -10841,7 +10825,7 @@ setTimeout(function(){
       }catch(e){
         try{ if(btn && btn.dataset) delete btn.dataset.exploraUploadBusy; }catch(_e){}
         const mensaje = "No se pudo iniciar la subida del comprobante: " + (e && e.message ? e.message : e);
-        setAdminMsgV2141(mensaje, false);
+        setAdminMsgV2144(mensaje, false);
         alert(mensaje);
         return true;
       }
@@ -10855,101 +10839,41 @@ setTimeout(function(){
         if(!attr.includes("subirComprobantePagoAdmin")) return;
         ev.preventDefault();
         ev.stopImmediatePropagation();
-        ejecutarOnclickComprobanteAdminV2143(attr, btn);
+        ejecutarOnclickComprobanteAdminV2144(attr, btn);
       }catch(e){}
     }, true);
 
-    [120,700,1800,3600,7000].forEach(ms=>setTimeout(ocultarModalCierreAdminV2141, ms));
-    window.addEventListener("focus",()=>setTimeout(ocultarModalCierreAdminV2141, 150));
-    document.addEventListener("visibilitychange",()=>{ if(!document.hidden) setTimeout(ocultarModalCierreAdminV2141, 150); });
+    [120,700,1800,3600,7000].forEach(ms=>setTimeout(ocultarModalCierreAdminV2144, ms));
+    window.addEventListener("focus",()=>setTimeout(ocultarModalCierreAdminV2144, 150));
+    document.addEventListener("visibilitychange",()=>{ if(!document.hidden) setTimeout(ocultarModalCierreAdminV2144, 150); });
     window.EXPLORA_BUILD_ADMIN_COMPROBANTE_ESTABLE = BUILD;
   })();
+
 </script>
-
-
-
-
-
 
 <script>
-/* ===== EXPLORA v2.8.135 · ADMIN-MODAL-BLOCK-DOM-FIX =====
-   Blindaje final para iPhone/Admin:
-   - Detecta Admin por DOM, no por variable de módulo.
-   - Oculta inmediatamente el modal de cierre obligatorio si la vista visible es Admin.
-   - Evita que el refresco posterior a subir comprobante vuelva a abrir el modal.
-*/
-(function(){
-  const BUILD = "v2.8.135-admin-modal-block-dom-fix";
-  let adminModalBlockUntil = 0;
-
-  function visible(el){
-    if(!el) return false;
-    if(el.classList && el.classList.contains('hidden')) return false;
-    const st = getComputedStyle(el);
-    return st.display !== 'none' && st.visibility !== 'hidden' && st.opacity !== '0';
+setTimeout(function(){
+  var btn = document.querySelector('#loginView button');
+  if (btn && typeof window.login !== 'function') {
+    btn.addEventListener('click', function(){
+      var box = document.getElementById('loginMsg');
+      if (box) box.innerHTML = '<div class="msg err">Error cargando la app. Actualizá la página o revisá que el index.html se haya subido completo.</div>';
+    });
   }
+}, 1500);
 
-  function isAdminDom(){
-    const admin = document.getElementById('adminView');
-    const driver = document.getElementById('driverView');
-    if(visible(admin) && !visible(driver)) return true;
-    const txt = (document.body && document.body.innerText || '').slice(0,800).toLowerCase();
-    return txt.includes('explora') && txt.includes('admin') && txt.includes('configuración');
-  }
 
-  function hideAdminCierreModal(){
-    if(!isAdminDom() && Date.now() > adminModalBlockUntil) return;
-    const modal = document.getElementById('cierreSemanalModal');
-    if(modal && !modal.classList.contains('hidden')) modal.classList.add('hidden');
-    const resumen = document.getElementById('cierreSemanalResumen');
-    const msg = document.getElementById('cierreSemanalMsg');
-    if(resumen && isAdminDom()) resumen.innerHTML = '';
-    if(msg && isAdminDom()) msg.innerHTML = '';
-  }
 
-  window.EXPLORA_bloquearModalCierreAdmin = function(ms){
-    adminModalBlockUntil = Date.now() + (ms || 12000);
-    hideAdminCierreModal();
-  };
 
-  const oldClick = document.addEventListener;
-  document.addEventListener('click', function(ev){
-    try{
-      const btn = ev.target && ev.target.closest && ev.target.closest('button');
-      const tx = btn ? (btn.textContent || '').toLowerCase() : '';
-      if(isAdminDom() && (tx.includes('subir comprobante') || tx.includes('cerrar'))){
-        window.EXPLORA_bloquearModalCierreAdmin(20000);
-      }
-    }catch(e){}
-  }, true);
 
-  const mo = new MutationObserver(()=>{
-    try{ hideAdminCierreModal(); }catch(e){}
-  });
-  mo.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style']});
-
-  [0,100,250,500,900,1500,2500,4000,6500,10000,15000].forEach(ms=>setTimeout(hideAdminCierreModal,ms));
-  window.addEventListener('focus',()=>setTimeout(hideAdminCierreModal,80));
-  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) setTimeout(hideAdminCierreModal,80); });
-
-  const prevUpload = window.subirComprobantePagoAdmin;
-  if(typeof prevUpload === 'function'){
-    window.subirComprobantePagoAdmin = async function(){
-      window.EXPLORA_bloquearModalCierreAdmin(30000);
-      try{
-        return await prevUpload.apply(this, arguments);
-      }finally{
-        window.EXPLORA_bloquearModalCierreAdmin(30000);
-        setTimeout(hideAdminCierreModal,150);
-        setTimeout(hideAdminCierreModal,800);
-        setTimeout(hideAdminCierreModal,2500);
-      }
-    };
-  }
-
-  window.EXPLORA_BUILD_ADMIN_MODAL_BLOCK_DOM_FIX = BUILD;
-})();
 </script>
+
+
+
+
+
+
+
 
 
 <script>
