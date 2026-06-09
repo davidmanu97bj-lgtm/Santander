@@ -1354,6 +1354,16 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   content:"⟳"!important;
 }
 
+/* EXPLORA v2.8.135 · extracción quirúrgica icono actualizar en “Vas ganando el bono” */
+.driver-b-ranking .ranking-bonus-box{
+  padding:16px!important;
+}
+.driver-b-ranking .ranking-bonus-box:after,
+.driver-b-ranking .ranking-bonus-box.refreshing:after{
+  content:""!important;
+  display:none!important;
+}
+
 /* EXPLORA v2.8.126 · Menú Más limpio para producción */
 .driver-b-more-card{
   display:none!important;
@@ -1623,18 +1633,8 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
     <div id="driverLeaderCard" class="leader-card driver-b-ranking">
       <h3>🏆 RANKING SEMANAL</h3>
-      <div id="driverLeaderContent">
-        <div class="ranking-bonus-box">
-          <div class="ranking-state-visual pending" aria-label="Ranking pendiente de actualización">
-            <div class="ranking-visual-main">
-              <div class="ranking-visual-icon">🏆</div>
-              <div class="ranking-visual-title">Ranking pendiente</div>
-              <div class="ranking-visual-sub">Actualiza para ver posiciones</div>
-            </div>
-          </div>
-          <div class="bonus-money">💰 Bono semanal: $50.000</div>
-        </div>
-      </div>
+      <div id="driverLeaderContent"></div>
+      <!-- Botón manual de ganador actual eliminado: ranking se actualiza automáticamente. -->
       <div id="driverGanadorActualMsg"></div>
     </div>
 
@@ -1646,7 +1646,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
           <div><b>Cargando ganador...</b><small>Chofer y Admin usan la misma fuente.</small></div>
         </div>
       </div>
-      <button id="btnActualizarUltimoGanadorChofer" class="btn-dark" style="display:none!important;margin-top:10px" type="button" onclick="loadGanadorSemanaPasadaChofer(true)">Actualizar</button>
+      <!-- Botón manual de último ganador eliminado: actualización solo automática por listener oficial. -->
       <div id="driverLastWeekWinnerMsg"></div>
     </div>
 
@@ -2107,10 +2107,8 @@ function exploraRestaurarPantallaDriver(){
     const permitidas = ["servicePanel","derivePanel","expensePanel","rankingPanel","miCierreSemanalPanel","historyPanel","miAutoPanel","comprobantesPanel","driverMorePanel"];
     if(!id || !permitidas.includes(id) || !$(id)) return;
     exploraRestaurandoPantalla = true;
-    setTimeout(()=>{
-      try{ showPanel(id); }catch(e){ console.warn("No se pudo restaurar pantalla chofer", e); }
-      finally{ exploraRestaurandoPantalla = false; }
-    }, 80);
+    try{ showPanel(id); }catch(e){ console.warn("No se pudo restaurar pantalla chofer", e); }
+    finally{ exploraRestaurandoPantalla = false; }
   }catch(e){ exploraRestaurandoPantalla = false; }
 }
 
@@ -3107,9 +3105,9 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
       exploraRestaurarPantallaAdmin();
     }else{
       $("driverView").classList.remove("hidden");
-      exploraMarcarAppLista();
       await loadDriver();
       exploraRestaurarPantallaDriver();
+      exploraMarcarAppLista();
     }
 
   }catch(e){
@@ -3119,14 +3117,10 @@ onAuthStateChanged(auth, async (firebaseUser)=>{
 });
 
 function autoClickGanadorChofer(origen="auto"){
-  // Ranking reconstruido: no simula botones viejos ni usa flujo anterior.
-  try{
-    if(typeof actualizarGanadorActualChofer === "function"){
-      actualizarGanadorActualChofer(false);
-    }
-  }catch(e){
-    console.warn("No se pudo actualizar ranking desde autoClick", e);
-  }
+  // v2.8.135 FIX: eliminado el flujo de click manual/auto-click del ganador.
+  // El último ganador se actualiza únicamente por listener oficial para evitar parpadeos,
+  // reconstrucciones repetidas y escrituras de semanas futuras.
+  console.log("Auto-click ganador desactivado", origen);
 }
 window.autoClickGanadorChofer = autoClickGanadorChofer;
 
@@ -3134,15 +3128,19 @@ function actualizarRankingYGanadorDesdeTarjeta(origen="tarjeta_ranking"){
   const box = document.querySelector('#driverLeaderContent .ranking-bonus-box');
   try{
     if(box) box.classList.add('refreshing');
-    if(typeof actualizarGanadorActualChofer === "function") actualizarGanadorActualChofer(false);
+    // Solo refresca ranking semanal. No toca ni reconstruye último ganador.
+    if(typeof exploraActualizarRankingAutoLiviano135 === "function"){
+      exploraActualizarRankingAutoLiviano135(origen);
+    }
   }catch(e){
     console.warn('No se pudo refrescar ranking desde tarjeta', e);
   }finally{
-    setTimeout(()=>{ try{ if(box) box.classList.remove('refreshing'); }catch(_e){} }, 1200);
+    setTimeout(()=>{ try{ if(box) box.classList.remove('refreshing'); }catch(_e){} }, 900);
   }
 }
 window.actualizarRankingYGanadorDesdeTarjeta = actualizarRankingYGanadorDesdeTarjeta;
 
+// Delegación robusta: aunque el ranking se re-renderice, la tarjeta mantiene el click.
 document.addEventListener('click', function(e){
   const card = e.target && e.target.closest ? e.target.closest('#driverLeaderContent .ranking-bonus-box') : null;
   if(!card) return;
@@ -3869,8 +3867,8 @@ async function getPeriodoOperativoChofer(choferId){
 }
 
 async function getPeriodoRankingVisible(){
-  // Ranking visible global: siempre usa la semana activa real del chofer actual.
-  // No depende de cachés viejos ni de documentos de ranking anteriores.
+  // Ranking visible GLOBAL, pero usando la misma fecha efectiva que usa el cierre.
+  // En modo prueba/fecha iPhone evita que ranking y cierre miren semanas distintas.
   let dateStr = today();
   try{
     if(typeof fechaOperativaParaChofer === "function" && currentUserId){
@@ -3887,137 +3885,146 @@ async function getPremioSemana(periodo){
     const snap = await getDoc(doc(db,"configuracion",`premio_${periodo.id}`));
     return snap.exists() ? Number(snap.data().monto || 50000) : 50000;
   }catch(e){
-    return 50000;
+    return 0;
   }
 }
 
 async function getChoferesRankingActivosRapido(){
-  // Reconstruido de cero: solo trae choferes activos. No usa ranking viejo como fuente.
-  const snap = await withTimeout(getDocs(collection(db,"choferes")), 5000, "No se pudieron cargar choferes para ranking.");
-  const arr = [];
+  const cached = cacheGet("ranking_choferes_activos", 10 * 60 * 1000);
+  if(cached && Array.isArray(cached) && cached.length){
+    // refresco no bloqueante
+    getDocs(collection(db,"choferes")).then(snap=>{
+      const arr=[];
+      snap.forEach(d=>{
+        const c=d.data();
+        if(c.rol === "admin" || c.activo === false) return;
+        arr.push({id:d.id,nombre:c.nombre || d.id});
+      });
+      if(arr.length) cacheSet("ranking_choferes_activos", arr);
+    }).catch(()=>{});
+    return cached;
+  }
+
+  const snap = await withTimeout(getDocs(collection(db,"choferes")), 3000, "El ranking tardó cargando choferes.");
+  const arr=[];
   snap.forEach(d=>{
-    const c = d.data() || {};
+    const c=d.data();
     if(c.rol === "admin" || c.activo === false) return;
-    arr.push({id:d.id, nombre:c.nombre || d.id});
+    arr.push({id:d.id,nombre:c.nombre || d.id});
   });
-  arr.sort((a,b)=>String(a.nombre || "").localeCompare(String(b.nombre || "")));
+  cacheSet("ranking_choferes_activos", arr);
   return arr;
 }
 
 function calcularPorcentajeRanking(arr){
-  const activos = (arr || []).filter(x=>
-    Number(x.viajes || 0) > 0 || Number(x.derivaciones || 0) > 0 || Number(x.facturacion || 0) > 0
-  );
-  if(!activos.length) return [];
-
-  const maxViajes = Math.max(1, ...activos.map(x=>Number(x.viajes || 0)));
-  const maxDeriv = Math.max(1, ...activos.map(x=>Number(x.derivaciones || 0)));
-  const maxFact = Math.max(1, ...activos.map(x=>Number(x.facturacion || 0)));
-
-  activos.forEach(x=>{
-    const fact = Number(x.facturacion || 0) / maxFact;
-    const viajes = Number(x.viajes || 0) / maxViajes;
-    const deriv = Number(x.derivaciones || 0) / maxDeriv;
-    const actividad = 1;
-    x.porcentaje = Math.round(((fact * 0.50) + (viajes * 0.20) + (deriv * 0.20) + (actividad * 0.10)) * 100);
+  arr.forEach(x=>{
+    x.actividad = (Number(x.viajes || 0) > 0 || Number(x.derivaciones || 0) > 0 || Number(x.facturacion || 0) > 0) ? 1 : 0;
   });
+  const maxViajes = Math.max(1,...arr.map(x=>Number(x.viajes || 0)));
+  const maxDeriv = Math.max(1,...arr.map(x=>Number(x.derivaciones || 0)));
+  const maxFact = Math.max(1,...arr.map(x=>Number(x.facturacion || 0)));
+  const maxActividad = Math.max(1,...arr.map(x=>Number(x.actividad || 0)));
 
-  activos.sort((a,b)=>
-    Number(b.porcentaje || 0) - Number(a.porcentaje || 0) ||
-    Number(b.facturacion || 0) - Number(a.facturacion || 0) ||
-    Number(b.derivaciones || 0) - Number(a.derivaciones || 0) ||
-    Number(b.viajes || 0) - Number(a.viajes || 0) ||
-    String(a.nombre || "").localeCompare(String(b.nombre || ""))
-  );
-  return activos;
+  arr.forEach(x=>{
+    x.porcentaje = Math.round((((Number(x.facturacion || 0)/maxFact)*0.50)+((Number(x.viajes || 0)/maxViajes)*0.20)+((Number(x.derivaciones || 0)/maxDeriv)*0.20)+((Number(x.actividad || 0)/maxActividad)*0.10))*100);
+  });
+  arr.sort((a,b)=>b.porcentaje-a.porcentaje || b.facturacion-a.facturacion || b.derivaciones-a.derivaciones || b.viajes-a.viajes);
+  return arr;
 }
 
-async function leerViajesPeriodoRanking(periodo){
-  const porId = new Map();
 
-  function agregarSnap(snap){
-    if(!snap) return;
-    snap.forEach(d=>{
-      const v = d.data() || {};
-      if(!perteneceAlPeriodo(v, periodo)) return;
-      porId.set(d.id, {id:d.id, ...v});
-    });
-  }
-
-  const consultas = await Promise.allSettled([
-    withTimeout(getDocs(query(collection(db,"viajes"), where("periodoId","==",periodo.id))), 4500, "Viajes por período tardaron."),
-    withTimeout(getDocs(query(collection(db,"viajes"), where("fecha",">=",periodo.start))), 4500, "Viajes por fecha tardaron.")
-  ]);
-
-  consultas.forEach(r=>{
-    if(r.status === "fulfilled") agregarSnap(r.value);
-    else console.warn("Ranking: lectura parcial de viajes", r.reason);
-  });
-
-  return Array.from(porId.values()).filter(v=>String(v.fecha || "").slice(0,10) <= periodo.end || String(v.periodoId || "") === periodo.id);
-}
-
-async function leerDerivacionesRanking(periodo){
+async function getDerivacionesAceptadasPorOrigenRapido(periodo){
+  const cacheKey = `ranking_derivaciones_reales_${periodo.id}`;
+  const cached = cacheGet(cacheKey, 2 * 60 * 1000);
   const counts = {};
-  const vistas = new Set();
+  let huboLectura = false;
 
-  function sumarSnap(snap){
+  function sumarDesdeSnap(snap){
     if(!snap) return;
     snap.forEach(d=>{
-      if(vistas.has(d.id)) return;
-      vistas.add(d.id);
-      const x = d.data() || {};
+      const x = d.data();
       const estadoOk = x.estado === "aceptado";
       const completada = x.derivacionCompletada === true || !!x.viajeId || !!x.facturadoA;
-      const origen = x.origen || x.choferOrigen || "";
-      if(!estadoOk || !completada || !origen) return;
+      if(!estadoOk || !completada || !x.origen) return;
+
+      // Para documentos viejos, aceptamos periodoId; para documentos nuevos, periodoOrigenId.
       const periodoDoc = x.periodoOrigenId || x.periodoId || "";
       if(periodoDoc && periodoDoc !== periodo.id) return;
-      if(!periodoDoc && !perteneceAlPeriodo(x, periodo)) return;
-      counts[origen] = (counts[origen] || 0) + 1;
+
+      counts[x.origen] = (counts[x.origen] || 0) + 1;
     });
   }
 
-  const consultas = await Promise.allSettled([
-    withTimeout(getDocs(query(collection(db,"derivaciones"), where("periodoOrigenId","==",periodo.id))), 3000, "Derivaciones por período origen tardaron."),
-    withTimeout(getDocs(query(collection(db,"derivaciones"), where("periodoId","==",periodo.id))), 3000, "Derivaciones por período tardaron.")
-  ]);
+  try{
+    const consultas = await Promise.allSettled([
+      withTimeout(getDocs(query(collection(db,"derivaciones"), where("periodoOrigenId","==",periodo.id))), 1400, "Derivaciones por periodoOrigenId tardaron."),
+      withTimeout(getDocs(query(collection(db,"derivaciones"), where("periodoId","==",periodo.id))), 1400, "Derivaciones por periodoId tardaron.")
+    ]);
 
-  consultas.forEach(r=>{
-    if(r.status === "fulfilled") sumarSnap(r.value);
-    else console.warn("Ranking: lectura parcial de derivaciones", r.reason);
-  });
-  return counts;
+    consultas.forEach(r=>{
+      if(r.status === "fulfilled"){
+        huboLectura = true;
+        sumarDesdeSnap(r.value);
+      }
+    });
+
+    if(huboLectura){
+      cacheSet(cacheKey, counts);
+      return counts;
+    }
+  }catch(e){
+    console.warn("No se pudieron leer derivaciones reales rápido", e);
+  }
+
+  return cached || {};
 }
+
 
 async function calcularRankingSemanalBaseSinSuspensiones(periodo = getPeriodoTrabajoActual(today())){
   const choferes = await getChoferesRankingActivosRapido();
   const stats = {};
   choferes.forEach(c=>{
-    stats[c.id] = {id:c.id, nombre:c.nombre || c.id, viajes:0, derivaciones:0, facturacion:0, porcentaje:0};
+    stats[c.id] = {id:c.id,nombre:c.nombre || c.id,viajes:0,derivaciones:0,facturacion:0,porcentaje:0,actividad:0};
   });
 
-  const [viajes, derivaciones] = await Promise.all([
-    leerViajesPeriodoRanking(periodo),
-    leerDerivacionesRanking(periodo).catch(e=>{ console.warn("Ranking: derivaciones no disponibles", e); return {}; })
-  ]);
-
-  viajes.forEach(v=>{
-    const choferId = v.chofer || v.choferId || "";
-    if(!stats[choferId]) return;
-    stats[choferId].viajes += 1;
-    stats[choferId].facturacion += Number(v.monto || v.total || v.importe || 0);
+  const derivacionesPromise = getDerivacionesAceptadasPorOrigenRapido(periodo).catch(e=>{
+    console.warn("Ranking base: derivaciones reales no disponibles", e);
+    return {};
   });
 
-  Object.keys(derivaciones || {}).forEach(choferId=>{
+  try{
+    const acumSnap = await withTimeout(getDocs(query(
+      collection(db,"acumulados_semanales"),
+      where("periodoId","==",periodo.id)
+    )), 2200, "El ranking base tardó cargando acumulados.");
+
+    acumSnap.forEach(d=>{
+      const a = d.data();
+      const choferId = a.chofer || String(d.id).split("_")[0];
+      if(!stats[choferId]) return;
+      stats[choferId].viajes = Number(a.cantidadViajes || 0);
+      stats[choferId].facturacion = Number(a.totalViajes || 0);
+      stats[choferId].derivaciones = Number(a.derivaciones || 0);
+    });
+  }catch(e){
+    console.warn("Ranking base por acumulados no disponible", e);
+  }
+
+  const derivacionesReales = await derivacionesPromise;
+  Object.keys(derivacionesReales || {}).forEach(choferId=>{
     if(!stats[choferId]) return;
-    stats[choferId].derivaciones = Number(derivaciones[choferId] || 0);
+    stats[choferId].derivaciones = Math.max(Number(stats[choferId].derivaciones || 0), Number(derivacionesReales[choferId] || 0));
   });
 
   return calcularPorcentajeRanking(Object.values(stats));
 }
 
 async function validarPagoPendienteContraSaldoFinal(p){
+  // Blindaje crítico:
+  // Un pago pendiente solo puede suspender bono o pedir comprobante del chofer
+  // si después de aplicar el bono al ganador el saldo final sigue dando chofer_a_david.
+  // Evita el caso: efectivo 25.000 + bono 50.000 => David debe pagar 37.500,
+  // pero quedó guardado un pago viejo "Ariel debe pagar 12.500".
   if(!p || p.pagado === true) return {valido:false, motivo:"pago ya resuelto"};
   if(p.sentido !== "chofer_a_david") return {valido:true, motivo:"no suspende bono del chofer"};
 
@@ -4031,7 +4038,11 @@ async function validarPagoPendienteContraSaldoFinal(p){
 
     let acumulado = null;
     try{
-      const snap = await withTimeout(getDoc(doc(db,"acumulados_semanales",`${p.chofer}_${periodoPago.id}`)), 2500, "No se pudo validar acumulado del cierre.");
+      const snap = await withTimeout(
+        getDoc(doc(db,"acumulados_semanales",`${p.chofer}_${periodoPago.id}`)),
+        2500,
+        "No se pudo validar acumulado del cierre."
+      );
       if(snap.exists()) acumulado = snap.data();
     }catch(e){
       console.warn("No se pudo leer acumulado para validar pago; se reconstruye", e);
@@ -4050,11 +4061,18 @@ async function validarPagoPendienteContraSaldoFinal(p){
     const esperadoDavidDebe = Number(cierreReal.davidDebe || 0);
 
     if(esperadoChoferDebe <= 0){
-      return {valido:false, motivo: esperadoDavidDebe > 0 ? `saldo final a favor del chofer: David debe ${esperadoDavidDebe}` : "saldo final sin deuda del chofer"};
+      return {
+        valido:false,
+        motivo: esperadoDavidDebe > 0
+          ? `saldo final a favor del chofer: David debe ${esperadoDavidDebe}`
+          : "saldo final sin deuda del chofer"
+      };
     }
+
     if(Math.abs(Number(p.monto || 0) - esperadoChoferDebe) > 1){
       return {valido:false, motivo:`monto pendiente ${Number(p.monto || 0)} no coincide con saldo final ${esperadoChoferDebe}`};
     }
+
     return {valido:true, motivo:"saldo final confirmado chofer_a_david"};
   }catch(e){
     console.warn("No se pudo validar pago contra saldo final; no se suspende para evitar falso negativo de bono", e);
@@ -4062,14 +4080,53 @@ async function validarPagoPendienteContraSaldoFinal(p){
   }
 }
 
+
 async function calcularRankingSemanalLiviano(periodo = getPeriodoTrabajoActual(today())){
-  const cacheKey = `ranking_rebuild_${periodo.id}`;
-  const arr = await calcularRankingSemanalBaseSinSuspensiones(periodo);
+  const cacheKey = `ranking_fast_${periodo.id}`;
+  const choferes = await getChoferesRankingActivosRapido();
+  const stats = {};
+  choferes.forEach(c=>{
+    stats[c.id] = {id:c.id,nombre:c.nombre || c.id,viajes:0,derivaciones:0,facturacion:0,porcentaje:0,actividad:0};
+  });
+
+  const derivacionesPromise = getDerivacionesAceptadasPorOrigenRapido(periodo).catch(e=>{
+    console.warn("Ranking: derivaciones reales no disponibles", e);
+    return {};
+  });
+
+  try{
+    const acumSnap = await withTimeout(getDocs(query(
+      collection(db,"acumulados_semanales"),
+      where("periodoId","==",periodo.id)
+    )), 2200, "El ranking tardó cargando acumulados.");
+
+    acumSnap.forEach(d=>{
+      const a = d.data();
+      const choferId = a.chofer || String(d.id).split("_")[0];
+      if(!stats[choferId]) return;
+      stats[choferId].viajes = Number(a.cantidadViajes || 0);
+      stats[choferId].facturacion = Number(a.totalViajes || 0);
+      stats[choferId].derivaciones = Number(a.derivaciones || 0);
+    });
+  }catch(e){
+    console.warn("Ranking por acumulados no disponible; uso caché si existe", e);
+    const cached = cacheGet(cacheKey, 30 * 60 * 1000);
+    if(cached && cached.ranking) return cached;
+  }
+
+  // Corrección rápida: las derivaciones aceptadas/completadas se leen desde la colección derivaciones
+  // y se cruzan con acumulados sin recalcular todos los viajes. Esto evita ranking lento y evita 0 falsos.
+  const derivacionesReales = await derivacionesPromise;
+  Object.keys(derivacionesReales || {}).forEach(choferId=>{
+    if(!stats[choferId]) return;
+    stats[choferId].derivaciones = Math.max(Number(stats[choferId].derivaciones || 0), Number(derivacionesReales[choferId] || 0));
+  });
+
+  const arr = calcularPorcentajeRanking(Object.values(stats));
   const suspensionesBono = await getSuspensionesBono(periodo, arr).catch(e=>{
     console.warn("Ranking: suspensiones no disponibles", e);
     return {};
   });
-
   arr.forEach(x=>{
     const susp = suspensionesBono && suspensionesBono[x.id];
     x.suspendidoBono = !!susp;
@@ -4077,13 +4134,12 @@ async function calcularRankingSemanalLiviano(periodo = getPeriodoTrabajoActual(t
     x.periodoPendienteId = susp ? (susp.periodoId || "") : "";
     x.pagoPendienteId = susp ? (susp.pagoId || "") : "";
   });
-
   const ganadorBono = arr.find(x=>!x.suspendidoBono) || null;
-  const data = {periodo, ranking:arr, ganadorBono, actualizado:Date.now(), modo:"rebuild_v1_viajes_derivaciones"};
+  const data = {periodo, ranking: arr, ganadorBono, actualizado: Date.now(), modo:"acumulados_derivaciones_fast"};
   cacheSet(cacheKey, data);
-  cacheSet(`ranking_fast_${periodo.id}`, data); // compatibilidad con otros módulos que limpian/leen esta clave.
   return data;
 }
+
 
 window.toggleRankingRules = function(btn){
   const box = btn && btn.nextElementSibling;
@@ -4095,84 +4151,74 @@ window.toggleRankingRules = function(btn){
 function renderRankingLiviano(data,targetId){
   const target = $(targetId);
   if(!target) return;
-  const ranking = (data && data.ranking) || [];
-  const periodo = data && data.periodo ? data.periodo : getPeriodoTrabajoActual(today());
-  const ganadorBono = data && data.ganadorBono ? data.ganadorBono : ranking.find(x=>!x.suspendidoBono) || null;
 
-  if(!ranking.length){
-    target.innerHTML = `<p class="note">Todavía no hay ranking semanal con actividad real en este período.<br><small>${periodo.start} al ${periodo.end}</small></p>`;
+  if(!data.ranking.length){
+    target.innerHTML = `<p class="note">Todavía no hay ranking semanal.</p>`;
     return;
   }
+
+  const lider = data.ranking[0];
+  const ganadorBono = data.ganadorBono || data.ranking.find(x=>!x.suspendidoBono) || null;
 
   let html = `
     <div class="leader-card">
       <h3>🏆 Ranking semanal</h3>
-      <b>${ganadorBono ? ganadorBono.nombre : ranking[0].nombre}</b><br>
-      <small>Período: ${periodo.start} al ${periodo.end}</small>
-      <div class="ranking-bonus-box">
-        <b>💰 Bono semanal: ${money(50000)}</b><br>
-        <small>Facturación 50% · Viajes 20% · Derivaciones 20% · Actividad 10%</small>
-      </div>
+      <b>Líder por puntos: ${lider.nombre}</b><br>
+      <small>${lider.porcentaje}% · ${data.periodo.start} al ${data.periodo.end}</small>
+      ${ganadorBono ? `<div class="bonus-winner-box">👑 Ganador provisional del bono: <b>${ganadorBono.nombre}</b><br><small>${money(50000)} · solo choferes elegibles</small></div>` : `<div class="pending-box">No hay chofer elegible para el bono por ahora.</div>`}
       <button class="ranking-rules-toggle" type="button" onclick="toggleRankingRules(this)">📖 Ver reglas</button>
       <div class="ranking-rules-box hidden">
-        <b>🏆 Cómo funciona el ranking reconstruido</b><br>
-        Este ranking se calcula desde cero leyendo viajes reales del período y derivaciones aceptadas/completadas. No usa documentos antiguos de ranking.
+        <b>🏆 Cómo funciona el ranking</b><br>
+        El ranking semanal premia al chofer que más aporta al resultado general de EXPLORA.
         <ul>
-          <li>💰 <b>50% Facturación</b></li>
-          <li>🚕 <b>20% Viajes realizados</b></li>
-          <li>🔄 <b>20% Derivaciones aceptadas/completadas</b></li>
-          <li>🟢 <b>10% Actividad real</b></li>
+          <li>💰 <b>50% Facturación:</b> los viajes de mayor valor siguen siendo la base del ranking.</li>
+          <li>🚕 <b>20% Viajes:</b> suma la cantidad de servicios realizados.</li>
+          <li>🔄 <b>20% Derivaciones aceptadas:</b> si no podés hacer un viaje, derivarlo dentro de EXPLORA suma fuerte para el ranking.</li>
+          <li>🟢 <b>10% Actividad:</b> suma participación real durante la semana.</li>
         </ul>
+        <br><b>💰 Bono semanal:</b> el chofer que finaliza primero en el cierre semanal recibe ${money(50000)}.
+        <br><br><b>🔄 Derivaciones:</b> cuando una derivación es aceptada y completada, el chofer que deriva suma puntos importantes por mantener el viaje dentro de EXPLORA; el chofer que realiza el viaje suma viaje y facturación. Las derivaciones rechazadas o ignoradas no suman.
+        <br><br><b>📎 Comprobantes:</b> si el chofer debe transferir a David y no sube comprobante dentro de las 24 h posteriores al cierre, sigue apareciendo en el ranking pero queda marcado como no elegible para el bono de esa semana.
+        <br><br><b>⚠️ Empates:</b> gana quien tenga mayor facturación. Si persiste el empate, gana quien tenga más viajes.
       </div>
     </div>
   `;
 
-  ranking.forEach((r,i)=>{
+  data.ranking.forEach((r,i)=>{
     html += `
       <div class="ranking-row ${r.suspendidoBono ? 'ranking-suspended' : ''}">
-        <b>${i+1}. ${escapeRankingText(r.nombre)}</b><br>
+        <b>${i+1}. ${r.nombre}</b><br>
         <small>Facturación: ${money(r.facturacion)} · Viajes: ${r.viajes} · Derivaciones: ${r.derivaciones}</small><br>
         <b style="color:var(--gold)">${r.porcentaje}%</b>
-        ${r.suspendidoBono ? `<div class="suspended-badge">🚫 No elegible para bono semanal · ${escapeRankingText(r.motivoSuspension || 'comprobante pendiente')}</div>` : ""}
-        <div class="progress"><span style="width:${Math.min(100, Number(r.porcentaje || 0))}%"></span></div>
+        ${r.suspendidoBono ? `<div class="suspended-badge">🚫 No elegible para bono semanal · ${r.motivoSuspension || 'comprobante pendiente'}</div>` : ""}
+        <div class="progress"><span style="width:${Math.min(100,r.porcentaje)}%"></span></div>
       </div>
     `;
   });
+
   target.innerHTML = html;
 }
+
 
 function escapeRankingText(value){
   return String(value == null ? "" : value)
     .replace(/&/g,"&amp;")
     .replace(/</g,"&lt;")
     .replace(/>/g,"&gt;")
-    .replace(/\"/g,"&quot;")
+    .replace(/"/g,"&quot;")
     .replace(/'/g,"&#039;");
 }
-
 function rankingVisualActualizado(ranking=[]){
-  const top = (ranking || []).slice(0,3);
-  if(!top.length) return "";
-  return `<div class="ranking-podium">${top.map((r,i)=>`<div><b>${i===0?'🥇':i===1?'🥈':'🥉'} ${escapeRankingText(r.nombre)}</b><small>${r.porcentaje}% · ${money(r.facturacion)}</small></div>`).join("")}</div>`;
+  return "";
 }
 
 function renderDriverLeaderBonus(data, lider, yo, yoIndex){
   const target = $("driverLeaderContent");
-  if(!target) return;
-  const ranking = (data && data.ranking) || [];
-  const ganadorBono = (data && data.ganadorBono) || ranking.find(x=>!x.suspendidoBono) || lider || null;
-  const bono = money(50000);
-  const visualRanking = rankingVisualActualizado(ranking);
+  if(!target || !lider) return;
 
-  if(!lider){
-    target.innerHTML = `
-      <div class="ranking-bonus-box">
-        <b>🏆 Ranking semanal</b><br>
-        <div class="bonus-money">💰 Bono semanal: ${bono}</div>
-        <small>Todavía no hay actividad real en esta semana.</small>
-      </div>`;
-    return;
-  }
+  const bono = money(50000);
+  const visualRanking = rankingVisualActualizado(data.ranking || []);
+  const ganadorBono = data.ganadorBono || (data.ranking || []).find(x=>!x.suspendidoBono) || null;
 
   if(yo && yo.suspendidoBono){
     target.innerHTML = `
@@ -4180,9 +4226,11 @@ function renderDriverLeaderBonus(data, lider, yo, yoIndex){
         ${visualRanking}
         <b>🚫 No elegible para bono semanal</b><br>
         <div class="bonus-money">💰 Bono semanal: ${bono}</div>
-        <small>Motivo: ${escapeRankingText(yo.motivoSuspension || 'comprobante pendiente')}.</small>
+        <small>Motivo: ${yo.motivoSuspension || 'comprobante pendiente'}.</small><br>
+        <small>Tus viajes y facturación siguen registrándose normalmente.</small>
         <button class="btn-gold" style="margin-top:10px" onclick="resolverCierrePendienteChofer('${yo.periodoPendienteId || ''}')">Resolver cierre pendiente</button>
-      </div>`;
+      </div>
+    `;
     return;
   }
 
@@ -4192,49 +4240,115 @@ function renderDriverLeaderBonus(data, lider, yo, yoIndex){
         ${visualRanking}
         <b>👑 Vas ganando el bono</b><br>
         <div class="bonus-money">💰 Bono semanal: ${bono}</div>
-        <small>Puesto: ${yoIndex + 1}° · ${yo.porcentaje}%</small>
-      </div>`;
+        <small>Puesto por puntos: ${yoIndex + 1}° · ${yo.porcentaje}%</small>
+      </div>
+    `;
     return;
   }
 
   if(yo){
+    const diferenciaFacturacion = Math.max(0, Number((ganadorBono || lider).facturacion || 0) - Number(yo.facturacion || 0));
     const medalla = yoIndex === 0 ? "🥇" : yoIndex === 1 ? "🥈" : (yoIndex === 2 ? "🥉" : "🏁");
     target.innerHTML = `
       <div class="ranking-bonus-box">
         ${visualRanking}
         <b>${medalla} Vas ${yoIndex + 1}°</b><br>
         <div class="bonus-money">💰 Bono semanal: ${bono}</div>
-        <small>Ganador provisional: ${escapeRankingText(ganadorBono ? ganadorBono.nombre : lider.nombre)}.</small>
-      </div>`;
+        <small>Ganador provisional del bono: ${ganadorBono ? ganadorBono.nombre : 'sin elegible'}.</small><br>
+        <small>${diferenciaFacturacion > 0 ? `Diferencia estimada de facturación: ${money(diferenciaFacturacion)}.` : "Estás muy cerca."}</small>
+      </div>
+    `;
     return;
   }
 
   target.innerHTML = `
     <div class="ranking-bonus-box">
       ${visualRanking}
-      <b>🏆 Líder actual: ${escapeRankingText(ganadorBono ? ganadorBono.nombre : lider.nombre)}</b><br>
+      <b>🏆 Ranking semanal</b><br>
       <div class="bonus-money">💰 Bono semanal: ${bono}</div>
-      <small>Ranking reconstruido desde viajes reales.</small>
-    </div>`;
+      <small>Cargando datos del ranking semanal.</small>
+    </div>
+  `;
 }
+
+
+function exploraMostrarRankingCacheValido135(origen="cache_inicial"){
+  try{
+    if(!currentUserId || !currentProfile || currentProfile.rol === "admin") return false;
+    const periodo = (typeof exploraRankingPeriodoAuto135 === "function")
+      ? exploraRankingPeriodoAuto135()
+      : getPeriodoTrabajoActual(today());
+    if(!periodo || !periodo.id) return false;
+    const cacheKey = `ranking_fast_${periodo.id}`;
+    const cached = cacheGet(cacheKey, 24 * 60 * 60 * 1000);
+    if(!cached || !cached.ranking || !cached.ranking.length) return false;
+    if(!cached.periodo || cached.periodo.id !== periodo.id) return false;
+    const lider = cached.ranking[0] || null;
+    const yoIndex = cached.ranking.findIndex(x=>x.id === currentUserId);
+    const yo = yoIndex >= 0 ? cached.ranking[yoIndex] : null;
+    if(!lider) return false;
+    renderDriverLeaderBonus(cached, lider, yo, yoIndex);
+    return true;
+  }catch(e){
+    console.warn("Ranking cache inicial omitido", origen, e);
+    return false;
+  }
+}
+
 
 async function actualizarGanadorActualChofer(mostrarMsg=false){
   const boxMsg = $("driverGanadorActualMsg");
   try{
-    if(mostrarMsg && boxMsg) msg(boxMsg, "Actualizando ranking actual...", true);
-    const periodoRanking = await getPeriodoRankingVisible();
-    const data = await withTimeout(calcularRankingSemanalLiviano(periodoRanking), 12000, "Ranking actual tardó demasiado.");
-    const lider = data.ranking[0] || null;
-    const yoIndex = data.ranking.findIndex(x=>x.id === currentUserId);
+    if(mostrarMsg && boxMsg) msg(boxMsg, "Actualizando ganador actual...", true);
+    const fechaBase = (currentUserId && typeof fechaOperativaParaChofer === "function")
+      ? fechaOperativaParaChofer(currentUserId, currentProfile || null)
+      : today();
+    const periodoRanking = getPeriodoTrabajoActual(fechaBase);
+    const cacheKey = `ranking_fast_${periodoRanking.id}`;
+    const cached = cacheGet(cacheKey, 2 * 60 * 1000);
+
+    if(cached && cached.ranking && cached.ranking.length){
+      const liderCache = cached.ranking[0];
+      const yoIndexCache = cached.ranking.findIndex(x=>x.id === currentUserId);
+      const yoCache = yoIndexCache >= 0 ? cached.ranking[yoIndexCache] : null;
+      renderDriverLeaderBonus(cached, liderCache, yoCache, yoIndexCache);
+    }
+
+    const data = await withTimeout(calcularRankingSemanalLiviano(periodoRanking), 7000, "Ranking actual tardó demasiado.");
+    cacheSet(cacheKey, data);
+    const lider = data && data.ranking && data.ranking.length ? data.ranking[0] : null;
+    const yoIndex = data && data.ranking ? data.ranking.findIndex(x=>x.id === currentUserId) : -1;
     const yo = yoIndex >= 0 ? data.ranking[yoIndex] : null;
-    renderDriverLeaderBonus(data, lider, yo, yoIndex);
-    if(mostrarMsg && boxMsg){
-      if(lider) msg(boxMsg, `Ranking actualizado. Líder: ${(data.ganadorBono || lider).nombre}.`, true);
-      else msg(boxMsg, "Todavía no hay ranking con actividad real.", true);
+
+    if(lider){
+      renderDriverLeaderBonus(data, lider, yo, yoIndex);
+      if(mostrarMsg && boxMsg){
+        const ganadorBono = data.ganadorBono || data.ranking.find(x=>!x.suspendidoBono) || lider;
+        msg(boxMsg, `Ganador actual actualizado: ${ganadorBono.nombre || ganadorBono.id}.`, true);
+      }
+    }else{
+      const target = $("driverLeaderContent");
+      if(target){
+        target.innerHTML = `
+          <div class="ranking-bonus-box">
+            <div class="ranking-state-visual pending" aria-label="Sin actividad de ranking">
+              <div class="ranking-visual-main">
+                <div class="ranking-visual-icon">🏆</div>
+                <div class="ranking-visual-title">Sin ranking todavía</div>
+                <div class="ranking-visual-sub">Cuando haya actividad se mostrará el podio</div>
+              </div>
+            </div>
+            <b>🏆 Ganador actual</b><br>
+            <div class="bonus-money">💰 Bono semanal: ${money(50000)}</div>
+            <small>Todavía no hay actividad suficiente en esta semana.</small>
+          </div>
+        `;
+      }
+      if(mostrarMsg && boxMsg) msg(boxMsg, "Todavía no hay ranking actual con actividad.", true);
     }
   }catch(e){
-    console.warn("No se pudo actualizar ranking actual chofer", e);
-    if(mostrarMsg && boxMsg) msg(boxMsg, "No se pudo actualizar ranking: " + (e.message || e));
+    console.warn("No se pudo actualizar ganador actual chofer", e);
+    if(mostrarMsg && boxMsg) msg(boxMsg, "No se pudo actualizar ganador actual: " + (e.message || e));
   }
 }
 
@@ -4243,23 +4357,46 @@ window.loadGanadorSemanaPasadaChofer = loadGanadorSemanaPasadaChofer;
 
 window.openRankingPanel = async function(){
   showPanel("rankingPanel");
+
+  // v2.8.135 FIX: al entrar a Ranking ya no se fuerza ningún botón de ganador.
+  // Ranking se carga abajo; último ganador queda solo con listener oficial.
+
   const token = ++rankingLoadToken;
   const box = $("driverRankingList");
-  if(box) box.innerHTML = `<div class="msg ok">Calculando ranking reconstruido...</div>`;
-
   try{
     const periodoRanking = await getPeriodoRankingVisible();
-    const data = await withTimeout(calcularRankingSemanalLiviano(periodoRanking), 14000, "Ranking semanal tardó demasiado.");
     if(token !== rankingLoadToken) return;
-    renderRankingLiviano(data,"driverRankingList");
-    const lider = data.ranking[0] || null;
-    const yoIndex = data.ranking.findIndex(x=>x.id === currentUserId);
-    const yo = yoIndex >= 0 ? data.ranking[yoIndex] : null;
-    renderDriverLeaderBonus(data, lider, yo, yoIndex);
-    scrollToPanelEnd("rankingPanel");
+    const cacheKey = `ranking_fast_${periodoRanking.id}`;
+    const cached = cacheGet(cacheKey, 60 * 60 * 1000);
+
+    if(cached && cached.ranking){
+      renderRankingLiviano(cached,"driverRankingList");
+      const liderCache = cached.ranking[0];
+      const yoIndexCache = cached.ranking.findIndex(x=>x.id === currentUserId);
+      const yoCache = yoIndexCache >= 0 ? cached.ranking[yoIndexCache] : null;
+      if(liderCache) renderDriverLeaderBonus(cached, liderCache, yoCache, yoIndexCache);
+      if(box) box.insertAdjacentHTML("afterbegin", `<div class="msg ok">Ranking abierto rápido. Actualizando en segundo plano...</div>`);
+      scrollToPanelEnd("rankingPanel");
+    }else if(box){
+      box.innerHTML = `<div class="msg ok">Calculando ranking rápido...</div>`;
+    }
+
+    calcularRankingSemanalLiviano(periodoRanking).then(data=>{
+      if(token !== rankingLoadToken) return;
+      cacheSet(cacheKey, data);
+      renderRankingLiviano(data,"driverRankingList");
+      const lider = data.ranking[0];
+      const yoIndex = data.ranking.findIndex(x=>x.id === currentUserId);
+      const yo = yoIndex >= 0 ? data.ranking[yoIndex] : null;
+      if(lider) renderDriverLeaderBonus(data, lider, yo, yoIndex);
+      scrollToPanelEnd("rankingPanel");
+    }).catch(e=>{
+      if(token !== rankingLoadToken) return;
+      if(!cached && box) box.innerHTML = `<div class="msg err">No se pudo calcular ranking: ${e.message}</div>`;
+      else if(box) box.insertAdjacentHTML("afterbegin", `<div class="msg err">No se pudo actualizar ahora. Se mantiene el último ranking guardado.</div>`);
+    });
   }catch(e){
-    if(token !== rankingLoadToken) return;
-    if(box) box.innerHTML = `<div class="msg err">No se pudo calcular ranking: ${escapeRankingText(e.message || e)}</div>`;
+    if(box) box.innerHTML = `<div class="msg err">No se pudo abrir ranking: ${e.message}</div>`;
   }
 }
 
@@ -4781,29 +4918,19 @@ function renderGanadorSemanaPasadaEn(boxId, contentId, data, modo="chofer"){
 }
 
 async function loadGanadorSemanaPasadaChofer(mostrarMsg=false){
+  // v2.8.135 FIX: Chofer solo lee fuente oficial/espejo. Nunca reconstruye ni escribe ganador.
   const msgBox = $("driverLastWeekWinnerMsg");
-  if(mostrarMsg && msgBox) msg(msgBox, "Actualizando último ganador...", true);
   const periodo = periodoSemanaPasadaVisible();
-  renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",{periodo, ganador:null, cargando:true},"admin");
+  renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",{periodo, ganador:null, cargando:true},"chofer");
   let data = null;
-
-  // Radical: Chofer lee primero la MISMA fuente oficial que Admin.
   data = await getUltimoGanadorSemanaUnico({preferirChofer:false, reconstruirSiFalta:false});
-
-  // Si las reglas bloquean esa fuente, recién ahí usa su espejo de perfil.
   if(!data || !data.ganador){
     data = await getUltimoGanadorDesdeChoferActual();
   }
-
-  // Último recurso: reconstruir con el mismo ranking/acumulados y guardar espejo oficial.
-  if(!data || !data.ganador){
-    data = await reconstruirYGuardarUltimoGanadorSemana();
-  }
-
-  renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",data || {periodo, ganador:null},"admin");
+  renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",data || {periodo, ganador:null},"chofer");
   if(mostrarMsg && msgBox){
     if(data && data.ganador) msg(msgBox, `Actualizado: ${data.ganador.nombre || data.ganador.id}.`, true);
-    else msg(msgBox, "No encontré ganador cerrado todavía.");
+    else msg(msgBox, "No hay ganador cerrado publicado todavía.");
   }
   return data;
 }
@@ -4888,10 +5015,7 @@ function iniciarListenerGanadorAnterior(modo="chofer"){
           ganadorAnteriorFallbackAdminHecho = true;
           setTimeout(()=>loadGanadorSemanaPasadaAdmin().catch(e=>console.warn("Fallback ganador anterior admin", e)), 650);
         }
-        if(!esAdmin && !ganadorAnteriorFallbackChoferHecho){
-          ganadorAnteriorFallbackChoferHecho = true;
-          setTimeout(()=>loadGanadorSemanaPasadaChofer(false).catch(e=>console.warn("Fallback ganador anterior chofer", e)), 650);
-        }
+        // Chofer no reconstruye ni fuerza lectura extra: evita parpadeo y semanas futuras.
       }
     }, async (e)=>{
       console.warn("Listener ganador anterior falló", modo, e);
@@ -4901,17 +5025,14 @@ function iniciarListenerGanadorAnterior(modo="chofer"){
           await loadGanadorSemanaPasadaAdmin().catch(err=>console.warn("Fallback ganador anterior admin", err));
         }
       }else{
-        if(!ganadorAnteriorFallbackChoferHecho){
-          ganadorAnteriorFallbackChoferHecho = true;
-          await loadGanadorSemanaPasadaChofer(false).catch(err=>console.warn("Fallback ganador anterior chofer", err));
-        }
+        // Chofer sin fallback de reconstrucción: queda esperando la fuente oficial/espejo.
       }
     });
     asignar(unsub);
   }catch(e){
     console.warn("No se pudo iniciar listener ganador anterior", modo, e);
     if(esAdmin) loadGanadorSemanaPasadaAdmin().catch(()=>null);
-    else loadGanadorSemanaPasadaChofer(false).catch(()=>null);
+    else renderGanadorSemanaPasadaEn(boxId, contentId, {periodo, ganador:null}, modo);
   }
 }
 
@@ -9039,7 +9160,7 @@ window.eliminarChoferesDemoAdmin = async function(){
 // Este bloque deja una sola regla de cierre: un chofer + un período = un documento.
 // También impide pedir cierres anteriores a la fecha de alta del chofer.
 
-const EXPLORA_CIERRE_VERSION = "v2.8.90 · FECHA-EFECTIVA-IPHONE-PRUEBA";
+const EXPLORA_CIERRE_VERSION = "v2.8.135 · PRODUCCION-FECHA-FIREBASE";
 const perfilAltaCacheV287 = {};
 
 function fechaBadgeTextoV287(){
@@ -9809,6 +9930,150 @@ window.showPanel = function(id){
 
 window.EXPLORA_BUILD_CIERRE_COMPROBANTE_OBLIGATORIO = EXPLORA_BUILD_CIERRE_COMPROBANTE_OBLIGATORIO;
 
+
+
+// ===== EXPLORA v2.8.135 · SPLASH 1s + RANKING/GANADOR AUTO LIVIANO =====
+// Cambio quirúrgico: no modifica cierres, comprobantes, servicios, derivaciones ni lógica financiera.
+const EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = "v2.8.135 · SPLASH-1S-RANKING-AUTO-SIN-BOTON-GANADOR";
+const EXPLORA_SPLASH_MAX_MS_135 = 1000;
+const EXPLORA_RANKING_AUTO_INTERVAL_MS_135 = 120000;
+const EXPLORA_GANADOR_AUTO_INTERVAL_MS_135 = 120000;
+let exploraRankingAutoTimer135 = null;
+let exploraGanadorAutoTimer135 = null;
+let exploraRankingAutoRunning135 = false;
+let exploraGanadorAutoRunning135 = false;
+let exploraRankingListener135 = null;
+
+(function activarSplashMaximoUnSegundo135(){
+  try{
+    const style = document.createElement("style");
+    style.textContent = `
+      body.auth-splash-max-135 #authSplash{
+        opacity:0!important;
+        pointer-events:none!important;
+        transition:opacity .16s ease!important;
+      }
+    `;
+    document.head.appendChild(style);
+    setTimeout(()=>{
+      try{ document.body.classList.add("auth-splash-max-135"); }catch(e){}
+    }, EXPLORA_SPLASH_MAX_MS_135);
+  }catch(e){ console.warn("Splash máximo 1s no aplicado", e); }
+})();
+
+function exploraRankingPeriodoAuto135(){
+  try{
+    if(typeof getPeriodoRankingVisible === "function") return getPeriodoRankingVisible();
+  }catch(e){}
+  try{
+    const fechaBase = (currentUserId && typeof fechaOperativaParaChofer === "function")
+      ? fechaOperativaParaChofer(currentUserId, currentProfile || null)
+      : today();
+    return getPeriodoTrabajoActual(fechaBase);
+  }catch(e){
+    return getPeriodoTrabajoActual(today());
+  }
+}
+
+function exploraRenderRankingAuto135(data, origen="auto"){
+  try{
+    if(!data || !data.ranking) return;
+    const cacheKey = data.periodo && data.periodo.id ? `ranking_fast_${data.periodo.id}` : "";
+    if(cacheKey) cacheSet(cacheKey, data);
+
+    const lider = data.ranking[0] || null;
+    const yoIndex = data.ranking.findIndex(x=>x.id === currentUserId);
+    const yo = yoIndex >= 0 ? data.ranking[yoIndex] : null;
+    if(lider) renderDriverLeaderBonus(data, lider, yo, yoIndex);
+
+    const panel = $("rankingPanel");
+    const list = $("driverRankingList");
+    if(panel && list && !panel.classList.contains("hidden")){
+      renderRankingLiviano(data, "driverRankingList");
+    }
+  }catch(e){ console.warn("No se pudo renderizar ranking automático", origen, e); }
+}
+
+async function exploraActualizarRankingAutoLiviano135(origen="auto"){
+  if(exploraRankingAutoRunning135) return;
+  if(!currentUserId || !currentProfile || currentProfile.rol === "admin") return;
+  exploraRankingAutoRunning135 = true;
+  try{
+    const periodo = await Promise.resolve(exploraRankingPeriodoAuto135());
+    if(!periodo || !periodo.id) return;
+    const cacheKey = `ranking_fast_${periodo.id}`;
+    const cached = cacheGet(cacheKey, 60 * 60 * 1000);
+    if(cached && cached.ranking && cached.ranking.length){
+      exploraRenderRankingAuto135(cached, origen + "_cache");
+    }
+    const data = await withTimeout(calcularRankingSemanalLiviano(periodo), 6500, "Ranking automático tardó demasiado.");
+    exploraRenderRankingAuto135(data, origen + "_fresh");
+  }catch(e){
+    console.warn("Ranking automático omitido para no generar delay", origen, e);
+  }finally{
+    exploraRankingAutoRunning135 = false;
+  }
+}
+
+function exploraIniciarListenerRankingAuto135(){
+  try{
+    if(exploraRankingListener135){ exploraRankingListener135(); exploraRankingListener135 = null; }
+    if(!currentUserId || !currentProfile || currentProfile.rol === "admin") return;
+    const periodo = getPeriodoTrabajoActual(today());
+    exploraRankingListener135 = onSnapshot(
+      query(collection(db,"acumulados_semanales"), where("periodoId","==",periodo.id)),
+      ()=>{
+        // Firestore avisa cambios en tiempo real, pero recalculamos con debounce para no trabar celulares lentos.
+        clearTimeout(window.__exploraRankingDebounce135);
+        window.__exploraRankingDebounce135 = setTimeout(()=>exploraActualizarRankingAutoLiviano135("snapshot_acumulados"), 1200);
+      },
+      e=>console.warn("Listener ranking semanal omitido; queda refresco por intervalo", e)
+    );
+  }catch(e){ console.warn("No se pudo iniciar listener ranking semanal", e); }
+}
+
+function exploraActualizarUltimoGanadorAuto135(origen="auto"){
+  // v2.8.135 FIX: último ganador solo inicia/usa un listener oficial. No ejecuta load ni reconstruye.
+  if(!currentUserId || !currentProfile || currentProfile.rol === "admin") return;
+  try{
+    if(unsubscribeGanadorAnteriorChofer) return;
+    if(typeof iniciarListenerGanadorAnterior === "function") iniciarListenerGanadorAnterior("chofer");
+  }catch(e){
+    console.warn("Último ganador automático omitido", origen, e);
+  }
+}
+
+function exploraIniciarRankingYGanadorAuto135(){
+  try{
+    if(!currentUserId || !currentProfile || currentProfile.rol === "admin") return;
+
+    clearInterval(exploraRankingAutoTimer135);
+    clearInterval(exploraGanadorAutoTimer135);
+    exploraGanadorAutoTimer135 = null;
+
+    // Primer ingreso: muestra inmediatamente el último ranking válido de ESTA semana si existe.
+    // Si no hay caché válida, no muestra placeholder viejo: espera el dato real de Firestore.
+    exploraMostrarRankingCacheValido135("primer_ingreso_cache");
+    // Último ganador queda con una sola entrada oficial más arriba: exploraRunIdle(()=>iniciarListenerGanadorAnterior("chofer"), 2350).
+    setTimeout(()=>exploraActualizarRankingAutoLiviano135("primer_ingreso_700ms"), 700);
+    setTimeout(()=>exploraIniciarListenerRankingAuto135(), 1500);
+
+    // Refresco moderado SOLO del ranking semanal. Último ganador no tiene intervalo ni segunda inicialización.
+    exploraRankingAutoTimer135 = setInterval(()=>exploraActualizarRankingAutoLiviano135("intervalo_2min"), EXPLORA_RANKING_AUTO_INTERVAL_MS_135);
+  }catch(e){ console.warn("No se pudo iniciar auto ranking/ganador", e); }
+}
+
+const _loadDriverSplashRankingAuto135 = loadDriver;
+loadDriver = async function(){
+  const r = await _loadDriverSplashRankingAuto135.apply(this, arguments);
+  exploraIniciarRankingYGanadorAuto135();
+  return r;
+};
+
+window.EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = EXPLORA_BUILD_SPLASH_RANKING_AUTO_135;
+window.exploraActualizarRankingAutoLiviano135 = exploraActualizarRankingAutoLiviano135;
+window.exploraActualizarUltimoGanadorAuto135 = exploraActualizarUltimoGanadorAuto135;
+window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135;
 </script>
 
 <script>
