@@ -8954,7 +8954,7 @@ window.resetearAppLanzamientoAdmin = async function(){
     return;
   }
 
-  const aviso = "RESET TOTAL DE LANZAMIENTO\n\nSe BORRA de Firebase:\n- todos los choferes excepto el Admin actual\n- todos los vehículos\n- viajes y gastos\n- cierres, pagos y comprobantes\n- fondos operativos\n- derivaciones\n- acumulados/ranking\n- fechas de prueba y registros de fecha\n\nSe CONSERVA:\n- el usuario Admin actual\n- tarifas/servicios base\n\nLos usuarios Auth de chofer que existían pueden quedar en Authentication, pero sin documento de chofer no podrán entrar a la app.";
+  const aviso = "RESET TOTAL DE LANZAMIENTO\n\nSe BORRA de Firestore:\n- todos los choferes excepto el Admin actual\n- todos los vehículos\n- viajes y gastos\n- cierres, pagos y comprobantes\n- fondos operativos\n- derivaciones\n- acumulados/ranking\n- último ganador y espejos públicos/sistema\n- fechas de prueba y registros de fecha\n\nSe CONSERVA:\n- el usuario Admin actual\n- tarifas/servicios base\n\nImportante: Firebase Authentication no se puede borrar desde esta app. Los usuarios Auth de chofer que existían pueden quedar en Authentication, pero sin documento de chofer no podrán entrar a EXPLORA.";
   if(!confirm(aviso)) return;
 
   const escrito = prompt('Para confirmar escribí exactamente: LANZAR');
@@ -8963,7 +8963,7 @@ window.resetearAppLanzamientoAdmin = async function(){
     return;
   }
 
-  const doble = confirm("Última confirmación: ¿borrar choferes, vehículos y toda actividad, conservando solo Admin?");
+  const doble = confirm("Última confirmación: ¿borrar de Firestore choferes, vehículos, ranking, último ganador y toda actividad, conservando solo Admin y tarifas?");
   if(!doble) return;
 
   const btn = Array.from(document.querySelectorAll('button')).find(b=>String(b.getAttribute('onclick') || '').includes('resetearAppLanzamientoAdmin'));
@@ -8982,7 +8982,9 @@ window.resetearAppLanzamientoAdmin = async function(){
     "kilometrajes",
     "resumenes_mensuales",
     "vehiculos",
-    "sistema_fecha"
+    "sistema_fecha",
+    "publico",
+    "sistema"
   ];
 
   const resultado = {};
@@ -9111,7 +9113,7 @@ window.resetearAppLanzamientoAdmin = async function(){
       ? `<br><br><b>⚠️ Algunos pasos tuvieron error:</b><br>${errores.join("<br>")}<br><small>Revisá reglas/permisos de Firestore si alguna colección no se borró.</small>`
       : "";
 
-    if(box) msg(box,`✅ Reset total finalizado. La app quedó lista para lanzamiento.<br><br>${detalle}${avisoErrores}<br><br><small>Se conservó el Admin actual: <b>${adminId}</b>. Ahora podés crear los choferes desde Alta / reasignación.</small>`,true);
+    if(box) msg(box,`✅ Reset total finalizado. Firestore quedó limpio para lanzamiento.<br><br>${detalle}${avisoErrores}<br><br><small>Se conservó el Admin actual: <b>${adminId}</b> y las tarifas/servicios base. Ahora podés crear los choferes desde Alta / reasignación.</small>`,true);
     setTimeout(()=>loadAdmin().catch(e=>console.warn("No se pudo refrescar Admin tras reset total", e)), 300);
   }catch(e){
     if(box) msg(box,"No se pudo completar el reset total: " + (e.message || e));
