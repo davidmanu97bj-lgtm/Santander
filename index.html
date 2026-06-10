@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.165A
-Build: 2026-06-10-BASE-143-GANADOR-CHOFER-FIX-165A
+Version: 2.8.165B
+Build: 2026-06-10-BASE-143-GANADOR-CHOFER-FIX-165B
 Fecha: 06/06/2026
 Cambios:
 - v2.8.129: en Chofer la campana superior se reemplaza por botón Salir, cierra sesión y vuelve al login.
@@ -89,7 +89,7 @@ Cambios:
 - v2.8.160: vuelve a base estable index(138) donde funcionaban cierre pendiente y último ganador; solo se reemplaza el alert feo de comprobante cargado por menú elegante.
 - v2.8.161: se rehace de forma quirúrgica el motor de Ganador ranking semanal anterior; elimina filtro de fuente rígido, reconstruye desde ranking/cierres/acumulados y mantiene espejos Firebase para Admin y Chofer.
 - v2.8.164: se elimina Último ganador del Admin y se deja Último ganador de Chofer como script independiente; calcula desde viajes reales/acumulados/cierres sin depender de publicación Admin.
-- v2.8.165A: prueba independiente para Último ganador Chofer; corrige lectura de viajes con campos alternativos de fecha, chofer y monto.
+- v2.8.165B: prueba independiente para Último ganador Chofer; acepta cierres cerrados con ganadorId aunque las métricas estén en 0 y completa desde acumulados si existe.
 - v2.8.162: corrección ganador anterior adelantando semanas; busca el último período cerrado con actividad real si la semana visible no tiene datos, corrige closeDate y sincroniza la fuente oficial sin tocar ranking actual, cierres ni comprobantes.
 - v2.8.163: ganador anterior reconstruido desde viajes reales del período cerrado; Admin publica fuente oficial única en configuracion/publico/sistema y espejo en choferes. No depende de acumulados/cache para detectar actividad.
 -->
@@ -5467,103 +5467,93 @@ function resetGanadorSemanaPasadaLocalState(){
 
 
 
-// ===== EXPLORA v2.8.165A · ÚLTIMO GANADOR CHOFER · FIX CAMPOS VIAJES =====
-// Posible error corregido: los viajes existen, pero el script anterior solo leía pocos nombres de campos.
-// Esta variante acepta más campos de fecha, chofer y monto, y además hace un barrido controlado si las consultas por índice no devuelven datos.
-function ganadorChofer165A_valor(v, campos, fallback=""){
-  for(const c of campos){
-    const x = v && v[c];
-    if(x !== undefined && x !== null && String(x) !== "") return x;
-  }
-  return fallback;
+// ===== EXPLORA v2.8.165B · ÚLTIMO GANADOR CHOFER · FIX CIERRES SIN MÉTRICAS =====
+// Posible error corregido: el cierre guarda ganadorId/ganadorNombre, pero las métricas quedan en 0 y el validador lo descartaba.
+function ganadorSemanaPasadaValido(item){
+  if(!item) return false;
+  const id = item.id || item.ganadorId || item.chofer || "";
+  const nombre = item.nombre || item.ganadorNombre || item.ganadorSemana || item.nombreGanador || "";
+  if(!id) return false;
+  if(Number(item.facturacion || item.totalViajes || 0) > 0) return true;
+  if(Number(item.viajes || item.cantidadViajes || 0) > 0) return true;
+  if(Number(item.derivaciones || 0) > 0) return true;
+  if(Number(item.porcentaje || 0) > 0) return true;
+  // Fix 165B: si viene de un cierre semanal cerrado con ganador, se permite mostrarlo aunque falten métricas.
+  return !!nombre;
 }
-function ganadorChofer165A_fechaISO(x){
+async function getUltimoGanadorDesdeCierresSemanales(){
   try{
-    if(!x) return "";
-    if(typeof x === "string") return x.slice(0,10);
-    if(x && typeof x.toDate === "function") return formatDateArgentina(x.toDate());
-    if(x instanceof Date) return formatDateArgentina(x);
-  }catch(e){}
-  return "";
-}
-function periodoIdDesdeFechaViajeGanador(v){
-  const pid = ganadorChofer165A_valor(v,["periodoId","periodoTrabajoId","periodo","semanaId","semana"]);
-  if(pid && periodoDesdeIdGenerico(String(pid))) return String(pid);
-  const f = ganadorChofer165A_fechaISO(ganadorChofer165A_valor(v,["fecha","fechaServicio","fechaReal","fechaViaje","dia","creadoFecha","createdAt","creado","timestamp"]));
-  if(!f) return "";
-  try{
-    const p = getPeriodoTrabajoActual(f);
-    return p && p.id ? p.id : "";
-  }catch(e){ return ""; }
-}
-function sumarViajeRealAGanadorAnterior(stats, v, periodo){
-  if(!v || !periodo || !periodo.id) return;
-  const estado = String(ganadorChofer165A_valor(v,["estado","status"],"")).toLowerCase();
-  if(["cancelado","cancelada","anulado","anulada","borrado","eliminado"].includes(estado)) return;
-
-  const choferId = String(ganadorChofer165A_valor(v,["chofer","choferId","driverId","uidChofer","idChofer","userId","conductorId"]));
-  if(!choferId) return;
-
-  const pid = periodoIdDesdeFechaViajeGanador(v);
-  if(pid && pid !== periodo.id) return;
-  if(!pid){
-    const f = ganadorChofer165A_fechaISO(ganadorChofer165A_valor(v,["fecha","fechaServicio","fechaReal","fechaViaje","dia","creadoFecha","createdAt","creado","timestamp"]));
-    if(f && (f < periodo.start || f > periodo.end)) return;
-    if(!f && typeof perteneceAlPeriodo === "function" && !perteneceAlPeriodo(v, periodo)) return;
-  }
-
-  if(!stats[choferId]){
-    stats[choferId] = {id:choferId,nombre:ganadorChofer165A_valor(v,["choferNombre","nombreChofer","driverName","conductorNombre"],choferId),viajes:0,derivaciones:0,facturacion:0,porcentaje:0,actividad:0};
-  }
-  const monto = Number(ganadorChofer165A_valor(v,["monto","total","precio","tarifa","importe","valor","cobrado","facturacion"],0)) || 0;
-  stats[choferId].facturacion += Math.max(0,monto);
-  stats[choferId].viajes += 1;
-  const nombre = ganadorChofer165A_valor(v,["choferNombre","nombreChofer","driverName","conductorNombre"],"");
-  if(nombre) stats[choferId].nombre = nombre;
-}
-async function calcularGanadorAnteriorDesdeViajesReales(periodo){
-  if(!periodo || !periodo.id) return null;
-  try{
-    let choferes = [];
-    try{ choferes = await getChoferesRankingActivosRapido(); }catch(e){ choferes = []; }
-    const stats = crearStatsGanadorAnteriorDesdeChoferes(choferes);
-    const idsLeidos = new Set();
-    let leyoViajes = false;
-
-    const leerSnap = (snap)=>{
-      snap.forEach(d=>{
-        if(idsLeidos.has(d.id)) return;
-        idsLeidos.add(d.id);
-        const antes = Object.values(stats).reduce((a,x)=>a+Number(x.viajes||0),0);
-        sumarViajeRealAGanadorAnterior(stats, d.data() || {}, periodo);
-        const despues = Object.values(stats).reduce((a,x)=>a+Number(x.viajes||0),0);
-        if(despues > antes) leyoViajes = true;
+    const periodoActivo = periodoActivoGanadorAnterior();
+    const snap = await withTimeout(getDocs(collection(db,"cierres_semanales")), 8500, "Cierres semanales tardaron demasiado.");
+    const candidatos = [];
+    snap.forEach(d=>{
+      const c = d.data() || {};
+      const periodoId = c.periodoId || (c.periodo && c.periodo.id) || String(d.id || "").split("_").slice(-2).join("_");
+      const periodo = (c.periodo && c.periodo.id) ? c.periodo : periodoDesdeIdGenerico(periodoId);
+      if(!periodo || (periodoActivo && periodoActivo.id && String(periodo.id) >= String(periodoActivo.id))) return;
+      const cerrado = c.estadoCierre === "cerrado" || c.estadoCierre === "sin_actividad" || c.aceptadoPorChofer === true || c.confirmado === true || c.cierreConfirmado === true || !!c.fechaConfirmacion || !!c.cierreConfirmadoAt || !!c.ganadorId || !!c.ganadorSemana;
+      if(!cerrado) return;
+      const ganadorId = c.ganadorId || (c.ganador && c.ganador.id) || c.ganadorChofer || c.choferGanador || "";
+      const ganadorNombre = c.ganadorSemana || c.ganadorNombre || c.nombreGanador || (c.ganador && c.ganador.nombre) || ganadorId;
+      if(!ganadorId) return;
+      candidatos.push({
+        periodo,
+        ganador:{
+          id: ganadorId,
+          nombre: ganadorNombre,
+          facturacion: Number((c.ganador && c.ganador.facturacion) || c.ganadorFacturacion || (c.chofer === ganadorId ? c.totalViajes : 0) || 0),
+          viajes: Number((c.ganador && c.ganador.viajes) || c.ganadorViajes || (c.chofer === ganadorId ? c.cantidadViajes : 0) || 0),
+          derivaciones: Number((c.ganador && c.ganador.derivaciones) || c.ganadorDerivaciones || c.derivaciones || 0),
+          porcentaje: Number((c.ganador && c.ganador.porcentaje) || c.ganadorPorcentaje || c.porcentaje || 0)
+        },
+        fuente:"chofer_fix_165B_cierres_sin_metricas",
+        prioridad: Number(c.premioAplicado || c.bono || 0) + (c.esGanador ? 100000 : 0) + (c.chofer === ganadorId ? 50000 : 0) + Number(c.actualizadoMs || 0),
+        actualizadoMs:Number(c.actualizadoMs || Date.now())
       });
-    };
-
-    try{ leerSnap(await withTimeout(getDocs(query(collection(db,"viajes"), where("periodoId","==",periodo.id))), 6500, "Viajes por periodoId tardaron.")); }catch(e){ console.warn("165A periodoId no disponible", e); }
-    for(const campo of ["fecha","fechaServicio","fechaReal","fechaViaje","dia"]){
-      try{ leerSnap(await withTimeout(getDocs(query(collection(db,"viajes"), where(campo,">=",periodo.start), where(campo,"<=",periodo.end))), 3500, "Viajes por fecha tardaron.")); }catch(e){}
-    }
-
-    if(!leyoViajes){
-      try{ leerSnap(await withTimeout(getDocs(collection(db,"viajes")), 9000, "Barrido de viajes tardó.")); }catch(e){ console.warn("165A barrido viajes no disponible", e); }
-    }
-
-    const derivacionesReales = await getDerivacionesAceptadasPorOrigenRapido(periodo).catch(()=>({}));
-    Object.keys(derivacionesReales || {}).forEach(choferId=>{
-      if(!stats[choferId]) stats[choferId] = {id:choferId,nombre:choferId,viajes:0,derivaciones:0,facturacion:0,porcentaje:0,actividad:0};
-      stats[choferId].derivaciones = Math.max(Number(stats[choferId].derivaciones || 0), Number(derivacionesReales[choferId] || 0));
     });
+    candidatos.sort((a,b)=>String(b.periodo.id).localeCompare(String(a.periodo.id)) || Number(b.prioridad||0)-Number(a.prioridad||0));
+    const elegido = candidatos[0] || null;
+    if(!elegido) return null;
 
-    const arr = calcularPorcentajeRanking(Object.values(stats));
-    const ganador = (arr || []).find(x=>ganadorSemanaPasadaValido(x)) || null;
-    if(!ganador || !leyoViajes) return null;
-    return {periodo, ganador, actualizado:Date.now(), actualizadoMs:Date.now(), fuente:"chofer_fix_165A_campos_viajes"};
+    // Completa métricas si el acumulado existe, pero no bloquea mostrar el ganador si no existe.
+    try{
+      const accSnap = await withTimeout(getDoc(doc(db,"acumulados_semanales",`${elegido.ganador.id}_${elegido.periodo.id}`)), 2500, "Acumulado del ganador tardó demasiado.");
+      if(accSnap.exists()){
+        const a = accSnap.data() || {};
+        elegido.ganador.facturacion = Number(a.totalViajes || a.facturacion || elegido.ganador.facturacion || 0);
+        elegido.ganador.viajes = Number(a.cantidadViajes || a.viajes || elegido.ganador.viajes || 0);
+        elegido.ganador.derivaciones = Number(a.derivaciones || elegido.ganador.derivaciones || 0);
+        elegido.ganador.porcentaje = Number(a.porcentaje || elegido.ganador.porcentaje || 0);
+        elegido.ganador.nombre = a.nombre || a.choferNombre || elegido.ganador.nombre;
+      }
+    }catch(e){}
+    return cacheUltimoGanadorSemanaUnico(elegido);
   }catch(e){
-    console.warn("165A no pudo calcular ganador desde viajes reales", e);
+    console.warn("165B no pudo leer ganador desde cierres", e);
     return null;
   }
+}
+async function getUltimoGanadorChoferIndependiente(){
+  const periodoVisible = periodoSemanaPasadaVisible();
+  const periodoActivo = periodoActivoGanadorAnterior();
+  async function validar(candidato){
+    if(candidato && candidato.ganador && ganadorSemanaPasadaValido(candidato.ganador)){
+      return cacheUltimoGanadorSemanaUnico({periodo:candidato.periodo || periodoVisible, ganador:candidato.ganador, fuente:candidato.fuente || "chofer_fix_165B", actualizadoMs:Date.now()}) || candidato;
+    }
+    return null;
+  }
+  // 165B prioriza cierres, porque el problema puede estar en métricas vacías pero cierre ya cerrado.
+  let candidato = await getUltimoGanadorDesdeCierresSemanales().catch(()=>null);
+  candidato = await validar(candidato); if(candidato) return candidato;
+  candidato = await calcularGanadorAnteriorDesdeViajesReales(periodoVisible).catch(()=>null);
+  candidato = await validar(candidato); if(candidato) return candidato;
+  candidato = await getUltimoGanadorHistoricoDesdeViajesReales(periodoActivo).catch(()=>null);
+  candidato = await validar(candidato); if(candidato) return candidato;
+  candidato = await getUltimoGanadorHistoricoRapido(periodoActivo).catch(()=>null);
+  candidato = await validar(candidato); if(candidato) return candidato;
+  candidato = await getGanadorSemanaPasadaDesdeAcumulados(periodoVisible).catch(()=>null);
+  candidato = await validar(candidato); if(candidato) return candidato;
+  return {periodo:periodoVisible, ganador:null, actualizado:Date.now(), fuente:"chofer_fix_165B_sin_ganador"};
 }
 
 
