@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.157
-Build: 2026-06-09-COMPROBANTE-CARGADO-MENU-ELEGANTE-140
+Version: 2.8.156
+Build: 2026-06-09-ELIMINA-MODAL-CIERRE-SEMANAL-PENDIENTE-139
 Fecha: 06/06/2026
 Cambios:
 - v2.8.129: en Chofer la campana superior se reemplaza por botón Salir, cierra sesión y vuelve al login.
@@ -86,7 +86,6 @@ Cambios:
 - v2.8.154: se elimina el disparador automático del cierre semanal obligatorio. Se conserva intacto el cartel “cierre pendiente de comprobante” y sus comprobantes.
 - v2.8.155: se elimina del HTML la pantalla/modal completa “Cierre semanal pendiente”. Se conserva intacto el cartel persistente de comprobante pendiente.
 - v2.8.156: comprobante del cartel persistente de cierre pendiente marca como pagado el documento original del pago para que no reaparezca después de subir la foto.
-- v2.8.157: mejora visual del aviso “Comprobante cargado” reemplazando el alert nativo por un menú elegante, sin tocar la lógica de carga.
 -->
 <html lang="es">
 <head>
@@ -710,109 +709,6 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   background:#0d0d0d;
   border:1px dashed rgba(212,175,55,.45);
   padding:13px;
-}
-
-
-/* v2.8.157 · Menú elegante de comprobante cargado */
-.explora-success-modal{
-  position:fixed;
-  inset:0;
-  z-index:9998;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:22px;
-  background:rgba(0,0,0,.72);
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
-}
-.explora-success-card{
-  width:100%;
-  max-width:430px;
-  border-radius:28px;
-  padding:24px 20px 20px;
-  text-align:center;
-  background:
-    radial-gradient(circle at 50% 0%,rgba(34,197,94,.20),transparent 34%),
-    linear-gradient(180deg,rgba(28,28,28,.98),rgba(8,8,8,.98));
-  border:1px solid rgba(34,197,94,.40);
-  box-shadow:0 24px 70px rgba(0,0,0,.62),0 0 28px rgba(34,197,94,.14);
-}
-.explora-success-icon{
-  width:78px;
-  height:78px;
-  margin:0 auto 14px;
-  border-radius:50%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:linear-gradient(180deg,#31e457,#16a33a);
-  color:#fff;
-  font-size:46px;
-  font-weight:900;
-  border:4px solid rgba(8,8,8,.75);
-  box-shadow:0 0 0 3px rgba(34,197,94,.65),0 0 30px rgba(34,197,94,.55);
-}
-.explora-success-card h2{
-  margin:6px 0 8px;
-  font-size:28px;
-  line-height:1.08;
-  color:#fff;
-}
-.explora-success-card p{
-  margin:0;
-  color:#e5e5e5;
-  font-size:17px;
-  line-height:1.35;
-}
-.explora-success-detail{
-  margin:18px 0 14px;
-  padding:14px;
-  border-radius:18px;
-  background:rgba(34,197,94,.08);
-  border:1px solid rgba(34,197,94,.32);
-  text-align:left;
-}
-.explora-success-detail-title{
-  text-align:center;
-  color:#4ade80;
-  font-size:13px;
-  letter-spacing:.9px;
-  font-weight:900;
-  margin-bottom:8px;
-}
-.explora-success-row{
-  display:flex;
-  justify-content:space-between;
-  gap:12px;
-  padding:9px 0;
-  color:#f4f4f5;
-  font-size:15px;
-  border-top:1px solid rgba(255,255,255,.08);
-}
-.explora-success-row:first-of-type{border-top:0}
-.explora-success-row span:first-child{color:#b7f7c7;font-weight:800}
-.explora-success-row span:last-child{text-align:right;word-break:break-word}
-.explora-success-safe{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  margin:0 0 18px;
-  padding:13px;
-  border-radius:18px;
-  text-align:left;
-  background:rgba(34,197,94,.12);
-  border:1px solid rgba(34,197,94,.32);
-  color:#d1fae5;
-}
-.explora-success-safe b{display:block;color:#86efac;font-size:16px}
-.explora-success-safe small{display:block;color:#e5e7eb;font-size:13px;margin-top:2px}
-.explora-success-safe-icon{font-size:28px;line-height:1}
-.explora-success-btn{
-  background:linear-gradient(180deg,#f7d34d,#d4af37)!important;
-  color:#090909!important;
-  border-radius:16px!important;
-  box-shadow:0 10px 24px rgba(212,175,55,.22);
 }
 
 
@@ -1747,7 +1643,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Viajes y Servicios</div>
-    <div class="explora-version-badge"><b>v2.8.157</b> · COMPROBANTE-CARGADO-MENU-ELEGANTE</div>
+    <div class="explora-version-badge"><b>v2.8.156</b> · COMPROBANTE-PENDIENTE-SIN-DUPLICADO</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1761,7 +1657,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="driverView" class="hidden driver-mobile-b">
     <div class="driver-b-topbar">
       <div class="driver-b-logo">EXPL<span>⌖</span>RA</div>
-      <div class="explora-version-badge"><b>v2.8.157</b> · COMPROBANTE-CARGADO-MENU-ELEGANTE</div>
+      <div class="explora-version-badge"><b>v2.8.156</b> · COMPROBANTE-PENDIENTE-SIN-DUPLICADO</div>
       <button class="driver-b-bell driver-b-logout-top" type="button" onclick="logout()" aria-label="Salir de la app">Salir</button>
     </div>
 
@@ -1978,7 +1874,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.157</b> · COMPROBANTE-CARGADO-MENU-ELEGANTE</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.156</b> · COMPROBANTE-PENDIENTE-SIN-DUPLICADO</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -5707,39 +5603,6 @@ function renderPagosPendientesChofer(items){
   box.innerHTML = html;
 }
 
-
-function cerrarComprobanteCargadoModal(){
-  const modal = document.getElementById("exploraComprobanteCargadoModal");
-  if(modal) modal.remove();
-}
-
-function mostrarComprobanteCargadoModal(nombreArchivo=""){
-  cerrarComprobanteCargadoModal();
-  const fechaHora = new Date().toLocaleString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
-  const nombreSeguro = String(nombreArchivo || "Foto cargada").replace(/[<>&"']/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;","\"":"&quot;","'":"&#39;"}[c]));
-  const modal = document.createElement("div");
-  modal.id = "exploraComprobanteCargadoModal";
-  modal.className = "explora-success-modal";
-  modal.innerHTML = `
-    <div class="explora-success-card" role="dialog" aria-modal="true">
-      <div class="explora-success-icon">✓</div>
-      <h2>¡Comprobante cargado!</h2>
-      <p>El comprobante fue subido correctamente.<br>Admin ya puede verlo.</p>
-      <div class="explora-success-detail">
-        <div class="explora-success-detail-title">DETALLE DEL COMPROBANTE</div>
-        <div class="explora-success-row"><span>🖼️ Foto cargada</span><span>${nombreSeguro}</span></div>
-        <div class="explora-success-row"><span>🕒 Fecha y hora</span><span>${fechaHora}</span></div>
-      </div>
-      <div class="explora-success-safe">
-        <div class="explora-success-safe-icon">🛡️</div>
-        <div><b>Tu comprobante está seguro</b><small>Será revisado por el administrador.</small></div>
-      </div>
-      <button class="explora-success-btn" onclick="cerrarComprobanteCargadoModal()">Entendido</button>
-    </div>`;
-  modal.addEventListener("click", e=>{ if(e.target === modal) cerrarComprobanteCargadoModal(); });
-  document.body.appendChild(modal);
-}
-
 window.subirComprobantePendienteChofer = async function(periodoId, monto, inputId, pagoPendienteId=""){
   const input = $(inputId);
   const file = obtenerComprobanteSeleccionado(inputId);
@@ -5784,7 +5647,7 @@ window.subirComprobantePendienteChofer = async function(periodoId, monto, inputI
     cacheRemove("pagos_pendientes_chofer_" + currentUserId);
     cacheRemove("comprobantes_chofer_" + currentUserId);
     setTimeout(()=>checkPagosPendientesChoferAutomatico().catch(e=>console.warn("Refresco comprobantes chofer diferido", e)), 250);
-    mostrarComprobanteCargadoModal(fileFinal.name || "Foto cargada");
+    alert("Comprobante cargado correctamente. Admin ya puede verlo.");
     if(btn){ btn.disabled = false; btn.textContent = old || "Subir comprobante"; }
   }catch(e){
     alert("No se pudo subir el comprobante: " + e.message);
@@ -6241,7 +6104,7 @@ window.subirComprobantePagoChofer = async function(){
     if(modal) modal.classList.add("hidden");
     if($("cierreSemanalMsg")) $("cierreSemanalMsg").innerHTML = "";
     setTimeout(()=>checkPagosPendientesChoferAutomatico().catch(()=>{}), 250);
-    mostrarComprobanteCargadoModal(file.name || "Foto cargada");
+    alert("Comprobante cargado correctamente. Admin ya puede verlo.");
   }catch(e){
     if($("cierreSemanalMsg")) msg($("cierreSemanalMsg"),"No se pudo subir el comprobante: " + e.message);
     alert("No se pudo subir el comprobante: " + e.message);
@@ -11355,14 +11218,14 @@ window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135
   })();
 
 
-  /* ===== EXPLORA v2.8.157 · COMPROBANTE-CARGADO-MENU-ELEGANTE =====
+  /* ===== EXPLORA v2.8.156 · COMPROBANTE-PENDIENTE-SIN-DUPLICADO =====
      Intervención quirúrgica solicitada:
      - Elimina del DOM la pantalla completa “Cierre semanal pendiente”.
      - Mantiene intacto el cartel persistente “cierre pendiente de comprobante”.
      - No modifica servicios, ranking, derivaciones, Admin ni comprobantes.
   */
   (function(){
-    const BUILD = "v2.8.157-comprobante-cargado-menu-elegante";
+    const BUILD = "v2.8.156-comprobante-pendiente-sin-duplicado";
     function eliminarModalCierreSemanalV2155(){
       try{
         const modal = document.getElementById("cierreSemanalModal");
