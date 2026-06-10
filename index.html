@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -524,10 +524,10 @@
        ========================================================= */
     .dashboard-profile-overlay {
       position: absolute;
-      z-index: 3;
-      left: 57.9881%;
-      top: 0.5593%;
-      width: 36.2128%;
+      z-index: 6;
+      left: 56.8%;
+      top: calc(env(safe-area-inset-top) + 14px);
+      width: 38.2%;
       height: 6.9493%;
       display: flex;
       align-items: center;
@@ -610,6 +610,15 @@
     }
 
     .profile-screen.is-open { display: flex; }
+
+    #profileAvatarInput {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+      z-index: -1;
+    }
 
     .profile-shell {
       width: 100%;
@@ -2115,18 +2124,21 @@
     /* AUTH, SPLASH Y SCROLL · BASE CHOFER FIREBASE */
     body.explora-auth-checking .app-shell,
     body.explora-auth-checking .main-bottom-nav,
+    body.explora-auth-checking .admin-screen,
     body.explora-auth-checking .profile-screen,
     body.explora-auth-checking .new-service-screen,
     body.explora-auth-checking .expense-screen,
     body.explora-auth-checking .receipts-screen,
     body.explora-login-visible .app-shell,
     body.explora-login-visible .main-bottom-nav,
+    body.explora-login-visible .admin-screen,
     body.explora-login-visible .profile-screen,
     body.explora-login-visible .new-service-screen,
     body.explora-login-visible .expense-screen,
     body.explora-login-visible .receipts-screen,
     body.explora-role-blocked .app-shell,
     body.explora-role-blocked .main-bottom-nav,
+    body.explora-role-blocked .admin-screen,
     body.explora-role-blocked .profile-screen,
     body.explora-role-blocked .new-service-screen,
     body.explora-role-blocked .expense-screen,
@@ -2136,8 +2148,19 @@
     }
 
     body.explora-authenticated .app-shell,
-    body.explora-authenticated .main-bottom-nav {
+    body.explora-authenticated .main-bottom-nav,
+    body.explora-admin-authenticated .admin-screen {
       visibility: visible;
+    }
+
+    body.explora-admin-authenticated .app-shell,
+    body.explora-admin-authenticated .main-bottom-nav,
+    body.explora-admin-authenticated .profile-screen,
+    body.explora-admin-authenticated .new-service-screen,
+    body.explora-admin-authenticated .expense-screen,
+    body.explora-admin-authenticated .receipts-screen {
+      visibility: hidden;
+      pointer-events: none;
     }
 
     .explora-splash {
@@ -2287,6 +2310,33 @@
       outline: none;
       padding: 12px 14px;
       font-size: 16px;
+    }
+
+    .explora-password-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .explora-password-wrap input {
+      padding-right: 74px;
+    }
+
+    .explora-password-toggle {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      min-width: 56px;
+      height: 38px;
+      border: 0;
+      border-radius: 12px;
+      background: rgba(245,185,66,.12);
+      color: #f3c45d;
+      font-weight: 850;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .explora-login-field input:focus {
@@ -2728,21 +2778,64 @@
     }
 
     .ranking-previous-metrics {
-      margin-top: 5px;
+      margin-top: 6px;
       display: grid;
-      gap: 2px;
-      color: #c8cdd3;
-      font-size: clamp(8.7px, 2.42vw, 11.5px);
-      line-height: 1.15;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 5px;
+      color: #f3c45d;
+      line-height: 1.05;
     }
 
     .ranking-previous-metrics[hidden] {
       display: none;
     }
 
-    .ranking-previous-metrics b {
-      color: #f3c45d;
-      font-weight: 850;
+    .winner-metric {
+      min-width: 0;
+      display: grid;
+      place-items: center;
+      gap: 2px;
+      padding: 4px 3px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.035);
+      border: 1px solid rgba(255,255,255,.07);
+      text-align: center;
+    }
+
+    .winner-metric svg {
+      width: clamp(12px, 3.3vw, 16px);
+      height: clamp(12px, 3.3vw, 16px);
+      stroke: #f3c45d;
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: .92;
+    }
+
+    .winner-metric b {
+      display: block;
+      max-width: 100%;
+      color: #fff;
+      font-size: clamp(9px, 2.45vw, 12px);
+      font-weight: 900;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .ranking-previous-period {
+      margin-top: 4px;
+      color: #aeb4bb;
+      font-size: clamp(8px, 2.2vw, 10.5px);
+      line-height: 1.05;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .ranking-previous-period[hidden] {
+      display: none;
     }
 
     .dashboard-greeting-mask {
@@ -2814,6 +2907,68 @@
 
     .app-shell {
       padding-bottom: calc(var(--explora-bottom-nav-height, 78px) + env(safe-area-inset-bottom) + 20px);
+    }
+
+
+    .dashboard-top-mask {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: calc(env(safe-area-inset-top) + 138px);
+      z-index: 2;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 12% 0%, rgba(245,185,66,.12), transparent 36%),
+        linear-gradient(180deg, rgba(2,6,9,.98), rgba(4,8,11,.94) 62%, rgba(4,8,11,.18));
+    }
+
+    .dashboard-brand-real {
+      position: absolute;
+      left: 5.2%;
+      top: calc(env(safe-area-inset-top) + 18px);
+      z-index: 6;
+      pointer-events: none;
+      color: #f6cb5c;
+      max-width: 44%;
+      overflow: hidden;
+    }
+
+    .dashboard-brand-word {
+      font-size: clamp(24px, 7.4vw, 40px);
+      letter-spacing: .16em;
+      font-weight: 300;
+      line-height: .95;
+      white-space: nowrap;
+    }
+
+    .dashboard-brand-sub {
+      margin-top: 6px;
+      color: #d7b66a;
+      font-size: clamp(7px, 2vw, 10px);
+      letter-spacing: .25em;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .dashboard-greeting-mask {
+      top: calc(env(safe-area-inset-top) + 76px);
+      height: 74px;
+      left: 3.4%;
+      right: 25%;
+      z-index: 2;
+    }
+
+    .driver-greeting {
+      top: calc(env(safe-area-inset-top) + 83px);
+      left: 5.2%;
+      width: 67%;
+      z-index: 6;
+    }
+
+    .dashboard-profile-overlay {
+      min-height: 58px;
+      max-height: 72px;
     }
 
     .ranking-rules-mini {
@@ -3046,7 +3201,407 @@
       .ranking-pos { width: 38px; height: 38px; }
     }
 
-</style>
+
+    .admin-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 1200;
+      visibility: hidden;
+      pointer-events: none;
+      background: #050607;
+      color: #fff;
+      overflow: hidden;
+    }
+
+    body.explora-admin-authenticated .admin-screen {
+      pointer-events: auto;
+    }
+
+    .admin-shell {
+      min-height: 100dvh;
+      max-height: 100dvh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      padding: calc(env(safe-area-inset-top) + 14px) 16px calc(env(safe-area-inset-bottom) + 24px);
+      background:
+        radial-gradient(circle at 18% 0%, rgba(245,185,66,.12), transparent 32%),
+        linear-gradient(180deg, #07090b 0%, #050607 100%);
+    }
+
+    .admin-header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .admin-logo-word {
+      color: #f6cb5c;
+      font-size: clamp(24px, 7vw, 38px);
+      letter-spacing: .16em;
+      font-weight: 300;
+      line-height: 1;
+    }
+
+    .admin-logo-sub {
+      margin-top: 5px;
+      color: #c8a858;
+      font-size: 9px;
+      letter-spacing: .24em;
+      font-weight: 800;
+    }
+
+    .admin-user {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      padding: 7px 9px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 18px;
+      background: rgba(255,255,255,.045);
+    }
+
+    .admin-user img {
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      object-fit: cover;
+      background: #111;
+      border: 1px solid rgba(245,185,66,.35);
+    }
+
+    .admin-user strong,
+    .admin-user span {
+      display: block;
+      max-width: 112px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .admin-user strong {
+      font-size: 12px;
+    }
+
+    .admin-user span {
+      color: #aeb4bb;
+      font-size: 10px;
+    }
+
+    .admin-logout,
+    .admin-section-head button,
+    .admin-modal-header button {
+      border: 1px solid rgba(245,185,66,.22);
+      color: #f3c45d;
+      background: rgba(245,185,66,.08);
+      border-radius: 14px;
+      min-height: 42px;
+      padding: 0 12px;
+      font-weight: 850;
+    }
+
+    .admin-hero-card,
+    .admin-card,
+    .admin-stats-grid article {
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(20,23,27,.96), rgba(8,10,13,.98));
+      box-shadow: 0 18px 42px rgba(0,0,0,.35);
+    }
+
+    .admin-hero-card {
+      padding: 18px;
+      display: grid;
+      gap: 18px;
+      margin-bottom: 14px;
+    }
+
+    .admin-kicker {
+      color: #f3c45d;
+      font-size: 11px;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      font-weight: 900;
+      margin: 0 0 6px;
+    }
+
+    .admin-hero-card h1 {
+      margin: 0;
+      font-size: clamp(24px, 7vw, 34px);
+      line-height: 1.05;
+    }
+
+    .admin-hero-card p,
+    .admin-card p {
+      color: #aeb4bb;
+      margin: 6px 0 0;
+    }
+
+    .admin-primary-btn {
+      width: 100%;
+      min-height: 52px;
+      border: 0;
+      border-radius: 17px;
+      color: #111;
+      background: linear-gradient(180deg, #f6cb5c, #b77b22);
+      font-weight: 950;
+      letter-spacing: .04em;
+      box-shadow: 0 12px 24px rgba(183,123,34,.24);
+    }
+
+    .admin-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .admin-stats-grid article {
+      padding: 14px;
+    }
+
+    .admin-stats-grid span {
+      color: #aeb4bb;
+      font-size: 12px;
+    }
+
+    .admin-stats-grid strong {
+      display: block;
+      margin-top: 5px;
+      font-size: 26px;
+      color: #f3c45d;
+    }
+
+    .admin-card {
+      padding: 15px;
+    }
+
+    .admin-section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+      margin-bottom: 12px;
+    }
+
+    .admin-section-head h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .admin-drivers-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .admin-driver-row {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.07);
+      background: rgba(255,255,255,.035);
+    }
+
+    .admin-driver-row img {
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      object-fit: cover;
+      background: #151515;
+    }
+
+    .admin-driver-row strong,
+    .admin-driver-row span {
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .admin-driver-row span {
+      color: #aeb4bb;
+      font-size: 12px;
+    }
+
+    .admin-badge {
+      font-size: 11px;
+      border-radius: 999px;
+      padding: 5px 8px;
+      color: #0f1510;
+      background: #87e2a0;
+      font-weight: 900;
+    }
+
+    .admin-badge.off {
+      background: #d66b6b;
+      color: #1b0808;
+    }
+
+    .admin-empty {
+      color: #aeb4bb;
+      border: 1px dashed rgba(255,255,255,.11);
+      border-radius: 18px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .admin-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 2500;
+      display: none;
+      background: rgba(0,0,0,.74);
+      padding: calc(env(safe-area-inset-top) + 12px) 14px calc(env(safe-area-inset-bottom) + 14px);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .admin-modal.is-open {
+      display: block;
+    }
+
+    .admin-modal-panel {
+      max-width: 680px;
+      margin: 0 auto;
+      border-radius: 26px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: #080a0d;
+      box-shadow: 0 20px 80px rgba(0,0,0,.6);
+      overflow: hidden;
+    }
+
+    .admin-modal-header {
+      display: grid;
+      grid-template-columns: 46px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 14px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+
+    .admin-modal-header h2 {
+      margin: 0;
+      font-size: 21px;
+    }
+
+    .admin-modal-header p {
+      margin: 3px 0 0;
+      color: #aeb4bb;
+      font-size: 12px;
+    }
+
+    .admin-create-form {
+      padding: 14px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .admin-create-form fieldset {
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 20px;
+      padding: 12px;
+      display: grid;
+      gap: 11px;
+      margin: 0;
+    }
+
+    .admin-create-form legend {
+      color: #f3c45d;
+      font-weight: 900;
+      padding: 0 6px;
+    }
+
+    .admin-create-form label {
+      display: grid;
+      gap: 6px;
+      color: #d6d9de;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .admin-create-form input,
+    .admin-create-form select,
+    .admin-create-form textarea {
+      width: 100%;
+      min-height: 48px;
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 15px;
+      background: rgba(255,255,255,.045);
+      color: #fff;
+      padding: 11px 12px;
+      outline: none;
+      font-size: 16px;
+    }
+
+    .admin-create-form textarea {
+      min-height: 82px;
+      resize: vertical;
+    }
+
+    .admin-password-row {
+      position: relative;
+    }
+
+    .admin-password-row input {
+      padding-right: 78px;
+    }
+
+    .admin-password-row button {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      min-width: 58px;
+      height: 36px;
+      border: 0;
+      border-radius: 12px;
+      color: #f3c45d;
+      background: rgba(245,185,66,.11);
+      font-weight: 850;
+    }
+
+    .admin-check-row {
+      display: flex !important;
+      grid-template-columns: none;
+      flex-direction: row;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .admin-check-row input {
+      width: 22px;
+      min-height: 22px;
+    }
+
+    .admin-create-msg {
+      min-height: 20px;
+      color: #f3c45d;
+      font-size: 13px;
+      line-height: 1.3;
+    }
+
+    .admin-create-msg.err { color: #ff8f8f; }
+    .admin-create-msg.ok { color: #8ee6a0; }
+
+    .admin-submit[disabled] {
+      opacity: .6;
+      cursor: progress;
+    }
+
+    @media (min-width: 720px) {
+      .admin-hero-card {
+        grid-template-columns: minmax(0, 1fr) 220px;
+        align-items: center;
+      }
+    }
+
+  </style>
 </head>
 
 <body class="explora-auth-checking">
@@ -3067,13 +3622,16 @@
       </div>
 
       <div class="explora-login-field">
-        <label for="exploraLoginEmail">Correo electrónico</label>
-        <input id="exploraLoginEmail" type="email" autocomplete="email" inputmode="email" placeholder="tu correo" required />
+        <label for="exploraLoginUsername">Usuario</label>
+        <input id="exploraLoginUsername" type="text" autocomplete="username" inputmode="text" autocapitalize="none" spellcheck="false" placeholder="marcelo" required />
       </div>
 
       <div class="explora-login-field">
         <label for="exploraLoginPassword">Contraseña</label>
-        <input id="exploraLoginPassword" type="password" autocomplete="current-password" placeholder="••••••••" required />
+        <div class="explora-password-wrap">
+          <input id="exploraLoginPassword" type="password" autocomplete="current-password" placeholder="••••••••" required />
+          <button id="exploraPasswordToggle" class="explora-password-toggle" type="button" aria-label="Mostrar u ocultar contraseña">Ver</button>
+        </div>
       </div>
 
       <button id="exploraLoginSubmit" class="explora-login-submit" type="submit">Ingresar</button>
@@ -3089,6 +3647,129 @@
     </div>
   </div>
 
+
+  <section id="adminScreen" class="admin-screen" aria-label="Panel administrativo" aria-hidden="true">
+    <div class="admin-shell">
+      <header class="admin-header">
+        <div class="admin-brand">
+          <div class="admin-logo-word">EXPLORA</div>
+          <div class="admin-logo-sub">TRAVEL MANAGEMENT</div>
+        </div>
+        <div class="admin-user">
+          <img id="adminAvatar" alt="Avatar administrador" src="" />
+          <div>
+            <strong id="adminName">Administrador</strong>
+            <span>Panel administrativo</span>
+          </div>
+        </div>
+        <button id="adminLogoutBtn" class="admin-logout" type="button">Salir</button>
+      </header>
+
+      <main class="admin-content">
+        <section class="admin-hero-card">
+          <div>
+            <p class="admin-kicker">Administración</p>
+            <h1>Panel administrativo</h1>
+            <p>Gestión segura de choferes y accesos de EXPLORA.</p>
+          </div>
+          <button id="adminOpenCreateDriverBtn" class="admin-primary-btn" type="button">CREAR CHOFER</button>
+        </section>
+
+        <section class="admin-stats-grid">
+          <article>
+            <span>Choferes activos</span>
+            <strong id="adminActiveDriversCount">—</strong>
+          </article>
+          <article>
+            <span>Vehículos disponibles</span>
+            <strong id="adminAvailableVehiclesCount">—</strong>
+          </article>
+        </section>
+
+        <section class="admin-card">
+          <div class="admin-section-head">
+            <div>
+              <h2>Choferes</h2>
+              <p>Listado compacto de usuarios operativos.</p>
+            </div>
+            <button id="adminRefreshBtn" type="button">Actualizar</button>
+          </div>
+          <div id="adminDriversList" class="admin-drivers-list" aria-live="polite">
+            <div class="admin-empty">Cargando choferes…</div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </section>
+
+  <section id="adminCreateDriverModal" class="admin-modal" aria-hidden="true" aria-label="Crear chofer">
+    <div class="admin-modal-panel" role="dialog" aria-modal="true" aria-labelledby="adminCreateDriverTitle">
+      <header class="admin-modal-header">
+        <button id="adminCreateCloseBtn" type="button" aria-label="Cerrar">‹</button>
+        <div>
+          <h2 id="adminCreateDriverTitle">Crear chofer</h2>
+          <p>Alta segura mediante Firebase Authentication.</p>
+        </div>
+      </header>
+
+      <form id="adminCreateDriverForm" class="admin-create-form">
+        <fieldset>
+          <legend>Datos de acceso</legend>
+          <label>Nombre de usuario
+            <input id="newDriverUsername" autocomplete="off" autocapitalize="none" spellcheck="false" required placeholder="ariel" />
+          </label>
+          <label>Correo interno de Firebase Authentication
+            <input id="newDriverEmail" type="email" autocomplete="off" inputmode="email" required placeholder="correo real del chofer" />
+          </label>
+          <label>Contraseña temporal
+            <div class="admin-password-row">
+              <input id="newDriverPassword" type="password" autocomplete="new-password" required minlength="8" placeholder="Mínimo 8 caracteres" />
+              <button id="newDriverPasswordToggle" type="button">Ver</button>
+            </div>
+          </label>
+          <label>Confirmar contraseña
+            <input id="newDriverPasswordConfirm" type="password" autocomplete="new-password" required minlength="8" placeholder="Repetir contraseña" />
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Datos personales</legend>
+          <label>Nombre completo
+            <input id="newDriverName" required placeholder="Nombre y apellido" />
+          </label>
+          <label>Teléfono
+            <input id="newDriverPhone" inputmode="tel" placeholder="+54..." />
+          </label>
+          <label>Avatar opcional
+            <input id="newDriverAvatar" type="file" accept="image/jpeg,image/png" />
+          </label>
+          <label class="admin-check-row">
+            <input id="newDriverActive" type="checkbox" checked />
+            <span>Chofer activo</span>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Datos operativos</legend>
+          <label>Vehículo asignado
+            <select id="newDriverVehicle">
+              <option value="">Sin vehículo asignado</option>
+            </select>
+          </label>
+          <label>Observaciones
+            <textarea id="newDriverNotes" maxlength="180" placeholder="Opcional"></textarea>
+          </label>
+        </fieldset>
+
+        <div id="adminCreateMsg" class="admin-create-msg" aria-live="polite"></div>
+
+        <button id="adminCreateSubmitBtn" class="admin-primary-btn admin-submit" type="submit">
+          Crear chofer
+        </button>
+      </form>
+    </div>
+  </section>
+
   <main class="app-shell" id="app" aria-label="Dashboard EXPLORA en pantalla completa">
     <img
       class="design-image"
@@ -3097,7 +3778,13 @@
       draggable="false"
     />
 
-    <div class="dashboard-profile-overlay" aria-hidden="true">
+        <div class="dashboard-top-mask" aria-hidden="true"></div>
+    <div class="dashboard-brand-real" aria-label="EXPLORA">
+      <div class="dashboard-brand-word">EXPLORA</div>
+      <div class="dashboard-brand-sub">TRAVEL MANAGEMENT</div>
+    </div>
+
+<div class="dashboard-profile-overlay" aria-hidden="true">
       <img id="dashboardProfileAvatar" class="dashboard-profile-avatar" alt="" />
       <div class="dashboard-profile-info">
         <div id="dashboardProfileName" class="dashboard-profile-name">Cargando perfil…</div>
@@ -3146,6 +3833,7 @@
               <div id="rankingPreviousScore" class="ranking-live-score">— pts</div>
               <div id="rankingPreviousMeta" class="ranking-live-meta">No hay una semana cerrada con actividad</div>
               <div id="rankingPreviousMetrics" class="ranking-previous-metrics" hidden></div>
+              <div id="rankingPreviousPeriod" class="ranking-previous-period" hidden></div>
             </div>
           </div>
         </button>
@@ -3153,7 +3841,7 @@
     </section>
 
     <!-- Encabezado -->
-    <button class="hotspot" style="left:57.9881%;top:0.5593%;width:36.2128%;height:6.9493%;"
+    <button class="hotspot" style="left:56.8%;top:calc(env(safe-area-inset-top) + 14px);width:38.2%;height:72px;"
       data-action="abrir-perfil" aria-label="Abrir mi perfil"></button>
 
     <button class="hotspot" style="left:70.7691%;top:10.3318%;width:23.4318%;height:4.6691%;"
@@ -4740,6 +5428,7 @@
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, getDocs, query, where, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
     import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js";
 
     const EXPLORA_FIREBASE_CONFIG = {
 apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
@@ -4754,6 +5443,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     const auth = getAuth(app);
     const db = getFirestore(app);
     const storage = getStorage(app);
+    const functions = getFunctions(app);
 
     await setPersistence(auth, browserLocalPersistence).catch(() => {});
 
@@ -4777,7 +5467,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     };
 
     window.ExploraSession = exploraSession;
-    window.ExploraFirebase = { app, auth, db, storage };
+    window.ExploraFirebase = { app, auth, db, storage, functions };
 
     const $ = (id) => document.getElementById(id);
 
@@ -5449,11 +6139,38 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       renderCurrentRankingPodium(result && result.rows ? result.rows : [], result);
     }
 
+    function compactWinnerDate(value) {
+      if (!value) return "";
+      let date = null;
+      if (typeof value.toDate === "function") date = value.toDate();
+      else if (value instanceof Date) date = value;
+      else if (typeof value === "number") date = new Date(value);
+      else if (typeof value === "string") {
+        const parsed = new Date(value);
+        if (!Number.isNaN(parsed.getTime())) date = parsed;
+      }
+      if (!date || Number.isNaN(date.getTime())) return String(value || "");
+      return new Intl.DateTimeFormat("es-AR", {
+        timeZone: "America/Argentina/Buenos_Aires",
+        day: "numeric",
+        month: "numeric",
+        year: "numeric"
+      }).format(date);
+    }
+
     function formatWinnerPeriod(winnerDoc = {}) {
-      const start = winnerDoc.inicioTexto || winnerDoc.inicio || "";
-      const end = winnerDoc.finTexto || winnerDoc.fin || "";
-      if (start && end) return `${start} al ${end}`;
-      return winnerDoc.periodoId || "—";
+      const startRaw = winnerDoc.inicio || winnerDoc.periodoInicio || winnerDoc.inicioTimestamp || "";
+      const endRaw = winnerDoc.fin || winnerDoc.periodoFin || winnerDoc.finTimestamp || "";
+      const start = winnerDoc.inicioTexto || compactWinnerDate(startRaw);
+      const end = winnerDoc.finTexto || compactWinnerDate(endRaw);
+      if (start && end) return `${start} – ${end}`;
+      return winnerDoc.periodoId || "";
+    }
+
+    function winnerMetricSvg(type) {
+      if (type === "money") return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v10H4z"></path><path d="M8 12h.01M16 12h.01"></path><path d="M12 9v6"></path></svg>`;
+      if (type === "trip") return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17h12l1-5-2-4H7l-2 4 1 5Z"></path><path d="M7 17v2M17 17v2"></path><path d="M8 12h8"></path></svg>`;
+      return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10l-3-3"></path><path d="M17 17H7l3 3"></path><path d="M17 7 7 17"></path></svg>`;
     }
 
     function renderPreviousWinner(winnerDoc) {
@@ -5463,16 +6180,18 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       const text = $("rankingWinnerText");
       const avatar = $("rankingPreviousAvatar");
       const metrics = $("rankingPreviousMetrics");
+      const period = $("rankingPreviousPeriod");
       if (!winnerDoc || !winnerDoc.ganadorId) {
         if (avatar) avatar.innerHTML = "—";
         if (name) name.textContent = "Sin ganador anterior";
-        if (meta) meta.textContent = "No hay una semana cerrada con actividad";
+        if (meta) { meta.hidden = false; meta.textContent = "No hay una semana cerrada con actividad"; }
         if (score) score.textContent = "— pts";
         if (metrics) { metrics.hidden = true; metrics.innerHTML = ""; }
+        if (period) { period.hidden = true; period.textContent = ""; }
         if (text) text.textContent = "Todavía no existe un período cerrado con actividad real.";
         return;
       }
-      const winnerName = winnerDoc.ganadorNombre || winnerDoc.ganadorId;
+      const winnerName = winnerDoc.ganadorNombre || winnerDoc.nombre || winnerDoc.choferNombre || winnerDoc.ganadorId;
       if (avatar) {
         const row = {
           nombre: winnerName,
@@ -5485,17 +6204,25 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         name.title = winnerName;
       }
       if (score) score.textContent = scoreText(winnerDoc.puntajeFinal);
-      if (meta) meta.textContent = winnerName;
+      if (meta) {
+        meta.hidden = true;
+        meta.textContent = "";
+      }
       if (metrics) {
         metrics.hidden = false;
         metrics.innerHTML = `
-          <span>Facturación: <b>${moneyARS(winnerDoc.facturacion)}</b></span>
-          <span>Viajes: <b>${winnerDoc.viajes || 0}</b></span>
-          <span>Derivaciones: <b>${winnerDoc.derivacionesValidas || 0}</b></span>
-          <span>Semana: <b>${formatWinnerPeriod(winnerDoc)}</b></span>
+          <span class="winner-metric" aria-label="Facturación ${moneyARS(winnerDoc.facturacion)}">${winnerMetricSvg("money")}<b>${moneyARS(winnerDoc.facturacion)}</b></span>
+          <span class="winner-metric" aria-label="Viajes ${winnerDoc.viajes || 0}">${winnerMetricSvg("trip")}<b>${winnerDoc.viajes || 0}</b></span>
+          <span class="winner-metric" aria-label="Derivaciones ${winnerDoc.derivacionesValidas || 0}">${winnerMetricSvg("ref")}<b>${winnerDoc.derivacionesValidas || 0}</b></span>
         `;
       }
-      if (text) text.textContent = `${winnerName} ganó el período ${winnerDoc.periodoId} con ${scoreText(winnerDoc.puntajeFinal)}.`;
+      const periodText = formatWinnerPeriod(winnerDoc);
+      if (period) {
+        period.hidden = !periodText;
+        period.textContent = periodText;
+        period.title = periodText;
+      }
+      if (text) text.textContent = `${winnerName} ganó el período ${winnerDoc.periodoId || periodText || ""} con ${scoreText(winnerDoc.puntajeFinal)}.`;
     }
 
     function renderRankingList(result) {
@@ -5655,6 +6382,269 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     $("rankingRefreshBtn")?.addEventListener("click", refreshWeeklyRanking);
 
 
+
+    function isAdminRole(role) {
+      return role === "admin" || role === "administrador" || role === "owner";
+    }
+
+    async function findAuthenticatedProfile(user) {
+      if (!user) throw new Error("No hay usuario autenticado.");
+      const email = String(user.email || "").trim().toLowerCase();
+      const username = normalizedEmailUser(user);
+      const collectionsToCheck = ["choferes", "administradores", "admins", "usuarios"];
+      const ids = Array.from(new Set([user.uid, username, email].filter(Boolean)));
+
+      for (const collectionName of collectionsToCheck) {
+        for (const id of ids) {
+          const ref = doc(db, collectionName, id);
+          const snap = await getDoc(ref).catch(() => null);
+          if (snap && snap.exists()) return { id: snap.id, ref, data: snap.data() || {}, collectionName };
+        }
+      }
+
+      for (const collectionName of collectionsToCheck) {
+        const qUid = await getDocs(query(collection(db, collectionName), where("uid", "==", user.uid))).catch(() => null);
+        if (qUid && !qUid.empty) {
+          const snap = qUid.docs[0];
+          return { id: snap.id, ref: doc(db, collectionName, snap.id), data: snap.data() || {}, collectionName };
+        }
+        if (email) {
+          const qEmail = await getDocs(query(collection(db, collectionName), where("email", "==", email))).catch(() => null);
+          if (qEmail && !qEmail.empty) {
+            const snap = qEmail.docs[0];
+            return { id: snap.id, ref: doc(db, collectionName, snap.id), data: snap.data() || {}, collectionName };
+          }
+        }
+      }
+
+      throw new Error("Tu usuario no tiene perfil creado en EXPLORA.");
+    }
+
+    function showAdminApp() {
+      setBodyMode("explora-admin-authenticated");
+      hideSplashSafely();
+      renderAdminHeader();
+      refreshAdminDashboard();
+    }
+
+    function renderAdminHeader() {
+      const profile = exploraSession.profile || {};
+      const name = getProfileName(profile, exploraSession.authUser);
+      const avatar = getProfileAvatarUrl(profile, exploraSession.authUser) || DEFAULT_AVATAR_SVG;
+      const nameEl = $("adminName");
+      const avatarEl = $("adminAvatar");
+      if (nameEl) nameEl.textContent = name;
+      if (avatarEl) avatarEl.src = avatar;
+    }
+
+    function normalizeAdminUsername(value) {
+      return normalizeUsername(value);
+    }
+
+    function adminMsg(message = "", type = "") {
+      const box = $("adminCreateMsg");
+      if (!box) return;
+      box.textContent = message;
+      box.className = "admin-create-msg" + (type ? ` ${type}` : "");
+    }
+
+    function isDriverActive(data = {}) {
+      return !(data.activo === false || data.active === false || data.habilitado === false || data.estado === "inactivo");
+    }
+
+    function adminVehicleLabel(vehicle = {}) {
+      const model = vehicle.modelo || vehicle.marcaModelo || vehicle.nombre || vehicle.tipo || "Vehículo";
+      const plate = vehicle.patente || vehicle.matricula || vehicle.dominio || vehicle.id || "";
+      return plate ? `${model} · ${plate}` : model;
+    }
+
+    async function loadAdminVehicles() {
+      const snap = await getDocs(collection(db, "vehiculos")).catch(() => null);
+      const vehicles = [];
+      if (snap) {
+        snap.forEach((docSnap) => vehicles.push({ id: docSnap.id, ...docSnap.data() }));
+      }
+      return vehicles;
+    }
+
+    async function loadAdminDrivers() {
+      const snap = await getDocs(collection(db, "choferes")).catch(() => null);
+      const drivers = [];
+      if (snap) {
+        snap.forEach((docSnap) => drivers.push({ id: docSnap.id, ...docSnap.data() }));
+      }
+      return drivers;
+    }
+
+    async function refreshAdminDashboard() {
+      if (!isAdminRole(exploraSession.role)) return;
+      const list = $("adminDriversList");
+      if (list) list.innerHTML = `<div class="admin-empty">Cargando choferes…</div>`;
+      try {
+        const [drivers, vehicles] = await Promise.all([loadAdminDrivers(), loadAdminVehicles()]);
+        const vehicleMap = new Map(vehicles.map(v => [String(v.id), v]));
+        const activeCount = drivers.filter(isDriverActive).length;
+        const availableVehicles = vehicles.filter(v => !v.choferId && !v.conductorId && !v.driverId && !v.asignadoA && !v.uidChofer).length;
+        if ($("adminActiveDriversCount")) $("adminActiveDriversCount").textContent = activeCount;
+        if ($("adminAvailableVehiclesCount")) $("adminAvailableVehiclesCount").textContent = availableVehicles;
+
+        const select = $("newDriverVehicle");
+        if (select) {
+          const current = select.value;
+          select.innerHTML = `<option value="">Sin vehículo asignado</option>`;
+          vehicles.forEach(vehicle => {
+            const occupiedBy = vehicle.choferId || vehicle.conductorId || vehicle.driverId || vehicle.asignadoA || vehicle.uidChofer || "";
+            const option = document.createElement("option");
+            option.value = vehicle.id;
+            option.textContent = adminVehicleLabel(vehicle) + (occupiedBy ? " · ocupado" : " · disponible");
+            option.dataset.occupiedBy = occupiedBy;
+            if (occupiedBy) option.disabled = true;
+            select.appendChild(option);
+          });
+          if (current) select.value = current;
+        }
+
+        if (!list) return;
+        if (!drivers.length) {
+          list.innerHTML = `<div class="admin-empty">No hay choferes cargados.</div>`;
+          return;
+        }
+
+        list.innerHTML = drivers
+          .sort((a,b) => String(getProfileName(a)).localeCompare(String(getProfileName(b)), "es"))
+          .map(driver => {
+            const avatar = getProfileAvatarUrl(driver) || DEFAULT_AVATAR_SVG;
+            const username = driver.usuario || driver.username || driver.usuarioNormalizado || driver.login || driver.id || "sin usuario";
+            const vehicleId = driver.vehiculoId || driver.autoId || driver.vehiculoAsignado || "";
+            const vehicle = vehicleMap.get(String(vehicleId));
+            const vehicleText = vehicle ? adminVehicleLabel(vehicle) : (driver.patente || driver.matricula || "Sin vehículo");
+            const active = isDriverActive(driver);
+            return `
+              <article class="admin-driver-row">
+                <img src="${avatar}" alt="Avatar de ${getProfileName(driver)}">
+                <div>
+                  <strong>${getProfileName(driver)}</strong>
+                  <span>${username} · ${vehicleText}</span>
+                </div>
+                <span class="admin-badge ${active ? "" : "off"}">${active ? "Activo" : "Inactivo"}</span>
+              </article>
+            `;
+          }).join("");
+      } catch (error) {
+        if (list) list.innerHTML = `<div class="admin-empty">No se pudo cargar el panel Admin.</div>`;
+      }
+    }
+
+    function openAdminCreateDriverModal() {
+      const modal = $("adminCreateDriverModal");
+      if (!modal) return;
+      modal.classList.add("is-open");
+      modal.setAttribute("aria-hidden", "false");
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+      adminMsg("");
+      refreshAdminDashboard();
+    }
+
+    function closeAdminCreateDriverModal() {
+      const modal = $("adminCreateDriverModal");
+      if (!modal) return;
+      modal.classList.remove("is-open");
+      modal.setAttribute("aria-hidden", "true");
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+      adminMsg("");
+    }
+
+    async function createSquareBlobFromFile(file, maxSize = 800) {
+      const bitmap = await createImageBitmap(file);
+      const side = Math.min(bitmap.width, bitmap.height);
+      const sx = Math.floor((bitmap.width - side) / 2);
+      const sy = Math.floor((bitmap.height - side) / 2);
+      const canvas = document.createElement("canvas");
+      const size = Math.min(maxSize, side);
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d", { alpha: false });
+      ctx.drawImage(bitmap, sx, sy, side, side, 0, 0, size, size);
+      return await new Promise((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("No se pudo procesar el avatar.")), "image/jpeg", .84));
+    }
+
+    async function submitCreateDriver(event) {
+      event.preventDefault();
+      const btn = $("adminCreateSubmitBtn");
+      if (btn && btn.disabled) return;
+
+      const username = normalizeAdminUsername($("newDriverUsername")?.value || "");
+      const email = String($("newDriverEmail")?.value || "").trim().toLowerCase();
+      const password = String($("newDriverPassword")?.value || "");
+      const confirmPassword = String($("newDriverPasswordConfirm")?.value || "");
+      const name = String($("newDriverName")?.value || "").trim().replace(/\s+/g, " ");
+      const phone = String($("newDriverPhone")?.value || "").trim();
+      const vehicleId = String($("newDriverVehicle")?.value || "").trim();
+      const active = Boolean($("newDriverActive")?.checked);
+      const notes = String($("newDriverNotes")?.value || "").trim();
+      const avatarFile = $("newDriverAvatar")?.files?.[0] || null;
+
+      if (!username || username.length < 3) return adminMsg("Ingresá un usuario válido de al menos 3 caracteres.", "err");
+      if (username === "david") return adminMsg("El usuario david está reservado para administración.", "err");
+      if (!email || !email.includes("@")) return adminMsg("Ingresá un correo interno válido.", "err");
+      if (!password || password.length < 8) return adminMsg("La contraseña temporal debe tener mínimo 8 caracteres.", "err");
+      if (password !== confirmPassword) return adminMsg("Las contraseñas no coinciden.", "err");
+      if (!name) return adminMsg("Ingresá el nombre completo.", "err");
+      if (avatarFile && (!avatarFile.type.startsWith("image/") || avatarFile.size > 5 * 1024 * 1024)) return adminMsg("El avatar debe ser JPG/PNG y pesar máximo 5 MB.", "err");
+
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Creando chofer…";
+        btn.setAttribute("aria-busy", "true");
+      }
+      adminMsg("");
+
+      try {
+        const createDriverAccount = httpsCallable(functions, "createDriverAccount");
+        const result = await createDriverAccount({
+          username,
+          email,
+          password,
+          nombre: name,
+          telefono: phone,
+          activo: active,
+          vehiculoId: vehicleId || null,
+          observaciones: notes || null
+        });
+
+        const payload = result && result.data || {};
+        const uid = payload.uid;
+        const driverId = payload.driverId || uid;
+        if (avatarFile && uid && driverId) {
+          const blob = await createSquareBlobFromFile(avatarFile);
+          const fileRef = storageRef(storage, `avatars/${uid}/profile.jpg`);
+          await uploadBytes(fileRef, blob, { contentType: "image/jpeg", customMetadata: { owner: uid } });
+          const avatarUrl = await getDownloadURL(fileRef);
+          await setDoc(doc(db, "choferes", driverId), { avatarUrl, fotoPerfil: avatarUrl, actualizado: serverTimestamp() }, { merge: true }).catch(() => {});
+        }
+
+        adminMsg("Chofer creado correctamente.", "ok");
+        $("newDriverPassword").value = "";
+        $("newDriverPasswordConfirm").value = "";
+        $("newDriverAvatar").value = "";
+        await refreshAdminDashboard();
+      } catch (error) {
+        const code = error && error.code || "";
+        const message = error && error.message || "";
+        if (code.includes("already-exists") || message.includes("already-exists")) adminMsg("El usuario o correo ya está en uso.", "err");
+        else if (code.includes("permission-denied")) adminMsg("No tenés permisos administrativos para crear choferes.", "err");
+        else adminMsg("No se pudo crear el chofer. Revisá los datos e intentá nuevamente.", "err");
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "Crear chofer";
+          btn.removeAttribute("aria-busy");
+        }
+      }
+    }
+
     async function handleAuthStateChanged(user) {
       authHandledOnce = true;
       if (!user) {
@@ -5665,7 +6655,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
 
       try {
         exploraSession.authUser = user;
-        const profile = await findDriverProfile(user);
+        const profile = await findAuthenticatedProfile(user);
         exploraSession.driverId = profile.id;
         exploraSession.profileRef = profile.ref;
         exploraSession.profile = profile.data || {};
@@ -5677,8 +6667,16 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
           return;
         }
 
-        if (exploraSession.role === "admin" || exploraSession.role === "administrador") {
+        if (isAdminRole(exploraSession.role)) {
+          exploraSession.vehicle = null;
+          exploraSession.vehicleId = "";
           applyDriverDataToUI();
+          saveVisualSession();
+          showAdminApp();
+          return;
+        }
+
+        if (exploraSession.role !== "chofer" && exploraSession.role !== "driver") {
           showRoleBlocked();
           return;
         }
@@ -5703,29 +6701,215 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       if (!authHandledOnce && !auth.currentUser) showLogin("");
     }, MAX_SPLASH_MS);
 
+
+    let loginInProgress = false;
+    const LOGIN_ALIAS_COLLECTION = "login_aliases";
+    const LOGIN_ALIAS_EMAIL_FIELDS = ["authEmail", "email", "correo", "firebaseEmail"];
+    const LOGIN_ALIAS_UID_FIELDS = ["uid", "authUid", "firebaseUid", "userId"];
+
+    function normalizeUsername(value) {
+      const normalized = String(value || "").trim().toLowerCase();
+      if (!normalized || normalized.includes("/") || normalized.includes("\\") || /\s/.test(normalized)) return "";
+      return normalized;
+    }
+
+    function maskAliasDebugValue(value) {
+      const text = String(value || "");
+      if (!text) return "";
+      return text.length <= 2 ? "**" : `${text.slice(0, 1)}***${text.slice(-1)}`;
+    }
+
+    function loginDevDiagnostic(step, data = {}) {
+      const safeData = {};
+      Object.entries(data || {}).forEach(([key, value]) => {
+        if (key.toLowerCase().includes("password") || key.toLowerCase().includes("token")) return;
+        if (key.toLowerCase().includes("email") || key.toLowerCase().includes("correo")) {
+          safeData[key] = Boolean(value);
+          return;
+        }
+        if (key.toLowerCase().includes("uid")) {
+          safeData[key] = value ? "present" : "";
+          return;
+        }
+        safeData[key] = value;
+      });
+      try {
+        console.info("[EXPLORA login]", step, safeData);
+      } catch (_) {}
+    }
+
+    function getAliasEmail(aliasData = {}) {
+      for (const field of LOGIN_ALIAS_EMAIL_FIELDS) {
+        const value = String(aliasData[field] || "").trim().toLowerCase();
+        if (value && value.includes("@")) return value;
+      }
+      return "";
+    }
+
+    function getAliasExpectedUid(aliasData = {}) {
+      for (const field of LOGIN_ALIAS_UID_FIELDS) {
+        const value = String(aliasData[field] || "").trim();
+        if (value) return value;
+      }
+      return "";
+    }
+
+    function getAliasRole(aliasData = {}) {
+      return String(aliasData.rol || aliasData.role || aliasData.tipo || "").trim().toLowerCase();
+    }
+
+    function isAliasInactive(aliasData = {}) {
+      return aliasData.activo === false || aliasData.active === false || aliasData.estado === "inactivo" || aliasData.disabled === true;
+    }
+
+    async function resolveLoginAlias(usernameInput) {
+      const username = normalizeUsername(usernameInput);
+      if (!username) throw new Error("ALIAS_INVALID");
+
+      const aliasRef = doc(db, LOGIN_ALIAS_COLLECTION, username);
+      loginDevDiagnostic("alias:get:start", { alias: maskAliasDebugValue(username) });
+
+      let aliasSnap;
+      try {
+        aliasSnap = await getDoc(aliasRef);
+      } catch (error) {
+        loginDevDiagnostic("alias:get:error", {
+          alias: maskAliasDebugValue(username),
+          code: error && error.code ? error.code : "unknown"
+        });
+        if (error && error.code === "permission-denied") throw new Error("ALIAS_PERMISSION_DENIED");
+        if (!navigator.onLine) throw new Error("NETWORK_ERROR");
+        throw new Error("ALIAS_READ_FAILED");
+      }
+
+      const exists = Boolean(aliasSnap && aliasSnap.exists());
+      loginDevDiagnostic("alias:get:result", { alias: maskAliasDebugValue(username), exists });
+
+      if (!exists) {
+        loginDevDiagnostic("alias:missing", { expectedPath: `${LOGIN_ALIAS_COLLECTION}/${username}` });
+        throw new Error("ALIAS_NOT_FOUND");
+      }
+
+      const data = aliasSnap.data() || {};
+      const email = getAliasEmail(data);
+      const expectedUid = getAliasExpectedUid(data);
+      const role = getAliasRole(data);
+      const active = !isAliasInactive(data);
+
+      loginDevDiagnostic("alias:validate", {
+        alias: maskAliasDebugValue(username),
+        collection: LOGIN_ALIAS_COLLECTION,
+        docIdMatchesUsername: true,
+        hasAuthEmail: Boolean(data.authEmail),
+        hasCompatibleEmail: Boolean(email),
+        hasUid: Boolean(expectedUid),
+        role: role || "not-set",
+        active
+      });
+
+      if (!active) throw new Error("ACCOUNT_DISABLED");
+      if (role && role !== "chofer" && role !== "driver") throw new Error("DRIVER_ONLY");
+      if (!email) throw new Error("ALIAS_EMAIL_MISSING");
+
+      return { username, email, expectedUid };
+    }
+
+    function showLoginErrorForCode(error) {
+      const code = error && error.message ? error.message : "";
+      if (code === "ACCOUNT_DISABLED") return loginMsg("Tu cuenta está desactivada. Contacta al administrador.");
+      if (code === "DRIVER_ONLY") return loginMsg("Esta versión corresponde al módulo Chofer.");
+      if (code === "NETWORK_ERROR" || !navigator.onLine) return loginMsg("No hay conexión. Revisa Internet e inténtalo nuevamente.");
+      if (
+        code === "ALIAS_PERMISSION_DENIED" ||
+        code === "ALIAS_EMAIL_MISSING" ||
+        code === "ALIAS_READ_FAILED"
+      ) {
+        return loginMsg("No se pudo completar el acceso. Contacta al administrador.");
+      }
+      return loginMsg("No se pudo ingresar. Verifica tu usuario y contraseña.");
+    }
+
+    function resetLoginState() {
+      loginInProgress = false;
+      const btn = $("exploraLoginSubmit");
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Ingresar";
+        btn.removeAttribute("aria-busy");
+      }
+      const form = $("exploraLoginForm");
+      if (form) form.style.pointerEvents = "";
+    }
+
+    async function loginWithUsernameAndPassword(username, password) {
+      const alias = await resolveLoginAlias(username);
+      let credential;
+      try {
+        credential = await signInWithEmailAndPassword(auth, alias.email, password);
+      } catch (error) {
+        loginDevDiagnostic("auth:error", { code: error && error.code ? error.code : "unknown" });
+        if (!navigator.onLine) throw new Error("NETWORK_ERROR");
+        throw new Error("AUTH_INVALID_CREDENTIAL");
+      }
+
+      const loggedUid = credential && credential.user && credential.user.uid || "";
+      const uidMatches = !alias.expectedUid || alias.expectedUid === loggedUid;
+      loginDevDiagnostic("auth:uid-check", { hasExpectedUid: Boolean(alias.expectedUid), uidMatches });
+
+      if (!uidMatches) {
+        await signOut(auth).catch(() => {});
+        throw new Error("UID_MISMATCH");
+      }
+
+      try { localStorage.setItem(EXPLORA_SESSION_PREFIX + "last_username", alias.username); } catch (_) {}
+      return credential;
+    }
+
     const loginForm = $("exploraLoginForm");
+    const passwordToggle = $("exploraPasswordToggle");
+    passwordToggle?.addEventListener("click", () => {
+      const input = $("exploraLoginPassword");
+      if (!input) return;
+      const hidden = input.type === "password";
+      input.type = hidden ? "text" : "password";
+      passwordToggle.textContent = hidden ? "Ocultar" : "Ver";
+    });
+
+    try {
+      const lastUser = localStorage.getItem(EXPLORA_SESSION_PREFIX + "last_username");
+      if (lastUser && $("exploraLoginUsername")) $("exploraLoginUsername").value = lastUser;
+    } catch (_) {}
+
     if (loginForm) {
       loginForm.addEventListener("submit", async (event) => {
         event.preventDefault();
-        const email = String($("exploraLoginEmail").value || "").trim();
-        const password = String($("exploraLoginPassword").value || "");
+        if (loginInProgress) return;
+        const username = normalizeUsername($("exploraLoginUsername")?.value || "");
+        const password = String($("exploraLoginPassword")?.value || "");
         const btn = $("exploraLoginSubmit");
-        if (!email || !password) {
-          loginMsg("Ingresá correo y contraseña.");
+
+        if (!username || !password) {
+          loginMsg("Ingresá usuario y contraseña.");
           return;
         }
-        btn.disabled = true;
-        btn.textContent = "Ingresando…";
-        loginMsg("");
-        try {
-          await signInWithEmailAndPassword(auth, email, password);
-        } catch (error) {
-          loginMsg(friendlyAuthError(error));
-        } finally {
-          btn.disabled = false;
-          btn.textContent = "Ingresar";
+
+        loginInProgress = true;
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = "Ingresando…";
+          btn.setAttribute("aria-busy", "true");
         }
-      });
+        loginMsg("");
+        loginForm.style.pointerEvents = "none";
+
+        try {
+          await loginWithUsernameAndPassword(username, password);
+        } catch (error) {
+          showLoginErrorForCode(error);
+        } finally {
+          resetLoginState();
+        }
+      }, { passive: false });
     }
 
     async function logoutExplora() {
@@ -5741,11 +6925,27 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       exploraSession.vehicle = null;
       exploraSession.role = null;
       clearDriverVisuals();
+      closeAdminCreateDriverModal();
       await signOut(auth);
       showLogin("");
     }
 
     $("exploraRoleLogout")?.addEventListener("click", logoutExplora);
+    $("adminLogoutBtn")?.addEventListener("click", logoutExplora);
+    $("adminOpenCreateDriverBtn")?.addEventListener("click", openAdminCreateDriverModal);
+    $("adminCreateCloseBtn")?.addEventListener("click", closeAdminCreateDriverModal);
+    $("adminRefreshBtn")?.addEventListener("click", refreshAdminDashboard);
+    $("adminCreateDriverForm")?.addEventListener("submit", submitCreateDriver);
+    $("newDriverPasswordToggle")?.addEventListener("click", () => {
+      const passwordInput = $("newDriverPassword");
+      const confirmInput = $("newDriverPasswordConfirm");
+      const toggle = $("newDriverPasswordToggle");
+      if (!passwordInput || !toggle) return;
+      const hidden = passwordInput.type === "password";
+      passwordInput.type = hidden ? "text" : "password";
+      if (confirmInput) confirmInput.type = hidden ? "text" : "password";
+      toggle.textContent = hidden ? "Ocultar" : "Ver";
+    });
 
     // Conectar botón Salir existente del dashboard.
     window.ExploraActions = window.ExploraActions || {};
@@ -5762,17 +6962,48 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         btn.textContent = "Guardar cambios";
         btn.removeAttribute("aria-busy");
       }
-      document.body.classList.remove("profile-saving", "modal-open", "no-scroll");
-      document.documentElement.classList.remove("profile-saving", "modal-open", "no-scroll");
+
+      document.body.classList.remove("profile-saving", "modal-open", "no-scroll", "is-loading");
+      document.documentElement.classList.remove("profile-saving", "modal-open", "no-scroll", "is-loading");
+      document.body.removeAttribute("inert");
+      document.documentElement.removeAttribute("inert");
+      document.body.removeAttribute("aria-busy");
+      document.documentElement.removeAttribute("aria-busy");
+      document.body.style.pointerEvents = "";
+      document.documentElement.style.pointerEvents = "";
+
+      document.querySelectorAll(".profile-saving-overlay,.profile-loader,.saving-overlay,.upload-overlay,.profile-backdrop").forEach((el) => {
+        el.classList.remove("is-open", "is-active", "show");
+        el.setAttribute("aria-hidden", "true");
+        el.style.pointerEvents = "none";
+      });
+
+      const input = $("profileAvatarInput");
+      if (input) {
+        input.style.pointerEvents = "none";
+        input.style.position = "";
+        input.style.inset = "";
+        input.style.zIndex = "";
+      }
+
       const profile = $("profileScreen");
-      if (profile && profile.classList.contains("is-open")) {
-        document.documentElement.style.overflow = "hidden";
-        document.body.style.overflow = "hidden";
+      if (profile) {
         profile.style.pointerEvents = "";
+        profile.removeAttribute("inert");
+        if (profile.classList.contains("is-open")) {
+          profile.setAttribute("aria-hidden", "false");
+          document.documentElement.style.overflow = "hidden";
+          document.body.style.overflow = "hidden";
+        } else {
+          profile.setAttribute("aria-hidden", "true");
+          document.documentElement.style.overflow = "";
+          document.body.style.overflow = "";
+        }
       } else {
         document.documentElement.style.overflow = "";
         document.body.style.overflow = "";
       }
+
       if (message) profileMsg(message, type);
     }
     function profileMsg(text, type = "") {
@@ -5838,7 +7069,10 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       if (!name) return profileMsg("El nombre no puede estar vacío.", "err");
       if (!isValidPhone(phone)) return profileMsg("Revisá el teléfono.", "err");
       if (!exploraSession.profileRef || !exploraSession.authUser) return profileMsg("No hay sesión válida.", "err");
+
       const btn = $("profileSaveBtn");
+      let finalMessage = "";
+      let finalType = "";
       profileState.saving = true;
       if (btn) {
         btn.disabled = true;
@@ -5846,35 +7080,44 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         btn.setAttribute("aria-busy", "true");
       }
       document.body.classList.add("profile-saving");
-      let successMessage = "Perfil actualizado correctamente";
+      document.body.setAttribute("aria-busy", "true");
+
       try {
         let avatarUrl = getProfileAvatarUrl(exploraSession.profile || {});
-        if (profileState.selectedFile) {
+        const changedAvatar = Boolean(profileState.selectedFile);
+        if (changedAvatar) {
           const blob = profileState.selectedBlob || await createSquareAvatarBlob(profileState.selectedFile);
           profileState.selectedBlob = blob;
           const path = `avatars/${exploraSession.driverId}/profile.jpg`;
           const fileRef = storageRef(storage, path);
           await uploadBytes(fileRef, blob, { contentType: "image/jpeg", customMetadata: { owner: exploraSession.driverId } });
           avatarUrl = await getDownloadURL(fileRef);
-          successMessage = "Foto de perfil actualizada";
         }
+
         const payload = { nombre: name, telefono: phone, avatarUrl, actualizado: serverTimestamp() };
         await setDoc(exploraSession.profileRef, payload, { merge: true });
         await updateProfile(exploraSession.authUser, { displayName: name, photoURL: avatarUrl || null }).catch(() => {});
+
         exploraSession.profile = { ...exploraSession.profile, ...payload };
-        if (profileState.previewUrl) URL.revokeObjectURL(profileState.previewUrl);
-        profileState.selectedFile = null;
-        profileState.selectedBlob = null;
-        profileState.previewUrl = "";
-        if ($("profileAvatarInput")) $("profileAvatarInput").value = "";
         applyDriverDataToUI();
         saveVisualSession();
-        if (window.ExploraRanking && typeof window.ExploraRanking.refresh === "function") window.ExploraRanking.refresh();
-        resetProfileSavingState(successMessage, "ok");
+        if (window.ExploraRanking && typeof window.ExploraRanking.refresh === "function") {
+          await window.ExploraRanking.refresh().catch(() => {});
+        }
+
+        if (profileState.previewUrl) URL.revokeObjectURL(profileState.previewUrl);
+        profileState.previewUrl = "";
+        profileState.selectedFile = null;
+        profileState.selectedBlob = null;
+        if ($("profileAvatarInput")) $("profileAvatarInput").value = "";
+
+        finalMessage = changedAvatar ? "Foto de perfil actualizada" : "Perfil actualizado correctamente";
+        finalType = "ok";
       } catch(error) {
-        resetProfileSavingState(error.message || "No se pudo guardar el perfil.", "err");
+        finalMessage = error && error.message ? error.message : "No se pudo guardar el perfil.";
+        finalType = "err";
       } finally {
-        resetProfileSavingState();
+        resetProfileSavingState(finalMessage, finalType);
       }
     }
     $("profileBackBtn")?.addEventListener("click", closeProfileScreen);
