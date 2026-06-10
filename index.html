@@ -2,21 +2,21 @@
 <!--
 EXPLORA · BASE NUEVA LIMPIA
 Version: 3.0.1
-Build: 2026-06-10-BASE-NUEVA-CONECTADA-A-FIREBASE-ANTERIOR
+Build: 2026-06-10-FIREBASE-LOGIN-COMPATIBLE
 Objetivo:
 - Reconstrucción desde 0 sin parches acumulados.
 - Módulos incluidos: Firebase, Firestore, Storage, Login persistente, Ranking, Cierre semanal, Comprobantes, Derivaciones, Mi auto, Admin y Chofer.
 - Referencia funcional tomada del index anterior v2.8.160, pero con código nuevo, ordenado y modular.
 
-COLECCIONES FIRESTORE USADAS (compatibles con index anterior):
-usuarios/{uid}: {nombre,email,rol,choferId,activo}
-choferes/{choferId}: {nombre,email,vehiculoId,activo,createdAt}
+COLECCIONES FIRESTORE USADAS:
+Firebase Auth: usuario histórico como usuario@explora.local
+choferes/{usuario}: {nombre,email,rol,vehiculoId,activo,createdAt}
 vehiculos/{vehiculoId}: {nombre,patente,kmActual,serviceCadaKm,serviceUltimoKm,correaCadaKm,correaUltimoKm,cubiertasCadaKm,cubiertasUltimoKm}
-viajes/{id}: {fecha,hora,chofer,vehiculo,periodoId,servicioNombre,tipo,monto,pago,creado}
-gastos/{id}: {fecha,hora,chofer,vehiculo,periodoId,tipo,monto,detalle,creado}
-derivaciones/{id}: {fecha,hora,origen,destino,estado,monto,periodoId,periodoOrigenId,periodoDestinoId,creado}
-cierres_semanales/{choferId_periodoId}: {periodoId,chofer,choferId,totalViajes,totalGastos,choferDebe,davidDebe,estadoCierre,pagoSemanal,actualizado}
-pagos_semanales/{choferId_periodoId} + comprobantes/{id}: respaldo de comprobantes compatible con Storage/DataURL
+servicios/{id}: {choferId,choferNombre,fechaISO,periodoId,tipo,origen,destino,importe,km,metodoPago,createdAt}
+gastos/{id}: {choferId,fechaISO,periodoId,concepto,importe,createdAt}
+derivaciones/{id}: {origenChoferId,destinoChoferId,estado,detalle,importe,periodoId,createdAt,updatedAt}
+cierres_semanales/{periodoId_choferId}: {periodoId,choferId,totales,saldoFinal,quienPaga,montoPagar,estado,comprobanteUrl,createdAt,updatedAt}
+comprobantes/{id}: {tipo,periodoId,choferId,url,dataUrl,estado,createdAt}
 -->
 <html lang="es">
 <head>
@@ -36,11 +36,11 @@ pagos_semanales/{choferId_periodoId} + comprobantes/{id}: respaldo de comprobant
 <body>
 <div id="loginView" class="app">
   <div class="logo">EXPL<span>✦</span>RA</div>
-  <div class="subtitle">Base nueva limpia · v3.0.0</div>
+  <div class="subtitle">Base nueva limpia · v3.0.1</div>
   <div class="card hero">
     <h2>Ingresar</h2>
     <p class="small">Sesión persistente activada: si no tocás “Salir”, el celular recuerda el acceso.</p>
-    <label>Email</label><input id="loginEmail" type="email" autocomplete="email" placeholder="admin@explora.com" />
+    <label>Usuario o email</label><input id="loginEmail" type="text" autocapitalize="none" spellcheck="false" autocomplete="username" placeholder="Ej: david" />
     <label>Contraseña</label><input id="loginPass" type="password" autocomplete="current-password" placeholder="••••••••" />
     <button id="loginBtn" class="btn-gold">Ingresar</button>
     <div id="loginMsg"></div>
@@ -102,45 +102,95 @@ pagos_semanales/{choferId_periodoId} + comprobantes/{id}: respaldo de comprobant
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, query, where, getDocs, serverTimestamp, onSnapshot, orderBy, limit, increment } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, query, where, getDocs, serverTimestamp, onSnapshot, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
 
 const firebaseConfig={apiKey:"AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",authDomain:"explora-control-operativo.firebaseapp.com",projectId:"explora-control-operativo",storageBucket:"explora-control-operativo.firebasestorage.app",messagingSenderId:"708368554540",appId:"1:708368554540:web:05871472b575484bc98f89"};
 const app=initializeApp(firebaseConfig);const auth=getAuth(app);const db=getFirestore(app);const storage=getStorage(app);setPersistence(auth,browserLocalPersistence).catch(e=>console.warn("No se pudo activar sesión persistente",e));
-const $=id=>document.getElementById(id);
-const money=n=>"$"+Number(n||0).toLocaleString("es-AR");
-const num=v=>Number(String(v||"0").replace(/\./g,"").replace(/,/g,"."))||0;
-function localDateStr(d=new Date()){const x=new Date(d);const y=x.getFullYear();const m=String(x.getMonth()+1).padStart(2,"0");const day=String(x.getDate()).padStart(2,"0");return `${y}-${m}-${day}`}
-function addDaysStr(dateStr,days){const d=new Date(`${dateStr}T12:00:00`);d.setDate(d.getDate()+days);return localDateStr(d)}
-function timeNow(){return new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})}
-const todayISO=()=>localDateStr(new Date());
-let CURRENT={user:null,profile:null,driver:null,drivers:[],vehicles:[],unsubs:[]};
-function msg(id,text,type="ok"){const el=$(id);if(!el)return;el.innerHTML=text?`<div class="msg ${type}">${text}</div>`:""}
-function showOnly(view){["loginView","adminView","choferView"].forEach(id=>$(id).classList.add("hidden"));$(view).classList.remove("hidden")}
-function initials(n){return String(n||"?").trim().slice(0,1).toUpperCase()}
-function closeUnsubs(){CURRENT.unsubs.forEach(u=>{try{u()}catch(e){}});CURRENT.unsubs=[]}
-function getPeriod(d=new Date()){
-  const dateStr=typeof d==="string"?d:localDateStr(d);
-  const date=new Date(`${dateStr}T12:00:00`);
-  const day=date.getDay();
-  let start;
-  if(day===6){start=dateStr}else{start=addDaysStr(dateStr,-(day+1))}
-  const end=addDaysStr(start,6);
-  const closeDate=addDaysStr(end,1);
-  return {id:`${start}_${end}`,start,end,closeDate,label:`${new Date(start+'T12:00:00').toLocaleDateString("es-AR")} al ${new Date(end+'T12:00:00').toLocaleDateString("es-AR")}`,motor:"sabado_0001"};
-}
-function inPeriod(field,start,end){return [where(field,">=",start),where(field,"<=",end)]}
-function driverName(id){return (CURRENT.drivers.find(d=>d.id===id)||{}).nombre||id||"Chofer"}
-function vehicleIdForDriver(driver){return driver?.vehiculoId||driver?.vehiculo||""}
-function normalizeTrip(x){return {choferId:x.chofer||x.choferId||"",monto:num(x.monto||x.importe),km:num(x.km||x.kilometros),periodoId:x.periodoId||"",fecha:x.fecha||String(x.fechaISO||"").slice(0,10),pago:x.pago||x.metodoPago||"efectivo"}}
-function normalizeExpense(x){return {choferId:x.chofer||x.choferId||"",monto:num(x.monto||x.importe),periodoId:x.periodoId||"",fecha:x.fecha||String(x.fechaISO||"").slice(0,10)}}
-async function actualizarAcumuladosViajeCompat(viaje){try{const monto=num(viaje.monto);if(!viaje.chofer||!monto)return;const pago=String(viaje.pago||"efectivo").replace(/[^a-zA-Z0-9_]/g,"_");await setDoc(doc(db,"acumulados_semanales",`${viaje.chofer}_${viaje.periodoId}`),{chofer:viaje.chofer,vehiculo:viaje.vehiculo||"",periodoId:viaje.periodoId,periodoInicio:viaje.periodoInicio||"",periodoFin:viaje.periodoFin||"",totalViajes:increment(monto),cantidadViajes:increment(1),[pago]:increment(monto),actualizado:serverTimestamp()},{merge:true})}catch(e){console.warn("No se pudo actualizar acumulado semanal de viaje",e)}}
-async function actualizarAcumuladosGastoCompat(gasto){try{const monto=num(gasto.monto);if(!gasto.chofer||!monto)return;await setDoc(doc(db,"acumulados_semanales",`${gasto.chofer}_${gasto.periodoId}`),{chofer:gasto.chofer,vehiculo:gasto.vehiculo||"",periodoId:gasto.periodoId,periodoInicio:gasto.periodoInicio||"",periodoFin:gasto.periodoFin||"",totalGastos:increment(monto),totalGastosPagadosChofer:increment(monto),cantidadGastos:increment(1),actualizado:serverTimestamp()},{merge:true})}catch(e){console.warn("No se pudo actualizar acumulado semanal de gasto",e)}}
+const $=id=>document.getElementById(id);const money=n=>"$"+Number(n||0).toLocaleString("es-AR");const num=v=>Number(String(v||"0").replace(/\./g,"").replace(/,/g,"."))||0;const todayISO=()=>new Date().toISOString();let CURRENT={user:null,profile:null,driver:null,drivers:[],vehicles:[],unsubs:[]};
+function msg(id,text,type="ok"){const el=$(id);if(!el)return;el.innerHTML=text?`<div class="msg ${type}">${text}</div>`:""}function showOnly(view){["loginView","adminView","choferView"].forEach(id=>$(id).classList.add("hidden"));$(view).classList.remove("hidden")}function initials(n){return String(n||"?").trim().slice(0,1).toUpperCase()}function closeUnsubs(){CURRENT.unsubs.forEach(u=>{try{u()}catch(e){}});CURRENT.unsubs=[]}
+function getPeriod(d=new Date()){const x=new Date(d);x.setHours(0,1,0,0);const day=x.getDay();const diff=(day+1)%7;const start=new Date(x);start.setDate(x.getDate()-diff);start.setHours(0,1,0,0);const end=new Date(start);end.setDate(start.getDate()+7);end.setHours(0,0,59,999);const id=start.toISOString().slice(0,10);return{id,start,end,label:`${start.toLocaleDateString("es-AR")} al ${end.toLocaleDateString("es-AR")}`}}
+function inPeriod(field,start,end){return [where(field,">=",start.toISOString()),where(field,"<=",end.toISOString())]}
 async function loadBase(){const [ds,vs]=await Promise.all([getDocs(collection(db,"choferes")),getDocs(collection(db,"vehiculos"))]);CURRENT.drivers=ds.docs.map(d=>({id:d.id,...d.data()})).filter(x=>x.activo!==false);CURRENT.vehicles=vs.docs.map(d=>({id:d.id,...d.data()}));renderDriverOptions();renderVehicleOptions()}
 function renderDriverOptions(){const html=CURRENT.drivers.map(d=>`<option value="${d.id}">${d.nombre||d.email}</option>`).join("");["deriveTo"].forEach(id=>{if($(id))$(id).innerHTML=html})}function renderVehicleOptions(){const html=`<option value="">Sin vehículo</option>`+CURRENT.vehicles.map(v=>`<option value="${v.id}">${v.nombre||"Auto"} · ${v.patente||"sin patente"}</option>`).join("");if($("newDriverVehicle"))$("newDriverVehicle").innerHTML=html}
-async function readProfile(user){let snap=await getDoc(doc(db,"usuarios",user.uid));if(!snap.exists()){const isAdmin=user.email && user.email.toLowerCase().includes("david");await setDoc(doc(db,"usuarios",user.uid),{email:user.email,nombre:isAdmin?"David":"Usuario",rol:isAdmin?"admin":"chofer",activo:true,createdAt:serverTimestamp()},{merge:true});snap=await getDoc(doc(db,"usuarios",user.uid))}return{uid:user.uid,...snap.data()}}
-$("loginBtn").onclick=async()=>{msg("loginMsg","");$("loginBtn").disabled=true;try{await signInWithEmailAndPassword(auth,$("loginEmail").value.trim(),$("loginPass").value)}catch(e){msg("loginMsg","No se pudo ingresar: "+e.message,"err")}finally{$("loginBtn").disabled=false}};["adminLogout","driverLogout"].forEach(id=>$(id).onclick=()=>signOut(auth));
-onAuthStateChanged(auth,async user=>{closeUnsubs();if(!user){showOnly("loginView");return}try{CURRENT.user=user;CURRENT.profile=await readProfile(user);await loadBase();if(CURRENT.profile.rol==="admin"){showOnly("adminView");startAdmin()}else{await startDriver();showOnly("choferView")}}catch(e){console.error(e);showOnly("loginView");msg("loginMsg","Error cargando perfil. Revisá Firestore/usuario: "+e.message,"err")}});
+function normalizarAccesoFirebase(valor){
+  const raw=String(valor||"").trim().toLowerCase();
+  if(!raw)return{usuario:"",email:""};
+  if(raw.includes("@"))return{usuario:raw.split("@")[0],email:raw};
+  const usuario=raw.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9._-]/g,"");
+  return{usuario,email:usuario?`${usuario}@explora.local`:""};
+}
+function mensajeErrorLoginFirebase(error){
+  const code=String(error?.code||"");
+  if(code==="auth/invalid-credential"||code==="auth/wrong-password"||code==="auth/user-not-found")return"Usuario o contraseña incorrectos.";
+  if(code==="auth/invalid-email")return"El usuario o email ingresado no es válido.";
+  if(code==="auth/too-many-requests")return"Demasiados intentos. Esperá unos minutos y volvé a intentar.";
+  if(code==="auth/network-request-failed")return"No se pudo conectar con Firebase. Revisá internet y volvé a intentar.";
+  if(code==="auth/operation-not-allowed")return"El acceso con usuario y contraseña no está habilitado en Firebase Authentication.";
+  return"No se pudo ingresar. Revisá usuario, contraseña y conexión.";
+}
+async function readProfile(user){
+  const email=String(user?.email||"").trim().toLowerCase();
+  const username=email.split("@")[0].trim().toLowerCase();
+  if(!username)throw new Error("Firebase no devolvió un usuario válido.");
+
+  let snap=await getDoc(doc(db,"choferes",username));
+  if(snap.exists()){
+    const data=snap.data()||{};
+    return{uid:user.uid,id:snap.id,choferId:snap.id,email,...data};
+  }
+
+  const todos=await getDocs(collection(db,"choferes"));
+  let encontrado=null;
+  todos.forEach(d=>{
+    if(encontrado)return;
+    const data=d.data()||{};
+    const id=String(d.id||"").trim().toLowerCase();
+    const nombre=String(data.nombre||"").trim().toLowerCase();
+    const emailPerfil=String(data.email||"").trim().toLowerCase();
+    if(id===username||nombre===username||emailPerfil===email){
+      encontrado={uid:user.uid,id:d.id,choferId:d.id,email,...data};
+    }
+  });
+  if(!encontrado)throw new Error(`El usuario ${username} existe en Firebase Auth, pero no tiene perfil en choferes.`);
+  return encontrado;
+}
+$("loginBtn").onclick=async()=>{
+  msg("loginMsg","");
+  const acceso=normalizarAccesoFirebase($("loginEmail").value);
+  const pass=String($("loginPass").value||"");
+  if(!acceso.email||!pass){msg("loginMsg","Ingresá usuario y contraseña.","err");return}
+  $("loginBtn").disabled=true;
+  try{
+    await signInWithEmailAndPassword(auth,acceso.email,pass);
+  }catch(e){
+    console.error("Firebase Auth",e);
+    msg("loginMsg",mensajeErrorLoginFirebase(e),"err");
+  }finally{$("loginBtn").disabled=false}
+};
+["adminLogout","driverLogout"].forEach(id=>$(id).onclick=()=>signOut(auth));
+onAuthStateChanged(auth,async user=>{
+  closeUnsubs();
+  if(!user){CURRENT.user=null;CURRENT.profile=null;CURRENT.driver=null;showOnly("loginView");return}
+  try{
+    CURRENT.user=user;
+    CURRENT.profile=await readProfile(user);
+    await loadBase();
+    if(String(CURRENT.profile.rol||"").toLowerCase()==="admin"){
+      showOnly("adminView");
+      await startAdmin();
+    }else{
+      await startDriver();
+      showOnly("choferView");
+    }
+  }catch(e){
+    console.error("Perfil Firebase/Firestore",e);
+    await signOut(auth).catch(()=>{});
+    CURRENT.user=null;CURRENT.profile=null;CURRENT.driver=null;
+    showOnly("loginView");
+    msg("loginMsg",e.message||"No se pudo cargar el perfil de Firestore.","err");
+  }
+});
 
 function setAdminSection(id){document.querySelectorAll(".admin-section").forEach(s=>s.classList.add("hidden"));$(id).classList.remove("hidden");document.querySelectorAll("[data-admin]").forEach(b=>b.classList.toggle("active",b.dataset.admin===id));if(id==="adminComprobantes")loadAdminProofs()}document.querySelectorAll("[data-admin]").forEach(b=>b.onclick=()=>setAdminSection(b.dataset.admin));
 function setDriverSection(id){document.querySelectorAll(".driver-section").forEach(s=>s.classList.add("hidden"));$(id).classList.remove("hidden");document.querySelectorAll("[data-driver]").forEach(b=>b.classList.toggle("active",b.dataset.driver===id));if(id==="driverDerivar")loadReceivedDerivations();if(id==="driverAuto")renderMyCar()}document.querySelectorAll("[data-driver]").forEach(b=>b.onclick=()=>setDriverSection(b.dataset.driver));
@@ -149,48 +199,30 @@ async function startDriver(){let did=CURRENT.profile.choferId;let driver=null;if
 
 $("createVehicleBtn").onclick=async()=>{try{const id=($('carPlate').value||$('carName').value||crypto.randomUUID()).trim().replace(/\s+/g,"_").toUpperCase();await setDoc(doc(db,"vehiculos",id),{nombre:$('carName').value.trim(),patente:$('carPlate').value.trim().toUpperCase(),kmActual:num($('carKm').value),serviceCadaKm:num($('serviceCada').value)||10000,serviceUltimoKm:num($('serviceUltimo').value),correaCadaKm:num($('correaCada').value)||60000,correaUltimoKm:num($('correaUltimo').value),cubiertasCadaKm:num($('cubiertasCada').value)||45000,cubiertasUltimoKm:num($('cubiertasUltimo').value),updatedAt:serverTimestamp()},{merge:true});msg('vehicleMsg','Vehículo guardado.');await loadBase();renderVehicles()}catch(e){msg('vehicleMsg',e.message,'err')}};
 async function renderVehicles(){const box=$('vehiclesList');if(!box)return;box.innerHTML=CURRENT.vehicles.map(v=>vehicleCard(v)).join('')||'<div class="small">Sin vehículos.</div>'}function vehicleCard(v){const km=num(v.kmActual);const rows=[['Service',v.serviceUltimoKm,v.serviceCadaKm],['Correa',v.correaUltimoKm,v.correaCadaKm],['Cubiertas',v.cubiertasUltimoKm,v.cubiertasCadaKm]].map(([n,u,c])=>{const falt=(num(u)+num(c))-km;const cls=falt<=0?'pill-red':falt<1000?'pill-gold':'pill-green';return`<div class="small">${n}: último ${num(u).toLocaleString('es-AR')} · faltan <span class="pill ${cls}">${falt.toLocaleString('es-AR')} km</span></div>`}).join('');return`<div class="list-item"><div class="list-head"><div><b>${v.nombre||'Auto'}</b><div class="small">${v.patente||'Sin patente'} · ${km.toLocaleString('es-AR')} km</div></div><span class="pill pill-gold">Mi auto</span></div>${rows}</div>`}
-$("createDriverBtn").onclick=async()=>{try{const email=$('newDriverEmail').value.trim().toLowerCase();if(!email)throw new Error('Falta email');const id=email.replace(/[^a-z0-9]/g,'_');await setDoc(doc(db,'choferes',id),{nombre:$('newDriverName').value.trim()||email,email,vehiculoId:$('newDriverVehicle').value||'',vehiculo:$('newDriverVehicle').value||'',activo:true,updatedAt:serverTimestamp(),createdAt:serverTimestamp()},{merge:true});msg('driverMsg','Chofer guardado. Creá o vinculá este email en Firebase Auth y en usuarios/{uid} con rol chofer + choferId: '+id);await loadBase();renderDrivers()}catch(e){msg('driverMsg',e.message,'err')}};
+$("createDriverBtn").onclick=async()=>{try{const email=$('newDriverEmail').value.trim().toLowerCase();if(!email)throw new Error('Falta email');const id=email.replace(/[^a-z0-9]/g,'_');await setDoc(doc(db,'choferes',id),{nombre:$('newDriverName').value.trim()||email,email,vehiculoId:$('newDriverVehicle').value||'',activo:true,updatedAt:serverTimestamp(),createdAt:serverTimestamp()},{merge:true});msg('driverMsg','Chofer guardado. Creá o vinculá este email en Firebase Auth y en usuarios/{uid} con rol chofer + choferId: '+id);await loadBase();renderDrivers()}catch(e){msg('driverMsg',e.message,'err')}};
 async function renderDrivers(){const box=$('driversList');if(!box)return;box.innerHTML=CURRENT.drivers.map(d=>`<div class="list-item"><div class="list-head"><div style="display:flex;gap:10px"><div class="avatar">${initials(d.nombre)}</div><div><b>${d.nombre||'Chofer'}</b><div class="small">${d.email||''}</div><div class="small">Vehículo: ${vehicleName(d.vehiculoId)}</div></div></div><span class="pill ${d.activo===false?'pill-red':'pill-green'}">${d.activo===false?'Inactivo':'Activo'}</span></div></div>`).join('')||'<div class="small">Sin choferes.</div>'}function vehicleName(id){const v=CURRENT.vehicles.find(x=>x.id===id);return v?(v.nombre||v.patente):'Sin asignar'}
-async function totalsForDriver(driverId,period=getPeriod()){
-  const [vs,gs,ds1,ds2]=await Promise.all([
-    getDocs(query(collection(db,'viajes'),where('chofer','==',driverId),...inPeriod('fecha',period.start,period.end))),
-    getDocs(query(collection(db,'gastos'),where('chofer','==',driverId),...inPeriod('fecha',period.start,period.end))),
-    getDocs(query(collection(db,'derivaciones'),where('origen','==',driverId))),
-    getDocs(query(collection(db,'derivaciones'),where('destino','==',driverId)))
-  ]);
-  let fact=0,viajes=0,km=0,gastos=0;
-  vs.docs.forEach(d=>{const x=normalizeTrip(d.data());if(x.periodoId&&x.periodoId!==period.id)return;fact+=x.monto;viajes++;km+=x.km});
-  gs.docs.forEach(d=>{const x=normalizeExpense(d.data());if(x.periodoId&&x.periodoId!==period.id)return;gastos+=x.monto});
-  let derivadas=0,recibidas=0;const ok=e=>['aceptado','aceptada','completado','completada'].includes(String(e||'').toLowerCase());
-  ds1.docs.forEach(d=>{const x=d.data();if(ok(x.estado)&&(x.periodoOrigenId===period.id||x.periodoId===period.id))derivadas++});
-  ds2.docs.forEach(d=>{const x=d.data();if(ok(x.estado)&&(x.periodoDestinoId===period.id||x.periodoId===period.id))recibidas++});
-  return{fact,viajes,km,gastos,derivadas,recibidas}
-}
+async function totalsForDriver(driverId,period=getPeriod()){const [ss,gs,ds1,ds2]=await Promise.all([getDocs(query(collection(db,'servicios'),where('choferId','==',driverId),...inPeriod('fechaISO',period.start,period.end))),getDocs(query(collection(db,'gastos'),where('choferId','==',driverId),...inPeriod('fechaISO',period.start,period.end))),getDocs(query(collection(db,'derivaciones'),where('origenChoferId','==',driverId),where('estado','in',['aceptada','completada']))),getDocs(query(collection(db,'derivaciones'),where('destinoChoferId','==',driverId),where('estado','in',['aceptada','completada'])))]);let fact=0,viajes=0,km=0,gastos=0;ss.docs.forEach(d=>{const x=d.data();fact+=num(x.importe);viajes++;km+=num(x.km)});gs.docs.forEach(d=>gastos+=num(d.data().importe));let derivadas=0,recibidas=0;ds1.docs.forEach(d=>{const x=d.data();if(x.periodoId===period.id)derivadas++});ds2.docs.forEach(d=>{const x=d.data();if(x.periodoId===period.id)recibidas++});return{fact,viajes,km,gastos,derivadas,recibidas}}
 async function computeRanking(){const period=getPeriod();const rows=[];for(const d of CURRENT.drivers){const t=await totalsForDriver(d.id,period);rows.push({driver:d,totals:t})}const max={fact:Math.max(1,...rows.map(r=>r.totals.fact)),viajes:Math.max(1,...rows.map(r=>r.totals.viajes)),derivadas:Math.max(1,...rows.map(r=>r.totals.derivadas)),actividad:Math.max(1,...rows.map(r=>r.totals.viajes+r.totals.derivadas+r.totals.recibidas))};rows.forEach(r=>{r.score=Math.round(((r.totals.fact/max.fact)*50+(r.totals.viajes/max.viajes)*20+(r.totals.derivadas/max.derivadas)*20+(((r.totals.viajes+r.totals.derivadas+r.totals.recibidas)/max.actividad)*10))*100)/100});rows.sort((a,b)=>b.score-a.score);return{period,rows}}
 async function renderRanking(target){const box=$(target);if(!box)return;const {period,rows}=await computeRanking();box.innerHTML=`<div class="small">Semana: ${period.label}<br>Fórmula: 50% facturación · 20% viajes · 20% derivaciones · 10% actividad.</div>`+rows.map((r,i)=>`<div class="list-item ${i===0?'success-card':''}"><div class="list-head"><div><b>${i+1}. ${r.driver.nombre||'Chofer'}</b><div class="small">${money(r.totals.fact)} · ${r.totals.viajes} viajes · ${r.totals.derivadas} deriv.</div></div><span class="pill pill-gold">${r.score}</span></div><div class="progress"><i style="width:${Math.min(100,r.score)}%"></i></div>${i===0?'<div class="msg ok">Líder actual del bono semanal.</div>':''}</div>`).join('')}
-async function saveLastWinnerIfNeeded(){
-  const {period,rows}=await computeRanking();const winner=rows[0];if(!winner)return;
-  const data={periodoId:period.id,periodoInicio:period.start,periodoFin:period.end,ganador:{id:winner.driver.id,nombre:winner.driver.nombre||winner.driver.email,facturacion:winner.totals.fact,viajes:winner.totals.viajes,derivaciones:winner.totals.derivadas,porcentaje:winner.score},nombre:winner.driver.nombre||winner.driver.email,choferId:winner.driver.id,score:winner.score,facturacion:winner.totals.fact,actualizado:serverTimestamp(),updatedAt:serverTimestamp(),source:"base_nueva_v3_0_1"};
-  await Promise.all([setDoc(doc(db,'configuracion','ultimo_ganador_semana'),data,{merge:true}),setDoc(doc(db,'publico','ultimo_ganador_semana'),data,{merge:true})]);
-}
-async function loadLastWinner(target){const box=$(target);if(!box)return;let s=await getDoc(doc(db,'publico','ultimo_ganador_semana'));if(!s.exists())s=await getDoc(doc(db,'configuracion','ultimo_ganador_semana'));if(!s.exists()){box.innerHTML='Sin ganador guardado todavía.';return}const w=s.data();const g=w.ganador||w;box.innerHTML=`🏆 <b>${g.nombre||w.nombre||'Sin nombre'}</b><br><span class="small">Periodo ${w.periodoId||''} · ${money(g.facturacion||w.facturacion)} · score ${Math.round(g.porcentaje||w.score||0)}</span>`}
-async function renderAdminDashboard(){const p=getPeriod();let total=0,serv=0;const ss=await getDocs(query(collection(db,'viajes'),...inPeriod('fecha',p.start,p.end)));ss.docs.forEach(d=>{serv++;total+=num(d.data().monto||d.data().importe)});const cs=await getDocs(query(collection(db,'cierres_semanales'),where('periodoId','==',p.id)));let pend=0;cs.docs.forEach(d=>{if((d.data().estado||'')!=='pagado'&&(d.data().estado||'')!=='cerrado')pend++});$('mChoferes').textContent=CURRENT.drivers.length;$('mServicios').textContent=serv;$('mFacturacion').textContent=money(total);$('mPendientes').textContent=pend}
-async function buildClosure(driver,period=getPeriod()){const t=await totalsForDriver(driver.id,period);const neto=t.fact-t.gastos;const mitad=neto/2;let quien='nadie',monto=0;if(mitad>0){quien='chofer';monto=Math.round(mitad)}else if(mitad<0){quien='David';monto=Math.abs(Math.round(mitad))}const estado=monto>0?'pendiente':'cerrado';const cierre={periodoId:period.id,periodoLabel:period.label,chofer:driver.id,choferId:driver.id,choferNombre:driver.nombre||driver.email,periodoInicio:period.start,periodoFin:period.end,totalViajes:t.fact,cantidadViajes:t.viajes,totalGastos:t.gastos,kilometros:t.km,totales:t,saldoFinal:Math.round(mitad),choferDebe:quien==='chofer'?monto:0,davidDebe:quien==='David'?monto:0,quienPaga:quien,montoPagar:monto,estado,estadoCierre:estado==='cerrado'?'cerrado':'pendiente',comprobanteRequerido:monto>0,updatedAt:serverTimestamp(),actualizado:serverTimestamp(),createdAt:serverTimestamp()};await setDoc(doc(db,'cierres_semanales',`${driver.id}_${period.id}`),cierre,{merge:true});return cierre}
+async function saveLastWinnerIfNeeded(){const {period,rows}=await computeRanking();const winner=rows[0];if(!winner)return;await setDoc(doc(db,'config','ultimo_ganador_semana'),{periodoId:period.id,nombre:winner.driver.nombre||winner.driver.email,choferId:winner.driver.id,score:winner.score,facturacion:winner.totals.fact,updatedAt:serverTimestamp()},{merge:true})}
+async function loadLastWinner(target){const box=$(target);if(!box)return;const s=await getDoc(doc(db,'config','ultimo_ganador_semana'));if(!s.exists()){box.innerHTML='Sin ganador guardado todavía.';return}const w=s.data();box.innerHTML=`🏆 <b>${w.nombre||'Sin nombre'}</b><br><span class="small">Periodo ${w.periodoId||''} · ${money(w.facturacion)} · score ${w.score||0}</span>`}
+async function renderAdminDashboard(){const p=getPeriod();let total=0,serv=0;const ss=await getDocs(query(collection(db,'servicios'),...inPeriod('fechaISO',p.start,p.end)));ss.docs.forEach(d=>{serv++;total+=num(d.data().importe)});const cs=await getDocs(query(collection(db,'cierres_semanales'),where('periodoId','==',p.id)));let pend=0;cs.docs.forEach(d=>{if((d.data().estado||'')!=='pagado'&&(d.data().estado||'')!=='cerrado')pend++});$('mChoferes').textContent=CURRENT.drivers.length;$('mServicios').textContent=serv;$('mFacturacion').textContent=money(total);$('mPendientes').textContent=pend}
+async function buildClosure(driver,period=getPeriod()){const t=await totalsForDriver(driver.id,period);const neto=t.fact-t.gastos;const mitad=neto/2;let quien='nadie',monto=0;if(mitad>0){quien='chofer';monto=Math.round(mitad)}else if(mitad<0){quien='David';monto=Math.abs(Math.round(mitad))}const estado=monto>0?'pendiente':'cerrado';const cierre={periodoId:period.id,periodoLabel:period.label,choferId:driver.id,choferNombre:driver.nombre||driver.email,totales:t,saldoFinal:Math.round(mitad),quienPaga:quien,montoPagar:monto,estado,updatedAt:serverTimestamp(),createdAt:serverTimestamp()};await setDoc(doc(db,'cierres_semanales',`${period.id}_${driver.id}`),cierre,{merge:true});return cierre}
 async function generateClosures(){const p=getPeriod();const out=[];for(const d of CURRENT.drivers)out.push(await buildClosure(d,p));await saveLastWinnerIfNeeded();return out}
 $('adminGenerateClosures').onclick=async()=>{msg('adminClosureMsg','Calculando...','warn');try{await generateClosures();msg('adminClosureMsg','Cierres recalculados.');await renderAdminClosures();await renderAdminDashboard();await loadLastWinner('adminUltimoGanador')}catch(e){msg('adminClosureMsg',e.message,'err')}};
 async function renderAdminClosures(){const box=$('adminClosuresList');if(!box)return;const p=getPeriod();const snap=await getDocs(query(collection(db,'cierres_semanales'),where('periodoId','==',p.id)));const docs=snap.docs.map(d=>({id:d.id,...d.data()}));box.innerHTML=docs.map(c=>closureCard(c,true)).join('')||'<div class="card"><div class="small">Sin cierres generados todavía.</div></div>'}
 function closureCard(c,admin=false){const cls=c.estado==='pagado'||c.estado==='cerrado'?'success-card':c.montoPagar>0?'danger-card':'';return`<div class="card ${cls}"><div class="list-head"><div><h3>${c.choferNombre||'Chofer'}</h3><div class="small">${c.periodoLabel||c.periodoId}</div></div><span class="pill ${c.estado==='pagado'||c.estado==='cerrado'?'pill-green':'pill-red'}">${c.estado||'pendiente'}</span></div><div class="grid"><div class="metric"><span>Facturación</span><b>${money(c.totales?.fact)}</b></div><div class="metric"><span>Gastos</span><b>${money(c.totales?.gastos)}</b></div><div class="metric"><span>Viajes</span><b>${c.totales?.viajes||0}</b></div><div class="metric"><span>Km</span><b>${Number(c.totales?.km||0).toLocaleString('es-AR')}</b></div></div><div class="msg ${c.montoPagar>0?'warn':'ok'}"><b>${c.quienPaga==='nadie'?'Sin pago pendiente':(c.quienPaga+' debe pagar '+money(c.montoPagar))}</b></div>${c.comprobanteUrl||c.comprobanteDataUrl?`<button class="btn-dark" onclick="window.openPhoto('${c.comprobanteUrl||c.comprobanteDataUrl}')">Ver comprobante</button>`:''}${admin&&c.estado!=='pagado'?`<button class="btn-green" onclick="window.markClosurePaid('${c.periodoId}','${c.choferId}')">Marcar pagado</button>`:''}</div>`}
-window.markClosurePaid=async(periodoId,choferId)=>{await updateDoc(doc(db,'cierres_semanales',`${choferId}_${periodoId}`),{estado:'pagado',paidAt:serverTimestamp(),updatedAt:serverTimestamp()});await renderAdminClosures();await renderAdminDashboard()};
+window.markClosurePaid=async(periodoId,choferId)=>{await updateDoc(doc(db,'cierres_semanales',`${periodoId}_${choferId}`),{estado:'pagado',paidAt:serverTimestamp(),updatedAt:serverTimestamp()});await renderAdminClosures();await renderAdminDashboard()};
 async function renderDriverDashboard(){const t=await totalsForDriver(CURRENT.driver.id,getPeriod());$('dViajes').textContent=t.viajes;$('dFacturacion').textContent=money(t.fact)}
-$('saveServiceBtn').onclick=async()=>{try{const p=getPeriod();const km=num($('serviceKm').value);const viaje={fecha:todayISO(),hora:timeNow(),chofer:CURRENT.driver.id,choferNombre:CURRENT.driver.nombre,vehiculo:vehicleIdForDriver(CURRENT.driver),periodoId:p.id,periodoInicio:p.start,periodoFin:p.end,servicioId:$('serviceType').value,servicioNombre:$('serviceType').options[$('serviceType').selectedIndex]?.text||$('serviceType').value,tipo:$('serviceType').value,origen:$('serviceOrigin').value.trim(),destino:$('serviceDestination').value.trim(),monto:num($('serviceAmount').value),km,pago:$('servicePay').value,creado:serverTimestamp(),createdAt:serverTimestamp()};await addDoc(collection(db,'viajes'),viaje);await actualizarAcumuladosViajeCompat(viaje);if(vehicleIdForDriver(CURRENT.driver)&&km>0){const vid=vehicleIdForDriver(CURRENT.driver);const v=CURRENT.vehicles.find(x=>x.id===vid);await setDoc(doc(db,'vehiculos',vid),{kmActual:num(v?.kmActual)+km,updatedAt:serverTimestamp(),actualizado:serverTimestamp()},{merge:true})}msg('serviceMsg','Servicio guardado.');['serviceAmount','serviceKm','serviceOrigin','serviceDestination'].forEach(id=>$(id).value='');await loadBase();await renderDriverDashboard();await renderRanking('driverRanking')}catch(e){msg('serviceMsg',e.message,'err')}};
-$('sendDerivationBtn').onclick=async()=>{try{const to=$('deriveTo').value;if(!to)throw new Error('Elegí chofer destino');const p=getPeriod();const destino=CURRENT.drivers.find(d=>d.id===to)||{};await addDoc(collection(db,'derivaciones'),{fecha:todayISO(),hora:timeNow(),origen:CURRENT.driver.id,origenNombre:CURRENT.driver.nombre,destino:to,destinoNombre:destino.nombre||'',vehiculoOrigen:vehicleIdForDriver(CURRENT.driver),vehiculoDestino:vehicleIdForDriver(destino),estado:'pendiente',detalle:$('deriveDetail').value.trim(),monto:num($('deriveAmount').value),periodoId:p.id,periodoOrigenId:p.id,periodoDestinoId:p.id,pago:'pendiente_receptor',pagoLoDefine:'receptor',facturacionUnica:true,creado:serverTimestamp(),createdAt:serverTimestamp(),updatedAt:serverTimestamp()});msg('deriveMsg','Derivación enviada.');$('deriveDetail').value='';$('deriveAmount').value=''}catch(e){msg('deriveMsg',e.message,'err')}};
-async function loadReceivedDerivations(){const box=$('receivedDerivations');if(!box||!CURRENT.driver)return;const snap=await getDocs(query(collection(db,'derivaciones'),where('destino','==',CURRENT.driver.id),where('estado','==','pendiente')));box.innerHTML=snap.docs.map(d=>{const x={id:d.id,...d.data()};return`<div class="list-item"><b>${x.origenNombre||x.origen||'Chofer'}</b><div class="small">${x.detalle||x.servicioNombre||''}<br>${money(x.monto)}</div><div class="row"><button class="btn-green" onclick="window.derivationStatus('${x.id}','aceptado')">Aceptar</button><button class="btn-red" onclick="window.derivationStatus('${x.id}','rechazado')">Rechazar</button></div></div>`}).join('')||'<div class="small">Sin derivaciones pendientes.</div>'}
-window.derivationStatus=async(id,estado)=>{const refD=doc(db,'derivaciones',id);const s=await getDoc(refD);if(!s.exists())return;const x=s.data();if(estado==='aceptado'){const p=getPeriod();const viaje={fecha:todayISO(),hora:timeNow(),chofer:CURRENT.driver.id,choferNombre:CURRENT.driver.nombre,vehiculo:x.vehiculoDestino||vehicleIdForDriver(CURRENT.driver),periodoId:p.id,periodoInicio:p.start,periodoFin:p.end,servicioId:x.servicioId||'derivacion',servicioNombre:x.servicioNombre||x.detalle||'Servicio derivado',tipo:x.tipo||'Derivado',monto:num(x.monto),pago:x.pagoConfirmadoPorReceptor||'efectivo',derivadoPor:x.origen||'',derivacion:true,derivacionId:id,creado:serverTimestamp(),createdAt:serverTimestamp()};await setDoc(doc(db,'viajes',`derivacion_${id}`),viaje,{merge:true});await actualizarAcumuladosViajeCompat(viaje);await updateDoc(refD,{estado:'aceptado',viajeId:`derivacion_${id}`,facturadoA:CURRENT.driver.id,periodoDestinoId:p.id,pagoConfirmadoPorReceptor:viaje.pago,updatedAt:serverTimestamp()})}else{await updateDoc(refD,{estado:'rechazado',updatedAt:serverTimestamp()})}await loadReceivedDerivations();await renderRanking('driverRanking')};
+$('saveServiceBtn').onclick=async()=>{try{const p=getPeriod();const km=num($('serviceKm').value);await addDoc(collection(db,'servicios'),{choferId:CURRENT.driver.id,choferNombre:CURRENT.driver.nombre,fechaISO:todayISO(),periodoId:p.id,tipo:$('serviceType').value,origen:$('serviceOrigin').value.trim(),destino:$('serviceDestination').value.trim(),importe:num($('serviceAmount').value),km,metodoPago:$('servicePay').value,createdAt:serverTimestamp()});if(CURRENT.driver.vehiculoId&&km>0){const v=CURRENT.vehicles.find(x=>x.id===CURRENT.driver.vehiculoId);await setDoc(doc(db,'vehiculos',CURRENT.driver.vehiculoId),{kmActual:num(v?.kmActual)+km,updatedAt:serverTimestamp()},{merge:true})}msg('serviceMsg','Servicio guardado.');['serviceAmount','serviceKm','serviceOrigin','serviceDestination'].forEach(id=>$(id).value='');await loadBase();await renderDriverDashboard();await renderRanking('driverRanking')}catch(e){msg('serviceMsg',e.message,'err')}};
+$('sendDerivationBtn').onclick=async()=>{try{const to=$('deriveTo').value;if(!to)throw new Error('Elegí chofer destino');const p=getPeriod();await addDoc(collection(db,'derivaciones'),{origenChoferId:CURRENT.driver.id,origenChoferNombre:CURRENT.driver.nombre,destinoChoferId:to,destinoChoferNombre:(CURRENT.drivers.find(d=>d.id===to)||{}).nombre||'',estado:'pendiente',detalle:$('deriveDetail').value.trim(),importe:num($('deriveAmount').value),periodoId:p.id,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});msg('deriveMsg','Derivación enviada.');$('deriveDetail').value='';$('deriveAmount').value=''}catch(e){msg('deriveMsg',e.message,'err')}};
+async function loadReceivedDerivations(){const box=$('receivedDerivations');if(!box||!CURRENT.driver)return;const snap=await getDocs(query(collection(db,'derivaciones'),where('destinoChoferId','==',CURRENT.driver.id),where('estado','==','pendiente')));box.innerHTML=snap.docs.map(d=>{const x={id:d.id,...d.data()};return`<div class="list-item"><b>${x.origenChoferNombre||'Chofer'}</b><div class="small">${x.detalle||''}<br>${money(x.importe)}</div><div class="row"><button class="btn-green" onclick="window.derivationStatus('${x.id}','aceptada')">Aceptar</button><button class="btn-red" onclick="window.derivationStatus('${x.id}','rechazada')">Rechazar</button></div></div>`}).join('')||'<div class="small">Sin derivaciones pendientes.</div>'}
+window.derivationStatus=async(id,estado)=>{await updateDoc(doc(db,'derivaciones',id),{estado,updatedAt:serverTimestamp()});await loadReceivedDerivations();await renderRanking('driverRanking')};
 $('calcMyClosure').onclick=async()=>{try{const c=await buildClosure(CURRENT.driver,getPeriod());$('myClosureBox').innerHTML=closureCard(c,false);await checkPendingClosure()}catch(e){$('myClosureBox').innerHTML=`<div class="msg err">${e.message}</div>`}};
-async function checkPendingClosure(){const p=getPeriod();const s=await getDoc(doc(db,'cierres_semanales',`${CURRENT.driver.id}_${p.id}`));const box=$('driverPendingBox');if(!s.exists()){box.innerHTML='';return}const c=s.data();if(c.estado==='pagado'||c.estado==='cerrado'){box.innerHTML=`<div class="card success-card"><b>✅ Cierre semanal al día</b><div class="small">${c.periodoLabel||p.label}</div></div>`}else{box.innerHTML=`<div class="card danger-card"><b>⚠️ Cierre pendiente</b><div class="small">${c.quienPaga} debe pagar ${money(c.montoPagar)}. Subí el comprobante desde Cierre.</div></div>`}}
+async function checkPendingClosure(){const p=getPeriod();const s=await getDoc(doc(db,'cierres_semanales',`${p.id}_${CURRENT.driver.id}`));const box=$('driverPendingBox');if(!s.exists()){box.innerHTML='';return}const c=s.data();if(c.estado==='pagado'||c.estado==='cerrado'){box.innerHTML=`<div class="card success-card"><b>✅ Cierre semanal al día</b><div class="small">${c.periodoLabel||p.label}</div></div>`}else{box.innerHTML=`<div class="card danger-card"><b>⚠️ Cierre pendiente</b><div class="small">${c.quienPaga} debe pagar ${money(c.montoPagar)}. Subí el comprobante desde Cierre.</div></div>`}}
 async function fileToCompressed(file){return new Promise((resolve,reject)=>{const img=new Image();const r=new FileReader();r.onload=()=>{img.onload=()=>{const max=900;let w=img.width,h=img.height;if(w>h&&w>max){h=Math.round(h*max/w);w=max}else if(h>=w&&h>max){w=Math.round(w*max/h);h=max}const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);c.toBlob(b=>resolve({blob:b,dataUrl:c.toDataURL('image/jpeg',.62)}),'image/jpeg',.62)};img.onerror=reject;img.src=r.result};r.onerror=reject;r.readAsDataURL(file)})}
-$('uploadProofBtn').onclick=async()=>{const file=$('proofFile').files[0];if(!file){msg('proofMsg','Seleccioná una foto.','err');return}msg('proofMsg','Subiendo comprobante...','warn');try{const p=getPeriod();const {blob,dataUrl}=await fileToCompressed(file);let url='';try{const path=`comprobantes/${CURRENT.driver.id}/${p.id}_${Date.now()}.jpg`;const ref=storageRef(storage,path);await uploadBytes(ref,blob,{contentType:'image/jpeg'});url=await getDownloadURL(ref)}catch(storageError){console.warn('Storage falló, se guarda fallback DataURL',storageError)}const pagoId=`${CURRENT.driver.id}_${p.id}`;const pago={chofer:CURRENT.driver.id,choferNombre:CURRENT.driver.nombre,periodoId:p.id,sentido:'chofer_a_david',monto:0,url,dataUrl:url?'':dataUrl,comprobanteUrl:url,estado:'cargado',pagado:true,marcadoPor:'chofer',fecha:todayISO(),hora:timeNow(),creado:serverTimestamp(),createdAt:serverTimestamp()};await setDoc(doc(db,'pagos_semanales',pagoId),pago,{merge:true});await addDoc(collection(db,'comprobantes'),{...pago,tipo:'cierre_semanal'});await setDoc(doc(db,'cierres_semanales',`${CURRENT.driver.id}_${p.id}`),{chofer:CURRENT.driver.id,choferId:CURRENT.driver.id,periodoId:p.id,comprobanteUrl:url,comprobanteDataUrl:url?'':dataUrl,estado:'esperando_admin',estadoCierre:'cerrado_con_comprobante_chofer',pagoSemanal:pago,comprobantePendiente:false,comprobanteRequerido:false,actualizado:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});msg('proofMsg','¡Comprobante cargado! Admin ya puede verlo.');$('proofFile').value='';await checkPendingClosure()}catch(e){msg('proofMsg',e.message,'err')}};
-async function loadAdminProofs(){const box=$('adminProofsList');const [cs,ps]=await Promise.all([getDocs(query(collection(db,'comprobantes'),orderBy('createdAt','desc'),limit(30))).catch(()=>({docs:[]})),getDocs(query(collection(db,'pagos_semanales'),limit(30))).catch(()=>({docs:[]}))]);const docs=[...cs.docs,...ps.docs].map(d=>({id:d.id,...d.data()})).filter((x,i,a)=>a.findIndex(y=>(y.url||y.comprobanteUrl||y.dataUrl)===(x.url||x.comprobanteUrl||x.dataUrl)&&y.periodoId===x.periodoId&&y.chofer===x.chofer)===i);box.innerHTML=docs.map(x=>{const src=x.url||x.comprobanteUrl||x.dataUrl||'';return`<div class="list-item"><b>${x.choferNombre||driverName(x.chofer||x.choferId)}</b><div class="small">${x.tipo||'pago semanal'} · ${x.periodoId||''}</div>${src?`<button class="btn-dark" onclick="window.openPhoto('${src}')">Ver foto</button>`:''}</div>`}).join('')||'<div class="small">Sin comprobantes.</div>'}
+$('uploadProofBtn').onclick=async()=>{const file=$('proofFile').files[0];if(!file){msg('proofMsg','Seleccioná una foto.','err');return}msg('proofMsg','Subiendo comprobante...','warn');try{const p=getPeriod();const {blob,dataUrl}=await fileToCompressed(file);let url='';try{const path=`comprobantes/${p.id}/${CURRENT.driver.id}_${Date.now()}.jpg`;const ref=storageRef(storage,path);await uploadBytes(ref,blob,{contentType:'image/jpeg'});url=await getDownloadURL(ref)}catch(storageError){console.warn('Storage falló, se guarda fallback DataURL',storageError)}await addDoc(collection(db,'comprobantes'),{tipo:'cierre_semanal',periodoId:p.id,choferId:CURRENT.driver.id,choferNombre:CURRENT.driver.nombre,url,dataUrl:url?'':dataUrl,estado:'cargado',createdAt:serverTimestamp()});await setDoc(doc(db,'cierres_semanales',`${p.id}_${CURRENT.driver.id}`),{comprobanteUrl:url,comprobanteDataUrl:url?'':dataUrl,estado:'esperando_admin',updatedAt:serverTimestamp()},{merge:true});msg('proofMsg','¡Comprobante cargado! Admin ya puede verlo.');$('proofFile').value='';await checkPendingClosure()}catch(e){msg('proofMsg',e.message,'err')}};
+async function loadAdminProofs(){const box=$('adminProofsList');const snap=await getDocs(query(collection(db,'comprobantes'),orderBy('createdAt','desc'),limit(30)));box.innerHTML=snap.docs.map(d=>{const x=d.data();const src=x.url||x.dataUrl||'';return`<div class="list-item"><b>${x.choferNombre||x.choferId}</b><div class="small">${x.tipo||''} · ${x.periodoId||''}</div>${src?`<button class="btn-dark" onclick="window.openPhoto('${src}')">Ver foto</button>`:''}</div>`}).join('')||'<div class="small">Sin comprobantes.</div>'}
 async function renderMyCar(){const box=$('myCarBox');if(!box||!CURRENT.driver)return;const v=CURRENT.vehicles.find(x=>x.id===CURRENT.driver.vehiculoId);if(!v){box.innerHTML='<div class="msg warn">No tenés vehículo asignado.</div>';return}box.innerHTML=vehicleCard(v);$('myCarKm').value=num(v.kmActual)||''}
 $('updateMyKmBtn').onclick=async()=>{try{if(!CURRENT.driver.vehiculoId)throw new Error('No hay vehículo asignado');await setDoc(doc(db,'vehiculos',CURRENT.driver.vehiculoId),{kmActual:num($('myCarKm').value),updatedAt:serverTimestamp()},{merge:true});msg('myCarMsg','Km actualizado.');await loadBase();renderMyCar()}catch(e){msg('myCarMsg',e.message,'err')}};
 window.openPhoto=src=>{$('photoImg').src=src;$('photoModal').classList.remove('hidden')};window.closePhoto=()=>{$('photoModal').classList.add('hidden');$('photoImg').src=''};
