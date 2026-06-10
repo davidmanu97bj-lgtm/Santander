@@ -1463,7 +1463,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
 
 
-/* EXPLORA v2.8.145 · versión visible unificada */
+/* EXPLORA v2.8.146 · versión visible unificada */
 .explora-version-badge{
   display:block!important;
   color:#8f8f8f;
@@ -1637,7 +1637,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Viajes y Servicios</div>
-    <div class="explora-version-badge"><b>v2.8.145</b> · ADMIN-COMPROBANTE-MODULE-FIX-REAL</div>
+    <div class="explora-version-badge"><b>v2.8.146</b> · CHOFER-COMPROBANTE-ESTABLE</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1651,7 +1651,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="driverView" class="hidden driver-mobile-b">
     <div class="driver-b-topbar">
       <div class="driver-b-logo">EXPL<span>⌖</span>RA</div>
-      <div class="explora-version-badge"><b>v2.8.145</b> · ADMIN-COMPROBANTE-MODULE-FIX-REAL</div>
+      <div class="explora-version-badge"><b>v2.8.146</b> · CHOFER-COMPROBANTE-ESTABLE</div>
       <button class="driver-b-bell driver-b-logout-top" type="button" onclick="logout()" aria-label="Salir de la app">Salir</button>
     </div>
 
@@ -1868,7 +1868,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.145</b> · ADMIN-COMPROBANTE-MODULE-FIX-REAL</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.146</b> · CHOFER-COMPROBANTE-ESTABLE</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -5551,8 +5551,8 @@ function renderPagosPendientesChofer(items){
           <small>${suspendido ? '🚫 Ya estás suspendido del bono semanal hasta la próxima semana por no subir el comprobante.' : 'Si no realizás el pago hoy, mañana serás suspendido del bono semanal.'}</small>
           <button class="btn-dark" style="margin-top:10px" onclick="resolverCierrePendienteChofer('${p.periodoId || ''}')">Resolver cierre pendiente</button>
           <div style="margin-top:10px">
-            <input id="compPendChofer_${safeId(p.id)}" class="file-input" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif" onchange="updateComprobanteFileName('compPendChofer_${safeId(p.id)}')" />
-            <small id="compPendChofer_${safeId(p.id)}_name">Ningún comprobante seleccionado.</small>
+            <input id="compPendChofer_${safeId(p.id)}" class="file-input" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif" capture="environment" onclick="this.value=null" onchange="updateComprobanteFileName('compPendChofer_${safeId(p.id)}')" />
+            <small id="compPendChofer_${safeId(p.id)}_name">${nombreComprobanteSeleccionado('compPendChofer_${safeId(p.id)}') ? `Seleccionado: ${nombreComprobanteSeleccionado('compPendChofer_${safeId(p.id)}')}` : "Ningún comprobante seleccionado."}</small>
             <button type="button" class="btn-gold" style="margin-top:8px" onclick="subirComprobantePendienteChofer('${p.periodoId}', ${Math.round(Number(p.monto || 0))}, 'compPendChofer_${safeId(p.id)}')">Subir comprobante</button>
           </div>
         </div>`;
@@ -5856,7 +5856,7 @@ function uploadComprobanteHtml({inputId, buttonText, onClick, nota}){
     <div class="comprobante-box">
       <b>📎 Comprobante obligatorio</b><br>
       <small>${nota || "Subí foto del comprobante para marcar el pago como realizado."}</small>
-      <input id="${inputId}" class="file-input" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif" onchange="updateComprobanteFileName('${inputId}')" />
+      <input id="${inputId}" class="file-input" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif" capture="environment" onclick="this.value=null" onchange="updateComprobanteFileName('${inputId}')" />
       <small id="${inputId}_name">${nombreComprobanteSeleccionado(inputId) ? `Seleccionado: ${nombreComprobanteSeleccionado(inputId)}` : "Ningún comprobante seleccionado."}</small>
       <small>Podés elegir una foto desde galería o tomar una foto nueva.</small>
       <button type="button" class="btn-gold" style="margin-top:8px" onclick="${onClick}">${buttonText || "Subir comprobante y marcar pagado"}</button>
@@ -5866,8 +5866,8 @@ function uploadComprobanteHtml({inputId, buttonText, onClick, nota}){
 
 window.updateComprobanteFileName = function(inputId){
   const input = $(inputId);
-  const file = obtenerComprobanteSeleccionado(inputId);
-  if(file) guardarComprobanteSeleccionado(inputId, file);
+  const fileDirecto = input && input.files && input.files[0] ? input.files[0] : null;
+  if(fileDirecto) guardarComprobanteSeleccionado(inputId, fileDirecto);
   const label = $(inputId + "_name");
   if(!label) return;
   const finalFile = obtenerComprobanteSeleccionado(inputId);
@@ -5880,43 +5880,64 @@ window.subirComprobantePagoChofer = async function(){
     return;
   }
   const c = cierreSemanalPendiente;
-  const input = $("comprobantePagoChoferInput");
-  const file = obtenerComprobanteSeleccionado("comprobantePagoChoferInput");
+  const periodoId = c && c.periodo && c.periodo.id ? c.periodo.id : "";
+  const inputId = "comprobantePagoChoferInput";
+  const input = $(inputId);
+  const file = obtenerComprobanteSeleccionado(inputId);
   const btns = Array.from(document.querySelectorAll('button'));
   const clicked = btns.find(b => (b.getAttribute('onclick') || '').includes('subirComprobantePagoChofer'));
   const oldText = clicked ? clicked.textContent : "";
   try{
+    if(!currentUserId || !periodoId) throw new Error("Falta chofer o período para guardar el comprobante.");
     if(!file) throw new Error("Seleccioná una foto del comprobante antes de subir.");
-    btns.forEach(b=>{ if((b.textContent||"").includes("Subir comprobante")) b.disabled = true; });
+    btns.forEach(b=>{ if((b.getAttribute('onclick') || '').includes('subirComprobantePagoChofer')) b.disabled = true; });
     if(clicked) clicked.textContent = "Preparando foto...";
     if($("cierreSemanalMsg")) msg($("cierreSemanalMsg"), "Preparando comprobante liviano...", true);
     await new Promise(r=>setTimeout(r, 40));
     if(clicked) clicked.textContent = "Subiendo...";
     if($("cierreSemanalMsg")) msg($("cierreSemanalMsg"), "Subiendo comprobante. Si Storage tarda, se usa respaldo rápido.", true);
+
     const pago = await subirComprobantePago({
       chofer:currentUserId,
-      periodoId:c.periodo.id,
+      periodoId,
       sentido:"chofer_a_david",
       monto:c.choferDebe,
       file,
       marcadoPor:"chofer"
     });
-    limpiarComprobanteSeleccionado("comprobantePagoChoferInput");
-    cierreSemanalPendiente.pagoSemanal = {...pago, pagado:true, fechaPago:pago.fecha, horaPago:pago.hora, comprobanteUrl:pago.url};
-    cierreSemanalCache = {key:`${currentUserId}_${c.periodo.id}`, data:cierreSemanalPendiente};
+
+    const pagoFinal = {...pago, pagado:true, fechaPago:pago.fecha, horaPago:pago.hora, comprobanteUrl:pago.url};
+    await withTimeout(setDoc(doc(db,"cierres_semanales",`${currentUserId}_${periodoId}`),{
+      aceptadoPorChofer:true,
+      estadoCierre:"cerrado_con_comprobante_chofer",
+      comprobanteRequerido:false,
+      comprobantePendiente:false,
+      responsableComprobante:"chofer",
+      pagoSemanal:pagoFinal,
+      fechaResolucion:today(),
+      horaResolucion:new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
+      actualizado:serverTimestamp()
+    },{merge:true}), 7000, "El comprobante subió, pero no se pudo cerrar el cierre semanal.");
+
+    limpiarComprobanteSeleccionado(inputId);
+    if(input) input.value = "";
+    cierreSemanalPendiente = null;
+    cierreSemanalCache = null;
     cacheRemove("comprobantes_chofer_" + currentUserId);
     cacheRemove("pagos_pendientes_chofer_" + currentUserId);
-    renderCierreSemanal(cierreSemanalPendiente);
-    msg($("cierreSemanalMsg"),"Comprobante cargado correctamente. Admin ya puede verlo. El pago quedó marcado como realizado.",true);
+    cacheRemove(`cierre_sem_${currentUserId}_${periodoId}`);
+    const modal = $("cierreSemanalModal");
+    if(modal) modal.classList.add("hidden");
+    await checkPagosPendientesChoferAutomatico().catch(()=>{});
+    alert("Comprobante cargado correctamente. Admin ya puede verlo.");
   }catch(e){
     if($("cierreSemanalMsg")) msg($("cierreSemanalMsg"),"No se pudo subir el comprobante: " + e.message);
     alert("No se pudo subir el comprobante: " + e.message);
   }finally{
-    btns.forEach(b=>{ if((b.textContent||"").includes("Subir comprobante") || (b.textContent||"").includes("Subiendo comprobante")) b.disabled = false; });
+    btns.forEach(b=>{ if((b.getAttribute('onclick') || '').includes('subirComprobantePagoChofer')) b.disabled = false; });
     if(clicked) clicked.textContent = oldText || "Subir comprobante y marcar pagado";
   }
 }
-
 /* v2.8.145: motor viejo Admin de comprobantes eliminado.
    La función final estable queda definida una sola vez en el bloque ADMIN-COMPROBANTE-CIERRE-VISUAL-FIX. */
 
@@ -10053,34 +10074,8 @@ window.confirmarCierreSemanal = async function(){
   }
 };
 
-const _subirComprobantePagoChoferV2130 = window.subirComprobantePagoChofer;
-window.subirComprobantePagoChofer = async function(){
-  const c = cierreSemanalPendiente ? {...cierreSemanalPendiente} : null;
-  await _subirComprobantePagoChoferV2130.apply(this, arguments);
+/* v2.8.146: wrapper viejo Chofer eliminado; queda un solo motor estable de comprobante. */
 
-  // Si la carga terminó correctamente, el cierre recién ahí queda aceptado y deja de llamarse obligatorio.
-  try{
-    const pago = cierreSemanalPendiente && cierreSemanalPendiente.pagoSemanal;
-    if(currentUserId && c && c.periodo && c.periodo.id && pago && pago.pagado === true){
-      const cierreId = `${currentUserId}_${c.periodo.id}`;
-      await setDoc(doc(db,"cierres_semanales",cierreId),{
-        aceptadoPorChofer:true,
-        estadoCierre:"cerrado_con_comprobante",
-        comprobanteRequerido:false,
-        comprobantePendiente:false,
-        pagoSemanal:pago,
-        fechaConfirmacion:today(),
-        horaConfirmacion:new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
-        actualizado:serverTimestamp()
-      },{merge:true});
-      cacheRemove(`cierre_sem_${currentUserId}_${c.periodo.id}`);
-      cacheRemove("pagos_pendientes_chofer_" + currentUserId);
-      await checkPagosPendientesChoferAutomatico().catch(()=>{});
-    }
-  }catch(e){
-    console.warn("No se pudo cerrar el comprobante obligatorio", e);
-  }
-};
 
 // Revisión automática más agresiva para pruebas por fecha iPhone: al cargar, al volver a la pestaña
 // y al tocar Ranking se vuelve a verificar el cierre/comprobante obligatorio.
@@ -10108,7 +10103,7 @@ window.EXPLORA_BUILD_CIERRE_COMPROBANTE_OBLIGATORIO = EXPLORA_BUILD_CIERRE_COMPR
 
 // ===== EXPLORA v2.8.135 · SPLASH 1s + RANKING/GANADOR AUTO LIVIANO =====
 // Cambio quirúrgico: no modifica cierres, comprobantes, servicios, derivaciones ni lógica financiera.
-const EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = "v2.8.145 · ADMIN-COMPROBANTE-MODULE-FIX-REAL";
+const EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = "v2.8.146 · CHOFER-COMPROBANTE-ESTABLE";
 const EXPLORA_SPLASH_MAX_MS_135 = 1000;
 const EXPLORA_RANKING_AUTO_INTERVAL_MS_135 = 120000;
 const EXPLORA_GANADOR_AUTO_INTERVAL_MS_135 = 120000;
@@ -10250,7 +10245,7 @@ window.exploraActualizarUltimoGanadorAuto135 = exploraActualizarUltimoGanadorAut
 window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135;
 
 
-  /* ===== EXPLORA v2.8.145 · ADMIN-COMPROBANTE-MODULE-FIX-REAL-REAL =====
+  /* ===== EXPLORA v2.8.146 · CHOFER-COMPROBANTE-ESTABLE-REAL =====
      Intervención quirúrgica dentro del script principal:
      - Un solo motor final para Admin.
      - Guarda comprobante inline en Firestore sin depender de Storage.
@@ -10695,36 +10690,10 @@ window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135
     }
   };
 
-  /* v2.8.145: wrapper viejo Admin v2.131 eliminado para evitar doble cierre/render. */
+  /* v2.8.146: wrappers viejos de comprobante Chofer eliminados; Admin sin cambios. */
 
-  const _subirChoferV2131 = window.subirComprobantePagoChofer;
-  window.subirComprobantePagoChofer = async function(){
-    await _subirChoferV2131.apply(this, arguments);
-    try{
-      const c = cierreSemanalPendiente;
-      const pago = c && c.pagoSemanal;
-      if(currentUserId && c && c.periodo && pagoResueltoV2131(pago)){
-        await setDoc(doc(db,"cierres_semanales",`${currentUserId}_${c.periodo.id}`),{
-          aceptadoPorChofer:true,
-          estadoCierre:"cerrado_con_comprobante_chofer",
-          comprobanteRequerido:false,
-          comprobantePendiente:false,
-          responsableComprobante:"chofer",
-          pagoSemanal:pago,
-          fechaResolucion:today(),
-          horaResolucion:new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
-          actualizado:serverTimestamp()
-        },{merge:true});
-        cacheRemove(`cierre_sem_${currentUserId}_${c.periodo.id}`);
-        cacheRemove("pagos_pendientes_chofer_" + currentUserId);
-        cierreSemanalPendiente = null;
-        cierreSemanalCache = null;
-        const modal = document.getElementById("cierreSemanalModal");
-        if(modal) modal.classList.add("hidden");
-        await checkPagosPendientesChoferAutomatico().catch(()=>{});
-      }
-    }catch(e){ console.warn("No se pudo cerrar el cierre luego del comprobante Chofer", e); }
-  };
+  /* v2.8.146: wrapper viejo Chofer eliminado; queda un solo motor estable de comprobante. */
+
 
   function recheckV2131(){
     if(!currentUserId || typeof checkCierreSemanalAutomatico !== "function") return;
