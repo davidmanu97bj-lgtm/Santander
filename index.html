@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.154
-Build: 2026-06-09-SIN-CIERRE-SEMANAL-OBLIGATORIO-138
+Version: 2.8.155
+Build: 2026-06-09-ELIMINA-MODAL-CIERRE-SEMANAL-PENDIENTE-139
 Fecha: 06/06/2026
 Cambios:
 - v2.8.129: en Chofer la campana superior se reemplaza por botón Salir, cierra sesión y vuelve al login.
@@ -84,6 +84,7 @@ Cambios:
 - v2.8.142: Admin comprobante cierre visual fix; render reconoce pagoSemanal/estadoCierre y getEstadoPagoSemanal usa fallback desde cierres_semanales. Se elimina motor Admin viejo duplicado.
 - v2.8.153: se elimina visualmente el modal/pantalla completa de cierre semanal pendiente para Chofer; se conserva el cartel persistente de pago/comprobante y los cálculos internos para no dañar Admin ni cierres.
 - v2.8.154: se elimina el disparador automático del cierre semanal obligatorio. Se conserva intacto el cartel “cierre pendiente de comprobante” y sus comprobantes.
+- v2.8.155: se elimina del HTML la pantalla/modal completa “Cierre semanal pendiente”. Se conserva intacto el cartel persistente de comprobante pendiente.
 -->
 <html lang="es">
 <head>
@@ -1641,7 +1642,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Viajes y Servicios</div>
-    <div class="explora-version-badge"><b>v2.8.154</b> · SIN-CIERRE-SEMANAL-OBLIGATORIO</div>
+    <div class="explora-version-badge"><b>v2.8.155</b> · SIN-MODAL-CIERRE-SEMANAL</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1655,7 +1656,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="driverView" class="hidden driver-mobile-b">
     <div class="driver-b-topbar">
       <div class="driver-b-logo">EXPL<span>⌖</span>RA</div>
-      <div class="explora-version-badge"><b>v2.8.154</b> · SIN-CIERRE-SEMANAL-OBLIGATORIO</div>
+      <div class="explora-version-badge"><b>v2.8.155</b> · SIN-MODAL-CIERRE-SEMANAL</div>
       <button class="driver-b-bell driver-b-logout-top" type="button" onclick="logout()" aria-label="Salir de la app">Salir</button>
     </div>
 
@@ -1872,7 +1873,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.154</b> · SIN-CIERRE-SEMANAL-OBLIGATORIO</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.155</b> · SIN-MODAL-CIERRE-SEMANAL</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -1953,15 +1954,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 </div>
 
 
-<div id="cierreSemanalModal" class="modal hidden">
-  <div class="card">
-    <h2>Cierre semanal pendiente</h2>
-    <p class="note">Esta pantalla aparece al cerrar la semana. Si hay diferencia, quien debe pagar sube el comprobante. La app sigue funcionando, pero el cartel queda visible hasta resolver el pago.</p>
-    <div id="cierreSemanalResumen"></div>
-    <button id="confirmarCierreSemanalBtn" class="btn-gold" onclick="confirmarCierreSemanal()">Aceptar resumen y continuar</button>
-    <div id="cierreSemanalMsg"></div>
-  </div>
-</div>
+<!-- v2.8.155: modal/pantalla completa de cierre semanal pendiente eliminado por solicitud. -->
 
 <div id="kmModal" class="modal hidden">
   <div class="card">
@@ -11203,6 +11196,47 @@ window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135
     setTimeout(refrescarSoloPendienteComprobanteV2154, 900);
     setTimeout(ocultarCierreObligatorioV2154, 2500);
     window.EXPLORA_BUILD_SIN_CIERRE_SEMANAL_OBLIGATORIO = BUILD;
+  })();
+
+
+  /* ===== EXPLORA v2.8.155 · ELIMINA-MODAL-CIERRE-SEMANAL-PENDIENTE =====
+     Intervención quirúrgica solicitada:
+     - Elimina del DOM la pantalla completa “Cierre semanal pendiente”.
+     - Mantiene intacto el cartel persistente “cierre pendiente de comprobante”.
+     - No modifica servicios, ranking, derivaciones, Admin ni comprobantes.
+  */
+  (function(){
+    const BUILD = "v2.8.155-elimina-modal-cierre-semanal-pendiente";
+    function eliminarModalCierreSemanalV2155(){
+      try{
+        const modal = document.getElementById("cierreSemanalModal");
+        if(modal && modal.parentNode) modal.parentNode.removeChild(modal);
+      }catch(e){}
+    }
+    async function mantenerSoloComprobantePendienteV2155(){
+      eliminarModalCierreSemanalV2155();
+      try{
+        if(typeof checkPagosPendientesChoferAutomatico === "function"){
+          await checkPagosPendientesChoferAutomatico();
+        }
+      }catch(e){ console.warn("Cartel comprobante pendiente conservado", e); }
+      eliminarModalCierreSemanalV2155();
+      return false;
+    }
+    window.checkCierreSemanalAutomatico = checkCierreSemanalAutomatico = mantenerSoloComprobantePendienteV2155;
+    window.revisarCierreObligatorioV2130 = mantenerSoloComprobantePendienteV2155;
+    const _showPanelV2155 = window.showPanel;
+    window.showPanel = function(){
+      const r = _showPanelV2155 ? _showPanelV2155.apply(this, arguments) : undefined;
+      setTimeout(eliminarModalCierreSemanalV2155, 0);
+      setTimeout(mantenerSoloComprobantePendienteV2155, 250);
+      return r;
+    };
+    eliminarModalCierreSemanalV2155();
+    setTimeout(eliminarModalCierreSemanalV2155, 250);
+    setTimeout(mantenerSoloComprobantePendienteV2155, 900);
+    setTimeout(eliminarModalCierreSemanalV2155, 2500);
+    window.EXPLORA_BUILD_ELIMINA_MODAL_CIERRE_SEMANAL = BUILD;
   })();
 
 
