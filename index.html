@@ -89,6 +89,7 @@ Cambios:
 - v2.8.160: vuelve a base estable index(138) donde funcionaban cierre pendiente y último ganador; solo se reemplaza el alert feo de comprobante cargado por menú elegante.
 - v2.8.161: se rehace de forma quirúrgica el motor de Ganador ranking semanal anterior; elimina filtro de fuente rígido, reconstruye desde ranking/cierres/acumulados y mantiene espejos Firebase para Admin y Chofer.
 - v2.8.162: corrección ganador anterior adelantando semanas; busca el último período cerrado con actividad real si la semana visible no tiene datos, corrige closeDate y sincroniza la fuente oficial sin tocar ranking actual, cierres ni comprobantes.
+- v2.8.163: ganador anterior reconstruido desde viajes reales del período cerrado; Admin publica fuente oficial única en configuracion/publico/sistema y espejo en choferes. No depende de acumulados/cache para detectar actividad.
 -->
 <html lang="es">
 <head>
@@ -4618,7 +4619,7 @@ function limpiarCachesViejosGanadorSemana(){
   }catch(e){}
 }
 
-function buildPayloadUltimoGanadorSemana(periodo, ganador, fuente="ganador_ranking_semanal_anterior_v2162"){
+function buildPayloadUltimoGanadorSemana(periodo, ganador, fuente="ganador_ranking_semanal_anterior_v2163"){
   if(!periodo || !periodo.id || !ganador || !ganador.id) return null;
   const g = {
     id: ganador.id || "",
@@ -4670,7 +4671,7 @@ function payloadUltimoGanadorSemanaParaChofer(data){
       derivaciones: Number(normalizado.ganador.derivaciones || 0),
       porcentaje: Number(normalizado.ganador.porcentaje || 0),
       actualizadoMs: Date.now(),
-      fuente: "espejo_chofer_desde_ganador_anterior_v2162"
+      fuente: "espejo_chofer_desde_ganador_anterior_v2163"
     }
   };
 }
@@ -4713,7 +4714,7 @@ async function publicarUltimoGanadorEnChoferes(data, mostrarAviso=false){
   }
 }
 
-async function guardarUltimoGanadorSemana(periodo, ganador, fuente="ganador_ranking_semanal_anterior_v2162"){
+async function guardarUltimoGanadorSemana(periodo, ganador, fuente="ganador_ranking_semanal_anterior_v2163"){
   try{
     const payload = buildPayloadUltimoGanadorSemana(periodo, ganador, fuente);
     if(!payload) return null;
@@ -4779,6 +4780,164 @@ async function getUltimoGanadorSemanaOficial(){
   }
 
   return cached || null;
+}
+
+
+function periodoIdDesdeFechaViajeGanador(v){
+  const pid = v && v.periodoId ? String(v.periodoId) : "";
+  if(pid && periodoDesdeIdGenerico(pid)) return pid;
+  const f = v && (v.fecha || v.fechaServicio || v.creadoFecha || v.dia);
+  if(!f) return "";
+  try{
+    const p = getPeriodoTrabajoActual(String(f).slice(0,10));
+    return p && p.id ? p.id : "";
+  }catch(e){ return ""; }
+}
+
+function crearStatsGanadorAnteriorDesdeChoferes(choferes){
+  const stats = {};
+  (choferes || []).forEach(c=>{
+    if(!c || !c.id) return;
+    stats[c.id] = {
+      id:c.id,
+      nombre:c.nombre || c.id,
+      viajes:0,
+      derivaciones:0,
+      facturacion:0,
+      porcentaje:0,
+      actividad:0
+    };
+  });
+  return stats;
+}
+
+function sumarViajeRealAGanadorAnterior(stats, v, periodo){
+  if(!v || !periodo || !periodo.id) return;
+  const choferId = v.chofer || v.choferId || v.driverId || "";
+  if(!choferId) return;
+
+  const pid = periodoIdDesdeFechaViajeGanador(v);
+  if(pid && pid !== periodo.id) return;
+  if(!pid && typeof perteneceAlPeriodo === "function" && !perteneceAlPeriodo(v, periodo)) return;
+
+  if(!stats[choferId]){
+    stats[choferId] = {id:choferId,nombre:v.choferNombre || v.nombreChofer || choferId,viajes:0,derivaciones:0,facturacion:0,porcentaje:0,actividad:0};
+  }
+  const monto = Number(v.monto || v.total || v.precio || v.tarifa || 0);
+  stats[choferId].facturacion += monto;
+  stats[choferId].viajes += 1;
+  if(v.choferNombre || v.nombreChofer) stats[choferId].nombre = v.choferNombre || v.nombreChofer;
+}
+
+async function calcularGanadorAnteriorDesdeViajesReales(periodo){
+  if(!periodo || !periodo.id) return null;
+  try{
+    const choferes = await getChoferesRankingActivosRapido();
+    const stats = crearStatsGanadorAnteriorDesdeChoferes(choferes);
+    const idsLeidos = new Set();
+    let leyoViajes = false;
+
+    try{
+      const snapPeriodo = await withTimeout(getDocs(query(
+        collection(db,"viajes"),
+        where("periodoId","==",periodo.id)
+      )), 6500, "Viajes reales por período tardaron demasiado.");
+      snapPeriodo.forEach(d=>{
+        idsLeidos.add(d.id);
+        leyoViajes = true;
+        sumarViajeRealAGanadorAnterior(stats, d.data() || {}, periodo);
+      });
+    }catch(e){
+      console.warn("Ganador anterior: no se pudo leer viajes por periodoId", e);
+    }
+
+    // Fallback para viajes viejos que no tengan periodoId o que hayan quedado con período simulado.
+    try{
+      const snapFechas = await withTimeout(getDocs(query(
+        collection(db,"viajes"),
+        where("fecha",">=",periodo.start),
+        where("fecha","<=",periodo.end)
+      )), 6500, "Viajes reales por fecha tardaron demasiado.");
+      snapFechas.forEach(d=>{
+        if(idsLeidos.has(d.id)) return;
+        idsLeidos.add(d.id);
+        leyoViajes = true;
+        sumarViajeRealAGanadorAnterior(stats, d.data() || {}, periodo);
+      });
+    }catch(e){
+      console.warn("Ganador anterior: no se pudo leer viajes por fecha", e);
+    }
+
+    const derivacionesReales = await getDerivacionesAceptadasPorOrigenRapido(periodo).catch(e=>{
+      console.warn("Ganador anterior: derivaciones reales no disponibles", e);
+      return {};
+    });
+    Object.keys(derivacionesReales || {}).forEach(choferId=>{
+      if(!stats[choferId]) stats[choferId] = {id:choferId,nombre:choferId,viajes:0,derivaciones:0,facturacion:0,porcentaje:0,actividad:0};
+      stats[choferId].derivaciones = Math.max(Number(stats[choferId].derivaciones || 0), Number(derivacionesReales[choferId] || 0));
+    });
+
+    const arr = calcularPorcentajeRanking(Object.values(stats));
+    const ganador = (arr || []).find(x=>ganadorSemanaPasadaValido(x)) || null;
+    if(!ganador || !leyoViajes) return null;
+
+    return {
+      periodo,
+      ganador,
+      actualizado:Date.now(),
+      actualizadoMs:Date.now(),
+      fuente:"viajes_reales_periodo_cerrado_v2163"
+    };
+  }catch(e){
+    console.warn("No se pudo calcular ganador anterior desde viajes reales", e);
+    return null;
+  }
+}
+
+async function getUltimoGanadorHistoricoDesdeViajesReales(periodoActual = periodoActivoGanadorAnterior(), opciones = {}){
+  const maxPeriodos = Number(opciones.maxPeriodos || 16);
+  if(!periodoActual || !periodoActual.id) return null;
+  try{
+    const snap = await withTimeout(getDocs(collection(db,"viajes")), 9000, "Histórico de viajes reales tardó demasiado.");
+    const grupos = {};
+    snap.forEach(d=>{
+      const v = d.data() || {};
+      const pid = periodoIdDesdeFechaViajeGanador(v);
+      const periodo = periodoDesdeIdGenerico(pid);
+      if(!periodo || String(periodo.id) >= String(periodoActual.id)) return;
+      const monto = Number(v.monto || v.total || v.precio || v.tarifa || 0);
+      if(monto <= 0) return;
+      if(!grupos[periodo.id]) grupos[periodo.id] = {periodo, viajes:[]};
+      grupos[periodo.id].viajes.push(v);
+    });
+
+    const ids = Object.keys(grupos).sort().reverse().slice(0, maxPeriodos);
+    const choferes = await getChoferesRankingActivosRapido().catch(()=>[]);
+    for(const id of ids){
+      const grupo = grupos[id];
+      const stats = crearStatsGanadorAnteriorDesdeChoferes(choferes);
+      grupo.viajes.forEach(v=>sumarViajeRealAGanadorAnterior(stats, v, grupo.periodo));
+      const derivacionesReales = await getDerivacionesAceptadasPorOrigenRapido(grupo.periodo).catch(()=>({}));
+      Object.keys(derivacionesReales || {}).forEach(choferId=>{
+        if(!stats[choferId]) stats[choferId] = {id:choferId,nombre:choferId,viajes:0,derivaciones:0,facturacion:0,porcentaje:0,actividad:0};
+        stats[choferId].derivaciones = Math.max(Number(stats[choferId].derivaciones || 0), Number(derivacionesReales[choferId] || 0));
+      });
+      const arr = calcularPorcentajeRanking(Object.values(stats));
+      const ganador = (arr || []).find(x=>ganadorSemanaPasadaValido(x)) || null;
+      if(ganador){
+        return {
+          periodo:grupo.periodo,
+          ganador,
+          actualizado:Date.now(),
+          actualizadoMs:Date.now(),
+          fuente:"historico_viajes_reales_cerrados_v2163"
+        };
+      }
+    }
+  }catch(e){
+    console.warn("No se pudo buscar último ganador histórico desde viajes reales", e);
+  }
+  return null;
 }
 
 async function getUltimoGanadorDesdeCierresSemanales(){
@@ -4978,35 +5137,44 @@ async function reconstruirYGuardarUltimoGanadorSemana(){
     return null;
   }
 
-  // 1) Primero intenta la semana anterior visible, que es la que el usuario espera ver
-  // cuando acaba de adelantar la fecha al sábado siguiente.
+  // 1) Fuente principal v2.8.163: viajes reales del período cerrado visible.
+  // No depende de acumulados_semanales ni de caché. Esto corrige cuando se adelanta la semana
+  // y la tarjeta decía "Aún no hay ganador anterior" aunque ya existían viajes cargados.
+  const realVisible = await calcularGanadorAnteriorDesdeViajesReales(periodoVisible);
+  const guardadoRealVisible = await intentarGuardar(realVisible, "viajes_reales_periodo_anterior_visible_v2163");
+  if(guardadoRealVisible) return guardadoRealVisible;
+
+  // 2) Si el usuario adelantó varias semanas, busca hacia atrás el último período cerrado
+  // con viajes reales y publica ese ganador como fuente oficial única.
+  const historicoReal = await getUltimoGanadorHistoricoDesdeViajesReales(periodoActivo);
+  const guardadoHistoricoReal = await intentarGuardar(historicoReal, "historico_viajes_reales_cerrados_v2163");
+  if(guardadoHistoricoReal) return guardadoHistoricoReal;
+
+  // 3) Fallback compatible con ranking liviano/acumulados del período visible.
   try{
     const data = await withTimeout(calcularRankingSemanalLiviano(periodoVisible), 6500, "Ganador anterior no disponible rápido.");
     const ranking = (data && data.ranking) || [];
     const ganador = data && data.ganadorBono ? data.ganadorBono : ranking.find(x=>!x.suspendidoBono) || ranking[0];
-    const guardado = await intentarGuardar({periodo:periodoVisible, ganador, fuente:"ranking_periodo_anterior_visible_v2162"}, "ranking_periodo_anterior_visible_v2162");
+    const guardado = await intentarGuardar({periodo:periodoVisible, ganador, fuente:"ranking_periodo_anterior_visible_v2163"}, "ranking_periodo_anterior_visible_v2163");
     if(guardado) return guardado;
   }catch(e){
     console.warn("No se pudo reconstruir ganador por ranking visible", e);
   }
 
-  // 2) Si esa semana no tiene datos rápidos, busca el último período cerrado con actividad real.
-  // Esto corrige pruebas donde se adelantan semanas y la tarjeta queda en "Aún no hay ganador anterior".
+  // 4) Fallback de documentos antiguos.
   const historico = await getUltimoGanadorHistoricoRapido(periodoActivo);
-  const guardadoHistorico = await intentarGuardar(historico, "historico_cerrado_con_actividad_v2162");
+  const guardadoHistorico = await intentarGuardar(historico, "historico_cerrado_con_actividad_v2163");
   if(guardadoHistorico) return guardadoHistorico;
 
-  // 3) Mantiene compatibilidad con cierres antiguos que sí guardaron ganadorId.
   const desdeCierres = await getUltimoGanadorDesdeCierresSemanales();
-  const guardadoCierres = await intentarGuardar(desdeCierres, "cierres_semanales_ganador_anterior_v2162");
+  const guardadoCierres = await intentarGuardar(desdeCierres, "cierres_semanales_ganador_anterior_v2163");
   if(guardadoCierres) return guardadoCierres;
 
-  // 4) Fallback específico de la semana visible por acumulados.
   const porAcumulados = await getGanadorSemanaPasadaDesdeAcumulados(periodoVisible);
-  const guardadoAcumulados = await intentarGuardar(porAcumulados, "acumulados_periodo_anterior_visible_v2162");
+  const guardadoAcumulados = await intentarGuardar(porAcumulados, "acumulados_periodo_anterior_visible_v2163");
   if(guardadoAcumulados) return guardadoAcumulados;
 
-  return {periodo:periodoVisible, ganador:null, actualizado:Date.now(), fuente:"sin_ganador_v2162"};
+  return {periodo:periodoVisible, ganador:null, actualizado:Date.now(), fuente:"sin_ganador_v2163"};
 }
 
 async function getUltimoGanadorSemanaUnico({preferirChofer=false, reconstruirSiFalta=true}={}){
@@ -5018,14 +5186,15 @@ async function getUltimoGanadorSemanaUnico({preferirChofer=false, reconstruirSiF
   const oficial = await getUltimoGanadorSemanaOficial();
   if(oficial && oficial.ganador) return oficial;
 
-  const desdeCierres = await getUltimoGanadorDesdeCierresSemanales();
-  if(desdeCierres && desdeCierres.ganador){
-    guardarUltimoGanadorSemana(desdeCierres.periodo, desdeCierres.ganador, desdeCierres.fuente || "cierres_semanales_ganador_anterior_v2162").catch(e=>console.warn("No se pudo publicar último ganador desde cierres", e));
-    return desdeCierres;
+  if(reconstruirSiFalta){
+    const reconstruido = await reconstruirYGuardarUltimoGanadorSemana();
+    if(reconstruido && reconstruido.ganador) return reconstruido;
   }
 
-  if(reconstruirSiFalta){
-    return await reconstruirYGuardarUltimoGanadorSemana();
+  const desdeCierres = await getUltimoGanadorDesdeCierresSemanales();
+  if(desdeCierres && desdeCierres.ganador){
+    guardarUltimoGanadorSemana(desdeCierres.periodo, desdeCierres.ganador, desdeCierres.fuente || "cierres_semanales_ganador_anterior_v2163").catch(e=>console.warn("No se pudo publicar último ganador desde cierres", e));
+    return desdeCierres;
   }
 
   return null;
@@ -5157,7 +5326,7 @@ async function loadGanadorSemanaPasadaAdmin(){
   renderGanadorSemanaPasadaEn("adminLastWeekWinnerCard","adminLastWeekWinnerContent",data || {periodo, ganador:null},"admin");
 
   if(data && data.ganador){
-    await guardarUltimoGanadorSemana(data.periodo, data.ganador, data.fuente || "ganador_ranking_semanal_anterior_v2162").catch(()=>null);
+    await guardarUltimoGanadorSemana(data.periodo, data.ganador, data.fuente || "ganador_ranking_semanal_anterior_v2163").catch(()=>null);
     const reporte = await publicarUltimoGanadorEnChoferes(data).catch(()=>null);
     if(reporte && reporte.fail > 0 && $("adminMsg")){
       msg($("adminMsg"), `Ganador visible en Admin, pero no se copió a todos los choferes (${reporte.ok}/${reporte.total}). Revisá permisos Firebase.`);
@@ -5270,7 +5439,7 @@ async function sincronizarUltimoGanadorSemanaAdmin(){
     const data = await getUltimoGanadorSemanaUnico({preferirChofer:false, reconstruirSiFalta:true});
     if(!data || !data.ganador) return msg($("adminToolsMsg"), "No hay ganador anterior con actividad para sincronizar todavía.");
     renderGanadorSemanaPasadaEn("adminLastWeekWinnerCard","adminLastWeekWinnerContent",data,"admin");
-    await guardarUltimoGanadorSemana(data.periodo, data.ganador, data.fuente || "ganador_ranking_semanal_anterior_v2162");
+    await guardarUltimoGanadorSemana(data.periodo, data.ganador, data.fuente || "ganador_ranking_semanal_anterior_v2163");
     const reporte = await publicarUltimoGanadorEnChoferes(data, true);
     if(reporte.fail === 0){
       msg($("adminToolsMsg"), `Listo: ${data.ganador.nombre || data.ganador.id} quedó sincronizado con ${reporte.ok}/${reporte.total} choferes.`, true);
