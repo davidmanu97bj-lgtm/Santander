@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.156
-Build: 2026-06-09-ELIMINA-MODAL-CIERRE-SEMANAL-PENDIENTE-139
+Version: 2.8.157
+Build: 2026-06-09-COMPROBANTE-CARGADO-MODAL-ELEGANTE-140
 Fecha: 06/06/2026
 Cambios:
 - v2.8.129: en Chofer la campana superior se reemplaza por botón Salir, cierra sesión y vuelve al login.
@@ -86,6 +86,7 @@ Cambios:
 - v2.8.154: se elimina el disparador automático del cierre semanal obligatorio. Se conserva intacto el cartel “cierre pendiente de comprobante” y sus comprobantes.
 - v2.8.155: se elimina del HTML la pantalla/modal completa “Cierre semanal pendiente”. Se conserva intacto el cartel persistente de comprobante pendiente.
 - v2.8.156: comprobante del cartel persistente de cierre pendiente marca como pagado el documento original del pago para que no reaparezca después de subir la foto.
+- v2.8.157: se reemplaza el alert nativo de “Comprobante cargado correctamente” por un modal EXPLORA elegante, sin tocar la lógica de carga ni cierres.
 -->
 <html lang="es">
 <head>
@@ -709,6 +710,72 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   background:#0d0d0d;
   border:1px dashed rgba(212,175,55,.45);
   padding:13px;
+}
+
+
+/* EXPLORA v2.8.157 · MODAL ELEGANTE COMPROBANTE CARGADO */
+.explora-ok-modal-overlay{
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:22px;
+  background:rgba(0,0,0,.58);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+.explora-ok-modal-card{
+  width:100%;
+  max-width:390px;
+  border-radius:26px;
+  padding:22px 18px 18px;
+  text-align:center;
+  background:
+    radial-gradient(circle at 50% 0%,rgba(212,175,55,.22),transparent 44%),
+    linear-gradient(180deg,#1d1d1f,#0d0d0e);
+  border:1px solid rgba(212,175,55,.42);
+  box-shadow:0 24px 60px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.08);
+  animation:exploraOkModalIn .18s ease-out;
+}
+.explora-ok-modal-icon{
+  width:62px;
+  height:62px;
+  margin:0 auto 12px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#111;
+  font-size:34px;
+  font-weight:900;
+  background:linear-gradient(180deg,#f7d96b,#d4af37);
+  box-shadow:0 0 28px rgba(212,175,55,.35);
+}
+.explora-ok-modal-card h3{
+  margin:0 0 8px;
+  color:#fff;
+  font-size:23px;
+  line-height:1.15;
+}
+.explora-ok-modal-card p{
+  margin:0 auto 16px;
+  color:#d6d6d6;
+  font-size:15px;
+  line-height:1.38;
+  max-width:300px;
+}
+.explora-ok-modal-card button{
+  margin-top:4px;
+  background:var(--gold);
+  color:#0b0b0b;
+  border-radius:16px;
+  font-weight:900;
+}
+@keyframes exploraOkModalIn{
+  from{opacity:0;transform:translateY(10px) scale(.98)}
+  to{opacity:1;transform:translateY(0) scale(1)}
 }
 
 
@@ -1643,7 +1710,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Viajes y Servicios</div>
-    <div class="explora-version-badge"><b>v2.8.156</b> · COMPROBANTE-PENDIENTE-SIN-DUPLICADO</div>
+    <div class="explora-version-badge"><b>v2.8.157</b> · COMPROBANTE-CARGADO-MODAL</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1657,7 +1724,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="driverView" class="hidden driver-mobile-b">
     <div class="driver-b-topbar">
       <div class="driver-b-logo">EXPL<span>⌖</span>RA</div>
-      <div class="explora-version-badge"><b>v2.8.156</b> · COMPROBANTE-PENDIENTE-SIN-DUPLICADO</div>
+      <div class="explora-version-badge"><b>v2.8.157</b> · COMPROBANTE-CARGADO-MODAL</div>
       <button class="driver-b-bell driver-b-logout-top" type="button" onclick="logout()" aria-label="Salir de la app">Salir</button>
     </div>
 
@@ -1874,7 +1941,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.156</b> · COMPROBANTE-PENDIENTE-SIN-DUPLICADO</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.157</b> · COMPROBANTE-CARGADO-MODAL</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -5603,6 +5670,36 @@ function renderPagosPendientesChofer(items){
   box.innerHTML = html;
 }
 
+function mostrarComprobanteCargadoModal(){
+  return new Promise(resolve=>{
+    try{
+      const anterior = document.getElementById("exploraOkComprobanteModal");
+      if(anterior) anterior.remove();
+      const overlay = document.createElement("div");
+      overlay.id = "exploraOkComprobanteModal";
+      overlay.className = "explora-ok-modal-overlay";
+      overlay.innerHTML = `
+        <div class="explora-ok-modal-card" role="dialog" aria-modal="true" aria-label="Comprobante cargado">
+          <div class="explora-ok-modal-icon">✓</div>
+          <h3>Comprobante cargado</h3>
+          <p>La foto se guardó correctamente. Admin ya puede verla.</p>
+          <button type="button" id="exploraOkComprobanteCerrar">Entendido</button>
+        </div>`;
+      document.body.appendChild(overlay);
+      const cerrar = ()=>{
+        overlay.remove();
+        resolve();
+      };
+      const btn = document.getElementById("exploraOkComprobanteCerrar");
+      if(btn) btn.onclick = cerrar;
+      overlay.addEventListener("click", ev=>{ if(ev.target === overlay) cerrar(); });
+    }catch(e){
+      await mostrarComprobanteCargadoModal();
+      resolve();
+    }
+  });
+}
+
 window.subirComprobantePendienteChofer = async function(periodoId, monto, inputId, pagoPendienteId=""){
   const input = $(inputId);
   const file = obtenerComprobanteSeleccionado(inputId);
@@ -5647,7 +5744,7 @@ window.subirComprobantePendienteChofer = async function(periodoId, monto, inputI
     cacheRemove("pagos_pendientes_chofer_" + currentUserId);
     cacheRemove("comprobantes_chofer_" + currentUserId);
     setTimeout(()=>checkPagosPendientesChoferAutomatico().catch(e=>console.warn("Refresco comprobantes chofer diferido", e)), 250);
-    alert("Comprobante cargado correctamente. Admin ya puede verlo.");
+    await mostrarComprobanteCargadoModal();
     if(btn){ btn.disabled = false; btn.textContent = old || "Subir comprobante"; }
   }catch(e){
     alert("No se pudo subir el comprobante: " + e.message);
@@ -6104,7 +6201,7 @@ window.subirComprobantePagoChofer = async function(){
     if(modal) modal.classList.add("hidden");
     if($("cierreSemanalMsg")) $("cierreSemanalMsg").innerHTML = "";
     setTimeout(()=>checkPagosPendientesChoferAutomatico().catch(()=>{}), 250);
-    alert("Comprobante cargado correctamente. Admin ya puede verlo.");
+    await mostrarComprobanteCargadoModal();
   }catch(e){
     if($("cierreSemanalMsg")) msg($("cierreSemanalMsg"),"No se pudo subir el comprobante: " + e.message);
     alert("No se pudo subir el comprobante: " + e.message);
@@ -11218,14 +11315,14 @@ window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135
   })();
 
 
-  /* ===== EXPLORA v2.8.156 · COMPROBANTE-PENDIENTE-SIN-DUPLICADO =====
+  /* ===== EXPLORA v2.8.157 · COMPROBANTE-CARGADO-MODAL =====
      Intervención quirúrgica solicitada:
      - Elimina del DOM la pantalla completa “Cierre semanal pendiente”.
      - Mantiene intacto el cartel persistente “cierre pendiente de comprobante”.
      - No modifica servicios, ranking, derivaciones, Admin ni comprobantes.
   */
   (function(){
-    const BUILD = "v2.8.156-comprobante-pendiente-sin-duplicado";
+    const BUILD = "v2.8.157-comprobante-cargado-modal";
     function eliminarModalCierreSemanalV2155(){
       try{
         const modal = document.getElementById("cierreSemanalModal");
