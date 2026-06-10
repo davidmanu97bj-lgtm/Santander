@@ -77,7 +77,7 @@ Cambios:
 - v2.8.128: sesión persistente sin parpadeo; el login queda oculto durante la restauración real de Firebase Auth.
 - v2.8.127: sesión persistente por celular; no vuelve a pedir usuario/contraseña si no se cerró sesión y restaura la última pantalla usada.
 - v2.8.130: ganador anterior en tiempo real: Admin escribe fuente oficial y Chofer escucha espejo público con onSnapshot. Modo prueba fecha iPhone activo para todo el archivo.
-- v2.8.149: comprobante Chofer rerender guard; bloquea el redibujado del cierre obligatorio mientras la foto se selecciona/prepara/sube para evitar que iPhone la borre.
+- v2.8.150: comprobante Chofer rerender guard; bloquea el redibujado del cierre obligatorio mientras la foto se selecciona/prepara/sube para evitar que iPhone la borre.
 - v2.8.148: comprobante Chofer DataURL fix; la foto se convierte y conserva en memoria al seleccionar para que iPhone no la borre al redibujar el modal.
 - v2.8.139: corrección de sintaxis en último ganador desde cierres; elimina fragmento viejo roto y evita splash infinito.
 - v2.8.141: Admin comprobante estable; un solo motor final para subir comprobante y cerrar con compresión reforzada y error visible real.
@@ -1465,7 +1465,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
 
 
-/* EXPLORA v2.8.149 · versión visible unificada */
+/* EXPLORA v2.8.150 · versión visible unificada */
 .explora-version-badge{
   display:block!important;
   color:#8f8f8f;
@@ -1639,7 +1639,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Viajes y Servicios</div>
-    <div class="explora-version-badge"><b>v2.8.149</b> · CHOFER-COMPROBANTE-RERENDER-GUARD</div>
+    <div class="explora-version-badge"><b>v2.8.150</b> · CHOFER-COMPROBANTE-RECONSTRUIDO</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1653,7 +1653,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="driverView" class="hidden driver-mobile-b">
     <div class="driver-b-topbar">
       <div class="driver-b-logo">EXPL<span>⌖</span>RA</div>
-      <div class="explora-version-badge"><b>v2.8.149</b> · CHOFER-COMPROBANTE-RERENDER-GUARD</div>
+      <div class="explora-version-badge"><b>v2.8.150</b> · CHOFER-COMPROBANTE-RECONSTRUIDO</div>
       <button class="driver-b-bell driver-b-logout-top" type="button" onclick="logout()" aria-label="Salir de la app">Salir</button>
     </div>
 
@@ -1870,7 +1870,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.149</b> · CHOFER-COMPROBANTE-RERENDER-GUARD</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.150</b> · CHOFER-COMPROBANTE-RECONSTRUIDO</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -5897,14 +5897,54 @@ window.updateComprobanteFileName = async function(inputId){
   const input = $(inputId);
   const fileDirecto = input && input.files && input.files[0] ? input.files[0] : null;
   const label = $(inputId + "_name");
-  if(label && fileDirecto) label.textContent = "Preparando foto...";
+  const esChofer = String(inputId || "") === "comprobantePagoChoferInput" || String(inputId || "").startsWith("compPendChofer_");
+
+  // iPhone puede disparar change vacío al volver de cámara/galería. Si ya había foto guardada,
+  // no la borramos. Solo se limpia después de una subida exitosa o si hay error real de preparación.
+  if(!fileDirecto){
+    const guardado = obtenerComprobanteSeleccionado(inputId);
+    if(label) label.textContent = guardado ? `Seleccionado: ${guardado.name || "foto_camara.jpg"}` : "Ningún comprobante seleccionado.";
+    return;
+  }
+
+  if(label) label.textContent = esChofer ? "Foto seleccionada. Preparando..." : "Preparando foto...";
+
   try{
-    if(fileDirecto){
-      if(!esArchivoImagenComprobante(fileDirecto)) throw new Error("El comprobante debe ser una imagen.");
-      const blob = await obtenerBlobComprobante(fileDirecto);
-      const dataUrl = await blobToDataURLComprobante(blob.blob);
-      guardarComprobanteDataUrlSeleccionado(inputId, dataUrl, fileDirecto.name || "foto_camara.jpg");
+    if(!esArchivoImagenComprobante(fileDirecto)) throw new Error("El comprobante debe ser una imagen.");
+
+    if(esChofer){
+      window.__exploraChoferComprobanteV150 = window.__exploraChoferComprobanteV150 || {};
+      const estado = window.__exploraChoferComprobanteV150;
+      estado.activo = true;
+      estado.preparando = true;
+      estado.subiendo = false;
+      estado.inputId = inputId;
+      estado.nombre = fileDirecto.name || "foto_camara.jpg";
+
+      // Guardado inmediato como DataURL crudo: deja de depender del input vivo de iPhone.
+      const rawDataUrl = await blobToDataURLComprobante(fileDirecto);
+      guardarComprobanteDataUrlSeleccionado(inputId, rawDataUrl, estado.nombre);
+      if(label) label.textContent = `Seleccionado: ${estado.nombre}`;
+
+      // Compresión en segundo plano: si falla, queda el DataURL crudo ya guardado.
+      estado.prepPromise = (async()=>{
+        try{
+          const comprimido = await obtenerBlobComprobante(fileDirecto);
+          const dataUrlFinal = await blobToDataURLComprobante(comprimido.blob);
+          guardarComprobanteDataUrlSeleccionado(inputId, dataUrlFinal, estado.nombre);
+          if(label) label.textContent = `Seleccionado: ${estado.nombre}`;
+        }catch(e){
+          console.warn("Comprobante chofer: se conserva DataURL inicial", e);
+        }finally{
+          estado.preparando = false;
+        }
+      })();
+      return estado.prepPromise;
     }
+
+    const blob = await obtenerBlobComprobante(fileDirecto);
+    const dataUrl = await blobToDataURLComprobante(blob.blob);
+    guardarComprobanteDataUrlSeleccionado(inputId, dataUrl, fileDirecto.name || "foto_camara.jpg");
     const finalFile = obtenerComprobanteSeleccionado(inputId);
     if(label) label.textContent = finalFile ? `Seleccionado: ${finalFile.name || "foto_camara.jpg"}` : "Ningún comprobante seleccionado.";
   }catch(e){
@@ -5912,31 +5952,52 @@ window.updateComprobanteFileName = async function(inputId){
     if(input) input.value = "";
     if(label) label.textContent = "Ningún comprobante seleccionado.";
     alert("No se pudo preparar la foto: " + e.message);
+    try{
+      if(window.__exploraChoferComprobanteV150){
+        window.__exploraChoferComprobanteV150.activo = false;
+        window.__exploraChoferComprobanteV150.preparando = false;
+      }
+    }catch(_e){}
   }
 };
-
 window.subirComprobantePagoChofer = async function(){
+  const inputId = "comprobantePagoChoferInput";
+  const estado = window.__exploraChoferComprobanteV150 || (window.__exploraChoferComprobanteV150 = {});
+
   if(!cierreSemanalPendiente){
     alert("No hay cierre pendiente cargado. Tocá Resolver cierre pendiente o Actualizar página.");
     return;
   }
+
   const c = cierreSemanalPendiente;
   const periodoId = c && c.periodo && c.periodo.id ? c.periodo.id : "";
-  const inputId = "comprobantePagoChoferInput";
   const input = $(inputId);
-  const file = obtenerComprobanteSeleccionado(inputId);
   const btns = Array.from(document.querySelectorAll('button'));
   const clicked = btns.find(b => (b.getAttribute('onclick') || '').includes('subirComprobantePagoChofer'));
   const oldText = clicked ? clicked.textContent : "";
+
   try{
     if(!currentUserId || !periodoId) throw new Error("Falta chofer o período para guardar el comprobante.");
+
+    // Si el usuario sacó/elegió foto y la preparación sigue en curso, esperamos.
+    if(estado && estado.prepPromise){
+      if(clicked) clicked.textContent = "Preparando foto...";
+      await estado.prepPromise.catch(e=>console.warn("Preparación comprobante chofer", e));
+    }
+
+    // Respaldo: si por alguna razón el onchange no terminó, capturamos el input actual una sola vez.
+    if(!obtenerComprobanteSeleccionado(inputId) && input && input.files && input.files[0]){
+      await window.updateComprobanteFileName(inputId);
+    }
+
+    const file = obtenerComprobanteSeleccionado(inputId);
     if(!file) throw new Error("Seleccioná una foto del comprobante antes de subir.");
+
+    estado.activo = true;
+    estado.subiendo = true;
     btns.forEach(b=>{ if((b.getAttribute('onclick') || '').includes('subirComprobantePagoChofer')) b.disabled = true; });
-    if(clicked) clicked.textContent = "Preparando foto...";
-    if($("cierreSemanalMsg")) msg($("cierreSemanalMsg"), "Preparando comprobante liviano...", true);
-    await new Promise(r=>setTimeout(r, 40));
     if(clicked) clicked.textContent = "Subiendo...";
-    if($("cierreSemanalMsg")) msg($("cierreSemanalMsg"), "Subiendo comprobante. Si Storage tarda, se usa respaldo rápido.", true);
+    if($("cierreSemanalMsg")) msg($("cierreSemanalMsg"), "Subiendo comprobante. No cierres esta pantalla.", true);
 
     const pago = await subirComprobantePago({
       chofer:currentUserId,
@@ -5962,6 +6023,10 @@ window.subirComprobantePagoChofer = async function(){
 
     limpiarComprobanteSeleccionado(inputId);
     if(input) input.value = "";
+    estado.activo = false;
+    estado.preparando = false;
+    estado.subiendo = false;
+    estado.prepPromise = null;
     cierreSemanalPendiente = null;
     cierreSemanalCache = null;
     cacheRemove("comprobantes_chofer_" + currentUserId);
@@ -5969,16 +6034,18 @@ window.subirComprobantePagoChofer = async function(){
     cacheRemove(`cierre_sem_${currentUserId}_${periodoId}`);
     const modal = $("cierreSemanalModal");
     if(modal) modal.classList.add("hidden");
-    await checkPagosPendientesChoferAutomatico().catch(()=>{});
+    if($("cierreSemanalMsg")) $("cierreSemanalMsg").innerHTML = "";
+    setTimeout(()=>checkPagosPendientesChoferAutomatico().catch(()=>{}), 250);
     alert("Comprobante cargado correctamente. Admin ya puede verlo.");
   }catch(e){
     if($("cierreSemanalMsg")) msg($("cierreSemanalMsg"),"No se pudo subir el comprobante: " + e.message);
     alert("No se pudo subir el comprobante: " + e.message);
   }finally{
+    estado.subiendo = false;
     btns.forEach(b=>{ if((b.getAttribute('onclick') || '').includes('subirComprobantePagoChofer')) b.disabled = false; });
     if(clicked) clicked.textContent = oldText || "Subir comprobante y marcar pagado";
   }
-}
+};
 /* v2.8.145: motor viejo Admin de comprobantes eliminado.
    La función final estable queda definida una sola vez en el bloque ADMIN-COMPROBANTE-CIERRE-VISUAL-FIX. */
 
@@ -10115,7 +10182,7 @@ window.confirmarCierreSemanal = async function(){
   }
 };
 
-/* v2.8.149: wrapper viejo Chofer eliminado; queda un solo motor estable de comprobante. */
+/* v2.8.150: wrapper viejo Chofer eliminado; queda un solo motor estable de comprobante. */
 
 
 // Revisión automática más agresiva para pruebas por fecha iPhone: al cargar, al volver a la pestaña
@@ -10144,7 +10211,7 @@ window.EXPLORA_BUILD_CIERRE_COMPROBANTE_OBLIGATORIO = EXPLORA_BUILD_CIERRE_COMPR
 
 // ===== EXPLORA v2.8.135 · SPLASH 1s + RANKING/GANADOR AUTO LIVIANO =====
 // Cambio quirúrgico: no modifica cierres, comprobantes, servicios, derivaciones ni lógica financiera.
-const EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = "v2.8.149 · CHOFER-COMPROBANTE-RERENDER-GUARD";
+const EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = "v2.8.150 · CHOFER-COMPROBANTE-RECONSTRUIDO";
 const EXPLORA_SPLASH_MAX_MS_135 = 1000;
 const EXPLORA_RANKING_AUTO_INTERVAL_MS_135 = 120000;
 const EXPLORA_GANADOR_AUTO_INTERVAL_MS_135 = 120000;
@@ -10286,7 +10353,7 @@ window.exploraActualizarUltimoGanadorAuto135 = exploraActualizarUltimoGanadorAut
 window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135;
 
 
-  /* ===== EXPLORA v2.8.149 · CHOFER-COMPROBANTE-RERENDER-GUARD-REAL =====
+  /* ===== EXPLORA v2.8.150 · CHOFER-COMPROBANTE-RECONSTRUIDO-REAL =====
      Intervención quirúrgica dentro del script principal:
      - Un solo motor final para Admin.
      - Guarda comprobante inline en Firestore sin depender de Storage.
@@ -10731,9 +10798,9 @@ window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135
     }
   };
 
-  /* v2.8.149: wrappers viejos de comprobante Chofer eliminados; Admin sin cambios. */
+  /* v2.8.150: wrappers viejos de comprobante Chofer eliminados; Admin sin cambios. */
 
-  /* v2.8.149: wrapper viejo Chofer eliminado; queda un solo motor estable de comprobante. */
+  /* v2.8.150: wrapper viejo Chofer eliminado; queda un solo motor estable de comprobante. */
 
 
   function recheckV2131(){
@@ -10862,140 +10929,51 @@ window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135
   })();
 
 
-  /* ===== EXPLORA v2.8.149 · CHOFER-COMPROBANTE-RERENDER-GUARD =====
+  /* ===== EXPLORA v2.8.150 · CHOFER-COMPROBANTE-RECONSTRUIDO =====
      Intervención quirúrgica solo comprobante de chofer:
-     - Guarda el archivo inmediatamente al seleccionar/cámara antes de comprimir.
-     - Bloquea re-render del cierre obligatorio mientras la foto se prepara o está seleccionada.
-     - Espera la preparación DataURL antes de subir.
+     - El flujo ya no depende del input vivo de iPhone.
+     - Se guarda DataURL apenas se selecciona/saca la foto.
+     - Se bloquea únicamente el re-render del modal mientras hay foto en preparación/subida.
      - No toca comprobante Admin ni cierre financiero.
   */
   (function(){
-    const BUILD = "v2.8.149-chofer-comprobante-rerender-guard";
+    const BUILD = "v2.8.150-chofer-comprobante-reconstruido";
     const INPUT_CHOFER = "comprobantePagoChoferInput";
-    const estado = window.__exploraChoferComprobanteEstado || {
-      activo:false,
-      preparando:false,
-      seleccionado:false,
-      subiendo:false,
-      inputId:"",
-      prepPromise:null,
-      ultimoArchivo:""
-    };
-    window.__exploraChoferComprobanteEstado = estado;
+    window.__exploraChoferComprobanteV150 = window.__exploraChoferComprobanteV150 || {};
+    const estado = window.__exploraChoferComprobanteV150;
 
-    function esChoferActualV2149(){
-      try{ return !!(currentUserId && (!currentProfile || String(currentProfile.rol || "").toLowerCase() !== "admin")); }
-      catch(e){ return false; }
-    }
-
-    function esInputChoferV2149(inputId){
-      return String(inputId || "") === INPUT_CHOFER || String(inputId || "").toLowerCase().includes("chofer");
-    }
-
-    function modalCierreVisibleV2149(){
+    function modalCierreVisibleV2150(){
       const modal = document.getElementById("cierreSemanalModal");
       return !!(modal && !modal.classList.contains("hidden"));
     }
-
-    function comprobanteChoferEnUsoV2149(){
-      if(!esChoferActualV2149()) return false;
-      if(!modalCierreVisibleV2149()) return false;
-      return !!(estado.activo || estado.preparando || estado.seleccionado || estado.subiendo);
+    function comprobanteChoferEnUsoV2150(){
+      if(!modalCierreVisibleV2150()) return false;
+      return !!(estado.activo || estado.preparando || estado.subiendo || obtenerComprobanteSeleccionado(INPUT_CHOFER));
     }
 
-    function setLabelV2149(inputId, texto){
-      try{
-        const label = document.getElementById(inputId + "_name");
-        if(label) label.textContent = texto;
-      }catch(e){}
-    }
-
-    const _updateComprobanteFileNameV2149 = window.updateComprobanteFileName;
-    window.updateComprobanteFileName = async function(inputId){
-      if(!esInputChoferV2149(inputId)){
-        return _updateComprobanteFileNameV2149 ? _updateComprobanteFileNameV2149.apply(this, arguments) : undefined;
-      }
-
-      const input = document.getElementById(inputId);
-      const fileDirecto = input && input.files && input.files[0] ? input.files[0] : null;
-      if(!fileDirecto){
-        return _updateComprobanteFileNameV2149 ? _updateComprobanteFileNameV2149.apply(this, arguments) : undefined;
-      }
-
-      estado.activo = true;
-      estado.preparando = true;
-      estado.seleccionado = true;
-      estado.inputId = inputId;
-      estado.ultimoArchivo = fileDirecto.name || "foto_camara.jpg";
-
-      // Guardado inmediato: aunque iPhone destruya/redibuje el input, ya hay una referencia inicial.
-      try{ guardarComprobanteSeleccionado(inputId, fileDirecto); }catch(e){}
-      setLabelV2149(inputId, "Foto seleccionada. Preparando imagen...");
-
-      estado.prepPromise = (async()=>{
-        try{
-          if(!esArchivoImagenComprobante(fileDirecto)) throw new Error("El comprobante debe ser una imagen.");
-          const blobInfo = await obtenerBlobComprobante(fileDirecto);
-          const dataUrl = await blobToDataURLComprobante(blobInfo.blob);
-          guardarComprobanteDataUrlSeleccionado(inputId, dataUrl, fileDirecto.name || "foto_camara.jpg");
-          estado.seleccionado = true;
-          setLabelV2149(inputId, `Seleccionado: ${fileDirecto.name || "foto_camara.jpg"}`);
-          return true;
-        }catch(e){
-          // Si falla la preparación DataURL, conservamos la referencia original para permitir reintento.
-          try{ guardarComprobanteSeleccionado(inputId, fileDirecto); }catch(_e){}
-          estado.seleccionado = true;
-          setLabelV2149(inputId, `Seleccionado: ${fileDirecto.name || "foto_camara.jpg"}`);
-          console.warn("Comprobante chofer: se conserva archivo original por falla DataURL", e);
-          return false;
-        }finally{
-          estado.preparando = false;
+    const _renderCierreSemanalV2150 = renderCierreSemanal;
+    renderCierreSemanal = function(c){
+      if(comprobanteChoferEnUsoV2150()){
+        const label = document.getElementById(INPUT_CHOFER + "_name");
+        if(label){
+          const f = obtenerComprobanteSeleccionado(INPUT_CHOFER);
+          label.textContent = f ? `Seleccionado: ${f.name || "foto_camara.jpg"}` : label.textContent;
         }
-      })();
-
-      return estado.prepPromise;
-    };
-
-    const _subirComprobantePagoChoferV2149 = window.subirComprobantePagoChofer;
-    window.subirComprobantePagoChofer = async function(){
-      estado.activo = true;
-      estado.subiendo = true;
-      try{
-        if(estado.prepPromise){
-          try{ await estado.prepPromise; }catch(e){ console.warn("Preparación previa comprobante chofer falló", e); }
-        }
-        const r = _subirComprobantePagoChoferV2149 ? await _subirComprobantePagoChoferV2149.apply(this, arguments) : undefined;
-        const modal = document.getElementById("cierreSemanalModal");
-        const oculto = modal && modal.classList.contains("hidden");
-        const todaviaHayFoto = obtenerComprobanteSeleccionado(INPUT_CHOFER);
-        if(oculto || !todaviaHayFoto){
-          estado.activo = false;
-          estado.preparando = false;
-          estado.seleccionado = false;
-          estado.subiendo = false;
-          estado.inputId = "";
-          estado.prepPromise = null;
-          estado.ultimoArchivo = "";
-        }
-        return r;
-      }finally{
-        estado.subiendo = false;
-      }
-    };
-
-    const _checkCierreSemanalAutomaticoV2149 = checkCierreSemanalAutomatico;
-    checkCierreSemanalAutomatico = async function(){
-      if(comprobanteChoferEnUsoV2149()){
-        // Evita que los timers/focus/ranking reconstruyan el modal y borren la foto en iPhone.
         return;
       }
-      return _checkCierreSemanalAutomaticoV2149.apply(this, arguments);
+      return _renderCierreSemanalV2150.apply(this, arguments);
+    };
+    window.renderCierreSemanal = renderCierreSemanal;
+
+    const _checkCierreSemanalAutomaticoV2150 = checkCierreSemanalAutomatico;
+    checkCierreSemanalAutomatico = async function(){
+      if(comprobanteChoferEnUsoV2150()) return;
+      return _checkCierreSemanalAutomaticoV2150.apply(this, arguments);
     };
     window.checkCierreSemanalAutomatico = checkCierreSemanalAutomatico;
 
-    window.EXPLORA_BUILD_CHOFER_COMPROBANTE_RERENDER_GUARD = BUILD;
+    window.EXPLORA_BUILD_CHOFER_COMPROBANTE_RECONSTRUIDO = BUILD;
   })();
-
 
 </script>
 
