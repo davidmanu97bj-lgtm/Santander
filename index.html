@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.160
-Build: 2026-06-09-BASE-138-ESTABLE-MAS-COMPROBANTE-ELEGANTE-160
+Version: 2.8.161
+Build: 2026-06-09-BASE-138-ESTABLE-RESTAURA-CIERRE-PENDIENTE-161
 Fecha: 06/06/2026
 Cambios:
 - v2.8.129: en Chofer la campana superior se reemplaza por botón Salir, cierra sesión y vuelve al login.
@@ -87,6 +87,7 @@ Cambios:
 - v2.8.155: se elimina del HTML la pantalla/modal completa “Cierre semanal pendiente”. Se conserva intacto el cartel persistente de comprobante pendiente.
 - v2.8.156: comprobante del cartel persistente de cierre pendiente marca como pagado el documento original del pago para que no reaparezca después de subir la foto.
 - v2.8.160: vuelve a base estable index(138) donde funcionaban cierre pendiente y último ganador; solo se reemplaza el alert feo de comprobante cargado por menú elegante.
+- v2.8.161: parche final restaura el modal y disparador de cierre semanal pendiente anulados por módulos finales v2.8.154/v2.8.156, sin tocar servicios, ranking ni comprobantes.
 -->
 <html lang="es">
 <head>
@@ -11361,5 +11362,191 @@ if ('serviceWorker' in navigator) {
 })();
 </script>
 
+
+
+<!-- ===== EXPLORA v2.8.161 · PARCHE FINAL RESTAURA CIERRE PENDIENTE =====
+     Intervención quirúrgica:
+     - Restaura el modal #cierreSemanalModal si fue eliminado del DOM.
+     - Quita únicamente los bloqueos finales v2.8.154/v2.8.156 que lo escondían/eliminaban.
+     - Reactiva checkCierreSemanalAutomatico para abrir el cierre semanal pendiente.
+     - No toca servicios, ranking, derivaciones ni motor de comprobantes.
+-->
+<script id="exploraRestauraCierrePendienteV2161">
+(function(){
+  if(window.EXPLORA_RESTAURA_CIERRE_PENDIENTE_V2161) return;
+  window.EXPLORA_RESTAURA_CIERRE_PENDIENTE_V2161 = true;
+  const BUILD = "v2.8.161-restaura-cierre-pendiente-final";
+
+  function $(id){ return document.getElementById(id); }
+
+  function quitarBloqueosCierreV2161(){
+    try{
+      const st = document.getElementById("exploraSinCierreSemanalObligatorioV2154");
+      if(st) st.remove();
+    }catch(e){}
+    try{ document.body && document.body.classList.remove("explora-sin-modal-cierre-chofer"); }catch(e){}
+    try{
+      const modal = $("cierreSemanalModal");
+      if(modal){
+        modal.style.removeProperty("display");
+        modal.style.removeProperty("visibility");
+        modal.style.removeProperty("pointer-events");
+      }
+    }catch(e){}
+  }
+
+  function asegurarModalCierreV2161(){
+    quitarBloqueosCierreV2161();
+    let modal = $("cierreSemanalModal");
+    if(modal) return modal;
+
+    modal = document.createElement("div");
+    modal.id = "cierreSemanalModal";
+    modal.className = "modal hidden";
+    modal.innerHTML = `
+      <div class="card">
+        <h2>⚠️ Cierre semanal pendiente</h2>
+        <p class="note">Revisá el resumen de la semana cerrada. Si queda un pago pendiente, el aviso de comprobante seguirá visible hasta resolverlo.</p>
+        <div id="cierreSemanalResumen"></div>
+        <div id="cierreSemanalMsg"></div>
+        <button id="confirmarCierreSemanalBtn" class="btn-gold" type="button" onclick="confirmarCierreSemanal()">Aceptar resumen y continuar</button>
+        <button class="btn-dark" type="button" style="margin-top:10px" onclick="cerrarCierreSemanalModal()">Ver luego</button>
+      </div>`;
+    document.body.appendChild(modal);
+    return modal;
+  }
+
+  window.cerrarCierreSemanalModal = function(){
+    const modal = asegurarModalCierreV2161();
+    modal.classList.add("hidden");
+    const msgBox = $("cierreSemanalMsg");
+    if(msgBox) msgBox.innerHTML = "";
+  };
+
+  function sinMovimientosCierreV2161(c){
+    return !!c &&
+      Number(c.cantidadViajes || 0) === 0 &&
+      Number(c.cantidadGastos || 0) === 0 &&
+      Number(c.totalFondoOperativo || 0) === 0 &&
+      Number(c.totalViajes || 0) === 0;
+  }
+
+  async function prepararCierreV2161(choferId, periodo){
+    let c = null;
+    try{
+      if(typeof calcularCierreSemanalLiviano === "function"){
+        c = await withTimeout(calcularCierreSemanalLiviano(choferId, periodo, true), 18000, "cierre pendiente final");
+      }
+    }catch(e){
+      console.warn("Cierre liviano falló; intento rápido", e);
+    }
+    if(!c){
+      try{
+        if(typeof calcularCierreSemanalUltraRapido === "function"){
+          c = await withTimeout(calcularCierreSemanalUltraRapido(choferId, periodo), 8000, "cierre pendiente rápido");
+        }
+      }catch(e){ console.warn("Cierre rápido falló", e); }
+    }
+    if(!c && typeof cierreDesdeAcumulado === "function"){
+      c = cierreDesdeAcumulado(choferId, periodo, {}, null, typeof getPremioSemanal === "function" ? await getPremioSemanal() : 50000);
+    }
+    if(!c) return null;
+
+    if(sinMovimientosCierreV2161(c)){
+      c.sinActividad = true;
+      c.choferDebe = 0;
+      c.davidDebe = 0;
+      c.premioAplicado = 0;
+      c.pagoSemanal = null;
+    }else{
+      try{
+        if(typeof getEstadoPagoSemanal === "function") c.pagoSemanal = await getEstadoPagoSemanal(choferId, periodo.id);
+      }catch(e){ c.pagoSemanal = c.pagoSemanal || null; }
+      try{
+        const debe = Number(c.choferDebe || 0) > 0 || Number(c.davidDebe || 0) > 0;
+        if(debe && !c.pagoSemanal && typeof asegurarPagoSemanalPendiente === "function"){
+          c.pagoSemanal = await asegurarPagoSemanalPendiente(c);
+        }
+      }catch(e){ console.warn("No se pudo asegurar pago semanal pendiente", e); }
+    }
+    return c;
+  }
+
+  async function buscarPeriodoPendienteV2161(choferId){
+    if(!choferId) return null;
+    const dateStr = (typeof fechaOperativaParaChofer === "function") ? fechaOperativaParaChofer(choferId, window.currentProfile || currentProfile) : (typeof today === "function" ? today() : "");
+    try{
+      if(typeof getPeriodoCierrePendienteNoConfirmado === "function"){
+        const p = await getPeriodoCierrePendienteNoConfirmado(choferId, dateStr);
+        if(p) return p;
+      }
+    }catch(e){ console.warn("Búsqueda principal de cierre pendiente falló", e); }
+    try{
+      if(typeof getPeriodoCierrePendiente === "function") return getPeriodoCierrePendiente(dateStr);
+    }catch(e){}
+    return null;
+  }
+
+  window.checkCierreSemanalAutomatico = checkCierreSemanalAutomatico = async function(){
+    quitarBloqueosCierreV2161();
+    if(!currentUserId) return;
+    try{
+      if(currentProfile && String(currentProfile.rol || "").toLowerCase() === "admin"){
+        if(typeof checkPagosPendientesChoferAutomatico === "function") await checkPagosPendientesChoferAutomatico().catch(()=>{});
+        return;
+      }
+      const modal = asegurarModalCierreV2161();
+      const resumen = $("cierreSemanalResumen");
+      const periodo = await buscarPeriodoPendienteV2161(currentUserId);
+      if(!periodo){
+        modal.classList.add("hidden");
+        if(typeof checkPagosPendientesChoferAutomatico === "function") await checkPagosPendientesChoferAutomatico().catch(()=>{});
+        return;
+      }
+      if(resumen) resumen.innerHTML = `<div class="msg ok">Calculando cierre pendiente...</div>`;
+      modal.classList.remove("hidden");
+      const cierreId = `${currentUserId}_${periodo.id}`;
+      const c = await prepararCierreV2161(currentUserId, periodo);
+      if(!c){ modal.classList.add("hidden"); return; }
+      cierreSemanalPendiente = c;
+      cierreSemanalCache = {key:cierreId, data:c};
+      try{ if(typeof cacheSet === "function") cacheSet(`cierre_sem_${cierreId}`, c, 60 * 1000); }catch(e){}
+      if(typeof renderCierreSemanal === "function") renderCierreSemanal(c);
+      if(typeof checkPagosPendientesChoferAutomatico === "function") setTimeout(()=>checkPagosPendientesChoferAutomatico().catch(()=>{}), 300);
+    }catch(e){
+      console.warn("No se pudo restaurar/abrir cierre pendiente", e);
+    }finally{
+      quitarBloqueosCierreV2161();
+    }
+  };
+
+  window.revisarCierreObligatorioV2130 = function(){
+    if(typeof window.checkCierreSemanalAutomatico === "function") return window.checkCierreSemanalAutomatico();
+  };
+
+  window.resolverCierrePendienteChofer = async function(){
+    await window.checkCierreSemanalAutomatico();
+    try{
+      const modal = asegurarModalCierreV2161();
+      if(!modal.classList.contains("hidden")) modal.scrollIntoView({behavior:"smooth", block:"start"});
+    }catch(e){}
+  };
+
+  const showPanelPrevV2161 = window.showPanel;
+  window.showPanel = function(){
+    const r = showPanelPrevV2161 ? showPanelPrevV2161.apply(this, arguments) : undefined;
+    setTimeout(quitarBloqueosCierreV2161, 0);
+    setTimeout(()=>{ try{ window.checkCierreSemanalAutomatico(); }catch(e){} }, 500);
+    return r;
+  };
+
+  asegurarModalCierreV2161();
+  setTimeout(()=>window.checkCierreSemanalAutomatico().catch(()=>{}), 900);
+  setTimeout(()=>window.checkCierreSemanalAutomatico().catch(()=>{}), 2600);
+  window.addEventListener("focus",()=>setTimeout(()=>window.checkCierreSemanalAutomatico().catch(()=>{}), 350));
+  document.addEventListener("visibilitychange",()=>{ if(!document.hidden) setTimeout(()=>window.checkCierreSemanalAutomatico().catch(()=>{}), 350); });
+  window.EXPLORA_BUILD_RESTAURA_CIERRE_PENDIENTE = BUILD;
+})();
+</script>
 </body>
 </html>
