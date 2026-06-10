@@ -77,7 +77,7 @@ Cambios:
 - v2.8.128: sesión persistente sin parpadeo; el login queda oculto durante la restauración real de Firebase Auth.
 - v2.8.127: sesión persistente por celular; no vuelve a pedir usuario/contraseña si no se cerró sesión y restaura la última pantalla usada.
 - v2.8.130: ganador anterior en tiempo real: Admin escribe fuente oficial y Chofer escucha espejo público con onSnapshot. Modo prueba fecha iPhone activo para todo el archivo.
-- v2.8.150: comprobante Chofer rerender guard; bloquea el redibujado del cierre obligatorio mientras la foto se selecciona/prepara/sube para evitar que iPhone la borre.
+- v2.8.151: comprobante Chofer aislado visualmente; selector estable Cámara/Galería y bloqueo antes de abrir iPhone para que no se borre la foto.
 - v2.8.148: comprobante Chofer DataURL fix; la foto se convierte y conserva en memoria al seleccionar para que iPhone no la borre al redibujar el modal.
 - v2.8.139: corrección de sintaxis en último ganador desde cierres; elimina fragmento viejo roto y evita splash infinito.
 - v2.8.141: Admin comprobante estable; un solo motor final para subir comprobante y cerrar con compresión reforzada y error visible real.
@@ -1465,7 +1465,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
 
 
-/* EXPLORA v2.8.150 · versión visible unificada */
+/* EXPLORA v2.8.151 · versión visible unificada */
 .explora-version-badge{
   display:block!important;
   color:#8f8f8f;
@@ -1639,7 +1639,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Viajes y Servicios</div>
-    <div class="explora-version-badge"><b>v2.8.150</b> · CHOFER-COMPROBANTE-RECONSTRUIDO</div>
+    <div class="explora-version-badge"><b>v2.8.151</b> · CHOFER-COMPROBANTE-FIJO</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1653,7 +1653,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="driverView" class="hidden driver-mobile-b">
     <div class="driver-b-topbar">
       <div class="driver-b-logo">EXPL<span>⌖</span>RA</div>
-      <div class="explora-version-badge"><b>v2.8.150</b> · CHOFER-COMPROBANTE-RECONSTRUIDO</div>
+      <div class="explora-version-badge"><b>v2.8.151</b> · CHOFER-COMPROBANTE-FIJO</div>
       <button class="driver-b-bell driver-b-logout-top" type="button" onclick="logout()" aria-label="Salir de la app">Salir</button>
     </div>
 
@@ -1870,7 +1870,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.150</b> · CHOFER-COMPROBANTE-RECONSTRUIDO</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.151</b> · CHOFER-COMPROBANTE-FIJO</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -5881,6 +5881,24 @@ window.verFotoComprobante = async function(pagoId, urlDirecta=""){
 };
 
 function uploadComprobanteHtml({inputId, buttonText, onClick, nota}){
+  const esChoferObligatorio = String(inputId || "") === "comprobantePagoChoferInput";
+  if(esChoferObligatorio){
+    const seleccionado = nombreComprobanteSeleccionado(inputId);
+    const estadoTxt = seleccionado ? `✅ Foto lista: ${seleccionado}` : "Ningún comprobante seleccionado.";
+    return `
+      <div class="comprobante-box" id="choferComprobanteFijoBox">
+        <b>📎 Comprobante obligatorio</b><br>
+        <small>${nota || "Subí foto del comprobante para marcar el pago como realizado."}</small>
+        <div style="position:relative;margin-top:12px">
+          <input id="${inputId}" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif" onchange="updateComprobanteFileName('${inputId}')" onclick="prepararSeleccionComprobanteChofer('${inputId}')" style="position:absolute;left:0;top:0;width:1px;height:1px;opacity:.01;z-index:-1" />
+          <label for="${inputId}" class="file-input" style="display:block;text-align:center;font-weight:900;cursor:pointer;border-radius:16px;padding:15px" onclick="prepararSeleccionComprobanteChofer('${inputId}')">📷 Elegir foto o abrir cámara</label>
+        </div>
+        <small id="${inputId}_name" style="display:block;margin-top:10px">${estadoTxt}</small>
+        <small style="display:block;margin-top:6px">Podés elegir una foto desde galería o tomar una foto nueva.</small>
+        <button type="button" class="btn-gold" style="margin-top:12px" onclick="${onClick}">${buttonText || "Subir comprobante y marcar pagado"}</button>
+      </div>
+    `;
+  }
   return `
     <div class="comprobante-box">
       <b>📎 Comprobante obligatorio</b><br>
@@ -5893,6 +5911,21 @@ function uploadComprobanteHtml({inputId, buttonText, onClick, nota}){
   `;
 }
 
+window.prepararSeleccionComprobanteChofer = function(inputId){
+  if(String(inputId || "") !== "comprobantePagoChoferInput") return;
+  try{
+    window.__exploraChoferComprobanteV150 = window.__exploraChoferComprobanteV150 || {};
+    const estado = window.__exploraChoferComprobanteV150;
+    estado.activo = true;
+    estado.seleccionando = true;
+    estado.inputId = inputId;
+    const label = document.getElementById(inputId + "_name");
+    if(label && !obtenerComprobanteSeleccionado(inputId)){
+      label.textContent = "Esperando foto de cámara o galería...";
+    }
+  }catch(e){ console.warn("Preparar comprobante chofer", e); }
+};
+
 window.updateComprobanteFileName = async function(inputId){
   const input = $(inputId);
   const fileDirecto = input && input.files && input.files[0] ? input.files[0] : null;
@@ -5903,7 +5936,11 @@ window.updateComprobanteFileName = async function(inputId){
   // no la borramos. Solo se limpia después de una subida exitosa o si hay error real de preparación.
   if(!fileDirecto){
     const guardado = obtenerComprobanteSeleccionado(inputId);
-    if(label) label.textContent = guardado ? `Seleccionado: ${guardado.name || "foto_camara.jpg"}` : "Ningún comprobante seleccionado.";
+    if(label){
+      if(guardado) label.textContent = `✅ Foto lista: ${guardado.name || "foto_camara.jpg"}`;
+      else if(esChofer && window.__exploraChoferComprobanteV150 && window.__exploraChoferComprobanteV150.seleccionando) label.textContent = "No se recibió una foto. Volvé a tocar Elegir foto o abrir cámara.";
+      else label.textContent = "Ningún comprobante seleccionado.";
+    }
     return;
   }
 
@@ -5916,6 +5953,7 @@ window.updateComprobanteFileName = async function(inputId){
       window.__exploraChoferComprobanteV150 = window.__exploraChoferComprobanteV150 || {};
       const estado = window.__exploraChoferComprobanteV150;
       estado.activo = true;
+      estado.seleccionando = false;
       estado.preparando = true;
       estado.subiendo = false;
       estado.inputId = inputId;
@@ -5924,7 +5962,7 @@ window.updateComprobanteFileName = async function(inputId){
       // Guardado inmediato como DataURL crudo: deja de depender del input vivo de iPhone.
       const rawDataUrl = await blobToDataURLComprobante(fileDirecto);
       guardarComprobanteDataUrlSeleccionado(inputId, rawDataUrl, estado.nombre);
-      if(label) label.textContent = `Seleccionado: ${estado.nombre}`;
+      if(label) label.textContent = `✅ Foto lista: ${estado.nombre}`;
 
       // Compresión en segundo plano: si falla, queda el DataURL crudo ya guardado.
       estado.prepPromise = (async()=>{
@@ -5932,11 +5970,12 @@ window.updateComprobanteFileName = async function(inputId){
           const comprimido = await obtenerBlobComprobante(fileDirecto);
           const dataUrlFinal = await blobToDataURLComprobante(comprimido.blob);
           guardarComprobanteDataUrlSeleccionado(inputId, dataUrlFinal, estado.nombre);
-          if(label) label.textContent = `Seleccionado: ${estado.nombre}`;
+          if(label) label.textContent = `✅ Foto lista: ${estado.nombre}`;
         }catch(e){
           console.warn("Comprobante chofer: se conserva DataURL inicial", e);
         }finally{
           estado.preparando = false;
+          estado.seleccionando = false;
         }
       })();
       return estado.prepPromise;
@@ -5956,6 +5995,7 @@ window.updateComprobanteFileName = async function(inputId){
       if(window.__exploraChoferComprobanteV150){
         window.__exploraChoferComprobanteV150.activo = false;
         window.__exploraChoferComprobanteV150.preparando = false;
+        window.__exploraChoferComprobanteV150.seleccionando = false;
       }
     }catch(_e){}
   }
@@ -6025,6 +6065,7 @@ window.subirComprobantePagoChofer = async function(){
     if(input) input.value = "";
     estado.activo = false;
     estado.preparando = false;
+    estado.seleccionando = false;
     estado.subiendo = false;
     estado.prepPromise = null;
     cierreSemanalPendiente = null;
@@ -10182,7 +10223,7 @@ window.confirmarCierreSemanal = async function(){
   }
 };
 
-/* v2.8.150: wrapper viejo Chofer eliminado; queda un solo motor estable de comprobante. */
+/* v2.8.151: wrapper viejo Chofer eliminado; queda un solo motor visual fijo. */
 
 
 // Revisión automática más agresiva para pruebas por fecha iPhone: al cargar, al volver a la pestaña
@@ -10211,7 +10252,7 @@ window.EXPLORA_BUILD_CIERRE_COMPROBANTE_OBLIGATORIO = EXPLORA_BUILD_CIERRE_COMPR
 
 // ===== EXPLORA v2.8.135 · SPLASH 1s + RANKING/GANADOR AUTO LIVIANO =====
 // Cambio quirúrgico: no modifica cierres, comprobantes, servicios, derivaciones ni lógica financiera.
-const EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = "v2.8.150 · CHOFER-COMPROBANTE-RECONSTRUIDO";
+const EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = "v2.8.151 · CHOFER-COMPROBANTE-FIJO";
 const EXPLORA_SPLASH_MAX_MS_135 = 1000;
 const EXPLORA_RANKING_AUTO_INTERVAL_MS_135 = 120000;
 const EXPLORA_GANADOR_AUTO_INTERVAL_MS_135 = 120000;
@@ -10353,7 +10394,7 @@ window.exploraActualizarUltimoGanadorAuto135 = exploraActualizarUltimoGanadorAut
 window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135;
 
 
-  /* ===== EXPLORA v2.8.150 · CHOFER-COMPROBANTE-RECONSTRUIDO-REAL =====
+  /* ===== EXPLORA v2.8.151 · CHOFER-COMPROBANTE-FIJO-REAL =====
      Intervención quirúrgica dentro del script principal:
      - Un solo motor final para Admin.
      - Guarda comprobante inline en Firestore sin depender de Storage.
@@ -10798,9 +10839,9 @@ window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135
     }
   };
 
-  /* v2.8.150: wrappers viejos de comprobante Chofer eliminados; Admin sin cambios. */
+  /* v2.8.151: comprobante Chofer visual fijo; Admin sin cambios. */
 
-  /* v2.8.150: wrapper viejo Chofer eliminado; queda un solo motor estable de comprobante. */
+  /* v2.8.151: wrapper viejo Chofer eliminado; queda un solo motor visual fijo. */
 
 
   function recheckV2131(){
@@ -10929,7 +10970,7 @@ window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135
   })();
 
 
-  /* ===== EXPLORA v2.8.150 · CHOFER-COMPROBANTE-RECONSTRUIDO =====
+  /* ===== EXPLORA v2.8.151 · CHOFER-COMPROBANTE-FIJO =====
      Intervención quirúrgica solo comprobante de chofer:
      - El flujo ya no depende del input vivo de iPhone.
      - Se guarda DataURL apenas se selecciona/saca la foto.
@@ -10937,7 +10978,7 @@ window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135
      - No toca comprobante Admin ni cierre financiero.
   */
   (function(){
-    const BUILD = "v2.8.150-chofer-comprobante-reconstruido";
+    const BUILD = "v2.8.151-chofer-comprobante-fijo";
     const INPUT_CHOFER = "comprobantePagoChoferInput";
     window.__exploraChoferComprobanteV150 = window.__exploraChoferComprobanteV150 || {};
     const estado = window.__exploraChoferComprobanteV150;
