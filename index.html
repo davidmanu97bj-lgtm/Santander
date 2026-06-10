@@ -77,7 +77,7 @@ Cambios:
 - v2.8.128: sesión persistente sin parpadeo; el login queda oculto durante la restauración real de Firebase Auth.
 - v2.8.127: sesión persistente por celular; no vuelve a pedir usuario/contraseña si no se cerró sesión y restaura la última pantalla usada.
 - v2.8.130: ganador anterior en tiempo real: Admin escribe fuente oficial y Chofer escucha espejo público con onSnapshot. Modo prueba fecha iPhone activo para todo el archivo.
-- v2.8.151: comprobante Chofer aislado visualmente; selector estable Cámara/Galería y bloqueo antes de abrir iPhone para que no se borre la foto.
+- v2.8.152: comprobante Chofer fijo aplicado también al cartel persistente de cierre pendiente; se elimina el input nativo viejo de ese cartel.
 - v2.8.148: comprobante Chofer DataURL fix; la foto se convierte y conserva en memoria al seleccionar para que iPhone no la borre al redibujar el modal.
 - v2.8.139: corrección de sintaxis en último ganador desde cierres; elimina fragmento viejo roto y evita splash infinito.
 - v2.8.141: Admin comprobante estable; un solo motor final para subir comprobante y cerrar con compresión reforzada y error visible real.
@@ -1465,7 +1465,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
 
 
-/* EXPLORA v2.8.151 · versión visible unificada */
+/* EXPLORA v2.8.152 · versión visible unificada */
 .explora-version-badge{
   display:block!important;
   color:#8f8f8f;
@@ -1639,7 +1639,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Viajes y Servicios</div>
-    <div class="explora-version-badge"><b>v2.8.151</b> · CHOFER-COMPROBANTE-FIJO</div>
+    <div class="explora-version-badge"><b>v2.8.152</b> · CHOFER-COMPROBANTE-PENDIENTE-FIJO</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1653,7 +1653,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="driverView" class="hidden driver-mobile-b">
     <div class="driver-b-topbar">
       <div class="driver-b-logo">EXPL<span>⌖</span>RA</div>
-      <div class="explora-version-badge"><b>v2.8.151</b> · CHOFER-COMPROBANTE-FIJO</div>
+      <div class="explora-version-badge"><b>v2.8.152</b> · CHOFER-COMPROBANTE-PENDIENTE-FIJO</div>
       <button class="driver-b-bell driver-b-logout-top" type="button" onclick="logout()" aria-label="Salir de la app">Salir</button>
     </div>
 
@@ -1870,7 +1870,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.151</b> · CHOFER-COMPROBANTE-FIJO</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.152</b> · CHOFER-COMPROBANTE-PENDIENTE-FIJO</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -5575,11 +5575,12 @@ function renderPagosPendientesChofer(items){
           <small>Debés transferir a David: <b>${money(p.monto)}</b></small><br>
           <small>${suspendido ? '🚫 Ya estás suspendido del bono semanal hasta la próxima semana por no subir el comprobante.' : 'Si no realizás el pago hoy, mañana serás suspendido del bono semanal.'}</small>
           <button class="btn-dark" style="margin-top:10px" onclick="resolverCierrePendienteChofer('${p.periodoId || ''}')">Resolver cierre pendiente</button>
-          <div style="margin-top:10px">
-            <input id="compPendChofer_${safeId(p.id)}" class="file-input" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif" onchange="updateComprobanteFileName('compPendChofer_${safeId(p.id)}')" />
-            <small id="compPendChofer_${safeId(p.id)}_name">${nombreComprobanteSeleccionado('compPendChofer_${safeId(p.id)}') ? `Seleccionado: ${nombreComprobanteSeleccionado('compPendChofer_${safeId(p.id)}')}` : "Ningún comprobante seleccionado."}</small>
-            <button type="button" class="btn-gold" style="margin-top:8px" onclick="subirComprobantePendienteChofer('${p.periodoId}', ${Math.round(Number(p.monto || 0))}, 'compPendChofer_${safeId(p.id)}')">Subir comprobante</button>
-          </div>
+          ${uploadComprobanteHtml({
+            inputId:`compPendChofer_${safeId(p.id)}`,
+            buttonText:"Subir comprobante",
+            nota:"Subí la foto del comprobante pendiente. Podés elegir una foto desde galería o tomar una foto nueva.",
+            onClick:`subirComprobantePendienteChofer('${p.periodoId}', ${Math.round(Number(p.monto || 0))}, 'compPendChofer_${safeId(p.id)}')`
+          })}
         </div>`;
     }
     if(p.sentido === "david_a_chofer" && p.pagado !== true){
@@ -5610,13 +5611,25 @@ window.subirComprobantePendienteChofer = async function(periodoId, monto, inputI
   const input = $(inputId);
   const file = obtenerComprobanteSeleccionado(inputId);
   try{
-    if(!file) throw new Error("Seleccioná una foto del comprobante antes de subir.");
+    const estado = window.__exploraChoferComprobanteV150 || {};
+    if(estado && estado.inputId === inputId && estado.prepPromise){
+      const btnTmp = Array.from(document.querySelectorAll('button')).find(b => (b.getAttribute('onclick') || '').includes(inputId));
+      if(btnTmp) btnTmp.textContent = "Preparando foto...";
+      await estado.prepPromise.catch(e=>console.warn("Preparación comprobante pendiente chofer", e));
+    }
+    const inputAhora = $(inputId);
+    if(!obtenerComprobanteSeleccionado(inputId) && inputAhora && inputAhora.files && inputAhora.files[0]){
+      await window.updateComprobanteFileName(inputId);
+    }
+    const fileFinal = obtenerComprobanteSeleccionado(inputId);
+    if(!fileFinal) throw new Error("Seleccioná una foto del comprobante antes de subir.");
     const btn = Array.from(document.querySelectorAll('button')).find(b => (b.getAttribute('onclick') || '').includes(inputId));
     const old = btn ? btn.textContent : "";
-    if(btn){ btn.disabled = true; btn.textContent = "Preparando foto..."; }
-    await new Promise(r=>setTimeout(r, 40));
-    if(btn){ btn.textContent = "Subiendo..."; }
-    await subirComprobantePago({chofer:currentUserId, periodoId, sentido:"chofer_a_david", monto, file, marcadoPor:"chofer"});
+    if(btn){ btn.disabled = true; btn.textContent = "Subiendo..."; }
+    await subirComprobantePago({chofer:currentUserId, periodoId, sentido:"chofer_a_david", monto, file:fileFinal, marcadoPor:"chofer"});
+    limpiarComprobanteSeleccionado(inputId);
+    const labelPend = $(inputId + "_name");
+    if(labelPend) labelPend.textContent = "Ningún comprobante seleccionado.";
     cacheRemove("pagos_pendientes_chofer_" + currentUserId);
     cacheRemove("comprobantes_chofer_" + currentUserId);
     setTimeout(()=>checkPagosPendientesChoferAutomatico().catch(e=>console.warn("Refresco comprobantes chofer diferido", e)), 250);
@@ -5881,7 +5894,7 @@ window.verFotoComprobante = async function(pagoId, urlDirecta=""){
 };
 
 function uploadComprobanteHtml({inputId, buttonText, onClick, nota}){
-  const esChoferObligatorio = String(inputId || "") === "comprobantePagoChoferInput";
+  const esChoferObligatorio = String(inputId || "") === "comprobantePagoChoferInput" || String(inputId || "").startsWith("compPendChofer_");
   if(esChoferObligatorio){
     const seleccionado = nombreComprobanteSeleccionado(inputId);
     const estadoTxt = seleccionado ? `✅ Foto lista: ${seleccionado}` : "Ningún comprobante seleccionado.";
@@ -5912,7 +5925,7 @@ function uploadComprobanteHtml({inputId, buttonText, onClick, nota}){
 }
 
 window.prepararSeleccionComprobanteChofer = function(inputId){
-  if(String(inputId || "") !== "comprobantePagoChoferInput") return;
+  if(String(inputId || "") !== "comprobantePagoChoferInput" && !String(inputId || "").startsWith("compPendChofer_")) return;
   try{
     window.__exploraChoferComprobanteV150 = window.__exploraChoferComprobanteV150 || {};
     const estado = window.__exploraChoferComprobanteV150;
@@ -10223,7 +10236,7 @@ window.confirmarCierreSemanal = async function(){
   }
 };
 
-/* v2.8.151: wrapper viejo Chofer eliminado; queda un solo motor visual fijo. */
+/* v2.8.152: wrapper viejo Chofer eliminado; queda un solo motor visual fijo. */
 
 
 // Revisión automática más agresiva para pruebas por fecha iPhone: al cargar, al volver a la pestaña
@@ -10252,7 +10265,7 @@ window.EXPLORA_BUILD_CIERRE_COMPROBANTE_OBLIGATORIO = EXPLORA_BUILD_CIERRE_COMPR
 
 // ===== EXPLORA v2.8.135 · SPLASH 1s + RANKING/GANADOR AUTO LIVIANO =====
 // Cambio quirúrgico: no modifica cierres, comprobantes, servicios, derivaciones ni lógica financiera.
-const EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = "v2.8.151 · CHOFER-COMPROBANTE-FIJO";
+const EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = "v2.8.152 · CHOFER-COMPROBANTE-PENDIENTE-FIJO";
 const EXPLORA_SPLASH_MAX_MS_135 = 1000;
 const EXPLORA_RANKING_AUTO_INTERVAL_MS_135 = 120000;
 const EXPLORA_GANADOR_AUTO_INTERVAL_MS_135 = 120000;
@@ -10394,7 +10407,7 @@ window.exploraActualizarUltimoGanadorAuto135 = exploraActualizarUltimoGanadorAut
 window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135;
 
 
-  /* ===== EXPLORA v2.8.151 · CHOFER-COMPROBANTE-FIJO-REAL =====
+  /* ===== EXPLORA v2.8.152 · CHOFER-COMPROBANTE-PENDIENTE-FIJO-REAL =====
      Intervención quirúrgica dentro del script principal:
      - Un solo motor final para Admin.
      - Guarda comprobante inline en Firestore sin depender de Storage.
@@ -10839,9 +10852,9 @@ window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135
     }
   };
 
-  /* v2.8.151: comprobante Chofer visual fijo; Admin sin cambios. */
+  /* v2.8.152: comprobante Chofer visual fijo; Admin sin cambios. */
 
-  /* v2.8.151: wrapper viejo Chofer eliminado; queda un solo motor visual fijo. */
+  /* v2.8.152: wrapper viejo Chofer eliminado; queda un solo motor visual fijo. */
 
 
   function recheckV2131(){
@@ -10970,7 +10983,7 @@ window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135
   })();
 
 
-  /* ===== EXPLORA v2.8.151 · CHOFER-COMPROBANTE-FIJO =====
+  /* ===== EXPLORA v2.8.152 · CHOFER-COMPROBANTE-PENDIENTE-FIJO =====
      Intervención quirúrgica solo comprobante de chofer:
      - El flujo ya no depende del input vivo de iPhone.
      - Se guarda DataURL apenas se selecciona/saca la foto.
@@ -10978,7 +10991,7 @@ window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135
      - No toca comprobante Admin ni cierre financiero.
   */
   (function(){
-    const BUILD = "v2.8.151-chofer-comprobante-fijo";
+    const BUILD = "v2.8.152-chofer-comprobante-pendiente-fijo";
     const INPUT_CHOFER = "comprobantePagoChoferInput";
     window.__exploraChoferComprobanteV150 = window.__exploraChoferComprobanteV150 || {};
     const estado = window.__exploraChoferComprobanteV150;
