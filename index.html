@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.158
-Build: 2026-06-09-COMPROBANTE-CARGADO-MENU-ELEGANTE-140
+Version: 2.8.159
+Build: 2026-06-09-RESTAURA-CIERRE-PENDIENTE-Y-GANADOR-142
 Fecha: 06/06/2026
 Cambios:
 - v2.8.129: en Chofer la campana superior se reemplaza por botón Salir, cierra sesión y vuelve al login.
@@ -87,7 +87,7 @@ Cambios:
 - v2.8.155: se elimina del HTML la pantalla/modal completa “Cierre semanal pendiente”. Se conserva intacto el cartel persistente de comprobante pendiente.
 - v2.8.156: comprobante del cartel persistente de cierre pendiente marca como pagado el documento original del pago para que no reaparezca después de subir la foto.
 - v2.8.157: mejora visual del aviso “Comprobante cargado” reemplazando el alert nativo por un menú elegante, sin tocar la lógica de carga.
-- v2.8.158: refuerzo quirúrgico: al resolver/cerrar semana no abre el modal de cierre pendiente; último ganador semanal acepta la fuente oficial publicada y fallback desde cierres.
+- v2.8.159: restauración segura desde base v2.8.157: se elimina el parche v2.8.158 que interfería con checkCierreSemanalAutomatico/resolverCierrePendienteChofer y con el arranque del último ganador. Se conserva el menú elegante de comprobante cargado.
 -->
 <html lang="es">
 <head>
@@ -1748,7 +1748,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Viajes y Servicios</div>
-    <div class="explora-version-badge"><b>v2.8.158</b> · CIERRE-SIN-MODAL-GANADOR-FIX</div>
+    <div class="explora-version-badge"><b>v2.8.159</b> · RESTAURA-CIERRE-PENDIENTE-Y-GANADOR</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1762,7 +1762,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="driverView" class="hidden driver-mobile-b">
     <div class="driver-b-topbar">
       <div class="driver-b-logo">EXPL<span>⌖</span>RA</div>
-      <div class="explora-version-badge"><b>v2.8.158</b> · CIERRE-SIN-MODAL-GANADOR-FIX</div>
+      <div class="explora-version-badge"><b>v2.8.159</b> · RESTAURA-CIERRE-PENDIENTE-Y-GANADOR</div>
       <button class="driver-b-bell driver-b-logout-top" type="button" onclick="logout()" aria-label="Salir de la app">Salir</button>
     </div>
 
@@ -1979,7 +1979,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.158</b> · CIERRE-SIN-MODAL-GANADOR-FIX</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.159</b> · RESTAURA-CIERRE-PENDIENTE-Y-GANADOR</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -5247,10 +5247,9 @@ function procesarSnapshotGanadorAnterior(snap, modo="chofer"){
   }
 
   const data = cacheUltimoGanadorSemanaUnico(raw);
-  // v2.8.158: lectura flexible del último ganador.
-  // Antes solo aceptaba fuente "cierres_semanales_bono_aplicado" y por eso podía quedar
-  // vacío aunque Admin hubiera publicado el ganador con otra fuente oficial válida.
-  if(!data || !data.ganador || !data.periodo){
+  // v2.8.139: el listener público solo acepta datos publicados desde cierres semanales.
+  // Evita mostrar ganadores reconstruidos por ranking viejo o caché histórica.
+  if(!data || data.fuente !== "cierres_semanales_bono_aplicado"){
     renderGanadorSemanaPasadaEn(boxId, contentId, {periodo, ganador:null}, modo);
     return null;
   }
@@ -11364,7 +11363,7 @@ window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135
      - No modifica servicios, ranking, derivaciones, Admin ni comprobantes.
   */
   (function(){
-    const BUILD = "v2.8.157-comprobante-cargado-menu-elegante";
+    const BUILD = "v2.8.159-restaura-cierre-pendiente-y-ganador";
     function eliminarModalCierreSemanalV2155(){
       try{
         const modal = document.getElementById("cierreSemanalModal");
@@ -11395,100 +11394,7 @@ window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135
     setTimeout(mantenerSoloComprobantePendienteV2155, 900);
     setTimeout(eliminarModalCierreSemanalV2155, 2500);
     window.EXPLORA_BUILD_ELIMINA_MODAL_CIERRE_SEMANAL = BUILD;
-  })();
-
-
-  /* ===== EXPLORA v2.8.158 · CIERRE-SIN-MODAL-GANADOR-FIX =====
-     Intervención quirúrgica:
-     - Refuerza que el cierre pendiente NO abra el modal/pantalla completa al cerrar semana.
-     - Conserva solo el banner persistente de comprobante pendiente.
-     - Corrige lectura del último ganador semanal aceptando cualquier fuente oficial válida.
-     - No toca servicios, derivaciones, ranking actual, Admin ni lógica financiera.
-  */
-  (function(){
-    const BUILD = "v2.8.158-cierre-sin-modal-ganador-fix";
-
-    function ocultarModalCierrePendienteV2158(){
-      try{
-        const modal = document.getElementById("cierreSemanalModal");
-        if(modal){
-          modal.classList.add("hidden");
-          modal.style.display = "none";
-          modal.setAttribute("aria-hidden","true");
-        }
-        const resumen = document.getElementById("cierreSemanalResumen");
-        if(resumen) resumen.innerHTML = "";
-        const msgBox = document.getElementById("cierreSemanalMsg");
-        if(msgBox) msgBox.innerHTML = "";
-      }catch(e){}
-    }
-
-    async function refrescarBannerComprobantePendienteV2158(){
-      ocultarModalCierrePendienteV2158();
-      try{
-        if(typeof checkPagosPendientesChoferAutomatico === "function"){
-          await checkPagosPendientesChoferAutomatico();
-        }
-      }catch(e){
-        console.warn("No se pudo refrescar banner de comprobante pendiente", e);
-      }finally{
-        ocultarModalCierrePendienteV2158();
-      }
-      return false;
-    }
-
-    const _confirmarCierreSemanalV2158 = window.confirmarCierreSemanal;
-    if(typeof _confirmarCierreSemanalV2158 === "function"){
-      window.confirmarCierreSemanal = async function(){
-        try{
-          const r = await _confirmarCierreSemanalV2158.apply(this, arguments);
-          await refrescarBannerComprobantePendienteV2158();
-          return r;
-        }catch(e){
-          ocultarModalCierrePendienteV2158();
-          throw e;
-        }
-      };
-    }
-
-    window.checkCierreSemanalAutomatico = checkCierreSemanalAutomatico = refrescarBannerComprobantePendienteV2158;
-    window.revisarCierreObligatorioV2130 = refrescarBannerComprobantePendienteV2158;
-    window.resolverCierrePendienteChofer = async function(){
-      await refrescarBannerComprobantePendienteV2158();
-      try{
-        const box = document.getElementById("cierrePagoPendienteAlert");
-        if(box && !box.classList.contains("hidden")) box.scrollIntoView({behavior:"smooth", block:"center"});
-      }catch(e){}
-      return false;
-    };
-
-    const _showPanelV2158 = window.showPanel;
-    window.showPanel = function(){
-      const r = _showPanelV2158 ? _showPanelV2158.apply(this, arguments) : undefined;
-      setTimeout(ocultarModalCierrePendienteV2158, 0);
-      setTimeout(refrescarBannerComprobantePendienteV2158, 250);
-      return r;
-    };
-
-    try{
-      const modal = document.getElementById("cierreSemanalModal");
-      if(modal && window.MutationObserver){
-        new MutationObserver(ocultarModalCierrePendienteV2158).observe(modal,{attributes:true,attributeFilter:["class","style"]});
-      }
-    }catch(e){}
-
-    // Arranca la lectura del ganador anterior aunque no se toque Ranking.
-    setTimeout(()=>{
-      try{
-        if(currentProfile && currentProfile.rol === "admin" && typeof iniciarListenerGanadorAnterior === "function") iniciarListenerGanadorAnterior("admin");
-        if(currentProfile && currentProfile.rol !== "admin" && typeof iniciarListenerGanadorAnterior === "function") iniciarListenerGanadorAnterior("chofer");
-      }catch(e){ console.warn("No se pudo iniciar listener ganador v2.8.158", e); }
-    }, 1300);
-
-    ocultarModalCierrePendienteV2158();
-    setTimeout(refrescarBannerComprobantePendienteV2158, 900);
-    setTimeout(ocultarModalCierrePendienteV2158, 2500);
-    window.EXPLORA_BUILD_CIERRE_SIN_MODAL_GANADOR_FIX = BUILD;
+    window.EXPLORA_BUILD_RESTAURA_CIERRE_PENDIENTE_Y_GANADOR = BUILD;
   })();
 
 
