@@ -77,7 +77,7 @@ Cambios:
 - v2.8.128: sesión persistente sin parpadeo; el login queda oculto durante la restauración real de Firebase Auth.
 - v2.8.127: sesión persistente por celular; no vuelve a pedir usuario/contraseña si no se cerró sesión y restaura la última pantalla usada.
 - v2.8.130: ganador anterior en tiempo real: Admin escribe fuente oficial y Chofer escucha espejo público con onSnapshot. Modo prueba fecha iPhone activo para todo el archivo.
-- v2.8.147: comprobante Chofer input fix; se quita capture forzado y limpieza onclick para que iPhone muestre Cámara/Galería y no borre la foto antes de subir.
+- v2.8.148: comprobante Chofer DataURL fix; la foto se convierte y conserva en memoria al seleccionar para que iPhone no la borre al redibujar el modal.
 - v2.8.139: corrección de sintaxis en último ganador desde cierres; elimina fragmento viejo roto y evita splash infinito.
 - v2.8.141: Admin comprobante estable; un solo motor final para subir comprobante y cerrar con compresión reforzada y error visible real.
 - v2.8.142: Admin comprobante cierre visual fix; render reconoce pagoSemanal/estadoCierre y getEstadoPagoSemanal usa fallback desde cierres_semanales. Se elimina motor Admin viejo duplicado.
@@ -1464,7 +1464,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
 
 
-/* EXPLORA v2.8.147 · versión visible unificada */
+/* EXPLORA v2.8.148 · versión visible unificada */
 .explora-version-badge{
   display:block!important;
   color:#8f8f8f;
@@ -1638,7 +1638,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Viajes y Servicios</div>
-    <div class="explora-version-badge"><b>v2.8.147</b> · CHOFER-COMPROBANTE-INPUT-FIX</div>
+    <div class="explora-version-badge"><b>v2.8.148</b> · CHOFER-COMPROBANTE-DATAURL-FIX</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1652,7 +1652,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="driverView" class="hidden driver-mobile-b">
     <div class="driver-b-topbar">
       <div class="driver-b-logo">EXPL<span>⌖</span>RA</div>
-      <div class="explora-version-badge"><b>v2.8.147</b> · CHOFER-COMPROBANTE-INPUT-FIX</div>
+      <div class="explora-version-badge"><b>v2.8.148</b> · CHOFER-COMPROBANTE-DATAURL-FIX</div>
       <button class="driver-b-bell driver-b-logout-top" type="button" onclick="logout()" aria-label="Salir de la app">Salir</button>
     </div>
 
@@ -1869,7 +1869,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.147</b> · CHOFER-COMPROBANTE-INPUT-FIX</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.148</b> · CHOFER-COMPROBANTE-DATAURL-FIX</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -2003,16 +2003,28 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 // iPhone/Safari puede vaciar el input file si el panel se redibuja mientras vuelve de cámara/galería.
-// Guardamos la foto seleccionada en memoria por inputId para que no se pierda antes de subir.
+// Guardamos una copia estable en memoria. En chofer se prioriza DataURL comprimido para que
+// la foto no dependa del input vivo ni se borre si el modal obligatorio se vuelve a renderizar.
 window.__exploraComprobanteFiles = window.__exploraComprobanteFiles || {};
 function guardarComprobanteSeleccionado(inputId, file){
   if(!inputId || !file) return;
   window.__exploraComprobanteFiles[inputId] = file;
 }
+function guardarComprobanteDataUrlSeleccionado(inputId, dataUrl, nombre="foto_camara.jpg"){
+  if(!inputId || !dataUrl) return;
+  window.__exploraComprobanteFiles[inputId] = {
+    __exploraDataUrl:true,
+    dataUrl:String(dataUrl || ""),
+    name:nombre || "foto_camara.jpg",
+    type:"image/jpeg"
+  };
+}
 function obtenerComprobanteSeleccionado(inputId){
+  const guardado = window.__exploraComprobanteFiles && window.__exploraComprobanteFiles[inputId];
+  if(guardado && guardado.__exploraDataUrl && guardado.dataUrl) return guardado;
   const input = inputId ? $(inputId) : null;
   const fileInput = input && input.files && input.files[0];
-  return fileInput || (window.__exploraComprobanteFiles && window.__exploraComprobanteFiles[inputId]) || null;
+  return fileInput || guardado || null;
 }
 function limpiarComprobanteSeleccionado(inputId){
   try{ if(inputId && window.__exploraComprobanteFiles) delete window.__exploraComprobanteFiles[inputId]; }catch(e){}
@@ -2020,6 +2032,17 @@ function limpiarComprobanteSeleccionado(inputId){
 function nombreComprobanteSeleccionado(inputId){
   const file = obtenerComprobanteSeleccionado(inputId);
   return file ? (file.name || "foto_camara.jpg") : "";
+}
+function dataURLToBlobComprobante(dataUrl){
+  const parts = String(dataUrl || "").split(",");
+  if(parts.length < 2) throw new Error("La foto seleccionada no pudo prepararse correctamente.");
+  const mimeMatch = parts[0].match(/data:([^;]+);base64/i);
+  const mime = mimeMatch ? mimeMatch[1] : "image/jpeg";
+  const binary = atob(parts[1]);
+  const len = binary.length;
+  const bytes = new Uint8Array(len);
+  for(let i=0;i<len;i++) bytes[i] = binary.charCodeAt(i);
+  return new Blob([bytes], {type:mime});
 }
 
 
@@ -5663,6 +5686,10 @@ async function comprimirImagenComprobante(file, maxWidth=750, quality=0.45){
 }
 
 async function obtenerBlobComprobante(file){
+  if(file && file.__exploraDataUrl && file.dataUrl){
+    const blob = dataURLToBlobComprobante(file.dataUrl);
+    return {blob, contentType:blob.type || "image/jpeg", extension:"jpg"};
+  }
   try{
     return {blob: await comprimirImagenComprobante(file), contentType:"image/jpeg", extension:"jpg"};
   }catch(e){
@@ -5865,14 +5892,26 @@ function uploadComprobanteHtml({inputId, buttonText, onClick, nota}){
   `;
 }
 
-window.updateComprobanteFileName = function(inputId){
+window.updateComprobanteFileName = async function(inputId){
   const input = $(inputId);
   const fileDirecto = input && input.files && input.files[0] ? input.files[0] : null;
-  if(fileDirecto) guardarComprobanteSeleccionado(inputId, fileDirecto);
   const label = $(inputId + "_name");
-  if(!label) return;
-  const finalFile = obtenerComprobanteSeleccionado(inputId);
-  label.textContent = finalFile ? `Seleccionado: ${finalFile.name || "foto_camara.jpg"}` : "Ningún comprobante seleccionado.";
+  if(label && fileDirecto) label.textContent = "Preparando foto...";
+  try{
+    if(fileDirecto){
+      if(!esArchivoImagenComprobante(fileDirecto)) throw new Error("El comprobante debe ser una imagen.");
+      const blob = await obtenerBlobComprobante(fileDirecto);
+      const dataUrl = await blobToDataURLComprobante(blob.blob);
+      guardarComprobanteDataUrlSeleccionado(inputId, dataUrl, fileDirecto.name || "foto_camara.jpg");
+    }
+    const finalFile = obtenerComprobanteSeleccionado(inputId);
+    if(label) label.textContent = finalFile ? `Seleccionado: ${finalFile.name || "foto_camara.jpg"}` : "Ningún comprobante seleccionado.";
+  }catch(e){
+    limpiarComprobanteSeleccionado(inputId);
+    if(input) input.value = "";
+    if(label) label.textContent = "Ningún comprobante seleccionado.";
+    alert("No se pudo preparar la foto: " + e.message);
+  }
 };
 
 window.subirComprobantePagoChofer = async function(){
@@ -10075,7 +10114,7 @@ window.confirmarCierreSemanal = async function(){
   }
 };
 
-/* v2.8.147: wrapper viejo Chofer eliminado; queda un solo motor estable de comprobante. */
+/* v2.8.148: wrapper viejo Chofer eliminado; queda un solo motor estable de comprobante. */
 
 
 // Revisión automática más agresiva para pruebas por fecha iPhone: al cargar, al volver a la pestaña
@@ -10104,7 +10143,7 @@ window.EXPLORA_BUILD_CIERRE_COMPROBANTE_OBLIGATORIO = EXPLORA_BUILD_CIERRE_COMPR
 
 // ===== EXPLORA v2.8.135 · SPLASH 1s + RANKING/GANADOR AUTO LIVIANO =====
 // Cambio quirúrgico: no modifica cierres, comprobantes, servicios, derivaciones ni lógica financiera.
-const EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = "v2.8.147 · CHOFER-COMPROBANTE-INPUT-FIX";
+const EXPLORA_BUILD_SPLASH_RANKING_AUTO_135 = "v2.8.148 · CHOFER-COMPROBANTE-DATAURL-FIX";
 const EXPLORA_SPLASH_MAX_MS_135 = 1000;
 const EXPLORA_RANKING_AUTO_INTERVAL_MS_135 = 120000;
 const EXPLORA_GANADOR_AUTO_INTERVAL_MS_135 = 120000;
@@ -10246,7 +10285,7 @@ window.exploraActualizarUltimoGanadorAuto135 = exploraActualizarUltimoGanadorAut
 window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135;
 
 
-  /* ===== EXPLORA v2.8.147 · CHOFER-COMPROBANTE-INPUT-FIX-REAL =====
+  /* ===== EXPLORA v2.8.148 · CHOFER-COMPROBANTE-DATAURL-FIX-REAL =====
      Intervención quirúrgica dentro del script principal:
      - Un solo motor final para Admin.
      - Guarda comprobante inline en Firestore sin depender de Storage.
@@ -10691,9 +10730,9 @@ window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135
     }
   };
 
-  /* v2.8.147: wrappers viejos de comprobante Chofer eliminados; Admin sin cambios. */
+  /* v2.8.148: wrappers viejos de comprobante Chofer eliminados; Admin sin cambios. */
 
-  /* v2.8.147: wrapper viejo Chofer eliminado; queda un solo motor estable de comprobante. */
+  /* v2.8.148: wrapper viejo Chofer eliminado; queda un solo motor estable de comprobante. */
 
 
   function recheckV2131(){
