@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.155
-Build: 2026-06-09-ARRANQUE-VISUAL-SIN-PANTALLA-NEGRA-137
+Version: 2.8.154
+Build: 2026-06-09-SIN-CIERRE-SEMANAL-OBLIGATORIO-138
 Fecha: 06/06/2026
 Cambios:
 - v2.8.129: en Chofer la campana superior se reemplaza por botón Salir, cierra sesión y vuelve al login.
@@ -82,7 +82,8 @@ Cambios:
 - v2.8.139: corrección de sintaxis en último ganador desde cierres; elimina fragmento viejo roto y evita splash infinito.
 - v2.8.141: Admin comprobante estable; un solo motor final para subir comprobante y cerrar con compresión reforzada y error visible real.
 - v2.8.142: Admin comprobante cierre visual fix; render reconoce pagoSemanal/estadoCierre y getEstadoPagoSemanal usa fallback desde cierres_semanales. Se elimina motor Admin viejo duplicado.
-- v2.8.155: intervención aplicada directamente sobre index(136); queda solo cartel persistente de cierre pendiente y se bloquea el modal obligatorio viejo.
+- v2.8.153: se elimina visualmente el modal/pantalla completa de cierre semanal pendiente para Chofer; se conserva el cartel persistente de pago/comprobante y los cálculos internos para no dañar Admin ni cierres.
+- v2.8.154: se elimina el disparador automático del cierre semanal obligatorio. Se conserva intacto el cartel “cierre pendiente de comprobante” y sus comprobantes.
 -->
 <html lang="es">
 <head>
@@ -1640,7 +1641,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Viajes y Servicios</div>
-    <div class="explora-version-badge"><b>v2.8.155</b> · SOLO-CARTEL-CIERRE-PENDIENTE</div>
+    <div class="explora-version-badge"><b>v2.8.154</b> · SIN-CIERRE-SEMANAL-OBLIGATORIO</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1654,7 +1655,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="driverView" class="hidden driver-mobile-b">
     <div class="driver-b-topbar">
       <div class="driver-b-logo">EXPL<span>⌖</span>RA</div>
-      <div class="explora-version-badge"><b>v2.8.155</b> · SOLO-CARTEL-CIERRE-PENDIENTE</div>
+      <div class="explora-version-badge"><b>v2.8.154</b> · SIN-CIERRE-SEMANAL-OBLIGATORIO</div>
       <button class="driver-b-bell driver-b-logout-top" type="button" onclick="logout()" aria-label="Salir de la app">Salir</button>
     </div>
 
@@ -1871,7 +1872,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.155</b> · SOLO-CARTEL-CIERRE-PENDIENTE</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.154</b> · SIN-CIERRE-SEMANAL-OBLIGATORIO</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -11030,6 +11031,181 @@ window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135
     window.EXPLORA_BUILD_CHOFER_COMPROBANTE_RECONSTRUIDO = BUILD;
   })();
 
+
+  /* ===== EXPLORA v2.8.153 · SIN-MODAL-CIERRE-OBLIGATORIO-CHOFER =====
+     Intervención quirúrgica solicitada:
+     - Elimina la pantalla completa/modal "Cierre semanal pendiente" para Chofer.
+     - Conserva el cartel persistente de cierre/pago pendiente y la subida directa de comprobante.
+     - No toca Admin, cálculos 50/50, ranking, bono, servicios, derivaciones ni comprobante Admin.
+  */
+  (function(){
+    const BUILD = "v2.8.153-sin-modal-cierre-obligatorio-chofer";
+    const STYLE_ID = "exploraNoModalCierreChoferStyleV2153";
+
+    function esAdminV2153(){
+      try{ return !!(currentProfile && String(currentProfile.rol || "").toLowerCase() === "admin"); }
+      catch(e){ return false; }
+    }
+
+    function instalarEstiloV2153(){
+      if(document.getElementById(STYLE_ID)) return;
+      const st = document.createElement("style");
+      st.id = STYLE_ID;
+      st.textContent = "body.explora-sin-modal-cierre-chofer #cierreSemanalModal{display:none!important;visibility:hidden!important;pointer-events:none!important;}";
+      document.head.appendChild(st);
+    }
+
+    function actualizarModoV2153(){
+      try{
+        instalarEstiloV2153();
+        if(esAdminV2153()) document.body.classList.remove("explora-sin-modal-cierre-chofer");
+        else document.body.classList.add("explora-sin-modal-cierre-chofer");
+      }catch(e){}
+    }
+
+    function ocultarModalChoferV2153(){
+      try{
+        actualizarModoV2153();
+        if(esAdminV2153()) return;
+        const modal = document.getElementById("cierreSemanalModal");
+        if(modal) modal.classList.add("hidden");
+      }catch(e){}
+    }
+
+    const _checkCierreSemanalAutomaticoV2153 = window.checkCierreSemanalAutomatico || checkCierreSemanalAutomatico;
+    window.checkCierreSemanalAutomatico = checkCierreSemanalAutomatico = async function(){
+      actualizarModoV2153();
+      if(esAdminV2153()) return _checkCierreSemanalAutomaticoV2153.apply(this, arguments);
+      ocultarModalChoferV2153();
+      try{ await _checkCierreSemanalAutomaticoV2153.apply(this, arguments); }
+      catch(e){ console.warn("Cierre automático sin modal omitido", e); }
+      finally{
+        ocultarModalChoferV2153();
+        try{ await checkPagosPendientesChoferAutomatico(); }catch(e){}
+      }
+    };
+
+    const _resolverCierrePendienteChoferV2153 = window.resolverCierrePendienteChofer;
+    window.resolverCierrePendienteChofer = async function(periodoId=""){
+      actualizarModoV2153();
+      if(esAdminV2153() && typeof _resolverCierrePendienteChoferV2153 === "function"){
+        return _resolverCierrePendienteChoferV2153.apply(this, arguments);
+      }
+      ocultarModalChoferV2153();
+      try{ await checkPagosPendientesChoferAutomatico(); }catch(e){}
+      try{
+        const box = document.getElementById("cierrePagoPendienteAlert");
+        if(box && !box.classList.contains("hidden")) box.scrollIntoView({behavior:"smooth", block:"center"});
+      }catch(e){}
+      return false;
+    };
+
+    const _showPanelV2153 = window.showPanel;
+    window.showPanel = function(id){
+      actualizarModoV2153();
+      const r = _showPanelV2153 ? _showPanelV2153.apply(this, arguments) : undefined;
+      setTimeout(ocultarModalChoferV2153, 0);
+      setTimeout(ocultarModalChoferV2153, 250);
+      return r;
+    };
+
+    try{
+      const modal = document.getElementById("cierreSemanalModal");
+      if(modal && window.MutationObserver){
+        new MutationObserver(()=>ocultarModalChoferV2153()).observe(modal,{attributes:true,attributeFilter:["class","style"]});
+      }
+    }catch(e){}
+
+    actualizarModoV2153();
+    ocultarModalChoferV2153();
+    setTimeout(ocultarModalChoferV2153, 300);
+    setTimeout(ocultarModalChoferV2153, 1500);
+    setTimeout(ocultarModalChoferV2153, 4000);
+    window.EXPLORA_BUILD_SIN_MODAL_CIERRE_CHOFER = BUILD;
+  })();
+
+  /* ===== EXPLORA v2.8.154 · SIN-CIERRE-SEMANAL-OBLIGATORIO =====
+     Intervención quirúrgica solicitada:
+     - Elimina el disparo automático del cierre semanal obligatorio.
+     - No toca el cartel persistente “cierre pendiente de comprobante”.
+     - No modifica Admin, Login, servicios, ranking, derivaciones ni comprobantes existentes.
+     - Si existe pago/comprobante pendiente, solo se refresca el banner persistente.
+  */
+  (function(){
+    const BUILD = "v2.8.154-sin-cierre-semanal-obligatorio";
+    const STYLE_ID = "exploraSinCierreSemanalObligatorioV2154";
+
+    function instalarEstiloV2154(){
+      if(document.getElementById(STYLE_ID)) return;
+      const st = document.createElement("style");
+      st.id = STYLE_ID;
+      st.textContent = "#cierreSemanalModal{display:none!important;visibility:hidden!important;pointer-events:none!important;}";
+      document.head.appendChild(st);
+    }
+
+    function ocultarCierreObligatorioV2154(){
+      try{
+        instalarEstiloV2154();
+        const modal = document.getElementById("cierreSemanalModal");
+        if(modal) modal.classList.add("hidden");
+        const msgBox = document.getElementById("cierreSemanalMsg");
+        if(msgBox) msgBox.innerHTML = "";
+      }catch(e){}
+    }
+
+    async function refrescarSoloPendienteComprobanteV2154(){
+      ocultarCierreObligatorioV2154();
+      try{
+        if(typeof checkPagosPendientesChoferAutomatico === "function"){
+          await checkPagosPendientesChoferAutomatico();
+        }
+      }catch(e){
+        console.warn("Cierre pendiente de comprobante conservado", e);
+      }finally{
+        ocultarCierreObligatorioV2154();
+      }
+    }
+
+    window.checkCierreSemanalAutomatico = checkCierreSemanalAutomatico = async function(){
+      return refrescarSoloPendienteComprobanteV2154();
+    };
+
+    window.revisarCierreObligatorioV2130 = function(){
+      return refrescarSoloPendienteComprobanteV2154();
+    };
+
+    window.resolverCierrePendienteChofer = async function(){
+      await refrescarSoloPendienteComprobanteV2154();
+      try{
+        const box = document.getElementById("cierrePagoPendienteAlert");
+        if(box && !box.classList.contains("hidden")) box.scrollIntoView({behavior:"smooth", block:"center"});
+      }catch(e){}
+      return false;
+    };
+
+    const _showPanelV2154 = window.showPanel;
+    window.showPanel = function(){
+      const r = _showPanelV2154 ? _showPanelV2154.apply(this, arguments) : undefined;
+      setTimeout(ocultarCierreObligatorioV2154, 0);
+      setTimeout(refrescarSoloPendienteComprobanteV2154, 250);
+      return r;
+    };
+
+    try{
+      const modal = document.getElementById("cierreSemanalModal");
+      if(modal && window.MutationObserver){
+        new MutationObserver(ocultarCierreObligatorioV2154).observe(modal,{attributes:true,attributeFilter:["class","style"]});
+      }
+    }catch(e){}
+
+    ocultarCierreObligatorioV2154();
+    setTimeout(ocultarCierreObligatorioV2154, 250);
+    setTimeout(refrescarSoloPendienteComprobanteV2154, 900);
+    setTimeout(ocultarCierreObligatorioV2154, 2500);
+    window.EXPLORA_BUILD_SIN_CIERRE_SEMANAL_OBLIGATORIO = BUILD;
+  })();
+
+
 </script>
 
 <script>
@@ -11066,107 +11242,5 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
-
-<script>
-/* ===== EXPLORA v2.8.155 · SOLO-CARTEL-CIERRE-PENDIENTE · SOBRE INDEX(136) =====
-   Intervención quirúrgica aplicada al index original recibido:
-   - Bloquea definitivamente la pantalla/modal viejo "Cierre semanal pendiente".
-   - En Chofer queda solo el cartel persistente "Cierre semanal pendiente" con comprobante.
-   - Oculta el botón "Resolver cierre pendiente" para que no vuelva a abrir el modal obligatorio.
-   - No modifica cálculos 50/50, ranking, bono, servicios, derivaciones, Firebase ni Admin.
-*/
-(function(){
-  const BUILD = "v2.8.155-solo-cartel-cierre-pendiente-sobre-index136";
-  const STYLE_ID = "exploraSoloCartelCierrePendienteV2155";
-
-  function instalarBloqueoVisualV2155(){
-    if(document.getElementById(STYLE_ID)) return;
-    const st = document.createElement("style");
-    st.id = STYLE_ID;
-    st.textContent = `
-      #cierreSemanalModal{display:none!important;visibility:hidden!important;pointer-events:none!important;opacity:0!important;}
-      #cierrePagoPendienteAlert button[data-resolver-cierre-v2155="1"]{display:none!important;}
-    `;
-    document.head.appendChild(st);
-  }
-
-  function cerrarModalViejoV2155(){
-    try{
-      instalarBloqueoVisualV2155();
-      const modal = document.getElementById("cierreSemanalModal");
-      if(modal){
-        modal.classList.add("hidden");
-        modal.setAttribute("aria-hidden","true");
-        modal.style.display = "none";
-      }
-    }catch(e){}
-  }
-
-  function limpiarBotonResolverV2155(){
-    try{
-      const box = document.getElementById("cierrePagoPendienteAlert");
-      if(!box) return;
-      box.querySelectorAll("button").forEach(btn=>{
-        const txt = (btn.textContent || "").trim().toLowerCase();
-        if(txt.includes("resolver cierre pendiente")){
-          btn.setAttribute("data-resolver-cierre-v2155","1");
-          btn.classList.add("hidden");
-          btn.style.display = "none";
-        }
-      });
-    }catch(e){}
-  }
-
-  function aplicarV2155(){
-    cerrarModalViejoV2155();
-    limpiarBotonResolverV2155();
-  }
-
-  const _renderPagosPendientesChoferV2155 = window.renderPagosPendientesChofer;
-  if(typeof _renderPagosPendientesChoferV2155 === "function"){
-    window.renderPagosPendientesChofer = function(){
-      const r = _renderPagosPendientesChoferV2155.apply(this, arguments);
-      setTimeout(aplicarV2155, 0);
-      setTimeout(aplicarV2155, 250);
-      return r;
-    };
-  }
-
-  window.resolverCierrePendienteChofer = async function(){
-    aplicarV2155();
-    try{
-      const box = document.getElementById("cierrePagoPendienteAlert");
-      if(box && !box.classList.contains("hidden")) box.scrollIntoView({behavior:"smooth", block:"center"});
-    }catch(e){}
-    return false;
-  };
-
-  const _renderCierreSemanalV2155 = window.renderCierreSemanal;
-  if(typeof _renderCierreSemanalV2155 === "function"){
-    window.renderCierreSemanal = function(){
-      const r = _renderCierreSemanalV2155.apply(this, arguments);
-      aplicarV2155();
-      return r;
-    };
-  }
-
-  try{
-    const modal = document.getElementById("cierreSemanalModal");
-    if(modal && window.MutationObserver){
-      new MutationObserver(aplicarV2155).observe(modal,{attributes:true,attributeFilter:["class","style"]});
-    }
-    const box = document.getElementById("cierrePagoPendienteAlert");
-    if(box && window.MutationObserver){
-      new MutationObserver(limpiarBotonResolverV2155).observe(box,{childList:true,subtree:true});
-    }
-  }catch(e){}
-
-  instalarBloqueoVisualV2155();
-  aplicarV2155();
-  [100,400,1000,2500,5000].forEach(t=>setTimeout(aplicarV2155,t));
-  window.EXPLORA_BUILD_SOLO_CARTEL_CIERRE_PENDIENTE = BUILD;
-})();
-</script>
-
 </body>
 </html>
