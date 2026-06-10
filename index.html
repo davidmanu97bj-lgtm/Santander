@@ -92,6 +92,7 @@ Cambios:
 - v2.8.162: corrección ganador anterior adelantando semanas; busca el último período cerrado con actividad real si la semana visible no tiene datos, corrige closeDate y sincroniza la fuente oficial sin tocar ranking actual, cierres ni comprobantes.
 - v2.8.163: ganador anterior reconstruido desde viajes reales del período cerrado; Admin publica fuente oficial única en configuracion/publico/sistema y espejo en choferes. No depende de acumulados/cache para detectar actividad.
 - v2.8.167: Ranking semana anterior corregido: primero respeta ganador registrado en Firebase aunque no tenga métricas completas, luego reconstruye desde acumulados/cierres/viajes con campos flexibles. No toca otros módulos.
+- v2.8.168: Chofer sin logo en encabezado; botón Salir movido junto al nombre del usuario sin tocar logout/auth.
 -->
 <html lang="es">
 <head>
@@ -1633,6 +1634,53 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 }
 
 #adminLastWeekWinnerCard{display:none!important}
+
+
+/* v2.8.168 · Header Chofer limpio y Salir junto al nombre */
+.driver-b-topbar-clean{
+  justify-content:flex-start!important;
+  min-height:42px!important;
+  padding-top:12px!important;
+  padding-bottom:6px!important;
+}
+.driver-b-topbar-clean .explora-version-badge{
+  position:static!important;
+  margin:0!important;
+  text-align:left!important;
+  font-size:10px!important;
+}
+.driver-b-name-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  width:100%;
+  min-width:0;
+}
+.driver-b-name-row h2{
+  flex:1 1 auto;
+  min-width:0;
+  margin:2px 0 3px!important;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+.driver-b-name-logout{
+  flex:0 0 auto;
+  width:auto!important;
+  min-width:62px!important;
+  height:38px!important;
+  padding:0 12px!important;
+  border-radius:999px!important;
+  font-size:13px!important;
+  font-weight:900!important;
+  background:rgba(58,16,16,.86)!important;
+  color:#fecaca!important;
+  border:1px solid rgba(239,68,68,.42)!important;
+}
+@media(max-width:360px){
+  .driver-b-name-row{gap:8px}
+  .driver-b-name-logout{min-width:56px!important;padding:0 10px!important;font-size:12px!important}
+}
+
 </style>
 </head>
 <body class="auth-boot auth-checking">
@@ -1650,7 +1698,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Viajes y Servicios</div>
-    <div class="explora-version-badge"><b>v2.8.164</b> · GANADOR-CHOFER-INDEPENDIENTE</div>
+    <div class="explora-version-badge"><b>v2.8.168</b> · HEADER-LIMPIO</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1662,17 +1710,18 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   </section>
 
   <section id="driverView" class="hidden driver-mobile-b">
-    <div class="driver-b-topbar">
-      <div class="driver-b-logo">EXPL<span>⌖</span>RA</div>
-      <div class="explora-version-badge"><b>v2.8.164</b> · GANADOR-CHOFER-INDEPENDIENTE</div>
-      <button class="driver-b-bell driver-b-logout-top" type="button" onclick="logout()" aria-label="Salir de la app">Salir</button>
+    <div class="driver-b-topbar driver-b-topbar-clean">
+      <div class="explora-version-badge"><b>v2.8.168</b> · HEADER-LIMPIO</div>
     </div>
 
     <div class="driver-b-profile">
       <div class="driver-b-avatar">⌖</div>
       <div class="driver-b-profile-text">
         <div class="note">Hola</div>
-        <h2 id="driverName">Chofer</h2>
+        <div class="driver-b-name-row">
+          <h2 id="driverName">Chofer</h2>
+          <button class="driver-b-name-logout" type="button" onclick="logout()" aria-label="Salir de la app">Salir</button>
+        </div>
         <div id="vehicleInfo" class="note">Vehículo asignado</div>
       </div>
       <button id="statusBtn" class="status disponible driver-b-status" onclick="toggleStatus()">🟢 Disponible</button>
