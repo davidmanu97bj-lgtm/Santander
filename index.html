@@ -88,6 +88,7 @@ Cambios:
 - v2.8.156: comprobante del cartel persistente de cierre pendiente marca como pagado el documento original del pago para que no reaparezca después de subir la foto.
 - v2.8.160: vuelve a base estable index(138) donde funcionaban cierre pendiente y último ganador; solo se reemplaza el alert feo de comprobante cargado por menú elegante.
 - v2.8.161: se rehace de forma quirúrgica el motor de Ganador ranking semanal anterior; elimina filtro de fuente rígido, reconstruye desde ranking/cierres/acumulados y mantiene espejos Firebase para Admin y Chofer.
+- v2.8.164: se elimina Último ganador del Admin y se deja Último ganador de Chofer como script independiente; calcula desde viajes reales/acumulados/cierres sin depender de publicación Admin.
 - v2.8.162: corrección ganador anterior adelantando semanas; busca el último período cerrado con actividad real si la semana visible no tiene datos, corrige closeDate y sincroniza la fuente oficial sin tocar ranking actual, cierres ni comprobantes.
 - v2.8.163: ganador anterior reconstruido desde viajes reales del período cerrado; Admin publica fuente oficial única en configuracion/publico/sistema y espejo en choferes. No depende de acumulados/cache para detectar actividad.
 -->
@@ -1630,6 +1631,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   line-height:1!important;
 }
 
+#adminLastWeekWinnerCard{display:none!important}
 </style>
 </head>
 <body class="auth-boot auth-checking">
@@ -1647,7 +1649,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Viajes y Servicios</div>
-    <div class="explora-version-badge"><b>v2.8.161</b> · GANADOR-SEMANAL-ANTERIOR</div>
+    <div class="explora-version-badge"><b>v2.8.164</b> · GANADOR-CHOFER-INDEPENDIENTE</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1661,7 +1663,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="driverView" class="hidden driver-mobile-b">
     <div class="driver-b-topbar">
       <div class="driver-b-logo">EXPL<span>⌖</span>RA</div>
-      <div class="explora-version-badge"><b>v2.8.161</b> · GANADOR-SEMANAL-ANTERIOR</div>
+      <div class="explora-version-badge"><b>v2.8.164</b> · GANADOR-CHOFER-INDEPENDIENTE</div>
       <button class="driver-b-bell driver-b-logout-top" type="button" onclick="logout()" aria-label="Salir de la app">Salir</button>
     </div>
 
@@ -1687,7 +1689,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div id="driverLastWeekWinnerContent">
         <div class="last-week-winner-body">
           <div class="last-week-winner-icon">🏆</div>
-          <div><b>Cargando ganador...</b><small>Chofer y Admin usan la misma fuente.</small></div>
+          <div><b>Cargando ganador...</b><small>Script independiente del chofer.</small></div>
         </div>
       </div>
       <!-- Botón manual de último ganador eliminado: actualización solo automática por listener oficial. -->
@@ -1878,7 +1880,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.161</b> · GANADOR-SEMANAL-ANTERIOR</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.164</b> · GANADOR-CHOFER-INDEPENDIENTE</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -1897,15 +1899,6 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
           <div class="admin-summary-card red"><div class="admin-summary-icon">📎</div><strong>...</strong><span>Comprobantes pendientes</span></div>
           <div class="admin-summary-card yellow"><div class="admin-summary-icon">🔧</div><strong>...</strong><span>Vehículos con alertas</span></div>
           <div class="admin-summary-card yellow"><div class="admin-summary-icon">🚨</div><strong>...</strong><span>Por revisar</span></div>
-        </div>
-        <div id="adminLastWeekWinnerCard" class="last-week-winner-card admin-last-week-winner-card" onclick="adminShowSection('home')">
-          <h3>🏆 Último ganador del ranking</h3>
-          <div id="adminLastWeekWinnerContent">
-            <div class="last-week-winner-body">
-              <div class="last-week-winner-icon">🏆</div>
-              <div><b>Aún no hay ganador anterior</b><small>Se actualizará automáticamente cuando haya ranking cerrado.</small></div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -1950,7 +1943,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
 
       <div class="admin-config-card production-hidden" data-produccion="modo-prueba-fecha-bloqueado"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigModoPruebaFecha')"><b>🧪 Modo prueba de fecha por chofer</b><span>›</span></button><div id="adminConfigModoPruebaFecha" class="admin-config-content hidden"><p class="note">Bloqueado en producción. La app usa fecha segura de Firebase.</p><div id="modoPruebaFechaMsg"></div><div id="modoPruebaFechaEstado" class="note" style="margin-top:12px">Modo producción activo.</div></div></div>
 
-      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigHerramientas')"><b>🛠️ Herramientas</b><span>›</span></button><div id="adminConfigHerramientas" class="admin-config-content hidden"><button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios EXPLORA</button><button class="btn-dark" style="margin-top:10px" onclick="verificarYRepararAcumuladosAdmin()">Verificar / reparar acumulados actuales</button><button class="btn-dark" style="margin-top:10px" onclick="sincronizarUltimoGanadorSemanaAdmin()">🏆 Sincronizar ganador anterior con choferes</button><button class="btn-red" style="margin-top:14px" onclick="resetearAppLanzamientoAdmin()">🧨 Lanzar app desde cero / borrar todo menos Admin</button><div class="msg err" style="margin-top:10px"><b>Producción:</b> este botón se usa una sola vez antes de entregar la app. Borra Firestore: choferes, vehículos y actividad, pero conserva el Admin actual. Firebase Authentication debe limpiarse desde Firebase Console si querés borrar usuarios y contraseñas viejas. Pide doble confirmación y la palabra LANZAR.</div><div id="adminToolsMsg"></div></div></div>
+      <div class="admin-config-card"><button class="admin-config-toggle" onclick="toggleAdminConfig('adminConfigHerramientas')"><b>🛠️ Herramientas</b><span>›</span></button><div id="adminConfigHerramientas" class="admin-config-content hidden"><button class="btn-dark" onclick="instalarServiciosExplora()">Instalar / actualizar servicios EXPLORA</button><button class="btn-dark" style="margin-top:10px" onclick="verificarYRepararAcumuladosAdmin()">Verificar / reparar acumulados actuales</button><button class="btn-red" style="margin-top:14px" onclick="resetearAppLanzamientoAdmin()">🧨 Lanzar app desde cero / borrar todo menos Admin</button><div class="msg err" style="margin-top:10px"><b>Producción:</b> este botón se usa una sola vez antes de entregar la app. Borra Firestore: choferes, vehículos y actividad, pero conserva el Admin actual. Firebase Authentication debe limpiarse desde Firebase Console si querés borrar usuarios y contraseñas viejas. Pide doble confirmación y la palabra LANZAR.</div><div id="adminToolsMsg"></div></div></div>
     </div>
 
     <div class="admin-bottom-nav"><button id="adminNavHome" class="active" onclick="adminShowSection('home')"><b>⌂</b>Inicio</button><button id="adminNavVehicles" onclick="adminShowSection('vehicles')"><b>🚗</b>Vehículos</button><button id="adminNavConfig" onclick="adminShowSection('config')"><b>⚙️</b>Configuración</button></div>
@@ -5306,11 +5299,80 @@ function renderGanadorSemanaPasadaEn(boxId, contentId, data, modo="chofer"){
   `;
 }
 
+
+async function getUltimoGanadorChoferIndependiente(){
+  const periodoVisible = periodoSemanaPasadaVisible();
+  const periodoActivo = periodoActivoGanadorAnterior();
+
+  async function validar(candidato){
+    if(candidato && candidato.ganador && ganadorSemanaPasadaValido(candidato.ganador)){
+      return cacheUltimoGanadorSemanaUnico({
+        periodo: candidato.periodo || periodoVisible,
+        ganador: candidato.ganador,
+        fuente: candidato.fuente || "chofer_independiente_v2164",
+        actualizadoMs: Date.now()
+      }) || candidato;
+    }
+    return null;
+  }
+
+  // Fuente 1: viajes reales de la semana cerrada visible.
+  let candidato = await calcularGanadorAnteriorDesdeViajesReales(periodoVisible).catch(e=>{
+    console.warn("Chofer ganador independiente: viajes reales visibles no disponibles", e);
+    return null;
+  });
+  candidato = await validar(candidato);
+  if(candidato) return candidato;
+
+  // Fuente 2: si se adelantaron varias semanas, busca hacia atrás el último período cerrado con viajes reales.
+  candidato = await getUltimoGanadorHistoricoDesdeViajesReales(periodoActivo).catch(e=>{
+    console.warn("Chofer ganador independiente: histórico de viajes reales no disponible", e);
+    return null;
+  });
+  candidato = await validar(candidato);
+  if(candidato) return candidato;
+
+  // Fuente 3: ranking liviano/acumulados del período visible, sin publicar nada en Admin.
+  try{
+    const data = await withTimeout(calcularRankingSemanalLiviano(periodoVisible), 6500, "Ranking anterior del chofer tardó demasiado.");
+    const ranking = (data && data.ranking) || [];
+    const ganador = data && data.ganadorBono ? data.ganadorBono : ranking.find(x=>!x.suspendidoBono) || ranking[0];
+    candidato = await validar({periodo:periodoVisible, ganador, fuente:"chofer_independiente_ranking_v2164"});
+    if(candidato) return candidato;
+  }catch(e){
+    console.warn("Chofer ganador independiente: ranking visible no disponible", e);
+  }
+
+  // Fuente 4: acumulados/cierres históricos ya existentes. Solo lectura, sin espejo Admin.
+  candidato = await getUltimoGanadorHistoricoRapido(periodoActivo).catch(e=>{
+    console.warn("Chofer ganador independiente: histórico rápido no disponible", e);
+    return null;
+  });
+  candidato = await validar(candidato);
+  if(candidato) return candidato;
+
+  candidato = await getUltimoGanadorDesdeCierresSemanales().catch(e=>{
+    console.warn("Chofer ganador independiente: cierres no disponibles", e);
+    return null;
+  });
+  candidato = await validar(candidato);
+  if(candidato) return candidato;
+
+  candidato = await getGanadorSemanaPasadaDesdeAcumulados(periodoVisible).catch(e=>{
+    console.warn("Chofer ganador independiente: acumulados visibles no disponibles", e);
+    return null;
+  });
+  candidato = await validar(candidato);
+  if(candidato) return candidato;
+
+  return {periodo:periodoVisible, ganador:null, actualizado:Date.now(), fuente:"chofer_independiente_sin_ganador_v2164"};
+}
+
 async function loadGanadorSemanaPasadaChofer(mostrarMsg=false){
   const msgBox = $("driverLastWeekWinnerMsg");
   const periodo = periodoSemanaPasadaVisible();
   renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",{periodo, ganador:null, cargando:true},"chofer");
-  let data = await getUltimoGanadorSemanaUnico({preferirChofer:true, reconstruirSiFalta:true});
+  const data = await getUltimoGanadorChoferIndependiente();
   renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",data || {periodo, ganador:null},"chofer");
   if(mostrarMsg && msgBox){
     if(data && data.ganador) msg(msgBox, `Actualizado: ${data.ganador.nombre || data.ganador.id}.`, true);
@@ -5320,19 +5382,9 @@ async function loadGanadorSemanaPasadaChofer(mostrarMsg=false){
 }
 
 async function loadGanadorSemanaPasadaAdmin(){
-  const periodo = periodoSemanaPasadaVisible();
-  renderGanadorSemanaPasadaEn("adminLastWeekWinnerCard","adminLastWeekWinnerContent",{periodo, ganador:null, cargando:true},"admin");
-  const data = await getUltimoGanadorSemanaUnico({preferirChofer:false, reconstruirSiFalta:true});
-  renderGanadorSemanaPasadaEn("adminLastWeekWinnerCard","adminLastWeekWinnerContent",data || {periodo, ganador:null},"admin");
-
-  if(data && data.ganador){
-    await guardarUltimoGanadorSemana(data.periodo, data.ganador, data.fuente || "ganador_ranking_semanal_anterior_v2163").catch(()=>null);
-    const reporte = await publicarUltimoGanadorEnChoferes(data).catch(()=>null);
-    if(reporte && reporte.fail > 0 && $("adminMsg")){
-      msg($("adminMsg"), `Ganador visible en Admin, pero no se copió a todos los choferes (${reporte.ok}/${reporte.total}). Revisá permisos Firebase.`);
-    }
-  }
-  return data;
+  const card = $("adminLastWeekWinnerCard");
+  if(card) card.classList.add("hidden");
+  return null;
 }
 
 let unsubscribeGanadorAnteriorChofer = null;
@@ -5383,70 +5435,25 @@ function procesarSnapshotGanadorAnterior(snap, modo="chofer"){
 }
 
 function iniciarListenerGanadorAnterior(modo="chofer"){
-  const esAdmin = modo === "admin";
-  const boxId = esAdmin ? "adminLastWeekWinnerCard" : "driverLastWeekWinnerCard";
-  const contentId = esAdmin ? "adminLastWeekWinnerContent" : "driverLastWeekWinnerContent";
-  const periodo = periodoSemanaPasadaVisible();
-
-  renderGanadorSemanaPasadaEn(boxId, contentId, {periodo, ganador:null, cargando:true}, modo);
-  pararListenerGanadorAnterior(modo);
-
-  const ref = esAdmin ? ganadorSemanaPasadaDocRef() : ganadorSemanaPasadaPublicoRef();
-  const asignar = esAdmin ? (fn)=>{ unsubscribeGanadorAnteriorAdmin = fn; } : (fn)=>{ unsubscribeGanadorAnteriorChofer = fn; };
-
-  try{
-    const unsub = onSnapshot(ref, async (snap)=>{
-      const data = procesarSnapshotGanadorAnterior(snap, modo);
-      if(!data || !data.ganador){
-        if(esAdmin && !ganadorAnteriorFallbackAdminHecho){
-          ganadorAnteriorFallbackAdminHecho = true;
-          setTimeout(()=>loadGanadorSemanaPasadaAdmin().catch(e=>console.warn("Fallback ganador anterior admin", e)), 650);
-        }
-        if(!esAdmin && !ganadorAnteriorFallbackChoferHecho){
-          ganadorAnteriorFallbackChoferHecho = true;
-          setTimeout(()=>loadGanadorSemanaPasadaChofer().catch(e=>console.warn("Fallback ganador anterior chofer", e)), 650);
-        }
-      }
-    }, async (e)=>{
-      console.warn("Listener ganador anterior falló", modo, e);
-      if(esAdmin){
-        if(!ganadorAnteriorFallbackAdminHecho){
-          ganadorAnteriorFallbackAdminHecho = true;
-          await loadGanadorSemanaPasadaAdmin().catch(err=>console.warn("Fallback ganador anterior admin", err));
-        }
-      }else{
-        if(!ganadorAnteriorFallbackChoferHecho){
-          ganadorAnteriorFallbackChoferHecho = true;
-          await loadGanadorSemanaPasadaChofer().catch(err=>console.warn("Fallback ganador anterior chofer", err));
-        }
-      }
-    });
-    asignar(unsub);
-  }catch(e){
-    console.warn("No se pudo iniciar listener ganador anterior", modo, e);
-    if(esAdmin) loadGanadorSemanaPasadaAdmin().catch(()=>null);
-    else loadGanadorSemanaPasadaChofer().catch(()=>null);
+  if(modo === "admin"){
+    pararListenerGanadorAnterior("admin");
+    const card = $("adminLastWeekWinnerCard");
+    if(card) card.classList.add("hidden");
+    return;
   }
+
+  pararListenerGanadorAnterior("chofer");
+  ganadorAnteriorFallbackChoferHecho = true;
+  loadGanadorSemanaPasadaChofer().catch(e=>console.warn("Ganador anterior independiente chofer falló", e));
 }
 
 window.iniciarListenerGanadorAnterior = iniciarListenerGanadorAnterior;
 window.pararListenerGanadorAnterior = pararListenerGanadorAnterior;
 
 async function sincronizarUltimoGanadorSemanaAdmin(){
-  if(!currentProfile || currentProfile.rol !== "admin") return msg($("adminToolsMsg"), "Solo Admin puede sincronizar el ganador.");
-  msg($("adminToolsMsg"), "Reconstruyendo ganador del ranking semanal anterior y sincronizando con choferes...", true);
-  try{
-    const data = await getUltimoGanadorSemanaUnico({preferirChofer:false, reconstruirSiFalta:true});
-    if(!data || !data.ganador) return msg($("adminToolsMsg"), "No hay ganador anterior con actividad para sincronizar todavía.");
-    renderGanadorSemanaPasadaEn("adminLastWeekWinnerCard","adminLastWeekWinnerContent",data,"admin");
-    await guardarUltimoGanadorSemana(data.periodo, data.ganador, data.fuente || "ganador_ranking_semanal_anterior_v2163");
-    const reporte = await publicarUltimoGanadorEnChoferes(data, true);
-    if(reporte.fail === 0){
-      msg($("adminToolsMsg"), `Listo: ${data.ganador.nombre || data.ganador.id} quedó sincronizado con ${reporte.ok}/${reporte.total} choferes.`, true);
-    }
-  }catch(e){
-    msg($("adminToolsMsg"), "No se pudo sincronizar ganador: " + (e.message || e));
-  }
+  const box = $("adminToolsMsg");
+  if(box) msg(box, "Último ganador fue eliminado del Admin. El Chofer lo calcula con script independiente.", true);
+  return null;
 }
 
 function resetGanadorSemanaPasadaLocalState(){
@@ -5454,7 +5461,7 @@ function resetGanadorSemanaPasadaLocalState(){
   try{ cacheRemove("ultimo_ganador_semana_oficial"); }catch(e){}
   const empty = {periodo: periodoSemanaPasadaVisible(), ganador:null, actualizado:Date.now(), reset:true};
   renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",empty,"chofer");
-  renderGanadorSemanaPasadaEn("adminLastWeekWinnerCard","adminLastWeekWinnerContent",empty,"admin");
+  const adminCard = $("adminLastWeekWinnerCard"); if(adminCard) adminCard.classList.add("hidden");
 }
 
 
@@ -8400,7 +8407,7 @@ async function loadAdmin(){
   try{
     // Carga en paralelo y sin calcular ranking pesado al entrar.
     await Promise.all([cargarPremioAdmin(periodo), cargarVehiculosAdminSimple(periodo)]);
-    setTimeout(()=>iniciarListenerGanadorAnterior("admin"), 250);
+    // Último ganador eliminado del Admin en v2.8.164.
     setTimeout(()=>autoActualizarServiciosExploraAdmin(), 600);
     adminBaseLoadedAt = Date.now();
     if(adminMsg) msg(adminMsg,"Administrador actualizado.",true);
