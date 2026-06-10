@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.165B
-Build: 2026-06-10-BASE-143-GANADOR-CHOFER-FIX-165B
+Version: 2.8.166
+Build: 2026-06-10-BASE-144-RANKING-SEMANA-ANTERIOR-INDEPENDIENTE-166
 Fecha: 06/06/2026
 Cambios:
 - v2.8.129: en Chofer la campana superior se reemplaza por botón Salir, cierra sesión y vuelve al login.
@@ -89,9 +89,9 @@ Cambios:
 - v2.8.160: vuelve a base estable index(138) donde funcionaban cierre pendiente y último ganador; solo se reemplaza el alert feo de comprobante cargado por menú elegante.
 - v2.8.161: se rehace de forma quirúrgica el motor de Ganador ranking semanal anterior; elimina filtro de fuente rígido, reconstruye desde ranking/cierres/acumulados y mantiene espejos Firebase para Admin y Chofer.
 - v2.8.164: se elimina Último ganador del Admin y se deja Último ganador de Chofer como script independiente; calcula desde viajes reales/acumulados/cierres sin depender de publicación Admin.
-- v2.8.165B: prueba independiente para Último ganador Chofer; acepta cierres cerrados con ganadorId aunque las métricas estén en 0 y completa desde acumulados si existe.
 - v2.8.162: corrección ganador anterior adelantando semanas; busca el último período cerrado con actividad real si la semana visible no tiene datos, corrige closeDate y sincroniza la fuente oficial sin tocar ranking actual, cierres ni comprobantes.
 - v2.8.163: ganador anterior reconstruido desde viajes reales del período cerrado; Admin publica fuente oficial única en configuracion/publico/sistema y espejo en choferes. No depende de acumulados/cache para detectar actividad.
+- v2.8.166: Ranking de semana anterior del Chofer reconstruido como módulo independiente; busca períodos cerrados hacia atrás y usa viajes reales, acumulados y cierres sin depender del Admin.
 -->
 <html lang="es">
 <head>
@@ -5301,83 +5301,291 @@ function renderGanadorSemanaPasadaEn(boxId, contentId, data, modo="chofer"){
 }
 
 
-async function getUltimoGanadorChoferIndependiente(){
-  const periodoVisible = periodoSemanaPasadaVisible();
-  const periodoActivo = periodoActivoGanadorAnterior();
+
+// ===== EXPLORA v2.8.166 · RANKING SEMANA ANTERIOR CHOFER INDEPENDIENTE =====
+// Objetivo: mostrar el ganador de la semana anterior sin depender de Admin.
+// Estrategia: buscar el último período cerrado con actividad real en viajes, acumulados o cierres.
+function normalizarFechaRankingAnteriorV2166(value){
+  try{
+    if(!value) return "";
+    if(typeof value === "string") return value.slice(0,10);
+    if(value && typeof value.toDate === "function") return formatDateArgentina(value.toDate());
+    if(value instanceof Date) return formatDateArgentina(value);
+    if(value && typeof value.seconds === "number") return formatDateArgentina(new Date(value.seconds * 1000));
+  }catch(e){}
+  return "";
+}
+
+function normalizarNumeroRankingAnteriorV2166(value){
+  if(value == null || value === "") return 0;
+  if(typeof value === "number") return Number.isFinite(value) ? value : 0;
+  const clean = String(value).replace(/\./g,"").replace(/,/g,".").replace(/[^0-9.-]/g,"");
+  const n = Number(clean);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function getChoferIdRankingAnteriorV2166(v){
+  if(!v) return "";
+  return String(
+    v.chofer || v.choferId || v.driverId || v.idChofer || v.uidChofer ||
+    v.choferAsignado || v.asignadoA || v.creadoPor || v.userId || v.uid || ""
+  ).trim();
+}
+
+function getNombreChoferRankingAnteriorV2166(v, fallback=""){
+  if(!v) return fallback;
+  return String(
+    v.choferNombre || v.nombreChofer || v.nombre || v.driverName ||
+    v.choferAsignadoNombre || v.nombreConductor || fallback || "Chofer"
+  ).trim();
+}
+
+function getMontoViajeRankingAnteriorV2166(v){
+  if(!v) return 0;
+  return normalizarNumeroRankingAnteriorV2166(
+    v.monto ?? v.total ?? v.precio ?? v.tarifa ?? v.valor ?? v.importe ??
+    v.totalViaje ?? v.totalServicio ?? v.precioFinal ?? v.totalARS ?? v.facturacion ?? 0
+  );
+}
+
+function getPeriodoViajeRankingAnteriorV2166(v){
+  const pid = String(v && (v.periodoId || v.periodo || v.periodoTrabajoId || v.semanaId || "") || "").trim();
+  if(pid && periodoDesdeIdGenerico(pid)) return pid;
+  const fecha = normalizarFechaRankingAnteriorV2166(v && (
+    v.fecha || v.fechaServicio || v.creadoFecha || v.dia || v.createdAt || v.fechaCreacion || v.timestamp
+  ));
+  if(!fecha) return "";
+  try{
+    const p = getPeriodoTrabajoActual(fecha);
+    return p && p.id ? p.id : "";
+  }catch(e){
+    return "";
+  }
+}
+
+function crearStatsRankingAnteriorV2166(){
+  return {};
+}
+
+function asegurarStatsRankingAnteriorV2166(stats, choferId, nombre){
+  if(!choferId) return null;
+  if(!stats[choferId]){
+    stats[choferId] = {
+      id: choferId,
+      nombre: nombre || choferId,
+      viajes: 0,
+      derivaciones: 0,
+      facturacion: 0,
+      porcentaje: 0,
+      actividad: 0
+    };
+  }else if(nombre && (!stats[choferId].nombre || stats[choferId].nombre === choferId)){
+    stats[choferId].nombre = nombre;
+  }
+  return stats[choferId];
+}
+
+function sumarViajeRankingAnteriorV2166(stats, v, periodo){
+  if(!v || !periodo || !periodo.id) return false;
+  const choferId = getChoferIdRankingAnteriorV2166(v);
+  if(!choferId) return false;
+  const pid = getPeriodoViajeRankingAnteriorV2166(v);
+  if(pid && pid !== periodo.id) return false;
+  if(!pid){
+    const f = normalizarFechaRankingAnteriorV2166(v.fecha || v.fechaServicio || v.creadoFecha || v.dia || v.createdAt || v.fechaCreacion || v.timestamp);
+    if(f && (String(f) < String(periodo.start) || String(f) > String(periodo.end))) return false;
+    if(!f && typeof perteneceAlPeriodo === "function" && !perteneceAlPeriodo(v, periodo)) return false;
+  }
+  const nombre = getNombreChoferRankingAnteriorV2166(v, choferId);
+  const row = asegurarStatsRankingAnteriorV2166(stats, choferId, nombre);
+  if(!row) return false;
+  row.facturacion += getMontoViajeRankingAnteriorV2166(v);
+  row.viajes += 1;
+  return true;
+}
+
+function sumarAcumuladoRankingAnteriorV2166(stats, a, docId, periodo){
+  if(!a || !periodo || !periodo.id) return false;
+  const pid = String(a.periodoId || "").trim() || (String(docId || "").includes(periodo.id) ? periodo.id : "");
+  if(pid && pid !== periodo.id) return false;
+  const choferId = String(a.chofer || a.choferId || a.driverId || String(docId || "").replace(`_${periodo.id}`,"").split("_")[0] || "").trim();
+  if(!choferId) return false;
+  const row = asegurarStatsRankingAnteriorV2166(stats, choferId, a.nombre || a.choferNombre || choferId);
+  if(!row) return false;
+  row.viajes += normalizarNumeroRankingAnteriorV2166(a.cantidadViajes ?? a.viajes ?? 0);
+  row.facturacion += normalizarNumeroRankingAnteriorV2166(a.totalViajes ?? a.facturacion ?? a.total ?? 0);
+  row.derivaciones += normalizarNumeroRankingAnteriorV2166(a.derivaciones ?? 0);
+  return (row.viajes > 0 || row.facturacion > 0 || row.derivaciones > 0);
+}
+
+function elegirGanadorRankingAnteriorV2166(stats, periodo, fuente){
+  const arr = calcularPorcentajeRanking(Object.values(stats || {}));
+  const ganador = (arr || []).find(x=>ganadorSemanaPasadaValido(x)) || null;
+  if(!ganador) return null;
+  return {
+    periodo,
+    ganador,
+    ranking: arr,
+    actualizado: Date.now(),
+    actualizadoMs: Date.now(),
+    fuente: fuente || "ranking_semana_anterior_chofer_v2166"
+  };
+}
+
+async function calcularRankingSemanaAnteriorDesdeViajesV2166(periodo){
+  if(!periodo || !periodo.id) return null;
+  const stats = crearStatsRankingAnteriorV2166();
+  const leidos = new Set();
+  let sumados = 0;
+
+  try{
+    const snapPeriodo = await withTimeout(getDocs(query(collection(db,"viajes"), where("periodoId","==",periodo.id))), 6000, "Viajes de semana anterior por período tardaron.");
+    snapPeriodo.forEach(d=>{
+      leidos.add(d.id);
+      if(sumarViajeRankingAnteriorV2166(stats, d.data() || {}, periodo)) sumados++;
+    });
+  }catch(e){
+    console.warn("Ranking semana anterior: no se pudo leer viajes por periodoId", e);
+  }
+
+  const camposFecha = ["fecha", "fechaServicio", "creadoFecha"];
+  for(const campo of camposFecha){
+    try{
+      const snapFecha = await withTimeout(getDocs(query(collection(db,"viajes"), where(campo,">=",periodo.start), where(campo,"<=",periodo.end))), 4500, `Viajes por ${campo} tardaron.`);
+      snapFecha.forEach(d=>{
+        if(leidos.has(d.id)) return;
+        leidos.add(d.id);
+        if(sumarViajeRankingAnteriorV2166(stats, d.data() || {}, periodo)) sumados++;
+      });
+    }catch(e){
+      console.warn("Ranking semana anterior: no se pudo leer viajes por", campo, e);
+    }
+  }
+
+  try{
+    const deriv = await getDerivacionesAceptadasPorOrigenRapido(periodo);
+    Object.keys(deriv || {}).forEach(choferId=>{
+      const row = asegurarStatsRankingAnteriorV2166(stats, choferId, choferId);
+      if(row) row.derivaciones = Math.max(Number(row.derivaciones || 0), Number(deriv[choferId] || 0));
+    });
+  }catch(e){
+    console.warn("Ranking semana anterior: derivaciones no disponibles", e);
+  }
+
+  if(sumados <= 0) return null;
+  return elegirGanadorRankingAnteriorV2166(stats, periodo, "viajes_reales_semana_anterior_v2166");
+}
+
+async function calcularRankingSemanaAnteriorDesdeAcumuladosV2166(periodo){
+  if(!periodo || !periodo.id) return null;
+  const stats = crearStatsRankingAnteriorV2166();
+  let sumados = 0;
+  try{
+    const snap = await withTimeout(getDocs(query(collection(db,"acumulados_semanales"), where("periodoId","==",periodo.id))), 5500, "Acumulados semana anterior tardaron.");
+    snap.forEach(d=>{
+      if(sumarAcumuladoRankingAnteriorV2166(stats, d.data() || {}, d.id, periodo)) sumados++;
+    });
+  }catch(e){
+    console.warn("Ranking semana anterior: acumulados por periodoId no disponibles", e);
+  }
+  if(sumados <= 0) return null;
+  return elegirGanadorRankingAnteriorV2166(stats, periodo, "acumulados_semana_anterior_v2166");
+}
+
+async function calcularRankingSemanaAnteriorDesdeCierresV2166(periodo){
+  if(!periodo || !periodo.id) return null;
+  try{
+    const snap = await withTimeout(getDocs(collection(db,"cierres_semanales")), 6500, "Cierres semana anterior tardaron.");
+    const stats = crearStatsRankingAnteriorV2166();
+    let sumados = 0;
+    snap.forEach(d=>{
+      const c = d.data() || {};
+      const pid = c.periodoId || (c.periodo && c.periodo.id) || "";
+      if(pid !== periodo.id) return;
+      const cerrado = c.estadoCierre === "cerrado" || c.estadoCierre === "sin_actividad" || c.aceptadoPorChofer === true || !!c.fechaConfirmacion || !!c.cierreConfirmadoAt;
+      if(!cerrado) return;
+      const choferId = String(c.chofer || c.choferId || c.idChofer || "").trim();
+      if(!choferId) return;
+      const row = asegurarStatsRankingAnteriorV2166(stats, choferId, c.choferNombre || c.nombre || choferId);
+      if(!row) return;
+      row.viajes += normalizarNumeroRankingAnteriorV2166(c.cantidadViajes ?? c.viajes ?? 0);
+      row.facturacion += normalizarNumeroRankingAnteriorV2166(c.totalViajes ?? c.facturacion ?? 0);
+      row.derivaciones += normalizarNumeroRankingAnteriorV2166(c.derivaciones ?? 0);
+      sumados++;
+    });
+    if(sumados <= 0) return null;
+    return elegirGanadorRankingAnteriorV2166(stats, periodo, "cierres_semana_anterior_v2166");
+  }catch(e){
+    console.warn("Ranking semana anterior: cierres no disponibles", e);
+    return null;
+  }
+}
+
+function generarPeriodosCerradosRankingAnteriorV2166(max=12){
+  const periodos = [];
+  let p = periodoSemanaPasadaVisible();
+  for(let i=0; i<max && p && p.id; i++){
+    periodos.push(p);
+    p = periodoAnterior(p);
+  }
+  return periodos;
+}
+
+async function getRankingSemanaAnteriorChoferIndependienteV2166(){
+  const periodos = generarPeriodosCerradosRankingAnteriorV2166(14);
+  const periodoVisible = periodos[0] || periodoSemanaPasadaVisible();
 
   async function validar(candidato){
     if(candidato && candidato.ganador && ganadorSemanaPasadaValido(candidato.ganador)){
       return cacheUltimoGanadorSemanaUnico({
         periodo: candidato.periodo || periodoVisible,
         ganador: candidato.ganador,
-        fuente: candidato.fuente || "chofer_independiente_v2164",
+        fuente: candidato.fuente || "ranking_semana_anterior_chofer_v2166",
         actualizadoMs: Date.now()
       }) || candidato;
     }
     return null;
   }
 
-  // Fuente 1: viajes reales de la semana cerrada visible.
-  let candidato = await calcularGanadorAnteriorDesdeViajesReales(periodoVisible).catch(e=>{
-    console.warn("Chofer ganador independiente: viajes reales visibles no disponibles", e);
-    return null;
-  });
-  candidato = await validar(candidato);
-  if(candidato) return candidato;
-
-  // Fuente 2: si se adelantaron varias semanas, busca hacia atrás el último período cerrado con viajes reales.
-  candidato = await getUltimoGanadorHistoricoDesdeViajesReales(periodoActivo).catch(e=>{
-    console.warn("Chofer ganador independiente: histórico de viajes reales no disponible", e);
-    return null;
-  });
-  candidato = await validar(candidato);
-  if(candidato) return candidato;
-
-  // Fuente 3: ranking liviano/acumulados del período visible, sin publicar nada en Admin.
-  try{
-    const data = await withTimeout(calcularRankingSemanalLiviano(periodoVisible), 6500, "Ranking anterior del chofer tardó demasiado.");
-    const ranking = (data && data.ranking) || [];
-    const ganador = data && data.ganadorBono ? data.ganadorBono : ranking.find(x=>!x.suspendidoBono) || ranking[0];
-    candidato = await validar({periodo:periodoVisible, ganador, fuente:"chofer_independiente_ranking_v2164"});
+  for(const periodo of periodos){
+    let candidato = await calcularRankingSemanaAnteriorDesdeViajesV2166(periodo).catch(e=>{
+      console.warn("Ranking semana anterior por viajes falló", periodo && periodo.id, e);
+      return null;
+    });
+    candidato = await validar(candidato);
     if(candidato) return candidato;
-  }catch(e){
-    console.warn("Chofer ganador independiente: ranking visible no disponible", e);
+
+    candidato = await calcularRankingSemanaAnteriorDesdeAcumuladosV2166(periodo).catch(e=>{
+      console.warn("Ranking semana anterior por acumulados falló", periodo && periodo.id, e);
+      return null;
+    });
+    candidato = await validar(candidato);
+    if(candidato) return candidato;
+
+    candidato = await calcularRankingSemanaAnteriorDesdeCierresV2166(periodo).catch(e=>{
+      console.warn("Ranking semana anterior por cierres falló", periodo && periodo.id, e);
+      return null;
+    });
+    candidato = await validar(candidato);
+    if(candidato) return candidato;
   }
 
-  // Fuente 4: acumulados/cierres históricos ya existentes. Solo lectura, sin espejo Admin.
-  candidato = await getUltimoGanadorHistoricoRapido(periodoActivo).catch(e=>{
-    console.warn("Chofer ganador independiente: histórico rápido no disponible", e);
-    return null;
-  });
-  candidato = await validar(candidato);
-  if(candidato) return candidato;
+  return {periodo: periodoVisible, ganador:null, ranking:[], actualizado:Date.now(), fuente:"sin_ranking_semana_anterior_v2166"};
+}
 
-  candidato = await getUltimoGanadorDesdeCierresSemanales().catch(e=>{
-    console.warn("Chofer ganador independiente: cierres no disponibles", e);
-    return null;
-  });
-  candidato = await validar(candidato);
-  if(candidato) return candidato;
-
-  candidato = await getGanadorSemanaPasadaDesdeAcumulados(periodoVisible).catch(e=>{
-    console.warn("Chofer ganador independiente: acumulados visibles no disponibles", e);
-    return null;
-  });
-  candidato = await validar(candidato);
-  if(candidato) return candidato;
-
-  return {periodo:periodoVisible, ganador:null, actualizado:Date.now(), fuente:"chofer_independiente_sin_ganador_v2164"};
+async function getUltimoGanadorChoferIndependiente(){
+  return getRankingSemanaAnteriorChoferIndependienteV2166();
 }
 
 async function loadGanadorSemanaPasadaChofer(mostrarMsg=false){
   const msgBox = $("driverLastWeekWinnerMsg");
   const periodo = periodoSemanaPasadaVisible();
   renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",{periodo, ganador:null, cargando:true},"chofer");
-  const data = await getUltimoGanadorChoferIndependiente();
+  const data = await getRankingSemanaAnteriorChoferIndependienteV2166();
   renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",data || {periodo, ganador:null},"chofer");
   if(mostrarMsg && msgBox){
-    if(data && data.ganador) msg(msgBox, `Actualizado: ${data.ganador.nombre || data.ganador.id}.`, true);
-    else msg(msgBox, "No hay ganador anterior con actividad todavía.");
+    if(data && data.ganador) msg(msgBox, `Ranking anterior actualizado: ${data.ganador.nombre || data.ganador.id}.`, true);
+    else msg(msgBox, "No hay ranking anterior con actividad todavía.");
   }
   return data;
 }
@@ -5407,32 +5615,13 @@ function pararListenerGanadorAnterior(modo="chofer"){
 }
 
 function procesarSnapshotGanadorAnterior(snap, modo="chofer"){
-  const esAdmin = modo === "admin";
-  const boxId = esAdmin ? "adminLastWeekWinnerCard" : "driverLastWeekWinnerCard";
-  const contentId = esAdmin ? "adminLastWeekWinnerContent" : "driverLastWeekWinnerContent";
-  const periodo = periodoSemanaPasadaVisible();
-
-  if(!snap || !snap.exists()){
-    renderGanadorSemanaPasadaEn(boxId, contentId, {periodo, ganador:null}, modo);
+  if(modo === "admin"){
+    const card = $("adminLastWeekWinnerCard");
+    if(card) card.classList.add("hidden");
     return null;
   }
-
-  const raw = snap.data() || {};
-  if(raw.eliminado === true || raw.reset === true || raw.ganador === null){
-    limpiarCachesViejosGanadorSemana();
-    try{ cacheRemove("ultimo_ganador_semana_oficial"); }catch(e){}
-    renderGanadorSemanaPasadaEn(boxId, contentId, {periodo, ganador:null}, modo);
-    return null;
-  }
-
-  const data = cacheUltimoGanadorSemanaUnico(raw);
-  if(!data || !data.ganador){
-    renderGanadorSemanaPasadaEn(boxId, contentId, {periodo, ganador:null}, modo);
-    return null;
-  }
-
-  renderGanadorSemanaPasadaEn(boxId, contentId, data, modo);
-  return data;
+  loadGanadorSemanaPasadaChofer().catch(e=>console.warn("Ranking semana anterior independiente falló", e));
+  return null;
 }
 
 function iniciarListenerGanadorAnterior(modo="chofer"){
@@ -5445,7 +5634,7 @@ function iniciarListenerGanadorAnterior(modo="chofer"){
 
   pararListenerGanadorAnterior("chofer");
   ganadorAnteriorFallbackChoferHecho = true;
-  loadGanadorSemanaPasadaChofer().catch(e=>console.warn("Ganador anterior independiente chofer falló", e));
+  loadGanadorSemanaPasadaChofer().catch(e=>console.warn("Ranking semana anterior independiente chofer falló", e));
 }
 
 window.iniciarListenerGanadorAnterior = iniciarListenerGanadorAnterior;
@@ -5453,7 +5642,7 @@ window.pararListenerGanadorAnterior = pararListenerGanadorAnterior;
 
 async function sincronizarUltimoGanadorSemanaAdmin(){
   const box = $("adminToolsMsg");
-  if(box) msg(box, "Último ganador fue eliminado del Admin. El Chofer lo calcula con script independiente.", true);
+  if(box) msg(box, "Ranking de semana anterior fue eliminado del Admin. El Chofer lo calcula con script independiente.", true);
   return null;
 }
 
@@ -5464,98 +5653,6 @@ function resetGanadorSemanaPasadaLocalState(){
   renderGanadorSemanaPasadaEn("driverLastWeekWinnerCard","driverLastWeekWinnerContent",empty,"chofer");
   const adminCard = $("adminLastWeekWinnerCard"); if(adminCard) adminCard.classList.add("hidden");
 }
-
-
-
-// ===== EXPLORA v2.8.165B · ÚLTIMO GANADOR CHOFER · FIX CIERRES SIN MÉTRICAS =====
-// Posible error corregido: el cierre guarda ganadorId/ganadorNombre, pero las métricas quedan en 0 y el validador lo descartaba.
-function ganadorSemanaPasadaValido(item){
-  if(!item) return false;
-  const id = item.id || item.ganadorId || item.chofer || "";
-  const nombre = item.nombre || item.ganadorNombre || item.ganadorSemana || item.nombreGanador || "";
-  if(!id) return false;
-  if(Number(item.facturacion || item.totalViajes || 0) > 0) return true;
-  if(Number(item.viajes || item.cantidadViajes || 0) > 0) return true;
-  if(Number(item.derivaciones || 0) > 0) return true;
-  if(Number(item.porcentaje || 0) > 0) return true;
-  // Fix 165B: si viene de un cierre semanal cerrado con ganador, se permite mostrarlo aunque falten métricas.
-  return !!nombre;
-}
-async function getUltimoGanadorDesdeCierresSemanales(){
-  try{
-    const periodoActivo = periodoActivoGanadorAnterior();
-    const snap = await withTimeout(getDocs(collection(db,"cierres_semanales")), 8500, "Cierres semanales tardaron demasiado.");
-    const candidatos = [];
-    snap.forEach(d=>{
-      const c = d.data() || {};
-      const periodoId = c.periodoId || (c.periodo && c.periodo.id) || String(d.id || "").split("_").slice(-2).join("_");
-      const periodo = (c.periodo && c.periodo.id) ? c.periodo : periodoDesdeIdGenerico(periodoId);
-      if(!periodo || (periodoActivo && periodoActivo.id && String(periodo.id) >= String(periodoActivo.id))) return;
-      const cerrado = c.estadoCierre === "cerrado" || c.estadoCierre === "sin_actividad" || c.aceptadoPorChofer === true || c.confirmado === true || c.cierreConfirmado === true || !!c.fechaConfirmacion || !!c.cierreConfirmadoAt || !!c.ganadorId || !!c.ganadorSemana;
-      if(!cerrado) return;
-      const ganadorId = c.ganadorId || (c.ganador && c.ganador.id) || c.ganadorChofer || c.choferGanador || "";
-      const ganadorNombre = c.ganadorSemana || c.ganadorNombre || c.nombreGanador || (c.ganador && c.ganador.nombre) || ganadorId;
-      if(!ganadorId) return;
-      candidatos.push({
-        periodo,
-        ganador:{
-          id: ganadorId,
-          nombre: ganadorNombre,
-          facturacion: Number((c.ganador && c.ganador.facturacion) || c.ganadorFacturacion || (c.chofer === ganadorId ? c.totalViajes : 0) || 0),
-          viajes: Number((c.ganador && c.ganador.viajes) || c.ganadorViajes || (c.chofer === ganadorId ? c.cantidadViajes : 0) || 0),
-          derivaciones: Number((c.ganador && c.ganador.derivaciones) || c.ganadorDerivaciones || c.derivaciones || 0),
-          porcentaje: Number((c.ganador && c.ganador.porcentaje) || c.ganadorPorcentaje || c.porcentaje || 0)
-        },
-        fuente:"chofer_fix_165B_cierres_sin_metricas",
-        prioridad: Number(c.premioAplicado || c.bono || 0) + (c.esGanador ? 100000 : 0) + (c.chofer === ganadorId ? 50000 : 0) + Number(c.actualizadoMs || 0),
-        actualizadoMs:Number(c.actualizadoMs || Date.now())
-      });
-    });
-    candidatos.sort((a,b)=>String(b.periodo.id).localeCompare(String(a.periodo.id)) || Number(b.prioridad||0)-Number(a.prioridad||0));
-    const elegido = candidatos[0] || null;
-    if(!elegido) return null;
-
-    // Completa métricas si el acumulado existe, pero no bloquea mostrar el ganador si no existe.
-    try{
-      const accSnap = await withTimeout(getDoc(doc(db,"acumulados_semanales",`${elegido.ganador.id}_${elegido.periodo.id}`)), 2500, "Acumulado del ganador tardó demasiado.");
-      if(accSnap.exists()){
-        const a = accSnap.data() || {};
-        elegido.ganador.facturacion = Number(a.totalViajes || a.facturacion || elegido.ganador.facturacion || 0);
-        elegido.ganador.viajes = Number(a.cantidadViajes || a.viajes || elegido.ganador.viajes || 0);
-        elegido.ganador.derivaciones = Number(a.derivaciones || elegido.ganador.derivaciones || 0);
-        elegido.ganador.porcentaje = Number(a.porcentaje || elegido.ganador.porcentaje || 0);
-        elegido.ganador.nombre = a.nombre || a.choferNombre || elegido.ganador.nombre;
-      }
-    }catch(e){}
-    return cacheUltimoGanadorSemanaUnico(elegido);
-  }catch(e){
-    console.warn("165B no pudo leer ganador desde cierres", e);
-    return null;
-  }
-}
-async function getUltimoGanadorChoferIndependiente(){
-  const periodoVisible = periodoSemanaPasadaVisible();
-  const periodoActivo = periodoActivoGanadorAnterior();
-  async function validar(candidato){
-    if(candidato && candidato.ganador && ganadorSemanaPasadaValido(candidato.ganador)){
-      return cacheUltimoGanadorSemanaUnico({periodo:candidato.periodo || periodoVisible, ganador:candidato.ganador, fuente:candidato.fuente || "chofer_fix_165B", actualizadoMs:Date.now()}) || candidato;
-    }
-    return null;
-  }
-  // 165B prioriza cierres, porque el problema puede estar en métricas vacías pero cierre ya cerrado.
-  let candidato = await getUltimoGanadorDesdeCierresSemanales().catch(()=>null);
-  candidato = await validar(candidato); if(candidato) return candidato;
-  candidato = await calcularGanadorAnteriorDesdeViajesReales(periodoVisible).catch(()=>null);
-  candidato = await validar(candidato); if(candidato) return candidato;
-  candidato = await getUltimoGanadorHistoricoDesdeViajesReales(periodoActivo).catch(()=>null);
-  candidato = await validar(candidato); if(candidato) return candidato;
-  candidato = await getUltimoGanadorHistoricoRapido(periodoActivo).catch(()=>null);
-  candidato = await validar(candidato); if(candidato) return candidato;
-  candidato = await getGanadorSemanaPasadaDesdeAcumulados(periodoVisible).catch(()=>null);
-  candidato = await validar(candidato); if(candidato) return candidato;
-  return {periodo:periodoVisible, ganador:null, actualizado:Date.now(), fuente:"chofer_fix_165B_sin_ganador"};
-}
-
 
 async function calcularCierreSemanalUltraRapido(chofer, periodo){
   const acumKey = `acum_sem_${chofer}_${periodo.id}`;
