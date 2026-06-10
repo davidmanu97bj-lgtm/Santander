@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
 EXPLORA BUILD
-Version: 2.8.155
+Version: 2.8.156
 Build: 2026-06-09-ELIMINA-MODAL-CIERRE-SEMANAL-PENDIENTE-139
 Fecha: 06/06/2026
 Cambios:
@@ -85,6 +85,7 @@ Cambios:
 - v2.8.153: se elimina visualmente el modal/pantalla completa de cierre semanal pendiente para Chofer; se conserva el cartel persistente de pago/comprobante y los cálculos internos para no dañar Admin ni cierres.
 - v2.8.154: se elimina el disparador automático del cierre semanal obligatorio. Se conserva intacto el cartel “cierre pendiente de comprobante” y sus comprobantes.
 - v2.8.155: se elimina del HTML la pantalla/modal completa “Cierre semanal pendiente”. Se conserva intacto el cartel persistente de comprobante pendiente.
+- v2.8.156: comprobante del cartel persistente de cierre pendiente marca como pagado el documento original del pago para que no reaparezca después de subir la foto.
 -->
 <html lang="es">
 <head>
@@ -1642,7 +1643,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="loginView">
     <div class="logo">EXPL<span class="compass">⌖</span>RA</div>
     <div class="subtitle">Viajes y Servicios</div>
-    <div class="explora-version-badge"><b>v2.8.155</b> · SIN-MODAL-CIERRE-SEMANAL</div>
+    <div class="explora-version-badge"><b>v2.8.156</b> · COMPROBANTE-PENDIENTE-SIN-DUPLICADO</div>
     <div class="card">
       <label>Usuario</label>
       <input id="loginUser" placeholder="Ej: ariel" autocomplete="username" />
@@ -1656,7 +1657,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
   <section id="driverView" class="hidden driver-mobile-b">
     <div class="driver-b-topbar">
       <div class="driver-b-logo">EXPL<span>⌖</span>RA</div>
-      <div class="explora-version-badge"><b>v2.8.155</b> · SIN-MODAL-CIERRE-SEMANAL</div>
+      <div class="explora-version-badge"><b>v2.8.156</b> · COMPROBANTE-PENDIENTE-SIN-DUPLICADO</div>
       <button class="driver-b-bell driver-b-logout-top" type="button" onclick="logout()" aria-label="Salir de la app">Salir</button>
     </div>
 
@@ -1873,7 +1874,7 @@ hr{border:0;border-top:1px solid #272727;margin:14px 0}
       <div class="admin-logo-row">
         <div class="admin-logo-mark">
           <div class="admin-logo-circle">⌖</div>
-          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.155</b> · SIN-MODAL-CIERRE-SEMANAL</div></div>
+          <div><div class="admin-logo-text">EXPLORA</div><div class="admin-logo-sub">ADMIN</div><div class="explora-version-badge"><b>v2.8.156</b> · COMPROBANTE-PENDIENTE-SIN-DUPLICADO</div></div>
         </div>
         <div class="admin-top-actions">
           <button class="admin-bell" onclick="adminShowSection('home')">🔔<span id="adminBellBadge" class="admin-bell-badge hidden">0</span></button>
@@ -5574,7 +5575,7 @@ function renderPagosPendientesChofer(items){
             inputId:`compPendChofer_${safeId(p.id)}`,
             buttonText:"Subir comprobante",
             nota:"Subí la foto del comprobante pendiente. Podés elegir una foto desde galería o tomar una foto nueva.",
-            onClick:`subirComprobantePendienteChofer('${p.periodoId}', ${Math.round(Number(p.monto || 0))}, 'compPendChofer_${safeId(p.id)}')`
+            onClick:`subirComprobantePendienteChofer('${p.periodoId}', ${Math.round(Number(p.monto || 0))}, 'compPendChofer_${safeId(p.id)}', '${jsArg(p.id)}')`
           })}
         </div>`;
     }
@@ -5602,7 +5603,7 @@ function renderPagosPendientesChofer(items){
   box.innerHTML = html;
 }
 
-window.subirComprobantePendienteChofer = async function(periodoId, monto, inputId){
+window.subirComprobantePendienteChofer = async function(periodoId, monto, inputId, pagoPendienteId=""){
   const input = $(inputId);
   const file = obtenerComprobanteSeleccionado(inputId);
   try{
@@ -5621,7 +5622,25 @@ window.subirComprobantePendienteChofer = async function(periodoId, monto, inputI
     const btn = Array.from(document.querySelectorAll('button')).find(b => (b.getAttribute('onclick') || '').includes(inputId));
     const old = btn ? btn.textContent : "";
     if(btn){ btn.disabled = true; btn.textContent = "Subiendo..."; }
-    await subirComprobantePago({chofer:currentUserId, periodoId, sentido:"chofer_a_david", monto, file:fileFinal, marcadoPor:"chofer"});
+    const pago = await subirComprobantePago({chofer:currentUserId, periodoId, sentido:"chofer_a_david", monto, file:fileFinal, marcadoPor:"chofer"});
+    // v2.8.156: si el aviso venía de un documento de pago con ID antiguo/auto-ID,
+    // se marca ese documento original como pagado. Antes se creaba el comprobante correcto,
+    // pero el pago viejo quedaba pendiente y el cartel reaparecía como si nada se hubiera cargado.
+    if(pagoPendienteId && pagoPendienteId !== comprobanteId(currentUserId, periodoId)){
+      await withTimeout(setDoc(doc(db,"pagos_semanales",pagoPendienteId),{
+        pagado:true,
+        marcadoPor:"chofer",
+        vistoPorChofer:true,
+        fechaPago:pago.fecha,
+        horaPago:pago.hora,
+        comprobanteUrl:pago.url,
+        comprobantePath:pago.storagePath,
+        guardadoEn:pago.guardadoEn,
+        storageError:pago.storageError || "",
+        comprobanteObligatorio:true,
+        actualizado:serverTimestamp()
+      },{merge:true}), 7000, "El comprobante subió, pero no se pudo cerrar el pago pendiente original.");
+    }
     limpiarComprobanteSeleccionado(inputId);
     const labelPend = $(inputId + "_name");
     if(labelPend) labelPend.textContent = "Ningún comprobante seleccionado.";
@@ -11199,14 +11218,14 @@ window.exploraMostrarRankingCacheValido135 = exploraMostrarRankingCacheValido135
   })();
 
 
-  /* ===== EXPLORA v2.8.155 · ELIMINA-MODAL-CIERRE-SEMANAL-PENDIENTE =====
+  /* ===== EXPLORA v2.8.156 · COMPROBANTE-PENDIENTE-SIN-DUPLICADO =====
      Intervención quirúrgica solicitada:
      - Elimina del DOM la pantalla completa “Cierre semanal pendiente”.
      - Mantiene intacto el cartel persistente “cierre pendiente de comprobante”.
      - No modifica servicios, ranking, derivaciones, Admin ni comprobantes.
   */
   (function(){
-    const BUILD = "v2.8.155-elimina-modal-cierre-semanal-pendiente";
+    const BUILD = "v2.8.156-comprobante-pendiente-sin-duplicado";
     function eliminarModalCierreSemanalV2155(){
       try{
         const modal = document.getElementById("cierreSemanalModal");
