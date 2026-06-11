@@ -2,12 +2,12 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="explora-version" content="v184-derivaciones-integradas">
+  <meta name="explora-version" content="v185-gastos-catalogo-servicios">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>EXPLORA — Dashboard v2 (179)</title>
+  <title>EXPLORA — Dashboard v2 (185)</title>
 
   <style>
     :root {
@@ -857,7 +857,7 @@
     }
 
 
-    /* NUEVO SERVICIO · 6 CATEGORÍAS · HTML REAL */
+    /* NUEVO SERVICIO · CATÁLOGO OFICIAL · HTML REAL */
     .new-service-screen{
       position:fixed;inset:0;z-index:55;display:none;min-height:100dvh;overflow-y:auto;overflow-x:hidden;
       -webkit-overflow-scrolling:touch;overscroll-behavior-y:auto;touch-action:pan-y;color:#fff;
@@ -869,31 +869,32 @@
     }
     .new-service-screen.is-open{display:block}
     .new-service-shell{width:100%;max-width:520px;margin:0 auto}
-    .new-service-header{position:relative;min-height:114px;display:grid;grid-template-columns:52px 1fr 52px;align-items:start;gap:8px;padding-top:4px}
+    .new-service-header{position:relative;min-height:108px;display:grid;grid-template-columns:52px 1fr 52px;align-items:start;gap:8px;padding-top:4px}
     .new-service-back,.new-service-bell{
       width:48px;height:48px;min-width:48px;border-radius:16px;border:1px solid rgba(255,255,255,.10);
       background:rgba(255,255,255,.025);color:#f8fafc;display:inline-grid;place-items:center;padding:0;cursor:pointer;
       touch-action:manipulation;-webkit-tap-highlight-color:transparent
     }
-    .new-service-back:active,.new-service-bell:active,.service-category-card:active,.service-row-card:active,.service-confirm-action:active{opacity:.84}
+    .new-service-back:active,.new-service-bell:active,.service-category-card:active,.service-row-card:active,.service-confirm-action:active,.service-option-card:active,.service-payment-option:active{opacity:.84}
     .new-service-back svg,.new-service-bell svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
     .new-service-bell-wrap{position:relative;justify-self:end}.new-service-bell-dot{position:absolute;right:7px;top:6px;width:11px;height:11px;border-radius:50%;background:#f5b942;box-shadow:0 0 0 3px rgba(5,6,7,.95);pointer-events:none}
-    .new-service-logo-wrap{text-align:center;min-width:0}.new-service-emblem{width:66px;height:48px;margin:0 auto 3px;color:#d4af37;display:grid;place-items:center}.new-service-emblem svg{width:64px;height:46px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;opacity:.94}.new-service-logo{color:#f1c55c;font-size:clamp(24px,7vw,35px);line-height:1;letter-spacing:.27em;font-weight:300;margin-left:.27em}.new-service-logo-sub{margin-top:5px;color:#d8c085;font-size:clamp(8px,2.2vw,11px);letter-spacing:.36em;font-weight:800;margin-left:.36em}
+    .new-service-logo-wrap{text-align:center;min-width:0}.new-service-emblem{width:62px;height:44px;margin:0 auto 3px;color:#d4af37;display:grid;place-items:center}.new-service-emblem svg{width:60px;height:43px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;opacity:.94}.new-service-logo{color:#f1c55c;font-size:clamp(23px,6.7vw,34px);line-height:1;letter-spacing:.27em;font-weight:300;margin-left:.27em}.new-service-logo-sub{margin-top:5px;color:#d8c085;font-size:clamp(8px,2.2vw,11px);letter-spacing:.36em;font-weight:800;margin-left:.36em}
 
-    .new-service-title-block{text-align:center;margin:4px 0 24px}.new-service-title-block h1{margin:0;color:#f8fafc;font-size:clamp(26px,7.3vw,38px);line-height:1.05;letter-spacing:.055em;font-weight:850;text-transform:uppercase}.new-service-title-block p{margin:10px 0 0;color:#c6c9ce;font-size:clamp(16px,4.2vw,22px);line-height:1.25}
-    .service-category-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.service-category-card{--svc-accent:#f3c45d;position:relative;min-height:clamp(150px,26.8vw,190px);border:1px solid rgba(255,255,255,.18);border-radius:16px;overflow:hidden;padding:16px 12px 15px;background:#111;color:#fff;box-shadow:0 12px 26px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.04);cursor:pointer;isolation:isolate;touch-action:manipulation;-webkit-tap-highlight-color:transparent}.service-category-card:focus-visible,.service-row-card:focus-visible,.service-view-all:focus-visible,.new-service-back:focus-visible,.new-service-bell:focus-visible,.service-category-card::before{content:"";position:absolute;inset:0;z-index:-2;background:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.78)),var(--svc-bg);background-size:cover;background-position:center;transform:none}.service-category-card::after{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(circle at 50% 20%,rgba(245,185,66,.10),transparent 34%),linear-gradient(180deg,rgba(0,0,0,.10),rgba(0,0,0,.72));pointer-events:none}
-    .svc-airport{--svc-bg:linear-gradient(135deg,rgba(19,58,83,.62),rgba(5,8,11,.92)),radial-gradient(circle at 50% 22%,rgba(75,142,177,.45),transparent 25%),linear-gradient(168deg,transparent 0 40%,rgba(210,225,235,.18) 41% 43%,transparent 44%)}.svc-hotels{--svc-bg:linear-gradient(135deg,rgba(80,54,30,.62),rgba(6,5,4,.92)),radial-gradient(circle at 50% 24%,rgba(245,185,66,.24),transparent 22%),repeating-linear-gradient(90deg,rgba(255,255,255,.055) 0 2px,transparent 2px 28px)}.svc-cataratas-ar,.svc-cataratas-br{--svc-bg:linear-gradient(140deg,rgba(17,62,41,.64),rgba(2,8,9,.92)),radial-gradient(ellipse at 42% 25%,rgba(205,238,244,.38),transparent 24%),repeating-linear-gradient(100deg,rgba(255,255,255,.20) 0 4px,transparent 4px 15px)}.svc-duty-free{--svc-bg:linear-gradient(135deg,rgba(92,63,32,.62),rgba(8,5,3,.94)),radial-gradient(circle at 38% 28%,rgba(245,185,66,.24),transparent 22%),repeating-linear-gradient(90deg,rgba(255,255,255,.055) 0 2px,transparent 2px 28px)}.svc-otros{--svc-bg:linear-gradient(135deg,rgba(66,45,54,.64),rgba(5,6,9,.94)),radial-gradient(circle at 70% 28%,rgba(245,185,66,.24),transparent 23%),linear-gradient(90deg,transparent 0 20%,rgba(255,255,255,.08) 21% 22%,transparent 23% 46%,rgba(255,255,255,.06) 47% 48%,transparent 49%)}
-    .service-category-icon{width:64px;height:64px;margin:8px auto 16px;display:grid;place-items:center;color:var(--svc-accent)}.service-category-icon svg{width:60px;height:60px;fill:none;stroke:currentColor;stroke-width:1.85;stroke-linecap:round;stroke-linejoin:round}.service-category-card h2{margin:0;color:#fff;text-align:center;font-size:clamp(18px,4.8vw,25px);line-height:1.05;font-weight:900;letter-spacing:.015em;text-transform:uppercase}.service-category-card p{margin:9px auto 0;max-width:190px;color:#e1e2e5;text-align:center;font-size:clamp(13px,3.5vw,18px);line-height:1.18;text-shadow:0 1px 8px rgba(0,0,0,.55)}
+    .new-service-title-block{text-align:center;margin:2px 0 20px}.new-service-title-block h1{margin:0;color:#f8fafc;font-size:clamp(25px,7vw,36px);line-height:1.05;letter-spacing:.055em;font-weight:850;text-transform:uppercase}.new-service-title-block p{margin:9px 0 0;color:#c6c9ce;font-size:clamp(15px,4vw,20px);line-height:1.25}
+    .service-category-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.service-category-card{--svc-accent:#f3c45d;position:relative;min-height:clamp(132px,23vw,166px);border:1px solid rgba(255,255,255,.16);border-radius:16px;overflow:hidden;padding:13px 10px 12px;background:#111;color:#fff;box-shadow:0 10px 22px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.04);cursor:pointer;isolation:isolate;touch-action:manipulation;-webkit-tap-highlight-color:transparent}.service-category-card:focus-visible,.service-row-card:focus-visible,.new-service-back:focus-visible,.new-service-bell:focus-visible,.service-option-card:focus-visible,.service-payment-option:focus-visible{outline:2px solid rgba(245,185,66,.55);outline-offset:2px}.service-category-card::before{content:"";position:absolute;inset:0;z-index:-2;background:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.78)),var(--svc-bg);background-size:cover;background-position:center}.service-category-card::after{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(circle at 50% 20%,rgba(245,185,66,.10),transparent 34%),linear-gradient(180deg,rgba(0,0,0,.10),rgba(0,0,0,.72));pointer-events:none}
+    .svc-airport{--svc-bg:linear-gradient(135deg,rgba(19,58,83,.62),rgba(5,8,11,.92)),radial-gradient(circle at 50% 22%,rgba(75,142,177,.45),transparent 25%),linear-gradient(168deg,transparent 0 40%,rgba(210,225,235,.18) 41% 43%,transparent 44%)}.svc-city{--svc-bg:linear-gradient(135deg,rgba(80,54,30,.62),rgba(6,5,4,.92)),radial-gradient(circle at 50% 24%,rgba(245,185,66,.24),transparent 22%),repeating-linear-gradient(90deg,rgba(255,255,255,.055) 0 2px,transparent 2px 28px)}.svc-argentina,.svc-brasil{--svc-bg:linear-gradient(140deg,rgba(17,62,41,.64),rgba(2,8,9,.92)),radial-gradient(ellipse at 42% 25%,rgba(205,238,244,.38),transparent 24%),repeating-linear-gradient(100deg,rgba(255,255,255,.20) 0 4px,transparent 4px 15px)}.svc-paraguay{--svc-bg:linear-gradient(135deg,rgba(92,63,32,.62),rgba(8,5,3,.94)),radial-gradient(circle at 38% 28%,rgba(245,185,66,.24),transparent 22%),repeating-linear-gradient(90deg,rgba(255,255,255,.055) 0 2px,transparent 2px 28px)}.svc-otros{--svc-bg:linear-gradient(135deg,rgba(66,45,54,.64),rgba(5,6,9,.94)),radial-gradient(circle at 70% 28%,rgba(245,185,66,.24),transparent 23%),linear-gradient(90deg,transparent 0 20%,rgba(255,255,255,.08) 21% 22%,transparent 23% 46%,rgba(255,255,255,.06) 47% 48%,transparent 49%)}
+    .service-category-icon{width:52px;height:52px;margin:4px auto 10px;display:grid;place-items:center;color:var(--svc-accent)}.service-category-icon svg{width:49px;height:49px;fill:none;stroke:currentColor;stroke-width:1.85;stroke-linecap:round;stroke-linejoin:round}.service-category-card h2{margin:0;color:#fff;text-align:center;font-size:clamp(16px,4.2vw,22px);line-height:1.05;font-weight:900;letter-spacing:.015em;text-transform:uppercase}.service-category-card p{margin:7px auto 0;max-width:190px;color:#e1e2e5;text-align:center;font-size:clamp(11px,3vw,15px);line-height:1.18;text-shadow:0 1px 8px rgba(0,0,0,.55)}
 
     .service-category-panel{display:none}.new-service-screen[data-view="category"] .new-service-main{display:none}.new-service-screen[data-view="category"] .service-category-panel{display:block}
-    .category-head{display:flex;align-items:center;gap:14px;margin:4px 0 22px}.category-head-icon{width:70px;height:70px;display:grid;place-items:center;color:#f3c45d;flex:0 0 auto}.category-head-icon svg{width:64px;height:64px;fill:none;stroke:currentColor;stroke-width:1.85;stroke-linecap:round;stroke-linejoin:round}.category-head h1{margin:0;color:#fff;font-size:clamp(25px,6.8vw,36px);line-height:1.03;font-weight:900;letter-spacing:.018em;text-transform:uppercase}.category-head p{margin:9px 0 0;color:#c9cdd2;font-size:clamp(16px,4.2vw,22px);line-height:1.2}
-    .service-search-wrap{position:relative;margin:0 0 20px}.service-search-wrap svg{position:absolute;left:18px;top:50%;width:25px;height:25px;transform:translateY(-50%);fill:none;stroke:#aab0b6;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.service-search{width:100%;min-height:60px;border:1px solid rgba(255,255,255,.06);border-radius:14px;background:rgba(255,255,255,.055);color:#fff;padding:15px 16px 15px 56px;font-size:clamp(16px,4.2vw,22px);outline:none}.service-search::placeholder{color:#a8adb3}.service-search:focus{border-color:rgba(245,185,66,.35);box-shadow:0 0 0 3px rgba(245,185,66,.08)}
-    .service-list{display:grid;gap:12px}.service-row-card{width:100%;min-height:108px;border:1px solid rgba(255,255,255,.12);border-radius:13px;background:rgba(12,15,17,.86);color:#fff;display:grid;grid-template-columns:132px minmax(0,1fr) auto 24px;align-items:center;gap:16px;padding:8px 14px 8px 10px;text-align:left;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;box-shadow:0 8px 18px rgba(0,0,0,.24)}.service-row-card:active{border-color:rgba(245,185,66,.34);background:rgba(18,21,24,.90)}.service-row-thumb{width:132px;height:88px;border-radius:7px;overflow:hidden;background:var(--thumb-bg);background-size:cover;background-position:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}.service-row-info{min-width:0}.service-row-info b{display:block;color:#fff;font-size:clamp(16px,4.2vw,22px);line-height:1.14;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.service-row-info small{display:block;color:#bfc4ca;font-size:clamp(14px,3.6vw,19px);line-height:1.2;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.service-row-price{color:#f3c45d;font-size:clamp(17px,4.5vw,24px);font-weight:850;white-space:nowrap}.service-row-chev{color:#c6c9ce}.service-row-chev svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-    .service-empty{display:none;border:1px solid rgba(255,255,255,.10);border-radius:18px;background:rgba(255,255,255,.04);color:#c9cdd2;padding:18px;text-align:center}.service-empty.is-visible{display:block}.service-info-note{display:flex;align-items:center;gap:10px;color:#bfc4ca;font-size:clamp(13px,3.4vw,17px);line-height:1.3;margin:28px 0 8px}.service-info-note span{width:27px;height:27px;border-radius:50%;border:1px solid #8c939b;color:#c0c5cb;display:grid;place-items:center;font-weight:800;flex:0 0 auto}
+    .category-head{display:flex;align-items:center;gap:12px;margin:2px 0 16px}.category-head-icon{width:58px;height:58px;display:grid;place-items:center;color:#f3c45d;flex:0 0 auto}.category-head-icon svg{width:52px;height:52px;fill:none;stroke:currentColor;stroke-width:1.85;stroke-linecap:round;stroke-linejoin:round}.category-head h1{margin:0;color:#fff;font-size:clamp(23px,6.2vw,32px);line-height:1.03;font-weight:900;letter-spacing:.018em;text-transform:uppercase}.category-head p{margin:7px 0 0;color:#c9cdd2;font-size:clamp(14px,3.8vw,19px);line-height:1.2}
+    .service-search-wrap{position:relative;margin:0 0 14px}.service-search-wrap svg{position:absolute;left:15px;top:50%;width:22px;height:22px;transform:translateY(-50%);fill:none;stroke:#aab0b6;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.service-search{width:100%;min-height:52px;border:1px solid rgba(255,255,255,.06);border-radius:14px;background:rgba(255,255,255,.055);color:#fff;padding:12px 14px 12px 48px;font-size:clamp(15px,3.9vw,19px);outline:none}.service-search::placeholder{color:#a8adb3}.service-search:focus{border-color:rgba(245,185,66,.35);box-shadow:0 0 0 3px rgba(245,185,66,.08)}
+    .service-list{display:grid;gap:9px}.service-row-card{width:100%;min-height:82px;border:1px solid rgba(255,255,255,.11);border-radius:14px;background:rgba(12,15,17,.86);color:#fff;display:grid;grid-template-columns:68px minmax(0,1fr) auto 18px;align-items:center;gap:10px;padding:8px 10px;text-align:left;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;box-shadow:0 6px 15px rgba(0,0,0,.22)}.service-row-card:active{border-color:rgba(245,185,66,.34);background:rgba(18,21,24,.90)}.service-row-thumb{width:68px;height:60px;border-radius:10px;overflow:hidden;background:var(--thumb-bg);background-size:cover;background-position:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);display:grid;place-items:center;color:#f3c45d}.service-row-thumb img{width:100%;height:100%;object-fit:cover;display:block}.service-thumb-placeholder{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:rgba(0,0,0,.28);border:1px solid rgba(245,185,66,.22)}.service-thumb-placeholder svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.service-row-info{min-width:0}.service-row-info b{display:-webkit-box;color:#fff;font-size:clamp(14px,3.7vw,18px);line-height:1.13;font-weight:780;overflow:hidden;-webkit-line-clamp:2;-webkit-box-orient:vertical}.service-row-info small{display:block;color:#bfc4ca;font-size:clamp(11px,3vw,14px);line-height:1.18;margin-top:4px;white-space:normal;overflow-wrap:anywhere}.service-row-trip{display:block;color:#d5b65f;font-size:10px;font-weight:850;letter-spacing:.07em;margin-top:4px;text-transform:uppercase}.service-row-price{color:#f3c45d;font-size:clamp(14px,3.8vw,19px);font-weight:850;white-space:nowrap;text-align:right}.service-row-chev{color:#c6c9ce}.service-row-chev svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .service-empty{display:none;border:1px solid rgba(255,255,255,.10);border-radius:18px;background:rgba(255,255,255,.04);color:#c9cdd2;padding:18px;text-align:center}.service-empty.is-visible{display:block}.service-info-note{display:flex;align-items:center;gap:10px;color:#bfc4ca;font-size:clamp(12px,3.2vw,16px);line-height:1.3;margin:22px 0 8px}.service-info-note span{width:25px;height:25px;border-radius:50%;border:1px solid #8c939b;color:#c0c5cb;display:grid;place-items:center;font-weight:800;flex:0 0 auto}
 
-    .service-confirm-backdrop{position:fixed;inset:0;z-index:70;display:none;place-items:center;padding:20px;background:rgba(0,0,0,.68)}.service-confirm-backdrop.is-open{display:grid}.service-confirm-modal{width:min(100%,420px);border:1px solid rgba(255,255,255,.12);border-radius:24px;background:linear-gradient(180deg,#171b20,#0c0f12);box-shadow:0 24px 80px rgba(0,0,0,.66);padding:20px}.service-confirm-modal h2{margin:0 0 12px;color:#fff;font-size:24px}.service-confirm-summary{display:grid;gap:9px;margin:12px 0 14px}.service-confirm-line{display:flex;justify-content:space-between;gap:16px;color:#c7cbd1;font-size:14px}.service-confirm-line b{color:#fff;text-align:right}.service-confirm-question{color:#f3c45d;font-weight:850;margin:14px 0}.service-confirm-msg{min-height:20px;color:#bfc4ca;font-size:14px;margin:8px 0}.service-confirm-msg.ok{color:#8ff0b2}.service-confirm-msg.err{color:#ffb4b4}.service-confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.service-confirm-action{min-height:48px;border-radius:15px;border:1px solid rgba(255,255,255,.12);font-size:15px;font-weight:900;cursor:pointer}.service-confirm-cancel{background:#20252b;color:#fff}.service-confirm-primary{background:linear-gradient(180deg,#f5c553,#d99b25);color:#111;border-color:#e7b13e}.service-confirm-action:disabled{opacity:.65;cursor:not-allowed}
+    .service-confirm-backdrop{position:fixed;inset:0;z-index:70;display:none;place-items:center;padding:16px;background:rgba(0,0,0,.72);overflow-y:auto}.service-confirm-backdrop.is-open{display:grid}.service-confirm-modal{width:min(100%,430px);max-height:calc(100dvh - 32px);overflow-y:auto;-webkit-overflow-scrolling:touch;border:1px solid rgba(255,255,255,.12);border-radius:24px;background:linear-gradient(180deg,#171b20,#0c0f12);box-shadow:0 24px 80px rgba(0,0,0,.66);padding:20px}.service-confirm-modal h2{margin:0 0 12px;color:#fff;font-size:23px}.service-confirm-summary{display:grid;gap:8px;margin:12px 0 14px}.service-confirm-line{display:flex;justify-content:space-between;gap:14px;color:#c7cbd1;font-size:13px}.service-confirm-line b{color:#fff;text-align:right;overflow-wrap:anywhere}.service-confirm-question{color:#f3c45d;font-weight:850;margin:15px 0 9px;font-size:13px;letter-spacing:.05em;text-transform:uppercase}.service-confirm-msg{min-height:20px;color:#bfc4ca;font-size:14px;margin:8px 0}.service-confirm-msg.ok{color:#8ff0b2}.service-confirm-msg.err{color:#ffb4b4}.service-confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.service-confirm-action{min-height:48px;border-radius:15px;border:1px solid rgba(255,255,255,.12);font-size:14px;font-weight:900;cursor:pointer}.service-confirm-cancel{background:#20252b;color:#fff}.service-confirm-primary{background:linear-gradient(180deg,#f5c553,#d99b25);color:#111;border-color:#e7b13e}.service-confirm-action:disabled{opacity:.48;cursor:not-allowed}
+    .service-field-group{display:grid;gap:8px;margin:12px 0}.service-field-group[hidden]{display:none}.service-field-label{color:#d7dade;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}.service-field-input{width:100%;min-height:48px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:#0d1013;color:#fff;padding:12px 14px;font:inherit;outline:none}.service-field-input:focus{border-color:rgba(245,185,66,.45);box-shadow:0 0 0 3px rgba(245,185,66,.08)}.service-field-help{color:#aeb3b9;font-size:12px;line-height:1.3}.service-option-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.service-option-card,.service-payment-option{min-width:0;min-height:62px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:#11151a;color:#fff;padding:10px;display:grid;gap:3px;align-content:center;text-align:center;cursor:pointer}.service-option-card strong,.service-payment-option strong{font-size:13px}.service-option-card span,.service-payment-option span{color:#bfc4ca;font-size:12px}.service-option-card.is-selected,.service-payment-option.is-selected{border-color:rgba(245,185,66,.72);background:rgba(245,185,66,.12);box-shadow:0 0 0 2px rgba(245,185,66,.08)}.service-option-card:disabled{opacity:.4;cursor:not-allowed}.service-payment-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.service-payment-option{min-height:56px;padding:8px 5px}.service-payment-option strong{font-size:11px;letter-spacing:.02em}.service-custom-minimum{color:#f3c45d;font-size:12px;font-weight:750}
 
-    @media(max-width:390px){.new-service-screen{padding-left:12px;padding-right:12px}.service-category-grid{gap:10px}.service-category-card{min-height:136px;padding:12px 8px}.service-category-icon{width:50px;height:50px;margin-bottom:10px}.service-category-icon svg{width:48px;height:48px}.service-row-card{grid-template-columns:92px minmax(0,1fr) auto 18px;gap:10px;min-height:94px;padding:7px 9px}.service-row-thumb{width:92px;height:72px}}
+    @media(max-width:390px){.new-service-screen{padding-left:12px;padding-right:12px}.service-category-grid{gap:9px}.service-category-card{min-height:122px;padding:10px 7px}.service-category-icon{width:44px;height:44px;margin-bottom:7px}.service-category-icon svg{width:42px;height:42px}.service-row-card{grid-template-columns:58px minmax(0,1fr) auto 15px;gap:8px;min-height:74px;padding:7px 8px}.service-row-thumb{width:58px;height:54px}.service-payment-option strong{font-size:10px}.service-confirm-modal{padding:16px}}
 
     /* BARRA INFERIOR PRINCIPAL · ÚNICA, FIJA AL VIEWPORT Y TRANSPARENTE */
     :root {
@@ -4899,44 +4900,38 @@
       </header>
 
       <main class="new-service-main">
-        <section class="new-service-title-block"><h1>NUEVO SERVICIO</h1><p>Selecciona el tipo de servicio</p></section>
-        <section class="service-category-grid" aria-label="Tipos de servicio">
-          <button type="button" class="service-category-card svc-airport" data-service-category="aeropuerto" aria-label="AEROPUERTO">
+        <section class="new-service-title-block"><h1>NUEVO SERVICIO</h1><p>Selecciona una categoría</p></section>
+        <section class="service-category-grid" aria-label="Categorías de servicio">
+          <button type="button" class="service-category-card svc-airport" data-service-category="aeropuerto" aria-label="Aeropuerto">
             <span class="service-category-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12 21 4l-5 16-4-7-7 3 4-5-6 1Z"/></svg></span>
-            <h2>AEROPUERTO</h2>
-            <p>Traslados desde / hacia aeropuerto</p>
+            <h2>AEROPUERTO</h2><p>Traslados desde el aeropuerto</p>
           </button>
-          <button type="button" class="service-category-card svc-hotels" data-service-category="hoteles" aria-label="HOTELES">
-            <span class="service-category-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><path d="M6 20V9a6 6 0 0 1 12 0v11"/><path d="M9 20v-6h6v6"/><path d="M12 3v4"/><path d="M9 7h6"/></svg></span>
-            <h2>HOTELES</h2>
-            <p>Traslados a hoteles de la ciudad</p>
+          <button type="button" class="service-category-card svc-city" data-service-category="ciudad" aria-label="Ciudad">
+            <span class="service-category-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><path d="M6 20V8h5v12"/><path d="M13 20V4h5v16"/><path d="M8 11h1M8 14h1M15 7h1M15 10h1M15 13h1"/></svg></span>
+            <h2>CIUDAD</h2><p>Traslados locales dentro de la ciudad</p>
           </button>
-          <button type="button" class="service-category-card svc-cataratas-ar" data-service-category="cataratas-ar" aria-label="CATARATAS AR">
+          <button type="button" class="service-category-card svc-argentina" data-service-category="argentina" aria-label="Argentina">
             <span class="service-category-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20h14"/><path d="M7 20c3-5 2-11 2-16"/><path d="M12 20c2-5 1-11 1-16"/><path d="M17 20c1-5 0-11 0-16"/></svg></span>
-            <h2>CATARATAS AR</h2>
-            <p>Excursiones a Cataratas Argentinas</p>
+            <h2>ARGENTINA</h2><p>Excursiones y traslados nacionales</p>
           </button>
-          <button type="button" class="service-category-card svc-cataratas-br" data-service-category="cataratas-br" aria-label="CATARATAS BR">
+          <button type="button" class="service-category-card svc-brasil" data-service-category="brasil" aria-label="Brasil">
             <span class="service-category-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"/><path d="M5 5c5-3 8 3 14 0v10c-6 3-9-3-14 0"/><path d="M11 10c1.4-1.8 3.6-1.8 5 0-1.4 1.8-3.6 1.8-5 0Z"/></svg></span>
-            <h2>CATARATAS BR</h2>
-            <p>Excursiones a Cataratas Brasileñas</p>
+            <h2>BRASIL</h2><p>Excursiones y traslados en Brasil</p>
           </button>
-          <button type="button" class="service-category-card svc-duty-free" data-service-category="duty-free" aria-label="DUTY FREE">
+          <button type="button" class="service-category-card svc-paraguay" data-service-category="paraguay" aria-label="Paraguay">
             <span class="service-category-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1 13H7L6 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg></span>
-            <h2>DUTY FREE</h2>
-            <p>Traslados a centros de compras</p>
+            <h2>PARAGUAY</h2><p>Compras y excursiones en Paraguay</p>
           </button>
-          <button type="button" class="service-category-card svc-otros" data-service-category="otros-destinos" aria-label="OTROS DESTINOS">
+          <button type="button" class="service-category-card svc-otros" data-service-category="otros-destinos" aria-label="Otros destinos">
             <span class="service-category-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.4 7-12a7 7 0 0 0-14 0c0 6.6 7 12 7 12Z"/><circle cx="12" cy="9" r="2.4"/></svg></span>
-            <h2>OTROS DESTINOS</h2>
-            <p>Hitos, parques, city tour y más</p>
+            <h2>OTROS DESTINOS</h2><p>Catálogo existente sin cambios</p>
           </button>
         </section>
       </main>
 
       <section class="service-category-panel" aria-label="Listado de servicios">
         <div class="category-head">
-          <div id="serviceCategoryIcon" class="category-head-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12 21 4l-5 16-4-7-7 3 4-5-6 1Z"/></svg></div>
+          <div id="serviceCategoryIcon" class="category-head-icon"></div>
           <div><h1 id="serviceCategoryTitle">AEROPUERTO</h1><p id="serviceCategorySubtitle">Selecciona un servicio</p></div>
         </div>
         <div class="service-search-wrap">
@@ -4945,24 +4940,49 @@
         </div>
         <div id="serviceCategoryList" class="service-list"></div>
         <div id="serviceCategoryEmpty" class="service-empty">No se encontraron servicios en esta categoría.</div>
-        <div class="service-info-note"><span>i</span><p>El servicio se registrará con la fecha y hora actual.</p></div>
+        <div class="service-info-note"><span>i</span><p>Los precios visibles corresponden a ida. El servicio se registra únicamente al confirmar.</p></div>
       </section>
     </div>
   </section>
 
   <div id="serviceConfirmBackdrop" class="service-confirm-backdrop" aria-hidden="true">
     <section class="service-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="serviceConfirmTitle">
-      <h2 id="serviceConfirmTitle">Confirmar servicio</h2>
+      <h2 id="serviceConfirmTitle">CONFIRMAR SERVICIO</h2>
       <div id="serviceConfirmSummary" class="service-confirm-summary"></div>
-      <p class="service-confirm-question">¿Confirmas que este servicio fue vendido?</p>
-      <div id="serviceConfirmMsg" class="service-confirm-msg"></div>
+
+      <div id="serviceTripSection" class="service-field-group" hidden>
+        <div class="service-confirm-question">SELECCIONA EL RECORRIDO</div>
+        <div class="service-option-grid">
+          <button id="serviceTripOneWayBtn" type="button" class="service-option-card" data-trip-type="one_way"><strong>IDA</strong><span id="serviceTripOneWayPrice">—</span></button>
+          <button id="serviceTripRoundBtn" type="button" class="service-option-card" data-trip-type="round_trip"><strong>IDA Y VUELTA</strong><span id="serviceTripRoundPrice">—</span></button>
+        </div>
+        <small id="serviceRoundTripHelp" class="service-field-help"></small>
+      </div>
+
+      <div id="serviceCustomFields" class="service-field-group" hidden>
+        <label class="service-field-label" for="serviceCustomDestination">DESTINO O DESCRIPCIÓN</label>
+        <input id="serviceCustomDestination" class="service-field-input" type="text" maxlength="90" autocomplete="off" placeholder="Escribe el destino" />
+        <label class="service-field-label" for="serviceCustomPrice">PRECIO FINAL</label>
+        <input id="serviceCustomPrice" class="service-field-input" type="text" inputmode="numeric" autocomplete="off" placeholder="$0" />
+        <small id="serviceCustomMinimum" class="service-custom-minimum"></small>
+      </div>
+
+      <div class="service-field-group">
+        <div class="service-confirm-question">FORMA DE PAGO</div>
+        <div id="servicePaymentGrid" class="service-payment-grid" role="group" aria-label="Forma de pago">
+          <button type="button" class="service-payment-option" data-payment-method="cash"><strong>EFECTIVO</strong><span>Chofer</span></button>
+          <button type="button" class="service-payment-option" data-payment-method="transfer"><strong>TRANSFERENCIA</strong><span>Admin</span></button>
+          <button type="button" class="service-payment-option" data-payment-method="card"><strong>TARJETA</strong><span>Admin</span></button>
+        </div>
+      </div>
+
+      <div id="serviceConfirmMsg" class="service-confirm-msg" aria-live="polite"></div>
       <div class="service-confirm-actions">
-        <button id="serviceConfirmCancelBtn" type="button" class="service-confirm-action service-confirm-cancel">Cancelar</button>
-        <button id="serviceConfirmSaveBtn" type="button" class="service-confirm-action service-confirm-primary">Confirmar venta</button>
+        <button id="serviceConfirmCancelBtn" type="button" class="service-confirm-action service-confirm-cancel">Volver</button>
+        <button id="serviceConfirmSaveBtn" type="button" class="service-confirm-action service-confirm-primary" disabled>CONFIRMAR SERVICIO</button>
       </div>
     </section>
   </div>
-
 
 
   <section id="expenseScreen" class="expense-screen" aria-label="Cargar gasto" aria-hidden="true">
@@ -5387,218 +5407,370 @@
       const screen = document.getElementById("newServiceScreen");
       if (!screen) return;
 
+      const $ = (id) => document.getElementById(id);
+      const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+      const money = (value) => "$" + Math.round(Number(value || 0)).toLocaleString("es-AR");
+      const normalizeAmount = (value) => {
+        if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+        const cleaned = String(value || "").replace(/\$/g, "").replace(/\s/g, "").replace(/\./g, "").replace(/,/g, ".").replace(/[^\d.-]/g, "");
+        const number = Number(cleaned);
+        return Number.isFinite(number) ? number : 0;
+      };
+      const formatAmountInput = (value) => {
+        const digits = String(value || "").replace(/\D/g, "");
+        return digits ? Number(digits).toLocaleString("es-AR") : "";
+      };
+      const nowDate = () => new Date().toLocaleDateString("es-AR", { timeZone:"America/Argentina/Buenos_Aires" });
+      const nowTime = () => new Date().toLocaleTimeString("es-AR", { timeZone:"America/Argentina/Buenos_Aires", hour:"2-digit", minute:"2-digit" });
+
       const iconSvg = {
         aeropuerto: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12 21 4l-5 16-4-7-7 3 4-5-6 1Z"/></svg>',
-        hoteles: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><path d="M6 20V9a6 6 0 0 1 12 0v11"/><path d="M9 20v-6h6v6"/><path d="M12 3v4"/><path d="M9 7h6"/></svg>',
-        "cataratas-ar": '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20h14"/><path d="M7 20c3-5 2-11 2-16"/><path d="M12 20c2-5 1-11 1-16"/><path d="M17 20c1-5 0-11 0-16"/></svg>',
-        "cataratas-br": '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"/><path d="M5 5c5-3 8 3 14 0v10c-6 3-9-3-14 0"/><path d="M11 10c1.4-1.8 3.6-1.8 5 0-1.4 1.8-3.6 1.8-5 0Z"/></svg>',
-        "duty-free": '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1 13H7L6 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>',
+        ciudad: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><path d="M6 20V8h5v12"/><path d="M13 20V4h5v16"/><path d="M8 11h1M8 14h1M15 7h1M15 10h1M15 13h1"/></svg>',
+        argentina: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20h14"/><path d="M7 20c3-5 2-11 2-16"/><path d="M12 20c2-5 1-11 1-16"/><path d="M17 20c1-5 0-11 0-16"/></svg>',
+        brasil: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"/><path d="M5 5c5-3 8 3 14 0v10c-6 3-9-3-14 0"/><path d="M11 10c1.4-1.8 3.6-1.8 5 0-1.4 1.8-3.6 1.8-5 0Z"/></svg>',
+        paraguay: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1 13H7L6 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>',
         "otros-destinos": '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.4 7-12a7 7 0 0 0-14 0c0 6.6 7 12 7 12Z"/><circle cx="12" cy="9" r="2.4"/></svg>',
         chev: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>'
       };
 
-      const categoryMeta = {
-        aeropuerto: { title:"AEROPUERTO", subtitle:"Selecciona un servicio", placeholder:"Buscar destino…" },
-        hoteles: { title:"HOTELES", subtitle:"Selecciona un hotel o servicio", placeholder:"Buscar hotel…" },
-        "cataratas-ar": { title:"CATARATAS AR", subtitle:"Selecciona una excursión", placeholder:"Buscar excursión…" },
-        "cataratas-br": { title:"CATARATAS BR", subtitle:"Selecciona una excursión", placeholder:"Buscar excursión…" },
-        "duty-free": { title:"DUTY FREE", subtitle:"Selecciona un traslado", placeholder:"Buscar servicio…" },
-        "otros-destinos": { title:"OTROS DESTINOS", subtitle:"Selecciona un destino", placeholder:"Buscar destino…" }
+      const categoryMeta = Object.freeze({
+        aeropuerto: { title:"AEROPUERTO", subtitle:"Traslados desde el aeropuerto", placeholder:"Buscar destino…" },
+        ciudad: { title:"CIUDAD", subtitle:"Traslados locales", placeholder:"Buscar servicio…" },
+        argentina: { title:"ARGENTINA", subtitle:"Excursiones y traslados nacionales", placeholder:"Buscar destino…" },
+        brasil: { title:"BRASIL", subtitle:"Excursiones y traslados en Brasil", placeholder:"Buscar destino…" },
+        paraguay: { title:"PARAGUAY", subtitle:"Compras y excursiones", placeholder:"Buscar destino…" },
+        "otros-destinos": { title:"OTROS DESTINOS", subtitle:"Catálogo existente", placeholder:"Buscar destino…" }
+      });
+
+      const visualStyles = Object.freeze({
+        airport:"linear-gradient(135deg,#12344a,#071016),radial-gradient(circle at 65% 30%,rgba(112,194,236,.42),transparent 28%)",
+        city:"linear-gradient(135deg,#3d2a1a,#090705),repeating-linear-gradient(90deg,rgba(255,255,255,.08) 0 2px,transparent 2px 16px)",
+        falls:"linear-gradient(135deg,#0e503c,#07100d),radial-gradient(ellipse at 50% 18%,rgba(198,238,245,.46),transparent 28%)",
+        argentina:"linear-gradient(135deg,#204b70,#070b0f),linear-gradient(180deg,rgba(255,255,255,.18),transparent)",
+        brasil:"linear-gradient(135deg,#16633c,#07100a),radial-gradient(circle at 68% 25%,rgba(246,212,72,.30),transparent 24%)",
+        paraguay:"linear-gradient(135deg,#6f382d,#080606),radial-gradient(circle at 65% 28%,rgba(66,130,220,.26),transparent 25%)",
+        custom:"linear-gradient(135deg,#5d4721,#0b0905),radial-gradient(circle at 50% 25%,rgba(245,185,66,.32),transparent 30%)",
+        monument:"linear-gradient(135deg,#55402e,#0a0806),radial-gradient(circle at 48% 26%,rgba(245,185,66,.22),transparent 28%)",
+        forest:"linear-gradient(135deg,#1d5135,#07100b),radial-gradient(circle at 55% 22%,rgba(117,220,149,.22),transparent 30%)",
+        forest2:"linear-gradient(135deg,#3f4f2a,#090c06),radial-gradient(circle at 58% 20%,rgba(212,175,55,.23),transparent 30%)",
+        night:"linear-gradient(135deg,#28345d,#080912),radial-gradient(circle at 60% 28%,rgba(115,155,255,.25),transparent 28%)",
+        river:"linear-gradient(135deg,#174f67,#071016),radial-gradient(ellipse at 50% 30%,rgba(108,203,230,.28),transparent 30%)",
+        stones:"linear-gradient(135deg,#6b3f42,#0b0708),radial-gradient(circle at 55% 25%,rgba(255,180,188,.22),transparent 30%)",
+        temple:"linear-gradient(135deg,#724126,#0a0705),radial-gradient(circle at 50% 28%,rgba(245,185,66,.25),transparent 28%)"
+      });
+
+      function catalogService(data) {
+        const oneWayPrice = data.oneWayPrice == null ? null : Number(data.oneWayPrice);
+        const roundTripPrice = data.roundTripPrice == null ? null : Number(data.roundTripPrice);
+        return Object.freeze({
+          serviceId:String(data.serviceId), id:String(data.serviceId),
+          categoryId:String(data.categoryId), categoryName:String(data.categoryName),
+          name:String(data.name), origin:String(data.origin || ""), destination:String(data.destination || ""),
+          oneWayPrice:Number.isFinite(oneWayPrice) ? oneWayPrice : null,
+          roundTripPrice:Number.isFinite(roundTripPrice) ? roundTripPrice : null,
+          supportsOneWay:data.supportsOneWay !== false,
+          supportsRoundTrip:Boolean(data.supportsRoundTrip),
+          isCustomPrice:Boolean(data.isCustomPrice),
+          minimumCustomPrice:Number(data.minimumCustomPrice || 0),
+          imageUrl:String(data.imageUrl || ""),
+          visualKey:String(data.visualKey || data.categoryId || "custom"),
+          active:data.active !== false,
+          description:String(data.description || ""), location:String(data.location || ""),
+          price:Number.isFinite(oneWayPrice) ? oneWayPrice : 0
+        });
+      }
+
+      const serviceCatalog = Object.freeze({
+        aeropuerto: Object.freeze([
+          catalogService({serviceId:"aeropuerto-iguazu",categoryId:"aeropuerto",categoryName:"Aeropuerto",name:"Traslado a Iguazú",origin:"Aeropuerto",destination:"Iguazú",oneWayPrice:25000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:false,isCustomPrice:false,minimumCustomPrice:0,imageUrl:"",visualKey:"airport",active:true}),
+          catalogService({serviceId:"aeropuerto-foz",categoryId:"aeropuerto",categoryName:"Aeropuerto",name:"Traslado a Foz",origin:"Aeropuerto",destination:"Foz",oneWayPrice:85000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:false,isCustomPrice:false,minimumCustomPrice:0,imageUrl:"",visualKey:"airport",active:true}),
+          catalogService({serviceId:"aeropuerto-ciudad-del-este",categoryId:"aeropuerto",categoryName:"Aeropuerto",name:"Traslado a Ciudad del Este",origin:"Aeropuerto",destination:"Ciudad del Este",oneWayPrice:134000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:false,isCustomPrice:false,minimumCustomPrice:0,imageUrl:"",visualKey:"airport",active:true}),
+          catalogService({serviceId:"aeropuerto-otro-destino",categoryId:"aeropuerto",categoryName:"Aeropuerto",name:"Otro destino",origin:"Aeropuerto",destination:"Destino a definir",oneWayPrice:null,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:false,isCustomPrice:true,minimumCustomPrice:25000,imageUrl:"",visualKey:"custom",active:true})
+        ]),
+        ciudad: Object.freeze([
+          catalogService({serviceId:"ciudad-viaje-local",categoryId:"ciudad",categoryName:"Ciudad",name:"Viaje local",origin:"Ciudad",destination:"Destino local",oneWayPrice:10000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,minimumCustomPrice:0,imageUrl:"",visualKey:"city",active:true})
+        ]),
+        argentina: Object.freeze([
+          catalogService({serviceId:"argentina-cataratas",categoryId:"argentina",categoryName:"Argentina",name:"Cataratas Argentina",origin:"Puerto Iguazú",destination:"Cataratas Argentina",oneWayPrice:25000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,minimumCustomPrice:0,imageUrl:"",visualKey:"falls",active:true}),
+          catalogService({serviceId:"argentina-wanda",categoryId:"argentina",categoryName:"Argentina",name:"Wanda",origin:"Puerto Iguazú",destination:"Wanda",oneWayPrice:40000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,minimumCustomPrice:0,imageUrl:"",visualKey:"stones",active:true}),
+          catalogService({serviceId:"argentina-ruinas",categoryId:"argentina",categoryName:"Argentina",name:"Ruinas",origin:"Puerto Iguazú",destination:"Ruinas de San Ignacio",oneWayPrice:200000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,minimumCustomPrice:0,imageUrl:"",visualKey:"monument",active:true}),
+          catalogService({serviceId:"argentina-hito",categoryId:"argentina",categoryName:"Argentina",name:"Hito",origin:"Puerto Iguazú",destination:"Hito Tres Fronteras",oneWayPrice:12000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,minimumCustomPrice:0,imageUrl:"",visualKey:"monument",active:true}),
+          catalogService({serviceId:"argentina-cabalgata",categoryId:"argentina",categoryName:"Argentina",name:"Cabalgata",origin:"Puerto Iguazú",destination:"Cabalgata",oneWayPrice:15000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,minimumCustomPrice:0,imageUrl:"",visualKey:"forest",active:true}),
+          catalogService({serviceId:"argentina-salto-turista-mbocay",categoryId:"argentina",categoryName:"Argentina",name:"Salto Turista / Mbocay",origin:"Puerto Iguazú",destination:"Salto Turista / Mbocay",oneWayPrice:20000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,minimumCustomPrice:0,imageUrl:"",visualKey:"falls",active:true}),
+          catalogService({serviceId:"argentina-excursion-libre",categoryId:"argentina",categoryName:"Argentina",name:"Excursión libre",origin:"Puerto Iguazú",destination:"Destino a definir",oneWayPrice:null,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:true,minimumCustomPrice:70000,imageUrl:"",visualKey:"custom",active:true})
+        ]),
+        brasil: Object.freeze([
+          catalogService({serviceId:"brasil-cataratas",categoryId:"brasil",categoryName:"Brasil",name:"Cataratas Brasil",origin:"Puerto Iguazú",destination:"Cataratas Brasil",oneWayPrice:35000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,imageUrl:"",visualKey:"falls",active:true}),
+          catalogService({serviceId:"brasil-parque-das-aves",categoryId:"brasil",categoryName:"Brasil",name:"Parque das Aves",origin:"Puerto Iguazú",destination:"Parque das Aves",oneWayPrice:35000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,imageUrl:"",visualKey:"brasil",active:true}),
+          catalogService({serviceId:"brasil-aquafoz",categoryId:"brasil",categoryName:"Brasil",name:"Aquafoz",origin:"Puerto Iguazú",destination:"Aquafoz",oneWayPrice:35000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,imageUrl:"",visualKey:"brasil",active:true}),
+          catalogService({serviceId:"brasil-blue-park",categoryId:"brasil",categoryName:"Brasil",name:"Blue Park",origin:"Puerto Iguazú",destination:"Blue Park",oneWayPrice:35000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,imageUrl:"",visualKey:"brasil",active:true}),
+          catalogService({serviceId:"brasil-aqua-mania",categoryId:"brasil",categoryName:"Brasil",name:"Aqua Manía",origin:"Puerto Iguazú",destination:"Aqua Manía",oneWayPrice:35000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,imageUrl:"",visualKey:"brasil",active:true}),
+          catalogService({serviceId:"brasil-helicoptero",categoryId:"brasil",categoryName:"Brasil",name:"Helicóptero",origin:"Puerto Iguazú",destination:"Helicóptero",oneWayPrice:35000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,imageUrl:"",visualKey:"brasil",active:true}),
+          catalogService({serviceId:"brasil-mezquita",categoryId:"brasil",categoryName:"Brasil",name:"Mezquita",origin:"Puerto Iguazú",destination:"Mezquita",oneWayPrice:35000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,imageUrl:"",visualKey:"brasil",active:true}),
+          catalogService({serviceId:"brasil-templo-buda",categoryId:"brasil",categoryName:"Brasil",name:"Templo del Buda",origin:"Puerto Iguazú",destination:"Templo del Buda",oneWayPrice:35000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,imageUrl:"",visualKey:"temple",active:true}),
+          catalogService({serviceId:"brasil-rafain-cena-show",categoryId:"brasil",categoryName:"Brasil",name:"Rafain Cena Show",origin:"Puerto Iguazú",destination:"Rafain Cena Show",oneWayPrice:30000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,imageUrl:"",visualKey:"night",active:true}),
+          catalogService({serviceId:"brasil-shopping",categoryId:"brasil",categoryName:"Brasil",name:"Shopping",origin:"Puerto Iguazú",destination:"Shopping",oneWayPrice:30000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,imageUrl:"",visualKey:"city",active:true}),
+          catalogService({serviceId:"brasil-excursion-libre",categoryId:"brasil",categoryName:"Brasil",name:"Excursión libre",origin:"Puerto Iguazú",destination:"Destino a definir",oneWayPrice:null,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:true,minimumCustomPrice:120000,imageUrl:"",visualKey:"custom",active:true})
+        ]),
+        paraguay: Object.freeze([
+          catalogService({serviceId:"paraguay-compras",categoryId:"paraguay",categoryName:"Paraguay",name:"Compras en Paraguay",origin:"Puerto Iguazú",destination:"Ciudad del Este",oneWayPrice:40000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,imageUrl:"",visualKey:"paraguay",active:true}),
+          catalogService({serviceId:"paraguay-saltos-monday",categoryId:"paraguay",categoryName:"Paraguay",name:"Saltos del Monday",origin:"Puerto Iguazú",destination:"Saltos del Monday",oneWayPrice:50000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,imageUrl:"",visualKey:"falls",active:true}),
+          catalogService({serviceId:"paraguay-excursion-libre",categoryId:"paraguay",categoryName:"Paraguay",name:"Excursión libre",origin:"Puerto Iguazú",destination:"Destino a definir",oneWayPrice:null,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:true,minimumCustomPrice:150000,imageUrl:"",visualKey:"custom",active:true})
+        ]),
+        "otros-destinos": Object.freeze([
+          catalogService({serviceId:"hito-tres-fronteras",categoryId:"otros-destinos",categoryName:"Otros destinos",name:"Hito Tres Fronteras",origin:"Hotel / Centro",destination:"Hito Tres Fronteras",oneWayPrice:20000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:false,isCustomPrice:false,imageUrl:"",visualKey:"monument",active:true,description:"Atractivo local",location:"Puerto Iguazú"}),
+          catalogService({serviceId:"guira-oga",categoryId:"otros-destinos",categoryName:"Otros destinos",name:"Güirá Oga",origin:"Hotel / Centro",destination:"Güirá Oga",oneWayPrice:18000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:false,isCustomPrice:false,imageUrl:"",visualKey:"forest",active:true,description:"Reserva de fauna",location:"Puerto Iguazú"}),
+          catalogService({serviceId:"la-aripuca",categoryId:"otros-destinos",categoryName:"Otros destinos",name:"La Aripuca",origin:"Hotel / Centro",destination:"La Aripuca",oneWayPrice:18000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:false,isCustomPrice:false,imageUrl:"",visualKey:"forest2",active:true,description:"Atractivo turístico",location:"Puerto Iguazú"}),
+          catalogService({serviceId:"icebar",categoryId:"otros-destinos",categoryName:"Otros destinos",name:"Icebar",origin:"Hotel / Centro",destination:"Icebar",oneWayPrice:18000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:false,isCustomPrice:false,imageUrl:"",visualKey:"night",active:true,description:"Bar de hielo",location:"Puerto Iguazú"}),
+          catalogService({serviceId:"catamaran",categoryId:"otros-destinos",categoryName:"Otros destinos",name:"Catamarán",origin:"Hotel / Centro",destination:"Catamarán",oneWayPrice:18000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:false,isCustomPrice:false,imageUrl:"",visualKey:"river",active:true,description:"Paseo náutico",location:"Puerto Iguazú"}),
+          catalogService({serviceId:"minas-wanda",categoryId:"otros-destinos",categoryName:"Otros destinos",name:"Minas de Wanda",origin:"Hotel / Centro",destination:"Minas de Wanda",oneWayPrice:70000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:false,isCustomPrice:false,imageUrl:"",visualKey:"stones",active:true,description:"Excursión provincial",location:"Misiones"}),
+          catalogService({serviceId:"templo-budista",categoryId:"otros-destinos",categoryName:"Otros destinos",name:"Templo Budista",origin:"Hotel / Centro",destination:"Templo Budista",oneWayPrice:70000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:false,isCustomPrice:false,imageUrl:"",visualKey:"temple",active:true,description:"Atractivo brasileño",location:"Foz do Iguaçu"}),
+          catalogService({serviceId:"saltos-monday",categoryId:"otros-destinos",categoryName:"Otros destinos",name:"Saltos del Monday",origin:"Hotel / Centro",destination:"Saltos del Monday",oneWayPrice:100000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:false,isCustomPrice:false,imageUrl:"",visualKey:"falls",active:true,description:"Atractivo paraguayo",location:"Paraguay"})
+        ])
+      });
+
+      const state = {
+        previousScrollY:0, currentCategory:"", selectedService:null, selectedTripType:null,
+        selectedPaymentMethod:null, customDestination:"", customPrice:0, saving:false
       };
 
-      const serviceCatalog = {
-        aeropuerto: [
-          { id:"igr-centro", categoryId:"aeropuerto", name:"IGR → Centro", origin:"IGR", destination:"Centro", location:"Centro de Foz", description:"Centro de Foz", price:25000, image:"airport" },
-          { id:"igr-hotel-melia", categoryId:"aeropuerto", name:"IGR → Hotel Meliá", origin:"IGR", destination:"Hotel Meliá", location:"Puerto Iguazú", description:"Puerto Iguazú", price:28000, image:"hotel" },
-          { id:"igr-loi-suites", categoryId:"aeropuerto", name:"IGR → Loi Suites", origin:"IGR", destination:"Loi Suites", location:"Puerto Iguazú", description:"Puerto Iguazú", price:28000, image:"hotel2" },
-          { id:"igr-mercure", categoryId:"aeropuerto", name:"IGR → Mercure", origin:"IGR", destination:"Mercure", location:"Puerto Iguazú", description:"Puerto Iguazú", price:27000, image:"hotel3" },
-          { id:"igr-falls-iguazu-hotel", categoryId:"aeropuerto", name:"IGR → Falls Iguazú Hotel", origin:"IGR", destination:"Falls Iguazú Hotel", location:"Puerto Iguazú", description:"Puerto Iguazú", price:30000, image:"resort" },
-          { id:"igr-duty-free-shop", categoryId:"aeropuerto", name:"IGR → Duty Free Shop", origin:"IGR", destination:"Duty Free Shop", location:"Puerto Iguazú", description:"Puerto Iguazú", price:20000, image:"mall" },
-          { id:"igr-catuai-palladium", categoryId:"aeropuerto", name:"IGR → Catuaí Palladium", origin:"IGR", destination:"Catuaí Palladium", location:"Foz do Iguaçu", description:"Foz do Iguaçu", price:25000, image:"shopping" },
-          { id:"igr-vivaz-cataratas-hotel", categoryId:"aeropuerto", name:"IGR → Vivaz Cataratas Hotel", origin:"IGR", destination:"Vivaz Cataratas Hotel", location:"Foz do Iguaçu", description:"Foz do Iguaçu", price:24000, image:"hotel4" }
-        ],
-        hoteles: [
-          { id:"hotel-melia-centro", categoryId:"hoteles", name:"Hotel Meliá → Centro", origin:"Hotel Meliá", destination:"Centro", location:"Puerto Iguazú", description:"Traslado hotel ciudad", price:28000, image:"hotel" },
-          { id:"loi-suites-centro", categoryId:"hoteles", name:"Loi Suites → Centro", origin:"Loi Suites", destination:"Centro", location:"Puerto Iguazú", description:"Traslado hotel ciudad", price:28000, image:"hotel2" },
-          { id:"mercure-centro", categoryId:"hoteles", name:"Mercure → Centro", origin:"Mercure", destination:"Centro", location:"Puerto Iguazú", description:"Traslado hotel ciudad", price:27000, image:"hotel3" },
-          { id:"falls-hotel-centro", categoryId:"hoteles", name:"Falls Iguazú Hotel → Centro", origin:"Falls Iguazú Hotel", destination:"Centro", location:"Puerto Iguazú", description:"Traslado hotel ciudad", price:30000, image:"resort" },
-          { id:"vivaz-centro", categoryId:"hoteles", name:"Vivaz Cataratas Hotel → Centro", origin:"Vivaz Cataratas Hotel", destination:"Centro", location:"Foz do Iguaçu", description:"Traslado hotel ciudad", price:24000, image:"hotel4" }
-        ],
-        "cataratas-ar": [
-          { id:"cataratas-ar-idayvuelta", categoryId:"cataratas-ar", name:"Cataratas AR ida y vuelta", origin:"Hotel / Centro", destination:"Parque Nacional Iguazú", location:"Cataratas Argentinas", description:"Excursión ida y vuelta", price:50000, image:"falls" },
-          { id:"pn-iguazu", categoryId:"cataratas-ar", name:"Parque Nacional Iguazú", origin:"Hotel / Centro", destination:"PN Iguazú", location:"Argentina", description:"Traslado a Cataratas AR", price:50000, image:"falls2" },
-          { id:"garganta-diablo", categoryId:"cataratas-ar", name:"Garganta del Diablo", origin:"Hotel / Centro", destination:"Cataratas AR", location:"Argentina", description:"Servicio Cataratas AR", price:50000, image:"falls3" }
-        ],
-        "cataratas-br": [
-          { id:"cataratas-br-idayvuelta", categoryId:"cataratas-br", name:"Cataratas BR ida y vuelta", origin:"Hotel / Centro", destination:"Parque Nacional do Iguaçu", location:"Brasil", description:"Excursión ida y vuelta", price:70000, image:"fallsbr" },
-          { id:"parque-aves", categoryId:"cataratas-br", name:"Parque das Aves", origin:"Hotel / Centro", destination:"Parque das Aves", location:"Foz do Iguaçu", description:"Servicio turístico BR", price:70000, image:"birds" },
-          { id:"helicoptero", categoryId:"cataratas-br", name:"Helicóptero", origin:"Hotel / Centro", destination:"Helisul", location:"Foz do Iguaçu", description:"Traslado a vuelo panorámico", price:70000, image:"heli" },
-          { id:"aquafoz", categoryId:"cataratas-br", name:"AquaFoz", origin:"Hotel / Centro", destination:"AquaFoz", location:"Foz do Iguaçu", description:"Servicio turístico BR", price:70000, image:"waterpark" },
-          { id:"marco-br", categoryId:"cataratas-br", name:"Marco das Três Fronteiras", origin:"Hotel / Centro", destination:"Marco BR", location:"Foz do Iguaçu", description:"Atractivo brasileño", price:60000, image:"monument" }
-        ],
-        "duty-free": [
-          { id:"duty-free-puerto", categoryId:"duty-free", name:"Duty Free Shop", origin:"Hotel / Centro", destination:"Duty Free Shop", location:"Puerto Iguazú", description:"Centro de compras", price:20000, image:"mall" },
-          { id:"catuai", categoryId:"duty-free", name:"Catuaí Palladium", origin:"Hotel / Centro", destination:"Catuaí Palladium", location:"Foz do Iguaçu", description:"Shopping en Foz", price:25000, image:"shopping" },
-          { id:"compras-cde", categoryId:"duty-free", name:"Compras Ciudad del Este", origin:"Hotel / Centro", destination:"Ciudad del Este", location:"Paraguay", description:"Traslado de compras", price:80000, image:"city" }
-        ],
-        "otros-destinos": [
-          { id:"hito-tres-fronteras", categoryId:"otros-destinos", name:"Hito Tres Fronteras", origin:"Hotel / Centro", destination:"Hito Tres Fronteras", location:"Puerto Iguazú", description:"Atractivo local", price:20000, image:"monument" },
-          { id:"guira-oga", categoryId:"otros-destinos", name:"Güirá Oga", origin:"Hotel / Centro", destination:"Güirá Oga", location:"Puerto Iguazú", description:"Reserva de fauna", price:18000, image:"forest" },
-          { id:"la-aripuca", categoryId:"otros-destinos", name:"La Aripuca", origin:"Hotel / Centro", destination:"La Aripuca", location:"Puerto Iguazú", description:"Atractivo turístico", price:18000, image:"forest2" },
-          { id:"icebar", categoryId:"otros-destinos", name:"Icebar", origin:"Hotel / Centro", destination:"Icebar", location:"Puerto Iguazú", description:"Bar de hielo", price:18000, image:"night" },
-          { id:"catamaran", categoryId:"otros-destinos", name:"Catamarán", origin:"Hotel / Centro", destination:"Catamarán", location:"Puerto Iguazú", description:"Paseo náutico", price:18000, image:"river" },
-          { id:"minas-wanda", categoryId:"otros-destinos", name:"Minas de Wanda", origin:"Hotel / Centro", destination:"Minas de Wanda", location:"Misiones", description:"Excursión provincial", price:70000, image:"stones" },
-          { id:"templo-budista", categoryId:"otros-destinos", name:"Templo Budista", origin:"Hotel / Centro", destination:"Templo Budista", location:"Foz do Iguaçu", description:"Atractivo brasileño", price:70000, image:"temple" },
-          { id:"saltos-monday", categoryId:"otros-destinos", name:"Saltos del Monday", origin:"Hotel / Centro", destination:"Saltos del Monday", location:"Paraguay", description:"Atractivo paraguayo", price:100000, image:"falls" }
-        ]
-      };
+      function getOfficialServicePrice(service, tripType, customPrice) {
+        if (!service || service.active === false) throw new Error("SERVICE_INVALID");
+        if (service.isCustomPrice) {
+          const price = normalizeAmount(customPrice);
+          if (!(price >= Number(service.minimumCustomPrice || 0))) throw new Error("CUSTOM_PRICE_MINIMUM");
+          return price;
+        }
+        if (tripType === "one_way" && service.supportsOneWay && Number(service.oneWayPrice) > 0) return Number(service.oneWayPrice);
+        if (tripType === "round_trip" && service.supportsRoundTrip && Number(service.roundTripPrice) > 0) return Number(service.roundTripPrice);
+        if (tripType === "round_trip") throw new Error("ROUND_TRIP_PRICE_UNAVAILABLE");
+        throw new Error("SERVICE_PRICE_UNAVAILABLE");
+      }
+      window.getOfficialServicePrice = getOfficialServicePrice;
 
-      const thumbStyles = {
-        airport:"linear-gradient(135deg,#406a7b,#101417),radial-gradient(circle at 38% 35%,#7fb5d0,transparent 28%)",
-        hotel:"linear-gradient(135deg,#9a6a32,#18100a),repeating-linear-gradient(90deg,rgba(255,255,255,.13) 0 3px,transparent 3px 18px)",
-        hotel2:"linear-gradient(135deg,#b99a61,#12100d),repeating-linear-gradient(0deg,rgba(255,255,255,.11) 0 3px,transparent 3px 18px)",
-        hotel3:"linear-gradient(135deg,#c4822d,#15100a),radial-gradient(circle at 55% 35%,rgba(255,220,130,.45),transparent 28%)",
-        hotel4:"linear-gradient(135deg,#6f91b8,#111823),repeating-linear-gradient(90deg,rgba(255,255,255,.12) 0 3px,transparent 3px 18px)",
-        resort:"linear-gradient(135deg,#1e4338,#111),radial-gradient(circle at 55% 55%,rgba(245,185,66,.35),transparent 30%)",
-        mall:"linear-gradient(135deg,#d2d8db,#192024),linear-gradient(90deg,rgba(0,0,0,.28),transparent)",
-        shopping:"linear-gradient(135deg,#8d6b45,#16100b),radial-gradient(circle at 38% 45%,rgba(245,185,66,.30),transparent 34%)",
-        falls:"linear-gradient(135deg,#17462f,#05100d),repeating-linear-gradient(110deg,rgba(210,245,255,.34) 0 5px,transparent 5px 18px)",
-        falls2:"linear-gradient(135deg,#205b39,#071510),radial-gradient(ellipse at 45% 28%,rgba(230,255,255,.45),transparent 24%)",
-        falls3:"linear-gradient(135deg,#0d362d,#020907),repeating-linear-gradient(100deg,rgba(255,255,255,.28) 0 4px,transparent 4px 14px)",
-        fallsbr:"linear-gradient(135deg,#1e6545,#05110d),repeating-linear-gradient(105deg,rgba(255,255,255,.24) 0 4px,transparent 4px 16px)",
-        birds:"linear-gradient(135deg,#295c36,#0b120d),radial-gradient(circle at 35% 38%,rgba(255,220,120,.28),transparent 22%)",
-        heli:"linear-gradient(135deg,#52748a,#11161a),radial-gradient(circle at 50% 24%,rgba(255,255,255,.24),transparent 20%)",
-        waterpark:"linear-gradient(135deg,#1687a7,#06131a),radial-gradient(circle at 65% 55%,rgba(120,220,255,.34),transparent 28%)",
-        monument:"linear-gradient(135deg,#927a4e,#111),radial-gradient(circle at 55% 35%,rgba(245,185,66,.32),transparent 26%)",
-        city:"linear-gradient(135deg,#343b54,#0b0b11),repeating-linear-gradient(90deg,rgba(245,185,66,.14) 0 3px,transparent 3px 16px)",
-        forest:"linear-gradient(135deg,#275b33,#071108),radial-gradient(circle at 40% 42%,rgba(120,220,120,.25),transparent 28%)",
-        forest2:"linear-gradient(135deg,#5b3f20,#0b0a06),radial-gradient(circle at 48% 40%,rgba(245,185,66,.20),transparent 28%)",
-        night:"linear-gradient(135deg,#21304d,#06070b),radial-gradient(circle at 55% 34%,rgba(150,200,255,.25),transparent 26%)",
-        river:"linear-gradient(135deg,#205a72,#071016),radial-gradient(ellipse at 45% 58%,rgba(120,220,255,.28),transparent 30%)",
-        stones:"linear-gradient(135deg,#7d6a55,#18120d),radial-gradient(circle at 42% 42%,rgba(230,200,155,.25),transparent 30%)",
-        temple:"linear-gradient(135deg,#915f3b,#0d0a07),radial-gradient(circle at 50% 34%,rgba(245,185,66,.25),transparent 26%)"
-      };
+      function lockBody(on) {
+        if (on) {
+          screen.dataset.previousHtmlOverflow = document.documentElement.style.overflow || "";
+          screen.dataset.previousBodyOverflow = document.body.style.overflow || "";
+          document.documentElement.style.overflow = "hidden";
+          document.body.style.overflow = "hidden";
+        } else {
+          document.documentElement.style.overflow = screen.dataset.previousHtmlOverflow || "";
+          document.body.style.overflow = screen.dataset.previousBodyOverflow || "";
+          delete screen.dataset.previousHtmlOverflow;
+          delete screen.dataset.previousBodyOverflow;
+        }
+      }
+      function toast(message) { const element = $("toast"); if (!element) return; clearTimeout(toast.timer); element.textContent = message; element.classList.add("show"); toast.timer = setTimeout(() => element.classList.remove("show"), 2200); }
+      function setConfirmMsg(message, type = "") { const element = $("serviceConfirmMsg"); element.textContent = message || ""; element.className = "service-confirm-msg" + (type ? " " + type : ""); }
+      function allServices() { return Object.values(serviceCatalog).flat(); }
+      function getServiceById(serviceId) { return allServices().find((service) => service.serviceId === String(serviceId)) || null; }
+      function serviceMatches(service, query) { if (!query) return true; return [service.name,service.origin,service.destination,service.location,service.description,service.categoryName].join(" ").toLowerCase().includes(String(query).trim().toLowerCase()); }
+      function resetPendingService() { state.selectedService = null; state.selectedTripType = null; state.selectedPaymentMethod = null; state.customDestination = ""; state.customPrice = 0; }
 
-      const state = { previousScrollY:0, currentCategory:"", selectedService:null, saving:false };
-      const $ = id => document.getElementById(id);
-      function money(v){ return "$" + Number(v || 0).toLocaleString("es-AR"); }
-      function todayLocal(){ return new Date().toLocaleDateString("es-AR"); }
-      function timeLocal(){ return new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}); }
-      function lockBody(on){ document.documentElement.style.overflow = on ? "hidden" : ""; document.body.style.overflow = on ? "hidden" : ""; }
-      function toast(msg){ const t=$("toast"); if(!t)return; clearTimeout(toast.timer); t.textContent=msg; t.classList.add("show"); toast.timer=setTimeout(()=>t.classList.remove("show"),2200); }
+      function openNewServiceScreen() {
+        state.previousScrollY = window.scrollY || 0;
+        screen.classList.add("is-open"); screen.setAttribute("aria-hidden","false"); screen.dataset.view = "main"; screen.scrollTop = 0;
+        lockBody(true); if (window.ExploraMainNav) window.ExploraMainNav.setActive("operaciones");
+      }
+      function closeNewServiceScreen() {
+        closeServiceConfirmation(); resetPendingService();
+        screen.classList.remove("is-open"); screen.setAttribute("aria-hidden","true"); screen.dataset.view = "main";
+        lockBody(false); if (window.ExploraMainNav) window.ExploraMainNav.setActive("inicio");
+        requestAnimationFrame(() => window.scrollTo(0, state.previousScrollY || 0));
+      }
+      function openNewServiceMain() { screen.dataset.view = "main"; screen.scrollTop = 0; state.currentCategory = ""; const search = $("serviceCategorySearch"); if (search) search.value = ""; }
 
-      function openNewServiceScreen(){ state.previousScrollY=window.scrollY||0; screen.classList.add("is-open"); screen.setAttribute("aria-hidden","false"); screen.dataset.view="main"; screen.scrollTop=0; lockBody(true); if(window.ExploraMainNav) window.ExploraMainNav.setActive("operaciones"); }
-      function closeNewServiceScreen(){ closeServiceConfirmation(); screen.classList.remove("is-open"); screen.setAttribute("aria-hidden","true"); screen.dataset.view="main"; lockBody(false); if(window.ExploraMainNav) window.ExploraMainNav.setActive("inicio"); requestAnimationFrame(()=>window.scrollTo(0,state.previousScrollY||0)); }
-      function openNewServiceMain(){ screen.dataset.view="main"; screen.scrollTop=0; const search=$("serviceCategorySearch"); if(search) search.value=""; }
-
-      function serviceMatches(s,q){ if(!q) return true; const hay=[s.name,s.origin,s.destination,s.location,s.description,s.categoryId].join(" ").toLowerCase(); return hay.includes(q.toLowerCase().trim()); }
-      function renderServiceCategory(categoryId){
-        const meta=categoryMeta[categoryId] || categoryMeta.aeropuerto;
-        state.currentCategory=categoryId;
-        $("serviceCategoryTitle").textContent=meta.title;
-        $("serviceCategorySubtitle").textContent=meta.subtitle;
-        $("serviceCategoryIcon").innerHTML=iconSvg[categoryId] || iconSvg.aeropuerto;
-        const search=$("serviceCategorySearch");
-        if(search){ search.value=""; search.placeholder=meta.placeholder; }
+      function renderServiceCategory(categoryId) {
+        const meta = categoryMeta[categoryId]; if (!meta) return;
+        state.currentCategory = categoryId;
+        $("serviceCategoryTitle").textContent = meta.title;
+        $("serviceCategorySubtitle").textContent = meta.subtitle;
+        $("serviceCategoryIcon").innerHTML = iconSvg[categoryId] || iconSvg["otros-destinos"];
+        const search = $("serviceCategorySearch"); if (search) { search.value = ""; search.placeholder = meta.placeholder; }
         renderServiceList("");
       }
-      function renderServiceList(query){
-        const list=$("serviceCategoryList");
-        const empty=$("serviceCategoryEmpty");
-        const services=(serviceCatalog[state.currentCategory] || []).filter(s=>serviceMatches(s,query));
-        list.innerHTML=services.map(s=>`
-          <button type="button" class="service-row-card" data-service-id="${s.id}" aria-label="${s.name} ${money(s.price)}">
-            <span class="service-row-thumb" style="--thumb-bg:${thumbStyles[s.image] || thumbStyles.airport}"></span>
-            <span class="service-row-info"><b>${s.name}</b><small>${s.location || s.description || ""}</small></span>
-            <span class="service-row-price">${money(s.price)}</span>
-            <span class="service-row-chev">${iconSvg.chev}</span>
-          </button>
-        `).join("");
+      function serviceThumbMarkup(service) {
+        const background = visualStyles[service.visualKey] || visualStyles.custom;
+        if (service.imageUrl) {
+          return `<span class="service-row-thumb" style="--thumb-bg:${background}"><img src="${escapeHtml(service.imageUrl)}" alt="" loading="lazy" onerror="this.remove()"></span>`;
+        }
+        return `<span class="service-row-thumb" style="--thumb-bg:${background}"><span class="service-thumb-placeholder">${iconSvg[service.categoryId] || iconSvg["otros-destinos"]}</span></span>`;
+      }
+      function renderServiceList(queryText = "") {
+        const list = $("serviceCategoryList"); const empty = $("serviceCategoryEmpty");
+        const services = (serviceCatalog[state.currentCategory] || []).filter((service) => service.active && serviceMatches(service, queryText));
+        list.innerHTML = services.map((service) => {
+          const route = [service.origin, service.destination].filter(Boolean).join(" → ");
+          const price = service.isCustomPrice ? `Desde ${money(service.minimumCustomPrice)}` : money(service.oneWayPrice);
+          return `<button type="button" class="service-row-card" data-service-id="${escapeHtml(service.serviceId)}" aria-label="${escapeHtml(service.name)} ${escapeHtml(price)}">
+            ${serviceThumbMarkup(service)}
+            <span class="service-row-info"><b>${escapeHtml(service.name)}</b><small>${escapeHtml(route)}</small><span class="service-row-trip">IDA</span></span>
+            <span class="service-row-price">${escapeHtml(price)}</span><span class="service-row-chev">${iconSvg.chev}</span>
+          </button>`;
+        }).join("");
         empty.classList.toggle("is-visible", services.length === 0);
       }
-      function openServiceCategory(categoryId){ renderServiceCategory(categoryId); screen.dataset.view="category"; screen.scrollTop=0; setTimeout(()=>{ const search=$("serviceCategorySearch"); if(search) search.blur(); },0); }
-      function getServiceById(serviceId){ return (serviceCatalog[state.currentCategory] || []).find(s=>s.id===serviceId) || null; }
+      function openServiceCategory(categoryId) { renderServiceCategory(categoryId); screen.dataset.view = "category"; screen.scrollTop = 0; }
 
-      function openServiceConfirmation(service){
-        state.selectedService=service;
-        const meta=categoryMeta[service.categoryId] || {};
+      function setSelectedTrip(tripType) {
+        const service = state.selectedService; if (!service) return;
+        if (tripType === "round_trip" && !(service.supportsRoundTrip && Number(service.roundTripPrice) > 0)) return;
+        if (tripType === "one_way" && !service.supportsOneWay) return;
+        state.selectedTripType = tripType;
+        document.querySelectorAll("[data-trip-type]").forEach((button) => button.classList.toggle("is-selected", button.dataset.tripType === tripType));
+        updateConfirmation();
+      }
+      function setSelectedPayment(paymentMethod) {
+        state.selectedPaymentMethod = paymentMethod;
+        document.querySelectorAll("[data-payment-method]").forEach((button) => button.classList.toggle("is-selected", button.dataset.paymentMethod === paymentMethod));
+        updateConfirmation();
+      }
+      function getCustomDestination() { return String($("serviceCustomDestination")?.value || "").trim(); }
+      function getCustomPrice() { return normalizeAmount($("serviceCustomPrice")?.value || ""); }
+      function finalDestination(service) { return service.isCustomPrice ? getCustomDestination() : service.destination; }
+      function validationState() {
+        const service = state.selectedService;
+        if (!service) return { valid:false, message:"Selecciona un servicio." };
+        const tripType = state.selectedTripType || (!service.supportsRoundTrip ? "one_way" : null);
+        if (!tripType) return { valid:false, message:"Selecciona Ida o Ida y vuelta." };
+        if (service.isCustomPrice && !getCustomDestination()) return { valid:false, message:"Indica el destino o la excursión." };
+        let finalPrice = 0;
+        try { finalPrice = getOfficialServicePrice(service, tripType, getCustomPrice()); }
+        catch (error) {
+          if (String(error.message).includes("CUSTOM_PRICE_MINIMUM")) return { valid:false, message:`La tarifa mínima para este servicio es de ${money(service.minimumCustomPrice)}.` };
+          if (String(error.message).includes("ROUND_TRIP")) return { valid:false, message:"Precio de ida y vuelta pendiente de configurar." };
+          return { valid:false, message:"No se encontró el precio oficial del servicio." };
+        }
+        if (!state.selectedPaymentMethod) return { valid:false, message:"Selecciona una forma de pago.", finalPrice, tripType };
+        return { valid:true, message:"", finalPrice, tripType };
+      }
+      function updateConfirmation() {
+        const service = state.selectedService; if (!service) return;
+        const validation = validationState();
+        const tripLabel = (state.selectedTripType || (!service.supportsRoundTrip ? "one_way" : null)) === "round_trip" ? "Ida y vuelta" : "Ida";
+        const destination = finalDestination(service) || service.destination || "Destino pendiente";
+        const displayPrice = validation.finalPrice || (service.isCustomPrice ? getCustomPrice() : (state.selectedTripType === "round_trip" ? service.roundTripPrice : service.oneWayPrice));
         $("serviceConfirmSummary").innerHTML = `
-          <div class="service-confirm-line"><span>Categoría</span><b>${meta.title || service.categoryId}</b></div>
-          <div class="service-confirm-line"><span>Servicio</span><b>${service.name}</b></div>
-          <div class="service-confirm-line"><span>Origen</span><b>${service.origin || "-"}</b></div>
-          <div class="service-confirm-line"><span>Destino</span><b>${service.destination || "-"}</b></div>
-          <div class="service-confirm-line"><span>Precio</span><b>${money(service.price)}</b></div>
-          <div class="service-confirm-line"><span>Fecha</span><b>${todayLocal()}</b></div>
-          <div class="service-confirm-line"><span>Hora</span><b>${timeLocal()}</b></div>`;
-        $("serviceConfirmMsg").textContent="";
-        $("serviceConfirmMsg").className="service-confirm-msg";
-        $("serviceConfirmSaveBtn").disabled=false;
-        $("serviceConfirmSaveBtn").textContent="Confirmar venta";
-        $("serviceConfirmBackdrop").classList.add("is-open");
-        $("serviceConfirmBackdrop").setAttribute("aria-hidden","false");
+          <div class="service-confirm-line"><span>Categoría</span><b>${escapeHtml(service.categoryName)}</b></div>
+          <div class="service-confirm-line"><span>Servicio</span><b>${escapeHtml(service.name)}</b></div>
+          <div class="service-confirm-line"><span>Origen</span><b>${escapeHtml(service.origin || "-")}</b></div>
+          <div class="service-confirm-line"><span>Destino</span><b>${escapeHtml(destination)}</b></div>
+          <div class="service-confirm-line"><span>Recorrido</span><b>${escapeHtml(tripLabel)}</b></div>
+          <div class="service-confirm-line"><span>Precio final</span><b>${displayPrice > 0 ? money(displayPrice) : "Pendiente"}</b></div>
+          <div class="service-confirm-line"><span>Fecha y hora</span><b>${escapeHtml(nowDate())} · ${escapeHtml(nowTime())}</b></div>`;
+        const button = $("serviceConfirmSaveBtn"); button.disabled = !validation.valid || state.saving;
+        if (!state.saving) button.textContent = "CONFIRMAR SERVICIO";
+        setConfirmMsg(validation.valid ? "" : validation.message, validation.message ? "err" : "");
       }
-      function closeServiceConfirmation(){
-        const b=$("serviceConfirmBackdrop"); if(!b)return;
-        b.classList.remove("is-open"); b.setAttribute("aria-hidden","true");
-        state.saving=false;
+      function openServiceConfirmation(service) {
+        resetPendingService(); state.selectedService = service;
+        state.selectedTripType = service.supportsRoundTrip ? null : "one_way";
+        $("serviceCustomDestination").value = ""; $("serviceCustomPrice").value = "";
+        const tripSection = $("serviceTripSection"); tripSection.hidden = !service.supportsRoundTrip;
+        $("serviceTripOneWayPrice").textContent = Number(service.oneWayPrice) > 0 ? money(service.oneWayPrice) : "Tarifa libre";
+        const roundAvailable = service.supportsRoundTrip && (service.isCustomPrice || Number(service.roundTripPrice) > 0);
+        $("serviceTripRoundBtn").disabled = !roundAvailable;
+        $("serviceTripRoundPrice").textContent = service.isCustomPrice ? "Tarifa libre" : (Number(service.roundTripPrice) > 0 ? money(service.roundTripPrice) : "Pendiente");
+        $("serviceRoundTripHelp").textContent = service.supportsRoundTrip && !roundAvailable ? "Precio de ida y vuelta pendiente de configurar." : "";
+        $("serviceCustomFields").hidden = !service.isCustomPrice;
+        $("serviceCustomMinimum").textContent = service.isCustomPrice ? `Tarifa mínima permitida: ${money(service.minimumCustomPrice)}` : "";
+        document.querySelectorAll("[data-trip-type],[data-payment-method]").forEach((button) => button.classList.remove("is-selected"));
+        if (state.selectedTripType) $("serviceTripOneWayBtn").classList.add("is-selected");
+        $("serviceConfirmBackdrop").classList.add("is-open"); $("serviceConfirmBackdrop").setAttribute("aria-hidden","false");
+        updateConfirmation();
       }
-      function setConfirmMsg(msg,type=""){ const el=$("serviceConfirmMsg"); el.textContent=msg||""; el.className="service-confirm-msg"+(type?" "+type:""); }
+      function closeServiceConfirmation() {
+        const backdrop = $("serviceConfirmBackdrop"); if (!backdrop) return;
+        backdrop.classList.remove("is-open"); backdrop.setAttribute("aria-hidden","true");
+        state.saving = false; $("serviceConfirmSaveBtn").disabled = false; $("serviceConfirmSaveBtn").textContent = "CONFIRMAR SERVICIO";
+      }
 
-      async function confirmServiceSale(){
-        if(state.saving || !state.selectedService) return;
-        state.saving=true;
-        const btn=$("serviceConfirmSaveBtn");
-        btn.disabled=true; btn.textContent="Guardando…";
+      async function confirmSelectedService(event) {
+        event?.preventDefault?.();
+        if (state.saving) return;
+        const validation = validationState();
+        if (!validation.valid) { setConfirmMsg(validation.message, "err"); updateConfirmation(); return; }
+        const user = window.ExploraFirebase?.auth?.currentUser;
+        if (!user?.uid) { setConfirmMsg("No se pudo verificar tu sesión.", "err"); return; }
+        state.saving = true;
+        const button = $("serviceConfirmSaveBtn"); button.disabled = true; button.textContent = "REGISTRANDO SERVICIO…";
         setConfirmMsg("Registrando servicio…");
-        try{
-          if(typeof window.ExploraRegisterSoldService !== "function"){
-            throw new Error("Firebase aún no está disponible para registrar ventas.");
-          }
-          await window.ExploraRegisterSoldService(state.selectedService);
-          setConfirmMsg("Servicio vendido correctamente","ok");
-          toast("Servicio vendido correctamente");
-          const saved = state.selectedService.name + " · " + money(state.selectedService.price);
-          state.selectedService=null;
-          setTimeout(()=>{ closeServiceConfirmation(); toast(saved); },650);
-        }catch(err){
-          setConfirmMsg(err && err.message ? err.message : "No se pudo registrar el servicio.","err");
-          btn.disabled=false; btn.textContent="Confirmar venta"; state.saving=false;
+        try {
+          if (typeof window.ExploraRegisterSoldService !== "function") throw new Error("SERVICE_MODULE_UNAVAILABLE");
+          const service = state.selectedService;
+          const destination = finalDestination(service);
+          const record = {
+            serviceId:service.serviceId, id:service.serviceId, catalogServiceId:service.serviceId,
+            categoryId:service.categoryId, categoryName:service.categoryName,
+            name:service.name, serviceName:service.name,
+            origin:service.origin, destination,
+            tripType:validation.tripType,
+            oneWayPrice:service.oneWayPrice,
+            roundTripPrice:service.roundTripPrice,
+            customPrice:service.isCustomPrice ? validation.finalPrice : null,
+            finalPrice:validation.finalPrice, price:validation.finalPrice,
+            paymentMethod:state.selectedPaymentMethod,
+            isCustomPrice:service.isCustomPrice,
+            minimumCustomPrice:service.minimumCustomPrice,
+            source:"manual_service", status:"completed"
+          };
+          await window.ExploraRegisterSoldService(record);
+          setConfirmMsg("Servicio registrado correctamente.", "ok"); toast("Servicio registrado correctamente");
+          resetPendingService();
+          setTimeout(() => { closeServiceConfirmation(); closeNewServiceScreen(); }, 420);
+        } catch (error) {
+          console.warn("SERVICE_CONFIRM_ERROR", error?.code || error?.message);
+          const code = String(error?.code || error?.message || "");
+          const message = code.includes("AUTH") || code.includes("Sesión") ? "No se pudo verificar tu sesión."
+            : code.includes("PRICE") || code.includes("Importe") ? "No se encontró el precio oficial del servicio."
+            : code.includes("payment") || code.includes("PAYMENT") ? "Selecciona una forma de pago."
+            : "No se pudo registrar el servicio.";
+          setConfirmMsg(message, "err"); state.saving = false; updateConfirmation();
+        } finally {
+          if (state.saving) state.saving = false;
+          if ($("serviceConfirmBackdrop").classList.contains("is-open")) updateConfirmation();
         }
       }
 
-      window.ExploraActions=window.ExploraActions||{};
-      window.ExploraActions["nuevo-servicio"]=openNewServiceScreen;
-      window.ExploraNewService={
-        open:openNewServiceScreen,
-        close:closeNewServiceScreen,
-        openCategory:openServiceCategory,
-        getState:()=>({currentCategory:state.currentCategory, selectedService:state.selectedService}),
-        getCatalog:()=>serviceCatalog
+      window.ExploraActions = window.ExploraActions || {};
+      window.ExploraActions["nuevo-servicio"] = openNewServiceScreen;
+      window.ExploraNewService = {
+        open:openNewServiceScreen, close:closeNewServiceScreen, openCategory:openServiceCategory,
+        getState:() => ({ currentCategory:state.currentCategory, selectedService:state.selectedService, selectedTripType:state.selectedTripType, selectedPaymentMethod:state.selectedPaymentMethod }),
+        getCatalog:() => serviceCatalog, getOfficialServicePrice
       };
 
-      document.addEventListener("DOMContentLoaded",()=>{
-        $("newServiceBackBtn").addEventListener("click",()=>{ if(screen.dataset.view==="category") openNewServiceMain(); else closeNewServiceScreen(); });
-        $("newServiceBellBtn").addEventListener("click",()=>{ const api=window.ExploraDerivations; if(api&&typeof api.openNotifications==="function") api.openNotifications(); else toast("No tienes derivaciones pendientes"); });
-        $("serviceCategorySearch").addEventListener("input",(e)=>renderServiceList(e.target.value));
-        $("serviceConfirmCancelBtn").addEventListener("click",closeServiceConfirmation);
-        $("serviceConfirmSaveBtn").addEventListener("click",confirmServiceSale);
-        $("serviceConfirmBackdrop").addEventListener("click",(e)=>{ if(e.target.id==="serviceConfirmBackdrop") closeServiceConfirmation(); });
+      document.addEventListener("DOMContentLoaded", () => {
+        $("newServiceBackBtn").addEventListener("click", () => { if (screen.dataset.view === "category") openNewServiceMain(); else closeNewServiceScreen(); });
+        $("newServiceBellBtn").addEventListener("click", () => { const api = window.ExploraDerivations; if (api && typeof api.openNotifications === "function") api.openNotifications(); else toast("No tienes derivaciones pendientes"); });
+        $("serviceCategorySearch").addEventListener("input", (event) => renderServiceList(event.target.value));
+        $("serviceConfirmCancelBtn").addEventListener("click", closeServiceConfirmation);
+        $("serviceConfirmSaveBtn").addEventListener("click", confirmSelectedService);
+        $("serviceConfirmBackdrop").addEventListener("click", (event) => { if (event.target.id === "serviceConfirmBackdrop" && !state.saving) closeServiceConfirmation(); });
+        $("serviceTripSection").addEventListener("click", (event) => { const button = event.target.closest("[data-trip-type]"); if (button && !button.disabled) setSelectedTrip(button.dataset.tripType); });
+        $("servicePaymentGrid").addEventListener("click", (event) => { const button = event.target.closest("[data-payment-method]"); if (button) setSelectedPayment(button.dataset.paymentMethod); });
+        $("serviceCustomDestination").addEventListener("input", updateConfirmation);
+        $("serviceCustomPrice").addEventListener("input", (event) => { event.target.value = formatAmountInput(event.target.value); updateConfirmation(); });
 
-        screen.addEventListener("click",(event)=>{
-          const categoryBtn=event.target.closest("[data-service-category]");
-          if(categoryBtn){ openServiceCategory(categoryBtn.dataset.serviceCategory); return; }
-          const serviceBtn=event.target.closest("[data-service-id]");
-          if(serviceBtn){ const s=getServiceById(serviceBtn.dataset.serviceId); if(s) openServiceConfirmation(s); return; }
-          const navBtn=event.target.closest("[data-new-service-nav]");
-          if(!navBtn)return;
-          const nav=navBtn.dataset.newServiceNav;
-          if(nav==="inicio"){ closeNewServiceScreen(); return; }
-          if(nav==="operaciones"){ openNewServiceMain(); return; }
-          if(nav==="finanzas"){ closeNewServiceScreen(); const target=document.querySelector('[data-action="nav-finanzas"], [aria-label="Finanzas"]'); if(target) target.click(); else toast("Finanzas preparado para conectar."); return; }
-          if(nav==="comprobantes"){ closeNewServiceScreen(); const target=document.querySelector('[data-action="nav-comprobantes"], [aria-label="Comprobantes"]'); if(target) target.click(); else toast("Comprobantes preparado para conectar."); return; }
-          if(nav==="perfil"){ closeNewServiceScreen(); const fn=window.ExploraActions && window.ExploraActions["abrir-perfil"]; if(typeof fn==="function") fn(); else toast("Perfil preparado para conectar."); }
+        screen.addEventListener("click", (event) => {
+          const categoryButton = event.target.closest("[data-service-category]");
+          if (categoryButton) { openServiceCategory(categoryButton.dataset.serviceCategory); return; }
+          const serviceButton = event.target.closest("[data-service-id]");
+          if (serviceButton) { const service = getServiceById(serviceButton.dataset.serviceId); if (service) openServiceConfirmation(service); return; }
+          const navButton = event.target.closest("[data-new-service-nav]"); if (!navButton) return;
+          const nav = navButton.dataset.newServiceNav;
+          if (nav === "inicio") { closeNewServiceScreen(); return; }
+          if (nav === "operaciones") { openNewServiceMain(); return; }
+          if (nav === "finanzas") { closeNewServiceScreen(); document.querySelector('[data-action="nav-finanzas"], [aria-label="Finanzas"]')?.click(); return; }
+          if (nav === "comprobantes") { closeNewServiceScreen(); document.querySelector('[data-action="nav-comprobantes"], [aria-label="Comprobantes"]')?.click(); return; }
+          if (nav === "perfil") { closeNewServiceScreen(); window.ExploraActions?.["abrir-perfil"]?.(); }
         });
-        document.addEventListener("keydown",(e)=>{ if(e.key==="Escape" && $("serviceConfirmBackdrop").classList.contains("is-open")) closeServiceConfirmation(); else if(e.key==="Escape" && screen.classList.contains("is-open")) closeNewServiceScreen(); });
+        document.addEventListener("keydown", (event) => {
+          if (event.key !== "Escape") return;
+          if ($("serviceConfirmBackdrop").classList.contains("is-open") && !state.saving) closeServiceConfirmation();
+          else if (screen.classList.contains("is-open")) closeNewServiceScreen();
+        });
       });
     })();
   </script>
@@ -5958,9 +6130,11 @@
         const code = String(error?.code || error?.message || "");
         if (code.includes("AUTH") || code.includes("SESSION") || code.includes("PRIVATE_SESSION")) return "No se pudo verificar tu sesión. Vuelve a intentarlo.";
         if (code.includes("AMOUNT") || code.includes("Monto") || code.includes("monto")) return "Ingresa un monto válido.";
-        if (code.includes("FORMAT") || code.includes("IMAGE") || code.includes("FILE") || code.includes("comprobante")) return error?.message || "No se pudo procesar el comprobante.";
+        if (code.includes("storage/unauthorized") || code.includes("storage/unauthenticated")) return "No se pudo subir el comprobante por un problema de permisos.";
+        if (code.includes("TOO_LARGE") || code.includes("maximum allowed size") || code.includes("resource-exhausted")) return "El comprobante continúa siendo demasiado pesado. Selecciona otra imagen.";
+        if (code.includes("FORMAT") || code.includes("IMAGE") || code.includes("FILE") || code.includes("comprobante")) return error?.message || "No se pudo preparar el comprobante seleccionado.";
         if (code.includes("UPLOAD") || code.includes("storage/")) return "No se pudo subir el comprobante.";
-        if (code.includes("WRITE") || code.includes("firestore") || code.includes("permission-denied")) return "No se pudo guardar el gasto.";
+        if (code.includes("WRITE") || code.includes("firestore") || code.includes("permission-denied")) return "No se pudo registrar el gasto.";
         if (code.includes("network") || code.includes("NETWORK")) return "No hay conexión. Revisa Internet e inténtalo nuevamente.";
         if (code.includes("TIMEOUT")) return "La carga está demorando demasiado. Inténtalo nuevamente.";
         return error?.message || "No se pudo guardar el gasto.";
@@ -13242,75 +13416,79 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
   }
   window.ExploraEnsureWeeklyBilling=startWeeklyBillingListener;
 
-  function blobToDataUrl(blob){
-    return new Promise((resolve,reject)=>{
-      const reader=new FileReader();
-      reader.onload=()=>resolve(String(reader.result||""));
-      reader.onerror=()=>reject(new Error("EXPENSE_DATA_URL_ERROR"));
-      reader.readAsDataURL(blob);
-    });
-  }
-
   async function compressReceiptImage(file){
-    if (!file || !String(file.type || "").startsWith("image/")) return file;
+    const fileName = String(file?.name || "").toLowerCase();
+    const isImage = Boolean(file) && (String(file.type || "").startsWith("image/") || /\.(jpe?g|png|webp|heic|heif)$/i.test(fileName));
+    if (!isImage) throw new Error("EXPENSE_FILE_FORMAT_INVALID");
     console.info("COMPRESS_START");
+    if (!(file.size > 0)) throw new Error("EXPENSE_FILE_EMPTY");
     if (file.size > 15 * 1024 * 1024) throw new Error("EXPENSE_FILE_TOO_LARGE");
+
     const url = URL.createObjectURL(file);
     let canvas = null;
     try {
-      const img = await withTimeout(new Promise((resolve, reject) => {
-        const image = new Image();
-        image.onload = () => resolve(image);
-        image.onerror = () => reject(new Error("EXPENSE_IMAGE_LOAD_ERROR"));
-        image.src = url;
-      }), 12000, "EXPENSE_IMAGE_LOAD_TIMEOUT");
-      const sourceWidth = img.naturalWidth || img.width;
-      const sourceHeight = img.naturalHeight || img.height;
+      const image = await withTimeout(new Promise((resolve, reject) => {
+        const candidate = new Image();
+        candidate.onload = () => resolve(candidate);
+        candidate.onerror = () => reject(new Error("EXPENSE_IMAGE_LOAD_ERROR"));
+        candidate.src = url;
+      }), 15000, "EXPENSE_IMAGE_LOAD_TIMEOUT");
+      const sourceWidth = image.naturalWidth || image.width;
+      const sourceHeight = image.naturalHeight || image.height;
       if (!sourceWidth || !sourceHeight) throw new Error("EXPENSE_IMAGE_DIMENSIONS_INVALID");
-      const maxSide = 1400;
-      const ratio = Math.min(1, maxSide / Math.max(sourceWidth, sourceHeight));
-      const width = Math.max(1, Math.round(sourceWidth * ratio));
-      const height = Math.max(1, Math.round(sourceHeight * ratio));
-      canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      const context = canvas.getContext("2d", { alpha: false });
-      if (!context) throw new Error("EXPENSE_CANVAS_UNAVAILABLE");
-      context.fillStyle = "#ffffff";
-      context.fillRect(0, 0, width, height);
-      context.drawImage(img, 0, 0, width, height);
 
-      async function encode(type, startQuality) {
-        let quality = startQuality;
-        let blob = null;
-        for (let attempt = 0; attempt < 4; attempt += 1) {
-          blob = await withTimeout(new Promise((resolve, reject) => {
-            canvas.toBlob(result => result ? resolve(result) : reject(new Error("EXPENSE_IMAGE_BLOB_EMPTY")), type, quality);
-          }), 10000, "EXPENSE_IMAGE_COMPRESS_TIMEOUT");
-          if (blob.size <= 280 * 1024) return blob;
-          quality -= 0.10;
+      const plans = [
+        { maxSide:1400, webp:[0.74,0.66,0.58], jpeg:[0.76,0.68,0.58] },
+        { maxSide:1100, webp:[0.70,0.60,0.52], jpeg:[0.72,0.62,0.54] },
+        { maxSide:900, webp:[0.64,0.54,0.46], jpeg:[0.66,0.56,0.48] }
+      ];
+      let smallest = null;
+      const encode = (type, quality) => withTimeout(new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => blob && blob.size ? resolve(blob) : reject(new Error("EXPENSE_IMAGE_BLOB_EMPTY")), type, quality);
+      }), 10000, "EXPENSE_IMAGE_COMPRESS_TIMEOUT");
+
+      for (const plan of plans) {
+        const ratio = Math.min(1, plan.maxSide / Math.max(sourceWidth, sourceHeight));
+        const width = Math.max(1, Math.round(sourceWidth * ratio));
+        const height = Math.max(1, Math.round(sourceHeight * ratio));
+        if (!canvas) canvas = document.createElement("canvas");
+        canvas.width = width; canvas.height = height;
+        const context = canvas.getContext("2d", { alpha:false });
+        if (!context) throw new Error("EXPENSE_CANVAS_UNAVAILABLE");
+        context.fillStyle = "#ffffff"; context.fillRect(0,0,width,height); context.drawImage(image,0,0,width,height);
+
+        for (const quality of plan.webp) {
+          try {
+            const blob = await encode("image/webp", quality);
+            if (!smallest || blob.size < smallest.size) smallest = blob;
+            if (blob.size <= 450 * 1024) {
+              console.info("COMPRESS_SUCCESS", blob.size);
+              return new File([blob], "comprobante.webp", { type:"image/webp", lastModified:Date.now() });
+            }
+          } catch (_) {}
         }
-        return blob;
+        for (const quality of plan.jpeg) {
+          try {
+            const blob = await encode("image/jpeg", quality);
+            if (!smallest || blob.size < smallest.size) smallest = blob;
+            if (blob.size <= 450 * 1024) {
+              console.info("COMPRESS_SUCCESS", blob.size);
+              return new File([blob], "comprobante.jpg", { type:"image/jpeg", lastModified:Date.now() });
+            }
+          } catch (_) {}
+        }
       }
-
-      let blob;
-      try { blob = await encode("image/webp", 0.78); }
-      catch (_) { blob = null; }
-      let mimeType = "image/webp";
-      if (!blob || !blob.size) {
-        blob = await encode("image/jpeg", 0.80);
-        mimeType = "image/jpeg";
-      }
-      if (!blob || blob.size > 700 * 1024) throw new Error("EXPENSE_IMAGE_TOO_LARGE_AFTER_COMPRESSION");
-      console.info("COMPRESS_SUCCESS");
-      return new File([blob], `${String(file.name || "comprobante").replace(/\.[^.]+$/, "")}.${mimeType.includes("webp") ? "webp" : "jpg"}`, { type: mimeType, lastModified: Date.now() });
+      if (!smallest || !smallest.size || smallest.size > 600 * 1024) throw new Error("EXPENSE_IMAGE_TOO_LARGE_AFTER_COMPRESSION");
+      const mimeType = smallest.type === "image/webp" ? "image/webp" : "image/jpeg";
+      console.info("COMPRESS_SUCCESS", smallest.size);
+      return new File([smallest], mimeType === "image/webp" ? "comprobante.webp" : "comprobante.jpg", { type:mimeType, lastModified:Date.now() });
     } finally {
       URL.revokeObjectURL(url);
       if (canvas) { canvas.width = 1; canvas.height = 1; }
     }
   }
 
-  async function uploadPdfReceipt(fileRef, file, metadata, timeoutMs = 25000){
+  async function uploadExpenseReceipt(fileRef, file, metadata, timeoutMs = 30000){
     return withTimeout(uploadBytes(fileRef, file, metadata), timeoutMs, "EXPENSE_UPLOAD_TIMEOUT");
   }
 
@@ -13329,15 +13507,57 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
   window.ExploraUpdateHistoricalAccumulated=updateHistoricalAccumulated;
 
   window.ExploraRegisterSoldService=async function(service){
-    const user=auth?.currentUser;if(!user?.uid)throw new Error("Sesión no iniciada.");if(!service?.id)throw new Error("Servicio inválido.");
-    const p=getActivePeriods(),valor=toNumber(service.price);if(valor<=0)throw new Error("Importe inválido.");const refDoc=doc(collection(db,"viajes"));const session=window.ExploraSession||{};
-    const paymentMethod=normalize(service.paymentMethod||service.metodoPago||service.pago||"efectivo");
-    const payload={id:refDoc.id,operationId:refDoc.id,uid:user.uid,choferUid:user.uid,choferId:session.driverId||user.uid,profileId:session.driverId||user.uid,choferEmail:user.email||"",choferNombre:(session.profile&&(session.profile.nombre||session.profile.nombreCompleto||session.profile.displayName))||user.displayName||"Chofer",categoria:service.categoryId||"",servicioId:service.id,viajeId:refDoc.id,nombreServicio:service.name||"Servicio",servicioNombre:service.name||"Servicio",origen:service.origin||"",destino:service.destination||"",ubicacion:service.location||"",descripcion:service.description||"",valor,monto:valor,importe:valor,tarifaMinima:valor,estado:"vendido",completado:true,fuente:"nuevo_servicio_premium",paymentMethod,metodoPago:paymentMethod,pago:paymentMethod,periodoSemanalId:p.weeklyPeriodId,weeklyPeriodId:p.weeklyPeriodId,periodoId:p.weeklyPeriodId,periodoMensualId:p.monthlyPeriodId,periodoAnualId:p.yearlyPeriodId,semana:p.week,mes:p.month,anio:p.year,fecha:new Date().toLocaleDateString("es-AR",{timeZone:AR_TZ}),hora:new Date().toLocaleTimeString("es-AR",{timeZone:AR_TZ,hour:"2-digit",minute:"2-digit"}),creadoEn:serverTimestamp(),creado:serverTimestamp()};
-    await withTimeout(setDoc(refDoc,payload,{merge:true}),12000,"SERVICE_WRITE_TIMEOUT");
+    const user = auth?.currentUser;
+    if (!user?.uid) throw new Error("AUTH_REQUIRED");
+    const catalogServiceId = String(service?.catalogServiceId || service?.serviceId || service?.id || "").trim();
+    if (!catalogServiceId) throw new Error("SERVICE_INVALID");
+    const paymentMethod = normalize(service?.paymentMethod || "");
+    if (!["cash","transfer","card"].includes(paymentMethod)) throw new Error("PAYMENT_METHOD_REQUIRED");
+    const finalPrice = toNumber(service?.finalPrice ?? service?.price ?? service?.amount);
+    if (!(finalPrice > 0)) throw new Error("SERVICE_PRICE_INVALID");
+    const tripType = String(service?.tripType || "one_way");
+    if (!["one_way","round_trip"].includes(tripType)) throw new Error("TRIP_TYPE_INVALID");
+    const minimumCustomPrice = toNumber(service?.minimumCustomPrice);
+    if (service?.isCustomPrice && minimumCustomPrice > 0 && finalPrice < minimumCustomPrice) throw new Error("CUSTOM_PRICE_MINIMUM");
+
+    const p = getActivePeriods();
+    const refDoc = doc(collection(db,"viajes"));
+    const session = window.ExploraSession || {};
+    const categoryId = String(service?.categoryId || "");
+    const categoryName = String(service?.categoryName || categoryId);
+    const serviceName = String(service?.serviceName || service?.name || "Servicio");
+    const origin = String(service?.origin || "");
+    const destination = String(service?.destination || "");
+    const payload = {
+      serviceRecordId:refDoc.id, id:refDoc.id, operationId:refDoc.id, viajeId:refDoc.id,
+      uid:user.uid, driverUid:user.uid, choferUid:user.uid, choferId:session.driverId || user.uid, profileId:session.driverId || user.uid,
+      choferEmail:user.email || "", choferNombre:(session.profile && (session.profile.nombre || session.profile.nombreCompleto || session.profile.displayName)) || user.displayName || "Chofer",
+      catalogServiceId, serviceId:catalogServiceId, servicioId:catalogServiceId,
+      categoryId, categoryName, categoria:categoryId,
+      serviceName, nombreServicio:serviceName, servicioNombre:serviceName,
+      origin, originLabel:origin, origen:origin, destination, destino:destination,
+      tripType, tipoRecorrido:tripType,
+      oneWayPrice:service?.oneWayPrice == null ? null : toNumber(service.oneWayPrice),
+      roundTripPrice:service?.roundTripPrice == null ? null : toNumber(service.roundTripPrice),
+      customPrice:service?.customPrice == null ? null : toNumber(service.customPrice),
+      finalPrice, amount:finalPrice, valor:finalPrice, monto:finalPrice, importe:finalPrice, tarifaMinima:service?.isCustomPrice ? minimumCustomPrice : finalPrice,
+      paymentMethod, metodoPago:paymentMethod, pago:paymentMethod,
+      source:"manual_service", fuente:"nuevo_servicio_premium", status:"completed", estado:"completado", completado:true,
+      weeklyPeriodId:p.weeklyPeriodId, periodoSemanalId:p.weeklyPeriodId, periodoId:p.weeklyPeriodId,
+      monthlyPeriodId:p.monthlyPeriodId, periodoMensualId:p.monthlyPeriodId,
+      yearlyPeriodId:p.yearlyPeriodId, periodoAnualId:p.yearlyPeriodId,
+      semana:p.week, mes:p.month, anio:p.year,
+      fecha:new Date().toLocaleDateString("es-AR",{timeZone:AR_TZ}),
+      hora:new Date().toLocaleTimeString("es-AR",{timeZone:AR_TZ,hour:"2-digit",minute:"2-digit"}),
+      completedAt:serverTimestamp(), createdAt:serverTimestamp(), updatedAt:serverTimestamp(), creadoEn:serverTimestamp(), creado:serverTimestamp(), schemaVersion:185
+    };
+    await withTimeout(setDoc(refDoc,payload,{merge:false}),15000,"SERVICE_WRITE_TIMEOUT");
     await Promise.resolve(window.ExploraWeeklyEngine?.applyService?.(payload));
+    window.invalidateWeeklyFinancialEngine?.("service-created");
     window.ExploraInvalidateWeeklyClosure?.("service-created",{refresh:false});
-    updateHistoricalAccumulated("facturacion",valor,"viajes",refDoc.id).catch(()=>{});
-    window.dispatchEvent(new CustomEvent("explora:servicio-registrado",{detail:{id:refDoc.id,valor,payload}}));return payload;
+    updateHistoricalAccumulated("facturacion",finalPrice,"viajes",refDoc.id).catch(() => {});
+    window.dispatchEvent(new CustomEvent("explora:servicio-registrado",{detail:{id:refDoc.id,valor:finalPrice,payload}}));
+    return payload;
   };
 
   let expenseSaveInProgress = false;
@@ -13387,26 +13607,33 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       let receiptMimeType = originalType;
       let receiptFileName = file.name || "comprobante";
       let receiptSize = file.size || 0;
-      let receiptStorageMode = "firestore-data-url";
+      let receiptStorageMode = "firebase-storage";
 
       if (originalType.startsWith("image/") || /\.(jpg|jpeg|png|webp|heic|heif)$/i.test(file.name || "")) {
         const processed = await compressReceiptImage(file);
         receiptMimeType = processed.type || "image/jpeg";
-        receiptFileName = processed.name || receiptFileName;
+        receiptFileName = receiptMimeType === "image/webp" ? "comprobante.webp" : "comprobante.jpg";
         receiptSize = processed.size || 0;
-        receiptUrl = await withTimeout(blobToDataUrl(processed), 10000, "EXPENSE_DATA_URL_TIMEOUT");
-        if (!receiptUrl.startsWith("data:image/")) throw new Error("EXPENSE_DATA_URL_INVALID");
+        const extension = receiptMimeType === "image/webp" ? "webp" : "jpg";
+        receiptPath = `gastos/${user.uid}/${expenseId}/comprobante.${extension}`;
+        const fileRef = storageRef(storage, receiptPath);
+        await uploadExpenseReceipt(fileRef, processed, {
+          contentType:receiptMimeType,
+          customMetadata:{ ownerUid:user.uid, uploadedByUid:user.uid, role:String(authenticated.role || "driver"), expenseId, category:"expense-receipt" }
+        });
+        uploadedPath = receiptPath; uploadedToStorage = true;
+        receiptUrl = await withTimeout(getDownloadURL(fileRef),10000,"EXPENSE_DOWNLOAD_URL_TIMEOUT");
       } else if (originalType.includes("pdf") || /\.pdf$/i.test(file.name || "")) {
-        receiptStorageMode = "firebase-storage";
+        if (!(file.size > 0) || file.size > 10 * 1024 * 1024) throw new Error("EXPENSE_PDF_TOO_LARGE");
+        receiptMimeType = "application/pdf"; receiptFileName = file.name || "comprobante.pdf"; receiptSize = file.size || 0;
         receiptPath = `gastos/${user.uid}/${expenseId}/comprobante.pdf`;
         const fileRef = storageRef(storage, receiptPath);
-        await uploadPdfReceipt(fileRef, file, {
-          contentType: "application/pdf",
-          customMetadata: { owner: user.uid, gastoId: expenseId, source: "explora-expense" }
+        await uploadExpenseReceipt(fileRef, file, {
+          contentType:"application/pdf",
+          customMetadata:{ ownerUid:user.uid, uploadedByUid:user.uid, role:String(authenticated.role || "driver"), expenseId, category:"expense-receipt" }
         });
-        uploadedPath = receiptPath;
-        uploadedToStorage = true;
-        receiptUrl = await withTimeout(getDownloadURL(fileRef), 10000, "EXPENSE_DOWNLOAD_URL_TIMEOUT");
+        uploadedPath = receiptPath; uploadedToStorage = true;
+        receiptUrl = await withTimeout(getDownloadURL(fileRef),10000,"EXPENSE_DOWNLOAD_URL_TIMEOUT");
       } else {
         throw new Error("EXPENSE_FILE_FORMAT_INVALID");
       }
@@ -13422,7 +13649,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         comprobanteUrl: receiptUrl, receiptUrl, comprobantePath: receiptPath, receiptPath,
         comprobanteNombre: receiptFileName, receiptFileName,
         comprobanteMime: receiptMimeType, receiptMimeType,
-        comprobanteTamano: receiptSize, receiptStorageMode,
+        comprobanteTamano: receiptSize, receiptSize, receiptStorageMode,
         estado: "registrado", status: "active", estadoComprobante: "registrado",
         payerRole: "driver", pagadoPorRol: "driver", sharedRate: 0.5,
         fuente: "cargar_gasto_premium", origenRegistro: "cargar_gasto",
@@ -13433,6 +13660,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         fecha: new Date().toLocaleDateString("es-AR", { timeZone: AR_TZ }),
         hora: new Date().toLocaleTimeString("es-AR", { timeZone: AR_TZ, hour: "2-digit", minute: "2-digit" }),
         receiptUploadedAt: serverTimestamp(), receiptUploadedByUid: user.uid,
+        receiptData: null, comprobanteData: null,
         creadoEn: serverTimestamp(), createdAt: serverTimestamp(), actualizadoEn: serverTimestamp(), updatedAt: serverTimestamp()
       };
 
@@ -13446,6 +13674,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       }
 
       await Promise.resolve(window.ExploraWeeklyEngine?.applyExpense?.(gasto));
+      window.invalidateWeeklyFinancialEngine?.("expense-created");
       window.ExploraInvalidateWeeklyClosure?.("expense-created", { refresh: false });
       window.dispatchEvent(new CustomEvent("explora:gasto-registrado", { detail: { id: expenseId, monto, gasto } }));
       updateHistoricalAccumulated("gastos", monto, "cantidadGastos", expenseId).catch(() => {});
@@ -13744,15 +13973,15 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
   }
   function renderServiceOptions(queryText = "") {
     const grid = $("derivationServiceGrid"); if (!grid) return;
-    const q = normalize(queryText); const rows = officialCatalog().filter(row => Number(row.price)>0 && (!q || normalize(`${row.name} ${row.origin} ${row.destination} ${row.location} ${row.categoryId}`).includes(q)));
-    grid.innerHTML = rows.length ? rows.map(row => `<button type="button" class="derivation-service-card${state.selectedServiceId===String(row.id)?" is-selected":""}" data-select-derivation-service="${escapeHtml(row.id)}"><span class="derivation-card-copy"><strong>${escapeHtml(row.name)}</strong><small>${escapeHtml([row.origin,row.destination].filter(Boolean).join(" → ") || row.location || row.categoryId)}</small></span><span class="derivation-service-price">${money(row.price)}</span><span class="derivation-select-dot" aria-hidden="true"></span></button>`).join("") : `<div class="derivation-empty">No se encontraron servicios activos.</div>`;
+    const q = normalize(queryText); const rows = officialCatalog().filter(row => Number(row.oneWayPrice ?? row.price)>0 && (!q || normalize(`${row.name} ${row.origin} ${row.destination} ${row.location} ${row.categoryId}`).includes(q)));
+    grid.innerHTML = rows.length ? rows.map(row => `<button type="button" class="derivation-service-card${state.selectedServiceId===String(row.id)?" is-selected":""}" data-select-derivation-service="${escapeHtml(row.id)}"><span class="derivation-card-copy"><strong>${escapeHtml(row.name)}</strong><small>${escapeHtml([row.origin,row.destination].filter(Boolean).join(" → ") || row.location || row.categoryId)}</small></span><span class="derivation-service-price">${money(row.oneWayPrice ?? row.price)}</span><span class="derivation-select-dot" aria-hidden="true"></span></button>`).join("") : `<div class="derivation-empty">No se encontraron servicios activos.</div>`;
   }
   function updateComposeSummary() {
     const driver = state.driverMap.get(state.selectedReceiverUid); const service = findOfficialService(state.selectedServiceId);
     $("derivationSummaryReceiver").textContent = driver?.name || "Sin seleccionar";
     $("derivationSummaryService").textContent = service?.name || "Sin seleccionar";
-    $("derivationSummaryPrice").textContent = money(service?.price || 0);
-    $("derivationSendBtn").disabled = !(driver && service && Number(service.price)>0);
+    $("derivationSummaryPrice").textContent = money(service?.oneWayPrice ?? service?.price ?? 0);
+    $("derivationSendBtn").disabled = !(driver && service && Number(service.oneWayPrice ?? service.price)>0);
   }
   function resetComposeForm() {
     state.selectedReceiverUid = ""; state.selectedServiceId = "";
@@ -13768,15 +13997,15 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     try {
       const session = await getSession(); const receiver = state.driverMap.get(state.selectedReceiverUid); const service = findOfficialService(state.selectedServiceId);
       if (!receiver || receiver.uid === session.uid || !profileActive(receiver.profile)) throw new Error("INVALID_RECEIVER");
-      if (!service || !(Number(service.price)>0)) throw new Error("INVALID_SERVICE");
-      const officialAgain = findOfficialService(service.id); if (!officialAgain || Number(officialAgain.price)!==Number(service.price)) throw new Error("SERVICE_PRICE_MISMATCH");
+      if (!service || !(Number(service.oneWayPrice ?? service.price)>0) || service.isCustomPrice) throw new Error("INVALID_SERVICE");
+      const officialAgain = findOfficialService(service.id); if (!officialAgain || Number(officialAgain.oneWayPrice ?? officialAgain.price)!==Number(service.oneWayPrice ?? service.price)) throw new Error("SERVICE_PRICE_MISMATCH");
       const ref = doc(collection(db, DERIVATION_COLLECTION)); const period = getPeriods(); const senderName = profileName(session.profile || {}); const notes = String($("derivationNotes")?.value || "").trim().slice(0,240);
       const payload = {
         derivationId:ref.id, id:ref.id, senderUid:session.uid, receiverUid:receiver.uid,
         senderProfileId:session.profileDocumentId || "", receiverProfileId:receiver.documentId,
         senderName, receiverName:receiver.name,
         serviceId:String(service.id), serviceCategory:String(service.categoryId || ""), serviceName:String(service.name || "Servicio"),
-        origin:String(service.origin || ""), destination:String(service.destination || ""), fixedPrice:Number(service.price), valor:Number(service.price), monto:Number(service.price),
+        origin:String(service.origin || ""), destination:String(service.destination || ""), fixedPrice:Number(service.oneWayPrice ?? service.price), valor:Number(service.oneWayPrice ?? service.price), monto:Number(service.oneWayPrice ?? service.price),
         notes, status:"sent_pending_response", estado:"sent_pending_response",
         sentAt:serverTimestamp(), createdAt:serverTimestamp(), acceptedAt:null, rejectedAt:null, completedAt:null, canceledAt:null,
         paymentMethod:null, billingServiceId:null, weeklyPeriodIdSent:period.weeklyPeriodId || "", weeklyPeriodIdCompleted:null,
