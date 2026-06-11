@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="explora-version" content="v174-avatar-firestore-fallback-verificado">
+  <meta name="explora-version" content="v173-foto-upload-sdk-stable">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -9024,10 +9024,13 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       selectedFile: null,
       previewUrl: "",
       processedPhoto: null,
+      processingPromise: null,
+      processingToken: 0,
       saving: false,
-      uploadTask: null,
       saveStartedAt: 0,
-      lastScrollTop: 0
+      lastScrollTop: 0,
+      optimisticPreviousAvatarUrl: "",
+      optimisticPreviousAvatarVersion: 0
     };
 
     function profileWithTimeout(promise, milliseconds, code) {
@@ -9121,235 +9124,40 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       });
     }
 
-    function uploadProfileAvatar(storageReference, blob, metadata) {
-      return new Promise((resolve, reject) => {
-        if (!(blob instanceof Blob) || blob.size <= 0) {
-          reject(createProfileSaveError("IMAGE_UPLOAD_BLOB_INVALID"));
-          return;
-        }
-        if (blob.size > 2 * 1024 * 1024) {
-          reject(createProfileSaveError("IMAGE_OUTPUT_TOO_LARGE"));
-          return;
-        }
-        if (!navigator.onLine) {
-          reject(createProfileSaveError("IMAGE_UPLOAD_NETWORK_FAILED"));
-          return;
-        }
-        const currentUser = auth.currentUser;
-        if (!currentUser?.uid) {
-          reject(createProfileSaveError("AUTH_REQUIRED"));
-          return;
-        }
-
-        let settled = false;
-        let uploadTask = null;
-        let absoluteTimer = null;
-        let stallTimer = null;
-        let lastProgressAt = Date.now();
-        let lastTransferred = 0;
-
-        const cleanup = () => {
-          if (absoluteTimer) clearTimeout(absoluteTimer);
-          if (stallTimer) clearInterval(stallTimer);
-          profileState.uploadTask = null;
-        };
-
-        const finishReject = (error) => {
-          if (settled) return;
-          settled = true;
-          cleanup();
-          reject(error);
-        };
-
-        const finishResolve = (reference) => {
-          if (settled) return;
-          settled = true;
-          cleanup();
-          updateProfileUploadProgress(1);
-          resolve(reference);
-        };
-
-        try {
-          uploadTask = uploadBytesResumable(storageReference, blob, metadata);
-          profileState.uploadTask = uploadTask;
-        } catch (error) {
-          finishReject(createProfileSaveError("IMAGE_UPLOAD_FAILED", error));
-          return;
-        }
-
-        absoluteTimer = setTimeout(() => {
-          if (settled) return;
-          try { uploadTask.cancel(); } catch (_) {}
-          finishReject(createProfileSaveError("PROFILE_UPLOAD_TIMEOUT"));
-        }, 60000);
-
-        stallTimer = setInterval(() => {
-          if (settled) return;
-          const stalledFor = Date.now() - lastProgressAt;
-          if (stalledFor > 30000) {
-            try { uploadTask.cancel(); } catch (_) {}
-            finishReject(createProfileSaveError("PROFILE_UPLOAD_STALLED"));
-          }
-        }, 2500);
-
-        uploadTask.on(
-          "state_changed",
-          (snapshot) => {
-            const transferred = Number(snapshot.bytesTransferred || 0);
-            const total = Number(snapshot.totalBytes || blob.size || 0);
-            if (transferred > lastTransferred) {
-              lastTransferred = transferred;
-              lastProgressAt = Date.now();
-            }
-            const progress = total > 0 ? transferred / total : 0;
-            updateProfileUploadProgress(progress);
-          },
-          (error) => {
-            const code = String(error?.code || error?.message || "");
-            if (code.includes("storage/canceled") && settled) return;
-            if (code.includes("storage/unauthorized")) {
-              finishReject(createProfileSaveError("STORAGE_PERMISSION_DENIED", error));
-              return;
-            }
-            if (code.includes("storage/bucket-not-found") || code.includes("storage/unknown")) {
-              finishReject(createProfileSaveError("STORAGE_CONFIGURATION_ERROR", error));
-              return;
-            }
-            if (code.includes("storage/retry-limit-exceeded") || code.includes("storage/server-file-wrong-size") || code.includes("storage/cannot-slice-blob")) {
-              finishReject(createProfileSaveError("IMAGE_UPLOAD_NETWORK_FAILED", error));
-              return;
-            }
-            finishReject(createProfileSaveError("IMAGE_UPLOAD_FAILED", error));
-          },
-          () => {
-            const reference = uploadTask?.snapshot?.ref || storageReference;
-            finishResolve(reference);
-          }
-        );
-      });
-    }
-
-    function profileBlobToDataUrl(blob, timeoutMs = 12000) {
-      return new Promise((resolve, reject) => {
-        if (!(blob instanceof Blob) || blob.size <= 0) {
-          reject(createProfileSaveError("FIRESTORE_AVATAR_BLOB_INVALID"));
-          return;
-        }
-        const reader = new FileReader();
-        let settled = false;
-        const timer = setTimeout(() => {
-          if (settled) return;
-          settled = true;
-          try { reader.abort(); } catch (_) {}
-          reject(createProfileSaveError("FIRESTORE_AVATAR_READ_TIMEOUT"));
-        }, timeoutMs);
-        const finish = (callback) => {
-          if (settled) return;
-          settled = true;
-          clearTimeout(timer);
-          reader.onload = null;
-          reader.onerror = null;
-          reader.onabort = null;
-          callback();
-        };
-        reader.onload = () => finish(() => {
-          const dataUrl = String(reader.result || "");
-          if (!dataUrl.startsWith("data:image/")) {
-            reject(createProfileSaveError("FIRESTORE_AVATAR_DATA_INVALID"));
-            return;
-          }
-          resolve(dataUrl);
-        });
-        reader.onerror = () => finish(() => reject(createProfileSaveError("FIRESTORE_AVATAR_READ_FAILED", reader.error)));
-        reader.onabort = () => finish(() => reject(createProfileSaveError("FIRESTORE_AVATAR_READ_FAILED")));
-        try {
-          reader.readAsDataURL(blob);
-        } catch (error) {
-          finish(() => reject(createProfileSaveError("FIRESTORE_AVATAR_READ_FAILED", error)));
-        }
-      });
-    }
-
-    async function createFirestoreAvatarFallback(processedPhoto, uid) {
-      const sourceBlob = processedPhoto && processedPhoto.blob;
-      if (!(sourceBlob instanceof Blob) || sourceBlob.size <= 0) {
-        throw createProfileSaveError("FIRESTORE_AVATAR_BLOB_INVALID");
+    async function uploadProfileAvatar(storageReference, blob, metadata) {
+      if (!(blob instanceof Blob) || blob.size <= 0) {
+        throw createProfileSaveError("IMAGE_UPLOAD_BLOB_INVALID");
+      }
+      if (blob.size > 512 * 1024) {
+        throw createProfileSaveError("IMAGE_OUTPUT_TOO_LARGE");
+      }
+      if (!navigator.onLine) {
+        throw createProfileSaveError("IMAGE_UPLOAD_NETWORK_FAILED");
+      }
+      const currentUser = auth.currentUser;
+      if (!currentUser?.uid) {
+        throw createProfileSaveError("AUTH_REQUIRED");
       }
 
-      const objectUrl = URL.createObjectURL(sourceBlob);
-      let decoded = null;
-      let canvas = null;
       try {
-        decoded = await loadProfileImageElement(objectUrl, {
-          revokeUrl: true,
-          timeoutMs: 12000,
-          method: "firestore-inline-fallback"
-        });
-        const size = 420;
-        canvas = document.createElement("canvas");
-        canvas.width = size;
-        canvas.height = size;
-        const context = canvas.getContext("2d", { alpha: false });
-        if (!context) throw createProfileSaveError("CANVAS_CONTEXT_UNAVAILABLE");
-        context.fillStyle = "#0b0f12";
-        context.fillRect(0, 0, size, size);
-        context.imageSmoothingEnabled = true;
-        if ("imageSmoothingQuality" in context) context.imageSmoothingQuality = "high";
-        context.drawImage(decoded.source, 0, 0, decoded.width, decoded.height, 0, 0, size, size);
-
-        let fallbackBlob = await canvasToBlobSafe(canvas, "image/jpeg", 0.72);
-        let dataUrl = await profileBlobToDataUrl(fallbackBlob);
-        if (dataUrl.length > 620000) {
-          fallbackBlob = await canvasToBlobSafe(canvas, "image/jpeg", 0.58);
-          dataUrl = await profileBlobToDataUrl(fallbackBlob);
-        }
-        if (dataUrl.length > 700000) {
-          throw createProfileSaveError("FIRESTORE_AVATAR_TOO_LARGE");
-        }
-        return {
-          url: dataUrl,
-          path: `firestore-inline/${uid}`,
-          bytes: fallbackBlob.size,
-          storageMode: "firestore-inline"
-        };
-      } finally {
-        try { decoded && decoded.cleanup && decoded.cleanup(); } catch (_) {}
-        try { URL.revokeObjectURL(objectUrl); } catch (_) {}
-        if (canvas) {
-          canvas.width = 1;
-          canvas.height = 1;
-        }
-      }
-    }
-
-    async function verifyProfilePersistence(profileRef, safe, expectedAvatarUrl = "") {
-      try {
-        const snapshot = await withProfileStageTimeout(
-          getDoc(profileRef),
-          10000,
-          "PROFILE_VERIFY_TIMEOUT"
+        return await withProfileStageTimeout(
+          uploadBytes(storageReference, blob, metadata),
+          12000,
+          "PROFILE_UPLOAD_TIMEOUT"
         );
-        if (!snapshot.exists()) {
-          throw createProfileSaveError("PROFILE_VERIFY_NOT_FOUND");
-        }
-        const persisted = snapshot.data() || {};
-        const namePersisted = String(persisted[safe.nameKey] || "").trim();
-        const expectedName = String(safe.updates[safe.nameKey] || "").trim();
-        if (namePersisted !== expectedName) {
-          throw createProfileSaveError("PROFILE_VERIFY_NAME_MISMATCH");
-        }
-        if (safe.avatarKey && expectedAvatarUrl) {
-          const avatarPersisted = String(persisted[safe.avatarKey] || "");
-          if (avatarPersisted !== expectedAvatarUrl) {
-            throw createProfileSaveError("PROFILE_VERIFY_AVATAR_MISMATCH");
-          }
-        }
-        return { verified: true, data: persisted };
       } catch (error) {
-        profileDiagnostic("PROFILE_FIRESTORE_VERIFY_WARNING", {
-          code: String((error && (error.code || error.message)) || "UNKNOWN")
-        });
-        return { verified: false, error };
+        const code = String(error?.code || error?.message || "");
+        if (code.includes("storage/unauthorized")) {
+          throw createProfileSaveError("STORAGE_PERMISSION_DENIED", error);
+        }
+        if (code.includes("storage/bucket-not-found") || code.includes("storage/unknown")) {
+          throw createProfileSaveError("STORAGE_CONFIGURATION_ERROR", error);
+        }
+        if (code.includes("storage/retry-limit-exceeded") || code.includes("storage/server-file-wrong-size") || code.includes("storage/cannot-slice-blob")) {
+          throw createProfileSaveError("IMAGE_UPLOAD_NETWORK_FAILED", error);
+        }
+        if (code.includes("PROFILE_UPLOAD_TIMEOUT")) throw error;
+        throw createProfileSaveError("IMAGE_UPLOAD_FAILED", error);
       }
     }
 
@@ -9377,12 +9185,6 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       }
       if (lower.includes("image_upload_blob_invalid")) {
         return "La fotografía procesada no es válida. Selecciona otra imagen.";
-      }
-      if (lower.includes("firestore_avatar_too_large")) {
-        return "La fotografía sigue siendo demasiado pesada para guardarla. Selecciona otra imagen.";
-      }
-      if (lower.includes("firestore_avatar")) {
-        return "No se pudo preparar la alternativa de guardado en Firestore.";
       }
       if (lower.includes("storage/") || lower.includes("avatar_upload") || lower.includes("image_upload_failed")) {
         return "No se pudo subir la fotografía.";
@@ -9456,65 +9258,41 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       return "No se pudieron guardar los cambios del perfil.";
     }
 
-    async function resolveWritableProfileDocument(authenticated) {
-      const user = authenticated && authenticated.user;
-      if (!user || !user.uid) throw createProfileSaveError("AUTH_REQUIRED");
+    function getWritableProfileDocumentFromSession(user) {
+      if (!user?.uid) throw createProfileSaveError("AUTH_REQUIRED");
 
-      // La referencia oficial se resuelve una sola vez al abrir la sesión. Perfil no
-      // vuelve a consultar por nombre, correo, username ni supone que doc.id === uid.
-      let profileRef = authenticated.profileRef || exploraSession.profileRef || null;
-      let profileDocumentId = String(
-        authenticated.profileDocumentId ||
+      const profile = exploraSession.profile || authSessionState.profile || null;
+      const profileDocumentId = String(
         exploraSession.profileDocumentId ||
         exploraSession.driverId ||
+        authSessionState.profileDocumentId ||
         ""
       ).trim();
-      let profileCollection = String(
-        authenticated.profileCollection ||
+      const profileCollection = String(
         exploraSession.profileCollection ||
-        profileRef?.parent?.id ||
+        authSessionState.profileCollection ||
+        exploraSession.profileRef?.parent?.id ||
         ""
       ).trim();
-      let profile = authenticated.profile || exploraSession.profile || null;
+      const profileRef = exploraSession.profileRef || (
+        profileCollection && profileDocumentId
+          ? doc(db, profileCollection, profileDocumentId)
+          : null
+      );
 
-      // Único fallback permitido: una sesión persistente antigua que todavía no tenía
-      // almacenada la referencia. Reutiliza exactamente el cargador oficial del login y
-      // persiste el resultado para no repetir la recuperación en futuros guardados.
-      if ((!profileRef || !profileDocumentId || !profileCollection || !profile) && !exploraSession.initialized) {
-        const loaded = await loadLegacyExploraProfile(user);
-        profileRef = loaded.profileRef || null;
-        profileDocumentId = String(loaded.profileDocumentId || "").trim();
-        profileCollection = String(loaded.collectionName || loaded.profileRef?.parent?.id || "").trim();
-        profile = loaded.profile || null;
-
-        exploraSession.authUser = user;
-        exploraSession.profile = profile;
-        exploraSession.driverId = profileDocumentId;
-        exploraSession.profileDocumentId = profileDocumentId;
-        exploraSession.profileCollection = profileCollection;
-        exploraSession.profileRef = profileRef;
-        exploraSession.role = loaded.role || exploraSession.role || null;
-        exploraSession.initialized = Boolean(profileRef && profileDocumentId && profileCollection && profile);
-
-        authSessionState.authenticatedUser = user;
-        authSessionState.profile = profile;
-        authSessionState.profileDocumentId = profileDocumentId;
-        authSessionState.profileCollection = profileCollection;
-      }
-
-      if (!exploraSession.initialized && (!profileRef || !profileDocumentId || !profileCollection || !profile)) {
+      if (!exploraSession.initialized || !profile || !profileRef || !profileDocumentId || !profileCollection) {
         throw createProfileSaveError("SESSION_PROFILE_NOT_READY");
       }
-      if (!profileDocumentId) throw createProfileSaveError("PROFILE_DOCUMENT_ID_MISSING");
-      if (!profileCollection) throw createProfileSaveError("PROFILE_COLLECTION_MISSING");
-      if (!profileRef) profileRef = doc(db, profileCollection, profileDocumentId);
-      if (!profile) throw createProfileSaveError("PROFILE_NOT_FOUND");
 
-      const sessionUid = String(exploraSession.authUser?.uid || authenticated.uid || "").trim();
-      if (sessionUid && sessionUid !== user.uid) throw createProfileSaveError("PROFILE_UID_MISMATCH");
+      const sessionUid = String(exploraSession.authUser?.uid || authSessionState.authenticatedUser?.uid || "").trim();
+      if (sessionUid && sessionUid !== user.uid) {
+        throw createProfileSaveError("PROFILE_UID_MISMATCH");
+      }
 
       const declaredUid = String(profile.uid || profile.authUid || profile.firebaseUid || profile.userId || "").trim();
-      if (declaredUid && declaredUid !== user.uid) throw createProfileSaveError("INVALID_PROFILE_DOCUMENT");
+      if (declaredUid && declaredUid !== user.uid) {
+        throw createProfileSaveError("INVALID_PROFILE_DOCUMENT");
+      }
 
       const declaredEmail = String(profile.email || profile.correo || "").trim().toLowerCase();
       const authEmail = String(user.email || "").trim().toLowerCase();
@@ -9546,7 +9324,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         if (updatedAtKey) updates[updatedAtKey] = serverTimestamp();
         if (versionKey) updates[versionKey] = values.avatarVersion;
       }
-      return { updates, nameKey, phoneKey, avatarKey: values.changedAvatar ? chooseExistingField(currentProfile, ["avatarUrl", "fotoPerfil", "avatar", "foto", "photoURL"], "avatarUrl") : "", pathKey: values.changedAvatar ? chooseExistingField(currentProfile, ["avatarPath", "avatarStoragePath", "fotoPerfilPath", "fotoPath"], "avatarPath") : "" };
+      return { updates, nameKey, phoneKey };
     }
 
     function getProfileAvatarPath(data = {}) {
@@ -9649,6 +9427,8 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       profileState.previewUrl = "";
       profileState.selectedFile = null;
       profileState.processedPhoto = null;
+      profileState.processingPromise = null;
+      profileState.processingToken += 1;
       if ($("profileAvatarInput")) $("profileAvatarInput").value = "";
       if (window.ExploraMainNav) window.ExploraMainNav.setActive("inicio");
       saveLastScreen("dashboard");
@@ -9897,30 +9677,24 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       if (file.size > 15 * 1024 * 1024) throw createProfileSaveError("IMAGE_TOO_LARGE");
       if (!isSupportedProfileImage(file)) throw createProfileSaveError("INVALID_IMAGE_FILE");
 
-      profileDiagnostic("PROFILE_FILE_SELECTED", { selected: true });
-      profileDiagnostic("PROFILE_FILE_NAME", { extension: getProfilePhotoExtension(file) || "unknown" });
-      profileDiagnostic("PROFILE_FILE_TYPE", { type: file.type || "empty" });
-      profileDiagnostic("PROFILE_FILE_SIZE", { bytes: file.size });
-
       const buffer = await readProfileFileBuffer(file);
       if (!(buffer instanceof ArrayBuffer) || buffer.byteLength <= 0) throw createProfileSaveError("FILE_EMPTY");
       const formatInfo = detectProfileImageFormat(file, buffer);
       if (!formatInfo.mimeType) throw createProfileSaveError("INVALID_IMAGE_FILE");
 
-      const decoded = await profileWithTimeout(decodeProfileImage(file, formatInfo), 15000, "IMAGE_DECODE_TIMEOUT");
+      const decoded = await profileWithTimeout(decodeProfileImage(file, formatInfo), 12000, "IMAGE_DECODE_TIMEOUT");
       let canvas = null;
       try {
-        const sourceWidth = decoded.width;
-        const sourceHeight = decoded.height;
+        const sourceWidth = Number(decoded.width || 0);
+        const sourceHeight = Number(decoded.height || 0);
         if (!sourceWidth || !sourceHeight) throw createProfileSaveError("IMAGE_DIMENSIONS_INVALID");
         const sourceSize = Math.min(sourceWidth, sourceHeight);
         if (sourceSize <= 0) throw createProfileSaveError("IMAGE_DIMENSIONS_INVALID");
 
-        const outputSize = sourceSize >= 720 ? 720 : Math.max(320, Math.round(sourceSize));
+        const outputSize = 384;
         const sourceX = (sourceWidth - sourceSize) / 2;
         const sourceY = (sourceHeight - sourceSize) / 2;
 
-        profileDiagnostic("PROFILE_CANVAS_START", { outputSize });
         canvas = document.createElement("canvas");
         canvas.width = outputSize;
         canvas.height = outputSize;
@@ -9941,24 +9715,32 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
           outputSize,
           outputSize
         );
-        profileDiagnostic("PROFILE_CANVAS_SUCCESS", { outputSize });
 
-        profileDiagnostic("PROFILE_BLOB_START", { format: "webp" });
         let blob = null;
         let mimeType = "image/webp";
         let extension = "webp";
         try {
-          blob = await profileWithTimeout(canvasToBlobSafe(canvas, "image/webp", 0.82), 10000, "IMAGE_ENCODING_TIMEOUT");
+          blob = await canvasToBlobSafe(canvas, "image/webp", 0.76);
           if (!blob.type.includes("webp")) throw createProfileSaveError("WEBP_ENCODING_UNAVAILABLE");
-        } catch (webpError) {
-          profileDiagnostic("PROFILE_PROCESSING_ERROR", { stage: "encode:webp", code: String(webpError && (webpError.code || webpError.message) || "UNKNOWN") });
+        } catch (_) {
           mimeType = "image/jpeg";
           extension = "jpg";
-          blob = await profileWithTimeout(canvasToBlobSafe(canvas, "image/jpeg", 0.84), 10000, "IMAGE_ENCODING_TIMEOUT");
+          blob = await canvasToBlobSafe(canvas, "image/jpeg", 0.78);
         }
+
         if (!blob || blob.size <= 0) throw createProfileSaveError("IMAGE_ENCODING_FAILED");
-        if (blob.size > 2 * 1024 * 1024) throw createProfileSaveError("IMAGE_OUTPUT_TOO_LARGE");
-        profileDiagnostic("PROFILE_BLOB_SUCCESS", { type: mimeType, bytes: blob.size });
+
+        if (blob.size > 200 * 1024) {
+          if (mimeType === "image/webp") {
+            blob = await canvasToBlobSafe(canvas, "image/webp", 0.62);
+          } else {
+            blob = await canvasToBlobSafe(canvas, "image/jpeg", 0.66);
+          }
+        }
+
+        if (!blob || blob.size <= 0) throw createProfileSaveError("IMAGE_ENCODING_FAILED");
+        if (blob.size > 512 * 1024) throw createProfileSaveError("IMAGE_OUTPUT_TOO_LARGE");
+
         return {
           blob,
           mimeType,
@@ -10006,6 +9788,57 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       }));
     }
 
+    function applyOptimisticAvatarEverywhere(uid, previewUrl) {
+      if (!uid || !previewUrl) return;
+      const uidText = String(uid);
+      ["dashboardProfileAvatar", "profileAvatarPreview", "adminAvatar"].forEach((id) => {
+        const image = $(id);
+        if (image && image.tagName?.toLowerCase() === "img") image.src = previewUrl;
+      });
+      document.querySelectorAll("img[data-user-id], img[data-avatar-user-id], [data-user-id] img, [data-avatar-user-id] img").forEach((image) => {
+        const owner = image.dataset.userId || image.dataset.avatarUserId || image.closest("[data-user-id]")?.dataset.userId || image.closest("[data-avatar-user-id]")?.dataset.avatarUserId || "";
+        if (String(owner) === uidText) image.src = previewUrl;
+      });
+    }
+
+    function restoreAvatarAfterOptimisticFailure(uid, previousUrl, previousVersion) {
+      if (previousUrl) applyAvatarEverywhere(uid, previousUrl, previousVersion || Date.now());
+      const preview = $("profileAvatarPreview");
+      if (preview && profileState.previewUrl) preview.src = profileState.previewUrl;
+    }
+
+    function beginProfilePhotoProcessing(file) {
+      const token = ++profileState.processingToken;
+      profileState.processedPhoto = null;
+      const startedAt = performance.now();
+      profileDiagnostic("PROFILE_COMPRESS_START", { sourceBytes: file.size });
+      profileState.processingPromise = processProfilePhoto(file)
+        .then((result) => {
+          if (token !== profileState.processingToken || profileState.selectedFile !== file) {
+            return { ok: false, error: createProfileSaveError("IMAGE_SELECTION_CHANGED") };
+          }
+          profileState.processedPhoto = result;
+          profileDiagnostic("PROFILE_COMPRESS_END", {
+            durationMs: Math.round(performance.now() - startedAt),
+            outputBytes: result.size,
+            width: result.width,
+            height: result.height,
+            type: result.mimeType
+          });
+          profileMsg("Foto optimizada y lista para guardar.");
+          return { ok: true, result };
+        })
+        .catch((error) => {
+          if (token === profileState.processingToken) {
+            profileState.processedPhoto = null;
+            profileDiagnostic("PROFILE_PROCESSING_ERROR", { code: String(error?.code || error?.message || "UNKNOWN") });
+            profileMsg(mapProfileSaveError(error), "err");
+          }
+          return { ok: false, error };
+        });
+      return profileState.processingPromise;
+    }
+
     async function deletePreviousAvatarSafely(oldPath, newPath, uid = "") {
       const oldClean = String(oldPath || "").trim();
       const uidClean = String(uid || "").trim();
@@ -10028,117 +9861,84 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       if (name.length > 80) return profileMsg("El nombre es demasiado largo.", "err");
       if (!isValidPhone(phone)) return profileMsg("Revisa el número de teléfono.", "err");
 
+      const user = auth.currentUser;
+      if (!user?.uid) return profileMsg("No se pudo verificar tu sesión. Vuelve a ingresar.", "err");
+
+      let resolved;
+      try {
+        resolved = getWritableProfileDocumentFromSession(user);
+      } catch (error) {
+        return profileMsg(mapProfileSaveError(error), "err");
+      }
+
+      const currentProfile = resolved.profile || {};
+      const currentName = getProfileName(currentProfile, user);
+      const currentPhone = String(currentProfile.telefono || currentProfile.phone || currentProfile.celular || "").trim();
+      const changedAvatar = Boolean(profileState.selectedFile);
+      const changedFields = name !== currentName || phone !== currentPhone;
+      if (!changedAvatar && !changedFields) {
+        profileMsg("No hay cambios para guardar.");
+        return;
+      }
+
       profileState.saving = true;
       profileState.saveStartedAt = performance.now();
-      profileState.processedPhoto = null;
-      setProfileSavingState(profileState.selectedFile ? "processing" : "saving");
-      document.body.classList.add("profile-saving");
-      document.body.setAttribute("aria-busy", "true");
-      profileMsg(profileState.selectedFile ? "Preparando fotografía…" : "Guardando cambios…");
-      profileDiagnostic("PROFILE_SAVE_START", { hasNewImage: Boolean(profileState.selectedFile) });
+      setProfileSavingState(changedAvatar ? "processing" : "saving");
+      profileMsg(changedAvatar ? "Preparando foto…" : "Guardando cambios…");
+      profileDiagnostic("PROFILE_SAVE_START", { hasNewImage: changedAvatar });
+
+      const uid = user.uid;
+      const oldAvatarPath = getProfileAvatarPath(currentProfile);
+      const oldAvatarUrl = getProfileAvatarUrl(currentProfile, user);
+      const oldAvatarVersion = Number(currentProfile.avatarVersion || currentProfile.fotoVersion || 0) || Date.now();
+      profileState.optimisticPreviousAvatarUrl = oldAvatarUrl;
+      profileState.optimisticPreviousAvatarVersion = oldAvatarVersion;
 
       let uploadedNewPath = "";
-      let uploadedReference = null;
-      let oldAvatarPath = "";
+      let newAvatarUrl = oldAvatarUrl;
+      let newAvatarPath = oldAvatarPath;
+      let processed = null;
+      let primarySucceeded = false;
       let finalMessage = "";
       let finalType = "";
-      let firestoreUpdated = false;
-      let avatarSavedIn = "existing";
-      let storageUploadError = null;
 
       try {
-        const authenticated = await withProfileStageTimeout(
-          getAuthenticatedSession({ timeoutMs: 5000 }),
-          5000,
-          "AUTH_SESSION_TIMEOUT"
-        ).catch((error) => {
-          throw createProfileSaveError("AUTH_REQUIRED", error);
-        });
-        profileDiagnostic("PROFILE_AUTH_OK", { uidPresent: Boolean(authenticated && authenticated.uid) });
-
-        const resolved = await resolveWritableProfileDocument(authenticated);
-        profileDiagnostic("PROFILE_DOCUMENT_OK", { documentIdPresent: Boolean(resolved.profileDocumentId) });
-
-        const user = authenticated.user;
-        const uid = authenticated.uid;
-        const currentProfile = resolved.profile || {};
-        oldAvatarPath = getProfileAvatarPath(currentProfile);
-        const oldAvatarUrl = getProfileAvatarUrl(currentProfile, user);
-        const changedAvatar = Boolean(profileState.selectedFile);
-        let newAvatarPath = oldAvatarPath;
-        let newAvatarUrl = oldAvatarUrl;
-        profileDiagnostic("PROFILE_FIELDS_VALIDATED", { changedAvatar });
+        if (changedAvatar && profileState.previewUrl) {
+          applyOptimisticAvatarEverywhere(uid, profileState.previewUrl);
+          profileDiagnostic("PROFILE_PREVIEW_APPLIED");
+        }
 
         if (changedAvatar) {
           setProfileSavingState("processing");
-          profileDiagnostic("PROFILE_PROCESS_START");
-          profileState.processedPhoto = await withProfileStageTimeout(
-            processProfilePhoto(profileState.selectedFile),
-            15000,
-            "IMAGE_PROCESS_TIMEOUT"
-          );
-          profileDiagnostic("PROFILE_PROCESS_SUCCESS", {
-            bytes: profileState.processedPhoto.blob.size,
-            type: profileState.processedPhoto.contentType
-          });
+          const outcome = profileState.processedPhoto
+            ? { ok: true, result: profileState.processedPhoto }
+            : await (profileState.processingPromise || beginProfilePhotoProcessing(profileState.selectedFile));
+          if (!outcome?.ok || !outcome.result) throw outcome?.error || createProfileSaveError("IMAGE_PROCESSING_FAILED");
+          processed = outcome.result;
 
           const operationId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-          newAvatarPath = `avatars/${uid}/profile-${operationId}.${profileState.processedPhoto.extension}`;
+          newAvatarPath = `avatars/${uid}/profile-${operationId}.${processed.extension}`;
           uploadedNewPath = newAvatarPath;
           const fileRef = storageRef(storage, newAvatarPath);
-          profileDiagnostic("PROFILE_UPLOAD_START", { pathOwnedByUser: newAvatarPath.startsWith(`avatars/${uid}/`) });
-          setProfileSavingState("uploading", 0);
 
-          try {
-            uploadedReference = await uploadProfileAvatar(fileRef, profileState.processedPhoto.blob, {
-              contentType: profileState.processedPhoto.contentType,
-              customMetadata: {
-                ownerUid: uid,
-                category: "profile-avatar"
-              }
-            });
-            profileDiagnostic("PROFILE_UPLOAD_SUCCESS");
-
-            profileDiagnostic("PROFILE_URL_START");
-            newAvatarUrl = await withProfileStageTimeout(
-              getDownloadURL(uploadedReference),
-              10000,
-              "PROFILE_DOWNLOAD_URL_TIMEOUT"
-            );
-            if (!newAvatarUrl) throw createProfileSaveError("PROFILE_DOWNLOAD_URL_FAILED");
-            profileDiagnostic("PROFILE_URL_SUCCESS");
-            avatarSavedIn = "storage";
-          } catch (error) {
-            storageUploadError = error;
-            profileDiagnostic("PROFILE_STORAGE_PRIMARY_FAILED", {
-              code: String((error && (error.code || error.message)) || "UNKNOWN")
-            });
-
-            // Alternativa definitiva: si Storage está bloqueado, sin reglas o no responde,
-            // guardar un avatar pequeño directamente en el documento Firestore del perfil.
-            // Esto reemplaza el campo anterior y no crea documentos ni fotografías duplicadas.
-            setProfileSavingState("saving");
-            profileMsg("Firebase Storage no respondió. Guardando la foto directamente en tu perfil…");
-            profileDiagnostic("PROFILE_FIRESTORE_AVATAR_FALLBACK_START");
-            const fallback = await withProfileStageTimeout(
-              createFirestoreAvatarFallback(profileState.processedPhoto, uid),
-              20000,
-              "FIRESTORE_AVATAR_TIMEOUT"
-            );
-            newAvatarUrl = fallback.url;
-            newAvatarPath = fallback.path;
-            avatarSavedIn = fallback.storageMode;
-            uploadedReference = null;
-
-            // No considerar como archivo confirmado la ruta que Storage no pudo completar.
-            // Intentar limpiar un posible fragmento remoto sin bloquear el guardado.
-            const failedStoragePath = uploadedNewPath;
-            uploadedNewPath = "";
-            if (failedStoragePath) {
-              Promise.resolve(deleteObject(storageRef(storage, failedStoragePath))).catch(() => {});
+          setProfileSavingState("uploading");
+          profileDiagnostic("PROFILE_UPLOAD_START", { bytes: processed.size });
+          const uploadStartedAt = performance.now();
+          const uploadResult = await uploadProfileAvatar(fileRef, processed.blob, {
+            contentType: processed.contentType,
+            customMetadata: {
+              ownerUid: uid,
+              category: "profile-avatar"
             }
-            profileDiagnostic("PROFILE_FIRESTORE_AVATAR_FALLBACK_READY", { bytes: fallback.bytes });
-          }
+          });
+          profileDiagnostic("PROFILE_UPLOAD_END", { durationMs: Math.round(performance.now() - uploadStartedAt) });
+
+          newAvatarUrl = await withProfileStageTimeout(
+            getDownloadURL(uploadResult.ref || fileRef),
+            8000,
+            "PROFILE_DOWNLOAD_URL_TIMEOUT"
+          );
+          if (!newAvatarUrl) throw createProfileSaveError("PROFILE_DOWNLOAD_URL_FAILED");
         }
 
         const avatarVersion = Date.now();
@@ -10152,129 +9952,99 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         });
 
         setProfileSavingState("saving");
-        profileMsg("Guardando datos del perfil…");
+        profileMsg("Guardando perfil…");
         profileDiagnostic("PROFILE_FIRESTORE_START", { updatedFieldCount: Object.keys(safe.updates).length });
+        const firestoreStartedAt = performance.now();
         try {
           await withProfileStageTimeout(
             updateDoc(resolved.profileRef, safe.updates),
-            15000,
+            10000,
             "PROFILE_UPDATE_TIMEOUT"
           );
-          firestoreUpdated = true;
         } catch (error) {
           if (uploadedNewPath) {
-            await withProfileStageTimeout(
-              deleteObject(storageRef(storage, uploadedNewPath)),
-              10000,
-              "PROFILE_ROLLBACK_TIMEOUT"
-            ).catch((rollbackError) => {
-              profileDiagnostic("PROFILE_ROLLBACK_WARNING", { code: String(rollbackError && (rollbackError.code || rollbackError.message) || "UNKNOWN") });
-            });
+            deleteObject(storageRef(storage, uploadedNewPath)).catch(() => {});
           }
-          if (String(error && error.code || "").includes("permission-denied")) throw createProfileSaveError("PROFILE_PERMISSION_DENIED", error);
+          if (String(error?.code || "").includes("permission-denied")) throw createProfileSaveError("PROFILE_PERMISSION_DENIED", error);
           throw createProfileSaveError("PROFILE_UPDATE_FAILED", error);
         }
-        profileDiagnostic("PROFILE_FIRESTORE_SUCCESS");
-        const persistenceCheck = await verifyProfilePersistence(
-          resolved.profileRef,
-          safe,
-          changedAvatar ? newAvatarUrl : ""
-        );
-        profileDiagnostic("PROFILE_FIRESTORE_VERIFY_RESULT", {
-          verified: persistenceCheck.verified,
-          avatarSavedIn
-        });
+        profileDiagnostic("PROFILE_FIRESTORE_END", { durationMs: Math.round(performance.now() - firestoreStartedAt) });
 
-        const mergedProfile = { ...currentProfile, ...safe.updates };
-        mergedProfile.nombre = name;
-        mergedProfile.telefono = phone;
+        primarySucceeded = true;
+        const mergedProfile = { ...currentProfile, ...safe.updates, nombre: name, telefono: phone };
         if (changedAvatar) {
           mergedProfile.avatarUrl = newAvatarUrl;
           mergedProfile.fotoPerfil = newAvatarUrl;
           mergedProfile.avatarPath = newAvatarPath;
           mergedProfile.avatarVersion = avatarVersion;
-          mergedProfile.avatarStorageMode = avatarSavedIn;
-        }
-        exploraSession.profile = mergedProfile;
-        exploraSession.profileRef = resolved.profileRef;
-        exploraSession.driverId = resolved.profileDocumentId;
-        exploraSession.profileDocumentId = resolved.profileDocumentId;
-        exploraSession.profileCollection = resolved.profileCollection || resolved.profileRef?.parent?.id || exploraSession.profileCollection;
-        exploraSession.initialized = true;
-        authSessionState.profile = mergedProfile;
-        authSessionState.profileDocumentId = resolved.profileDocumentId;
-        authSessionState.profileCollection = exploraSession.profileCollection;
-        if (exploraAccessState && exploraAccessState.user && exploraAccessState.user.uid === uid) {
-          exploraAccessState.profile = mergedProfile;
         }
 
-        profileDiagnostic("PROFILE_UI_UPDATE_START");
+        exploraSession.profile = mergedProfile;
+        authSessionState.profile = mergedProfile;
+        if (exploraAccessState?.user?.uid === uid) exploraAccessState.profile = mergedProfile;
+
+        if (changedAvatar) applyAvatarEverywhere(uid, newAvatarUrl, avatarVersion);
         try {
           applyDriverDataToUI();
-          if (changedAvatar) applyAvatarEverywhere(uid, newAvatarUrl, avatarVersion);
           saveVisualSession();
-          profileDiagnostic("PROFILE_UI_UPDATE_SUCCESS");
         } catch (uiError) {
-          profileDiagnostic("PROFILE_UI_UPDATE_WARNING", { code: String(uiError && (uiError.code || uiError.message) || "UNKNOWN") });
+          profileDiagnostic("PROFILE_UI_UPDATE_WARNING", { code: String(uiError?.code || uiError?.message || "UNKNOWN") });
         }
 
-        Promise.resolve(updateProfile(user, {
-          displayName: name,
-          ...(changedAvatar ? { photoURL: newAvatarUrl } : {})
-        })).catch((error) => {
-          profileDiagnostic("PROFILE_AUTH_UPDATE_WARNING", { code: String(error && (error.code || error.message) || "UNKNOWN") });
-        });
-
-        finalMessage = changedAvatar
-          ? (avatarSavedIn === "firestore-inline"
-              ? "Perfil actualizado correctamente. La foto quedó guardada en Firestore."
-              : "Perfil actualizado correctamente. La foto quedó guardada en Firebase Storage.")
-          : "Perfil actualizado correctamente.";
+        profileDiagnostic("PROFILE_PRIMARY_SUCCESS");
+        finalMessage = "Perfil actualizado correctamente.";
         finalType = "ok";
-        profileDiagnostic("PROFILE_SAVE_SUCCESS");
 
-        if (profileState.previewUrl) URL.revokeObjectURL(profileState.previewUrl);
+        setProfileSavingState("success");
+        profileMsg(finalMessage, finalType);
+
+        const previousPreviewUrl = profileState.previewUrl;
         profileState.previewUrl = "";
         profileState.selectedFile = null;
         profileState.processedPhoto = null;
+        profileState.processingPromise = null;
+        profileState.processingToken += 1;
         if ($("profileAvatarInput")) $("profileAvatarInput").value = "";
 
-        if (changedAvatar && oldAvatarPath && oldAvatarPath !== newAvatarPath) {
-          profileDiagnostic("PROFILE_OLD_AVATAR_DELETE_START", { eligible: oldAvatarPath.startsWith(`avatars/${uid}/`) });
-          deletePreviousAvatarSafely(oldAvatarPath, newAvatarPath, uid).then(() => {
-            profileDiagnostic("PROFILE_OLD_AVATAR_DELETE_SUCCESS");
-          }).catch((error) => {
-            profileDiagnostic("PROFILE_OLD_AVATAR_DELETE_WARNING", { code: String(error && (error.code || error.message) || "UNKNOWN") });
+        queueMicrotask(() => {
+          Promise.resolve(updateProfile(user, {
+            displayName: name,
+            ...(changedAvatar ? { photoURL: newAvatarUrl } : {})
+          })).catch((error) => {
+            profileDiagnostic("PROFILE_AUTH_UPDATE_WARNING", { code: String(error?.code || error?.message || "UNKNOWN") });
           });
-        }
 
-        if (window.ExploraRanking && typeof window.ExploraRanking.refresh === "function") {
-          Promise.resolve(window.ExploraRanking.refresh()).catch(() => {});
-        }
-        if (typeof window.refreshAdminDriverList === "function") {
-          Promise.resolve(window.refreshAdminDriverList()).catch(() => {});
-        }
+          if (changedAvatar && oldAvatarPath && oldAvatarPath !== newAvatarPath) {
+            deletePreviousAvatarSafely(oldAvatarPath, newAvatarPath, uid).catch(() => {});
+          }
+
+          if (window.ExploraRanking && typeof window.ExploraRanking.refresh === "function") {
+            Promise.resolve(window.ExploraRanking.refresh()).catch(() => {});
+          }
+          if (typeof window.refreshAdminDriverList === "function") {
+            Promise.resolve(window.refreshAdminDriverList()).catch(() => {});
+          }
+
+          if (previousPreviewUrl) {
+            setTimeout(() => {
+              try { URL.revokeObjectURL(previousPreviewUrl); } catch (_) {}
+            }, 1500);
+          }
+          profileDiagnostic("PROFILE_SECONDARY_TASKS_END");
+        });
       } catch (error) {
-        if (firestoreUpdated) {
-          finalMessage = "Perfil actualizado correctamente.";
-          finalType = "ok";
-          profileDiagnostic("PROFILE_SAVE_SUCCESS", { recoveredAfterLateError: true });
-        } else {
-          finalMessage = mapProfileSaveError(error);
-          finalType = "err";
-          profileDiagnostic("PROFILE_SAVE_ERROR", { code: String((error && (error.code || error.message)) || "UNKNOWN") });
+        if (!primarySucceeded && changedAvatar) {
+          restoreAvatarAfterOptimisticFailure(uid, oldAvatarUrl, oldAvatarVersion);
         }
+        finalMessage = mapProfileSaveError(error);
+        finalType = "err";
+        profileDiagnostic("PROFILE_SAVE_ERROR", { code: String(error?.code || error?.message || "UNKNOWN") });
       } finally {
-        profileDiagnostic("PROFILE_SAVE_FINALLY");
-        profileState.uploadTask = null;
-        profileState.processedPhoto = null;
-        resetProfileSavingState(finalMessage, finalType);
+        profileDiagnostic("PROFILE_FINALLY");
+        profileState.saving = false;
         setProfileSavingState(finalType === "ok" ? "success" : (finalType === "err" ? "error" : "idle"));
+        resetProfileSavingState(finalMessage, finalType);
         profileState.saveStartedAt = 0;
-        const message = $("profileMessage");
-        if (message) {
-          requestAnimationFrame(() => message.scrollIntoView({ block: "nearest", behavior: "smooth" }));
-        }
       }
     }
 
@@ -10283,10 +10053,6 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     $("profileAvatarInput")?.addEventListener("change", (event) => {
       const file = event.target.files && event.target.files[0];
       if (!file) return;
-      profileDiagnostic("PROFILE_FILE_SELECTED", { selected: true });
-      profileDiagnostic("PROFILE_FILE_NAME", { extension: getProfilePhotoExtension(file) || "unknown" });
-      profileDiagnostic("PROFILE_FILE_TYPE", { type: file.type || "empty" });
-      profileDiagnostic("PROFILE_FILE_SIZE", { bytes: file.size });
       if (file.size <= 0) {
         event.target.value = "";
         return profileMsg("iPhone no pudo descargar la fotografía seleccionada desde iCloud. Inténtalo nuevamente.", "err");
@@ -10299,22 +10065,27 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         event.target.value = "";
         return profileMsg("La imagen es demasiado grande. Selecciona otra fotografía.", "err");
       }
-      if (profileState.previewUrl) URL.revokeObjectURL(profileState.previewUrl);
+
+      if (profileState.previewUrl) {
+        try { URL.revokeObjectURL(profileState.previewUrl); } catch (_) {}
+      }
       profileState.selectedFile = file;
       profileState.processedPhoto = null;
+      profileState.processingPromise = null;
       profileState.previewUrl = URL.createObjectURL(file);
+
       const preview = $("profileAvatarPreview");
       if (preview) {
-        preview.onerror = () => {
-          profileMsg("La vista previa no pudo mostrarse, pero puedes intentar guardarla igualmente.", "err");
-        };
+        preview.onerror = () => profileMsg("La vista previa no pudo mostrarse, pero puedes intentar guardarla igualmente.", "err");
         preview.onload = () => {
           preview.onerror = null;
           preview.onload = null;
         };
         preview.src = profileState.previewUrl;
       }
-      profileMsg("Vista previa lista. Tocá Guardar cambios para subirla.");
+
+      profileMsg("Preparando foto en segundo plano…");
+      beginProfilePhotoProcessing(file);
     });
     $("profileForm")?.addEventListener("submit", saveProfileChanges);
     window.ExploraActions["abrir-perfil"] = openProfileScreen;
