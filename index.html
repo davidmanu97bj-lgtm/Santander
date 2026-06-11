@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="explora-version" content="v173-foto-upload-sdk-stable">
+  <meta name="explora-version" content="v174-avatar-firestore-fallback-verificado">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -9229,6 +9229,130 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       });
     }
 
+    function profileBlobToDataUrl(blob, timeoutMs = 12000) {
+      return new Promise((resolve, reject) => {
+        if (!(blob instanceof Blob) || blob.size <= 0) {
+          reject(createProfileSaveError("FIRESTORE_AVATAR_BLOB_INVALID"));
+          return;
+        }
+        const reader = new FileReader();
+        let settled = false;
+        const timer = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          try { reader.abort(); } catch (_) {}
+          reject(createProfileSaveError("FIRESTORE_AVATAR_READ_TIMEOUT"));
+        }, timeoutMs);
+        const finish = (callback) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          reader.onload = null;
+          reader.onerror = null;
+          reader.onabort = null;
+          callback();
+        };
+        reader.onload = () => finish(() => {
+          const dataUrl = String(reader.result || "");
+          if (!dataUrl.startsWith("data:image/")) {
+            reject(createProfileSaveError("FIRESTORE_AVATAR_DATA_INVALID"));
+            return;
+          }
+          resolve(dataUrl);
+        });
+        reader.onerror = () => finish(() => reject(createProfileSaveError("FIRESTORE_AVATAR_READ_FAILED", reader.error)));
+        reader.onabort = () => finish(() => reject(createProfileSaveError("FIRESTORE_AVATAR_READ_FAILED")));
+        try {
+          reader.readAsDataURL(blob);
+        } catch (error) {
+          finish(() => reject(createProfileSaveError("FIRESTORE_AVATAR_READ_FAILED", error)));
+        }
+      });
+    }
+
+    async function createFirestoreAvatarFallback(processedPhoto, uid) {
+      const sourceBlob = processedPhoto && processedPhoto.blob;
+      if (!(sourceBlob instanceof Blob) || sourceBlob.size <= 0) {
+        throw createProfileSaveError("FIRESTORE_AVATAR_BLOB_INVALID");
+      }
+
+      const objectUrl = URL.createObjectURL(sourceBlob);
+      let decoded = null;
+      let canvas = null;
+      try {
+        decoded = await loadProfileImageElement(objectUrl, {
+          revokeUrl: true,
+          timeoutMs: 12000,
+          method: "firestore-inline-fallback"
+        });
+        const size = 420;
+        canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const context = canvas.getContext("2d", { alpha: false });
+        if (!context) throw createProfileSaveError("CANVAS_CONTEXT_UNAVAILABLE");
+        context.fillStyle = "#0b0f12";
+        context.fillRect(0, 0, size, size);
+        context.imageSmoothingEnabled = true;
+        if ("imageSmoothingQuality" in context) context.imageSmoothingQuality = "high";
+        context.drawImage(decoded.source, 0, 0, decoded.width, decoded.height, 0, 0, size, size);
+
+        let fallbackBlob = await canvasToBlobSafe(canvas, "image/jpeg", 0.72);
+        let dataUrl = await profileBlobToDataUrl(fallbackBlob);
+        if (dataUrl.length > 620000) {
+          fallbackBlob = await canvasToBlobSafe(canvas, "image/jpeg", 0.58);
+          dataUrl = await profileBlobToDataUrl(fallbackBlob);
+        }
+        if (dataUrl.length > 700000) {
+          throw createProfileSaveError("FIRESTORE_AVATAR_TOO_LARGE");
+        }
+        return {
+          url: dataUrl,
+          path: `firestore-inline/${uid}`,
+          bytes: fallbackBlob.size,
+          storageMode: "firestore-inline"
+        };
+      } finally {
+        try { decoded && decoded.cleanup && decoded.cleanup(); } catch (_) {}
+        try { URL.revokeObjectURL(objectUrl); } catch (_) {}
+        if (canvas) {
+          canvas.width = 1;
+          canvas.height = 1;
+        }
+      }
+    }
+
+    async function verifyProfilePersistence(profileRef, safe, expectedAvatarUrl = "") {
+      try {
+        const snapshot = await withProfileStageTimeout(
+          getDoc(profileRef),
+          10000,
+          "PROFILE_VERIFY_TIMEOUT"
+        );
+        if (!snapshot.exists()) {
+          throw createProfileSaveError("PROFILE_VERIFY_NOT_FOUND");
+        }
+        const persisted = snapshot.data() || {};
+        const namePersisted = String(persisted[safe.nameKey] || "").trim();
+        const expectedName = String(safe.updates[safe.nameKey] || "").trim();
+        if (namePersisted !== expectedName) {
+          throw createProfileSaveError("PROFILE_VERIFY_NAME_MISMATCH");
+        }
+        if (safe.avatarKey && expectedAvatarUrl) {
+          const avatarPersisted = String(persisted[safe.avatarKey] || "");
+          if (avatarPersisted !== expectedAvatarUrl) {
+            throw createProfileSaveError("PROFILE_VERIFY_AVATAR_MISMATCH");
+          }
+        }
+        return { verified: true, data: persisted };
+      } catch (error) {
+        profileDiagnostic("PROFILE_FIRESTORE_VERIFY_WARNING", {
+          code: String((error && (error.code || error.message)) || "UNKNOWN")
+        });
+        return { verified: false, error };
+      }
+    }
+
     function mapProfileSaveError(error) {
       const code = String((error && (error.code || error.message)) || "");
       const causeCode = String((error && error.cause && (error.cause.code || error.cause.message)) || "");
@@ -9253,6 +9377,12 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       }
       if (lower.includes("image_upload_blob_invalid")) {
         return "La fotografía procesada no es válida. Selecciona otra imagen.";
+      }
+      if (lower.includes("firestore_avatar_too_large")) {
+        return "La fotografía sigue siendo demasiado pesada para guardarla. Selecciona otra imagen.";
+      }
+      if (lower.includes("firestore_avatar")) {
+        return "No se pudo preparar la alternativa de guardado en Firestore.";
       }
       if (lower.includes("storage/") || lower.includes("avatar_upload") || lower.includes("image_upload_failed")) {
         return "No se pudo subir la fotografía.";
@@ -9416,7 +9546,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         if (updatedAtKey) updates[updatedAtKey] = serverTimestamp();
         if (versionKey) updates[versionKey] = values.avatarVersion;
       }
-      return { updates, nameKey, phoneKey };
+      return { updates, nameKey, phoneKey, avatarKey: values.changedAvatar ? chooseExistingField(currentProfile, ["avatarUrl", "fotoPerfil", "avatar", "foto", "photoURL"], "avatarUrl") : "", pathKey: values.changedAvatar ? chooseExistingField(currentProfile, ["avatarPath", "avatarStoragePath", "fotoPerfilPath", "fotoPath"], "avatarPath") : "" };
     }
 
     function getProfileAvatarPath(data = {}) {
@@ -9913,6 +10043,8 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       let finalMessage = "";
       let finalType = "";
       let firestoreUpdated = false;
+      let avatarSavedIn = "existing";
+      let storageUploadError = null;
 
       try {
         const authenticated = await withProfileStageTimeout(
@@ -9956,6 +10088,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
           const fileRef = storageRef(storage, newAvatarPath);
           profileDiagnostic("PROFILE_UPLOAD_START", { pathOwnedByUser: newAvatarPath.startsWith(`avatars/${uid}/`) });
           setProfileSavingState("uploading", 0);
+
           try {
             uploadedReference = await uploadProfileAvatar(fileRef, profileState.processedPhoto.blob, {
               contentType: profileState.processedPhoto.contentType,
@@ -9964,22 +10097,48 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
                 category: "profile-avatar"
               }
             });
-          } catch (error) {
-            const code = String(error && (error.code || error.message) || "");
-            if (code.includes("storage/unauthorized")) throw createProfileSaveError("STORAGE_PERMISSION_DENIED", error);
-            if (code.includes("PROFILE_UPLOAD_TIMEOUT")) throw error;
-            throw createProfileSaveError("IMAGE_UPLOAD_FAILED", error);
-          }
-          profileDiagnostic("PROFILE_UPLOAD_SUCCESS");
+            profileDiagnostic("PROFILE_UPLOAD_SUCCESS");
 
-          profileDiagnostic("PROFILE_URL_START");
-          newAvatarUrl = await withProfileStageTimeout(
-            getDownloadURL(uploadedReference),
-            10000,
-            "PROFILE_DOWNLOAD_URL_TIMEOUT"
-          );
-          if (!newAvatarUrl) throw createProfileSaveError("PROFILE_DOWNLOAD_URL_FAILED");
-          profileDiagnostic("PROFILE_URL_SUCCESS");
+            profileDiagnostic("PROFILE_URL_START");
+            newAvatarUrl = await withProfileStageTimeout(
+              getDownloadURL(uploadedReference),
+              10000,
+              "PROFILE_DOWNLOAD_URL_TIMEOUT"
+            );
+            if (!newAvatarUrl) throw createProfileSaveError("PROFILE_DOWNLOAD_URL_FAILED");
+            profileDiagnostic("PROFILE_URL_SUCCESS");
+            avatarSavedIn = "storage";
+          } catch (error) {
+            storageUploadError = error;
+            profileDiagnostic("PROFILE_STORAGE_PRIMARY_FAILED", {
+              code: String((error && (error.code || error.message)) || "UNKNOWN")
+            });
+
+            // Alternativa definitiva: si Storage está bloqueado, sin reglas o no responde,
+            // guardar un avatar pequeño directamente en el documento Firestore del perfil.
+            // Esto reemplaza el campo anterior y no crea documentos ni fotografías duplicadas.
+            setProfileSavingState("saving");
+            profileMsg("Firebase Storage no respondió. Guardando la foto directamente en tu perfil…");
+            profileDiagnostic("PROFILE_FIRESTORE_AVATAR_FALLBACK_START");
+            const fallback = await withProfileStageTimeout(
+              createFirestoreAvatarFallback(profileState.processedPhoto, uid),
+              20000,
+              "FIRESTORE_AVATAR_TIMEOUT"
+            );
+            newAvatarUrl = fallback.url;
+            newAvatarPath = fallback.path;
+            avatarSavedIn = fallback.storageMode;
+            uploadedReference = null;
+
+            // No considerar como archivo confirmado la ruta que Storage no pudo completar.
+            // Intentar limpiar un posible fragmento remoto sin bloquear el guardado.
+            const failedStoragePath = uploadedNewPath;
+            uploadedNewPath = "";
+            if (failedStoragePath) {
+              Promise.resolve(deleteObject(storageRef(storage, failedStoragePath))).catch(() => {});
+            }
+            profileDiagnostic("PROFILE_FIRESTORE_AVATAR_FALLBACK_READY", { bytes: fallback.bytes });
+          }
         }
 
         const avatarVersion = Date.now();
@@ -10016,6 +10175,15 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
           throw createProfileSaveError("PROFILE_UPDATE_FAILED", error);
         }
         profileDiagnostic("PROFILE_FIRESTORE_SUCCESS");
+        const persistenceCheck = await verifyProfilePersistence(
+          resolved.profileRef,
+          safe,
+          changedAvatar ? newAvatarUrl : ""
+        );
+        profileDiagnostic("PROFILE_FIRESTORE_VERIFY_RESULT", {
+          verified: persistenceCheck.verified,
+          avatarSavedIn
+        });
 
         const mergedProfile = { ...currentProfile, ...safe.updates };
         mergedProfile.nombre = name;
@@ -10025,6 +10193,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
           mergedProfile.fotoPerfil = newAvatarUrl;
           mergedProfile.avatarPath = newAvatarPath;
           mergedProfile.avatarVersion = avatarVersion;
+          mergedProfile.avatarStorageMode = avatarSavedIn;
         }
         exploraSession.profile = mergedProfile;
         exploraSession.profileRef = resolved.profileRef;
@@ -10056,7 +10225,11 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
           profileDiagnostic("PROFILE_AUTH_UPDATE_WARNING", { code: String(error && (error.code || error.message) || "UNKNOWN") });
         });
 
-        finalMessage = "Perfil actualizado correctamente.";
+        finalMessage = changedAvatar
+          ? (avatarSavedIn === "firestore-inline"
+              ? "Perfil actualizado correctamente. La foto quedó guardada en Firestore."
+              : "Perfil actualizado correctamente. La foto quedó guardada en Firebase Storage.")
+          : "Perfil actualizado correctamente.";
         finalType = "ok";
         profileDiagnostic("PROFILE_SAVE_SUCCESS");
 
