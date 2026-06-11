@@ -3823,36 +3823,101 @@
     }
 
     .driver-status-real{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:12px;
+      display:block;
     }
 
-    .status-tile-real{
-      border:1px solid var(--explora-border);
-      background:linear-gradient(180deg,rgba(18,24,29,.92),rgba(8,12,15,.92));
-      border-radius:21px;
-      padding:14px 12px;
+    .driver-status-card{
+      width:100%;
+      min-height:92px;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:22px;
+      padding:14px;
       color:#fff;
+      display:grid;
+      grid-template-columns:minmax(0,1.25fr) minmax(0,.95fr);
+      align-items:center;
+      gap:14px;
+      text-align:left;
+      background:linear-gradient(180deg,rgba(18,24,29,.94),rgba(8,12,15,.96));
+      transition:opacity .18s ease,border-color .18s ease,background-color .18s ease;
+      overflow:hidden;
+    }
+
+    .driver-status-card:active{opacity:.76}
+    .driver-status-card:focus-visible{outline:2px solid rgba(246,190,59,.78);outline-offset:3px}
+    .driver-status-card[aria-disabled="true"]{cursor:default;opacity:.82}
+
+    .driver-status-main,
+    .driver-status-action{
+      min-width:0;
       display:flex;
       align-items:center;
-      gap:10px;
-      text-align:left;
-      min-height:82px;
+      gap:11px;
     }
 
-    .status-icon-real{
-      width:40px;height:40px;
+    .driver-status-action{
+      min-height:56px;
+      padding-left:14px;
+      border-left:1px solid currentColor;
+      border-left-color:color-mix(in srgb,currentColor 22%,transparent);
+    }
+
+    .driver-status-icon,
+    .driver-status-action-icon{
+      width:42px;
+      height:42px;
       border-radius:15px;
-      display:grid;place-items:center;
+      display:grid;
+      place-items:center;
       flex:0 0 auto;
+      background:rgba(255,255,255,.08);
     }
 
-    .status-ok-real .status-icon-real{background:rgba(48,214,125,.15);color:#44e08b}
-    .status-receipt-real .status-icon-real{background:rgba(246,190,59,.15);color:var(--explora-gold)}
-    .status-icon-real svg{width:22px;height:22px;stroke:currentColor;stroke-width:2.4;fill:none}
-    .status-tile-real b{display:block;font-size:12px;letter-spacing:.04em}
-    .status-tile-real small{display:block;margin-top:4px;color:var(--explora-muted);font-size:12px;line-height:1.25}
+    .driver-status-icon svg,
+    .driver-status-action-icon svg{
+      width:22px;
+      height:22px;
+      stroke:currentColor;
+      stroke-width:2.35;
+      fill:none;
+    }
+
+    .driver-status-copy,
+    .driver-status-action-copy{min-width:0}
+    .driver-status-copy strong,
+    .driver-status-action-copy strong{display:block;font-size:12px;line-height:1.2;letter-spacing:.045em}
+    .driver-status-copy span,
+    .driver-status-action-copy span{display:block;margin-top:4px;color:rgba(255,255,255,.88);font-size:12px;line-height:1.28}
+    .driver-status-copy small{display:block;margin-top:3px;color:rgba(255,255,255,.66);font-size:11px;line-height:1.25}
+
+    .driver-status-card[data-status="ok"]{
+      color:#72eba4;
+      background:linear-gradient(135deg,rgba(26,126,70,.24),rgba(12,60,38,.30));
+      border-color:rgba(92,226,142,.38);
+      box-shadow:0 15px 34px rgba(16,94,52,.12);
+    }
+    .driver-status-card[data-status="ok"] .driver-status-icon,
+    .driver-status-card[data-status="ok"] .driver-status-action-icon{background:rgba(69,224,139,.14)}
+
+    .driver-status-card[data-status="pending"]{
+      color:#ff8a8a;
+      background:linear-gradient(135deg,rgba(153,34,45,.28),rgba(77,18,26,.36));
+      border-color:rgba(255,104,113,.44);
+      box-shadow:0 15px 34px rgba(122,20,31,.15);
+    }
+    .driver-status-card[data-status="pending"] .driver-status-icon,
+    .driver-status-card[data-status="pending"] .driver-status-action-icon{background:rgba(255,90,101,.14)}
+
+    .driver-status-card[data-status="loading"]{
+      color:#c5cbd1;
+      background:linear-gradient(180deg,rgba(18,24,29,.94),rgba(8,12,15,.96));
+      border-color:rgba(255,255,255,.10);
+    }
+
+    @media(max-width:390px){
+      .driver-status-card{grid-template-columns:1fr;gap:10px}
+      .driver-status-action{padding-left:0;padding-top:10px;border-left:0;border-top:1px solid rgba(255,255,255,.12)}
+    }
 
     .section-header-real{
       display:flex;
@@ -4095,13 +4160,198 @@
       .dashboard-profile-avatar-real{width:33px;height:33px}
       .driver-welcome-real{flex-direction:column}
       .logout-pill-real{align-self:flex-start}
-      .driver-status-real{grid-template-columns:1fr}
       .weekly-ranking-grid-real{grid-template-columns:1fr}
       .operations-grid-real{gap:8px}
       .operation-card-real{min-height:132px;padding:12px 6px}
       .operation-orb-real{width:54px;height:54px}
       .finance-grid-real{grid-template-columns:1fr}
       .summary-grid-real{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+  </style>
+
+
+  <style id="explora-profile-closure-fix-css">
+    .profile-screen .weekly-closure-overlay,
+    .profile-screen .weekly-closure-modal,
+    .profile-screen .weekly-closure-content,
+    .profile-screen [id*="closure" i],
+    .profile-screen [class*="closure" i],
+    .profile-screen [id*="cierre" i],
+    .profile-screen [class*="cierre" i]{
+      display:none;
+    }
+
+    .profile-pending-closure-card{
+      margin:0 18px 16px;
+      border:1px solid rgba(246,190,59,.24);
+      background:linear-gradient(180deg,rgba(246,190,59,.1),rgba(13,18,22,.95));
+      color:#fff;
+      border-radius:22px;
+      padding:14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+    }
+    .profile-pending-closure-card[hidden]{display:none!important}
+    .profile-pending-closure-card .pending-kicker{
+      display:block;
+      color:#f6be3b;
+      font-size:11px;
+      letter-spacing:.12em;
+      font-weight:900;
+      margin-bottom:4px;
+    }
+    .profile-pending-closure-card strong{
+      display:block;
+      font-size:17px;
+      line-height:1.15;
+    }
+    .profile-pending-closure-card small{
+      display:block;
+      color:rgba(255,255,255,.66);
+      margin-top:4px;
+      line-height:1.25;
+    }
+    .profile-pending-closure-card button{
+      border:1px solid rgba(246,190,59,.5);
+      background:rgba(246,190,59,.12);
+      color:#f6be3b;
+      border-radius:999px;
+      padding:9px 13px;
+      font-weight:900;
+      white-space:nowrap;
+    }
+
+    .weekly-closure-overlay{
+      position:fixed;
+      inset:0;
+      z-index:2200;
+      display:grid;
+      place-items:center;
+      padding:calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 16px);
+      background:rgba(0,0,0,.72);
+      -webkit-backdrop-filter:blur(14px);
+      backdrop-filter:blur(14px);
+    }
+    .weekly-closure-overlay[hidden]{display:none!important}
+    .weekly-closure-modal{
+      width:min(100%,520px);
+      max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px);
+      overflow-y:auto;
+      -webkit-overflow-scrolling:touch;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:28px;
+      background:linear-gradient(180deg,rgba(18,24,29,.98),rgba(5,8,11,.98));
+      color:#fff;
+      box-shadow:0 24px 80px rgba(0,0,0,.45);
+    }
+    .weekly-closure-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:18px 18px 10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .weekly-closure-header span{
+      color:#f6be3b;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      font-size:11px;
+      font-weight:900;
+    }
+    .weekly-closure-header h2{
+      margin:4px 0 0;
+      font-size:24px;
+      font-family:Georgia,serif;
+    }
+    #weeklyClosureCloseBtn{
+      width:42px;height:42px;
+      border-radius:50%;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.05);
+      color:#fff;
+      font-size:28px;
+      line-height:1;
+    }
+    .weekly-closure-content{
+      padding:16px 18px 18px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+    .closure-summary-card{
+      border:1px solid rgba(246,190,59,.25);
+      border-radius:22px;
+      padding:16px;
+      background:rgba(246,190,59,.08);
+    }
+    .closure-summary-card span,
+    .closure-summary-card small{
+      display:block;
+      color:rgba(255,255,255,.66);
+    }
+    .closure-summary-card strong{
+      display:block;
+      color:#f6be3b;
+      font-size:32px;
+      margin:6px 0;
+    }
+    .closure-upload-box{
+      border:1px dashed rgba(246,190,59,.72);
+      border-radius:22px;
+      padding:18px;
+      text-align:center;
+      display:grid;
+      place-items:center;
+      gap:6px;
+      background:rgba(246,190,59,.06);
+    }
+    .closure-upload-box svg{
+      width:44px;height:44px;
+      stroke:#f6be3b;
+      fill:none;
+      stroke-width:2.1;
+    }
+    .closure-upload-box b{color:#f6be3b;font-size:18px}
+    .closure-upload-box small{color:rgba(255,255,255,.66)}
+    .weekly-closure-preview{
+      border:1px solid rgba(255,255,255,.1);
+      border-radius:18px;
+      padding:12px;
+      color:rgba(255,255,255,.75);
+      overflow:hidden;
+    }
+    .weekly-closure-preview img{
+      width:100%;
+      max-height:240px;
+      object-fit:cover;
+      border-radius:14px;
+      display:block;
+    }
+    .weekly-closure-msg{min-height:20px;color:#f4c0c0}
+    .weekly-closure-msg.ok{color:#9cf0b5}
+    .weekly-closure-actions{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    .closure-secondary,
+    .closure-primary{
+      min-height:50px;
+      border-radius:17px;
+      font-weight:900;
+      border:1px solid rgba(255,255,255,.12);
+    }
+    .closure-secondary{
+      background:rgba(255,255,255,.06);
+      color:#fff;
+    }
+    .closure-primary{
+      background:linear-gradient(135deg,#ffd25e,#e6a72a);
+      color:#130d05;
+      border-color:rgba(246,190,59,.6);
     }
   </style>
 
@@ -4309,18 +4559,27 @@
 
       <div id="dashboardVehicleChip" class="dashboard-vehicle-chip-real">Vehículo: cargando…</div>
 
-      <section class="driver-status-real" aria-label="Estado operativo">
-        <button type="button" class="status-tile-real status-ok-real" data-action="estado-al-dia">
-          <span class="status-icon-real" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
+      <section class="driver-status-real" aria-label="Estado operativo y cierre semanal">
+        <button id="driverStatusCard" type="button" class="driver-status-card" data-status="loading" data-action="driver-status" aria-label="Comprobando estado del cierre semanal" aria-disabled="true">
+          <span class="driver-status-main">
+            <span id="driverStatusIcon" class="driver-status-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 7v5l3 2"/></svg>
+            </span>
+            <span class="driver-status-copy">
+              <strong id="driverStatusTitle">COMPROBANDO ESTADO…</strong>
+              <span id="driverStatusMessage">Consultando cierres y comprobantes</span>
+              <small id="driverStatusDetail">Espera un momento</small>
+            </span>
           </span>
-          <span><b>ESTADO AL DÍA</b><small>Todo en orden</small></span>
-        </button>
-        <button type="button" class="status-tile-real status-receipt-real" data-action="carga-comprobante">
-          <span class="status-icon-real" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M9 14h6"/><path d="M9 17h4"/></svg>
+          <span class="driver-status-action">
+            <span id="driverStatusActionIcon" class="driver-status-action-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M9 14h6"/><path d="M9 17h4"/></svg>
+            </span>
+            <span class="driver-status-action-copy">
+              <strong id="driverStatusActionTitle">VERIFICANDO</strong>
+              <span id="driverStatusActionMessage">Sin acciones disponibles</span>
+            </span>
           </span>
-          <span><b>CARGA DE COMPROBANTE</b><small>Registrar pago o cierre</small></span>
         </button>
       </section>
 
@@ -4483,6 +4742,15 @@
         </div>
       </section>
 
+      <section id="profilePendingClosureCard" class="profile-pending-closure-card" hidden>
+        <div>
+          <span class="pending-kicker">PAGO PENDIENTE</span>
+          <strong id="profilePendingClosureTitle">Comprobante pendiente</strong>
+          <small id="profilePendingClosureText">Tienes un cierre semanal pendiente.</small>
+        </div>
+        <button id="profilePendingClosureBtn" type="button">Ver detalle</button>
+      </section>
+
       <section class="profile-card">
         <form id="profileForm" class="profile-form-grid">
           <div class="profile-field">
@@ -4518,6 +4786,42 @@
     </div>
   </section>
 
+
+
+  <div id="weeklyClosureOverlay" class="weekly-closure-overlay" hidden aria-hidden="true">
+    <section class="weekly-closure-modal" role="dialog" aria-modal="true" aria-labelledby="weeklyClosureTitle">
+      <header class="weekly-closure-header">
+        <div>
+          <span>Cierre semanal</span>
+          <h2 id="weeklyClosureTitle">Pago pendiente</h2>
+        </div>
+        <button id="weeklyClosureCloseBtn" type="button" aria-label="Cerrar">×</button>
+      </header>
+
+      <div id="weeklyClosureContent" class="weekly-closure-content">
+        <div class="closure-summary-card">
+          <span>Saldo pendiente</span>
+          <strong id="weeklyClosureAmount">—</strong>
+          <small id="weeklyClosurePeriod">Período pendiente</small>
+        </div>
+
+        <label class="closure-upload-box" for="weeklyClosureFileInput">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M20 16.5a4.5 4.5 0 0 1-4.5 4.5h-7A4.5 4.5 0 0 1 4 16.5"/></svg>
+          <b>Subir comprobante</b>
+          <small>Seleccionar foto o archivo</small>
+        </label>
+        <input id="weeklyClosureFileInput" type="file" accept="image/jpeg,image/png,application/pdf" hidden />
+
+        <div id="weeklyClosurePreview" class="weekly-closure-preview" hidden></div>
+        <div id="weeklyClosureMsg" class="weekly-closure-msg" role="status" aria-live="polite"></div>
+
+        <div class="weekly-closure-actions">
+          <button id="weeklyClosureKeepPendingBtn" type="button" class="closure-secondary">Cerrar y dejar pendiente</button>
+          <button id="weeklyClosureSubmitBtn" type="button" class="closure-primary">Subir y marcar pagado</button>
+        </div>
+      </div>
+    </section>
+  </div>
 
   <section id="newServiceScreen" class="new-service-screen" aria-label="Nuevo servicio" aria-hidden="true" data-view="main">
     <div class="new-service-shell">
@@ -5531,9 +5835,14 @@
           setExpenseMsg("Gasto cargado correctamente", "ok");
           toast("Gasto cargado correctamente");
           resetExpenseForm();
-          window.dispatchEvent(new CustomEvent("explora:gasto-registrado", { detail: { monto: data.amount, tipo: data.type } }));
         } catch (error) {
-          setExpenseMsg(error.message || "No se pudo guardar el gasto.", "err");
+          const code = String(error && (error.code || error.message) || "");
+          const message = code.includes("AUTH_SESSION") || code.includes("PRIVATE_SESSION")
+            ? "No se pudo validar la sesión. Espera un momento e inténtalo nuevamente."
+            : code.includes("TIMEOUT")
+              ? "El guardado está demorando demasiado. Revisa tu conexión."
+              : (error.message || "No se pudo guardar el gasto.");
+          setExpenseMsg(message, "err");
         } finally {
           setSaving(false);
         }
@@ -5926,7 +6235,7 @@
     import { initializeApp, getApps, getApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, getDocs, query, where, limit, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
 
     const EXPLORA_FIREBASE_CONFIG = {
 apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
@@ -6095,6 +6404,69 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     window.ExploraSession = exploraSession;
     window.ExploraFirebase = { app, auth, db, storage };
 
+    let authenticatedSessionWaitPromise = null;
+    async function getAuthenticatedSession(options = {}) {
+      const timeoutMs = Number(options.timeoutMs || 6000);
+      let user = auth.currentUser;
+
+      if (!user) {
+        if (!authenticatedSessionWaitPromise) {
+          authenticatedSessionWaitPromise = new Promise((resolve, reject) => {
+            let settled = false;
+            const timer = setTimeout(() => {
+              if (settled) return;
+              settled = true;
+              unsubscribe();
+              reject(new Error("AUTH_SESSION_TIMEOUT"));
+            }, timeoutMs);
+            const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
+              if (settled || !nextUser) return;
+              settled = true;
+              clearTimeout(timer);
+              unsubscribe();
+              resolve(nextUser);
+            }, (error) => {
+              if (settled) return;
+              settled = true;
+              clearTimeout(timer);
+              unsubscribe();
+              reject(error);
+            });
+          }).finally(() => { authenticatedSessionWaitPromise = null; });
+        }
+        user = await authenticatedSessionWaitPromise;
+      }
+
+      if (!user || !user.uid) throw new Error("AUTH_SESSION_MISSING");
+      if (activeSessionOpenPromise && activeSessionUid === user.uid) {
+        await profileWithTimeout(activeSessionOpenPromise, timeoutMs, "SESSION_PROFILE_TIMEOUT").catch(() => {});
+      }
+
+      // Authentication es la fuente oficial. Si el perfil local todavía no terminó de
+      // restaurarse (caso frecuente al abrir un módulo inmediatamente después del login),
+      // recuperar el documento real sin declarar falsamente “sesión no iniciada”.
+      if ((!exploraSession.profile || !exploraSession.profileRef || !exploraSession.driverId) && typeof loadLegacyExploraProfile === "function") {
+        const loaded = await profileWithTimeout(loadLegacyExploraProfile(user), timeoutMs, "SESSION_PROFILE_TIMEOUT");
+        exploraSession.authUser = user;
+        exploraSession.profile = loaded.profile || {};
+        exploraSession.driverId = loaded.profileDocumentId || "";
+        exploraSession.profileRef = loaded.profileRef || null;
+        exploraSession.role = loaded.role || exploraSession.role || null;
+      } else if (!exploraSession.authUser || exploraSession.authUser.uid !== user.uid) {
+        exploraSession.authUser = user;
+      }
+
+      return {
+        user,
+        uid: user.uid,
+        profile: exploraSession.profile || null,
+        profileDocumentId: exploraSession.driverId || "",
+        profileRef: exploraSession.profileRef || null,
+        role: exploraSession.role || null
+      };
+    }
+    window.ExploraGetAuthenticatedSession = getAuthenticatedSession;
+
     const $ = (id) => document.getElementById(id);
 
     const DEFAULT_AVATAR_SVG = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
@@ -6118,6 +6490,8 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     }
 
     setTimeout(() => hideSplashSafely(), MAX_SPLASH_MS);
+
+    function finishSplash() { return hideSplashSafely(); }
 
     function setBodyMode(mode) {
       document.body.classList.remove("explora-auth-checking","explora-login-visible","explora-authenticated","explora-role-blocked");
@@ -6319,9 +6693,18 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       applyDriverGreeting("Chofer", null);
       if (typeof renderCurrentRankingPodium === "function") renderCurrentRankingPodium([], null);
       if (typeof renderPreviousWinner === "function") renderPreviousWinner(null);
+      if (typeof renderDriverStatusCard === "function") renderDriverStatusCard({ status: "loading" });
     }
 
-    function showLogin(message = "") {
+    function showLogin(message = "", reason = "") {
+      if (
+        authSessionState.authenticatedUser &&
+        authSessionState.uiOpened &&
+        !authSessionState.logoutInProgress
+      ) {
+        loginDevDiagnostic("SHOW_LOGIN_BLOCKED", { reason: reason || "authenticated-ui-open" });
+        return;
+      }
       clearDriverVisuals();
       setBodyMode("explora-login-visible");
       loginMsg(message);
@@ -6329,6 +6712,10 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     }
 
     function showDriverApp() {
+      authSessionState.authenticatedUser = exploraSession.authUser || auth.currentUser || null;
+      authSessionState.profile = exploraSession.profile || null;
+      authSessionState.role = "chofer";
+      authSessionState.uiOpened = true;
       setBodyMode("explora-authenticated");
       hideSplashSafely();
       if (window.ExploraMainNav) window.ExploraMainNav.setActive("inicio");
@@ -6337,6 +6724,10 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         window.ExploraRanking.refresh();
       }
       refreshRealDashboardMetrics().catch((error) => console.warn("[EXPLORA dashboard] metrics", error));
+      refreshDriverPaymentStatus().catch((error) => {
+        console.warn("[EXPLORA status] No se pudo comprobar el cierre", error && (error.code || error.message));
+        renderDriverStatusCard({ status: "loading", message: "No se pudo comprobar el estado", detail: "Toca para reintentar" });
+      });
     }
 
     function showRoleBlocked() {
@@ -7370,8 +7761,9 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       };
     }
 
-    async function openAuthenticatedExploraSession(authUser) {
+    async function performAuthenticatedExploraSessionOpen(authUser) {
       resetCurrentSessionUI();
+      authSessionState.profileLoading = true;
 
       const loaded = await withTimeout(
         loadLegacyExploraProfile(authUser),
@@ -7423,7 +7815,26 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       showDriverApp();
     }
 
+    async function openAuthenticatedExploraSession(authUser) {
+      if (!authUser || !authUser.uid) throw new Error("AUTH_USER_MISSING");
+      if (activeSessionOpenPromise && activeSessionUid === authUser.uid) {
+        return activeSessionOpenPromise;
+      }
+
+      activeSessionUid = authUser.uid;
+      activeSessionOpenPromise = performAuthenticatedExploraSessionOpen(authUser)
+        .finally(() => {
+          authSessionState.profileLoading = false;
+          activeSessionOpenPromise = null;
+          activeSessionUid = "";
+        });
+      return activeSessionOpenPromise;
+    }
+
     function resetCurrentSessionUI() {
+      authSessionState.profile = null;
+      authSessionState.role = null;
+      authSessionState.uiOpened = false;
       resetExploraAccessState();
       clearAuthenticatedUI();
       document.body.classList.remove("explora-authenticated", "explora-admin-authenticated", "explora-role-blocked");
@@ -7517,9 +7928,12 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
 
     function showAdminApp() {
       if (!auth.currentUser || legacyProfileRole(exploraSession.profile || {}) !== "admin") {
-        showLogin("No tienes permisos para acceder al Panel administrativo.");
-        return;
+        throw new Error("PROFILE_ROLE_INVALID");
       }
+      authSessionState.authenticatedUser = exploraSession.authUser || auth.currentUser || null;
+      authSessionState.profile = exploraSession.profile || null;
+      authSessionState.role = "admin";
+      authSessionState.uiOpened = true;
       setBodyMode("explora-admin-authenticated");
       hideSplashSafely();
       renderAdminHeader();
@@ -7797,30 +8211,50 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
 
     async function handleAuthStateChanged(user) {
       authHandledOnce = true;
+      loginDevDiagnostic("AUTH_STATE_USER", { hasUser: Boolean(user) });
 
-      if (!user) {
-        resetCurrentSessionUI();
+      if (authSessionState.loginInProgress || loginInProgress) {
         exploraSession.authReady = true;
-        showLogin("");
         return;
       }
 
-      // Si el submit manual está abriendo la sesión, no dupliques la carga.
-      if (loginInProgress) {
+      if (!user) {
+        authSessionState.authenticatedUser = null;
+        authSessionState.profile = null;
+        authSessionState.role = null;
+        authSessionState.uiOpened = false;
+        resetCurrentSessionUI();
         exploraSession.authReady = true;
+        if (!authSessionState.logoutInProgress) showLogin("", "AUTH_NULL");
+        finishSplash();
+        return;
+      }
+
+      if (
+        authSessionState.authenticatedUser &&
+        authSessionState.authenticatedUser.uid === user.uid &&
+        authSessionState.uiOpened
+      ) {
+        exploraSession.authReady = true;
+        finishSplash();
         return;
       }
 
       try {
         await openAuthenticatedExploraSession(user);
+        authSessionState.authenticatedUser = user;
       } catch (error) {
         console.warn("[EXPLORA legacy] ACCESS_ERROR", error);
+        loginDevDiagnostic("ACCESS_ERROR", { code: error && (error.message || error.code) || "unknown" });
         resetCurrentSessionUI();
+        // La restauración solo cierra la sesión ante fallos críticos de identidad/perfil.
         await signOut(auth).catch(() => {});
-        showLogin(legacyAccessErrorMessage(error));
+        showLogin(legacyAccessErrorMessage(error), "SESSION_RESTORE_ERROR");
       } finally {
         loginDevDiagnostic("PROFILE_LOAD_FINALLY", {});
         exploraSession.authReady = true;
+        authSessionState.bootCompleted = true;
+        finishSplash();
       }
     }
 
@@ -7832,6 +8266,18 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
 
 
     let loginInProgress = false;
+    let activeSessionOpenPromise = null;
+    let activeSessionUid = "";
+    const authSessionState = {
+      bootCompleted: false,
+      loginInProgress: false,
+      profileLoading: false,
+      authenticatedUser: null,
+      profile: null,
+      role: null,
+      uiOpened: false,
+      logoutInProgress: false
+    };
     const LOGIN_ALIAS_COLLECTION = "login_aliases";
     const LOGIN_ALIAS_EMAIL_FIELDS = ["authEmail", "email", "correo", "firebaseEmail"];
     const LOGIN_ALIAS_UID_FIELDS = ["uid", "authUid", "firebaseUid", "userId"];
@@ -7959,7 +8405,8 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       if (code === "NETWORK_ERROR" || code.includes("network") || !navigator.onLine) return "No hay conexión. Revisa Internet e inténtalo nuevamente.";
       if (code === "LOGIN_TIMEOUT" || code === "ALIAS_TIMEOUT" || code === "AUTH_TIMEOUT" || code === "PROFILE_TIMEOUT" || code === "VEHICLE_TIMEOUT") return "El acceso está demorando demasiado. Revisa tu conexión e inténtalo nuevamente.";
       if (code === "ALIAS_PERMISSION_DENIED" || code === "ALIAS_EMAIL_MISSING" || code === "ALIAS_READ_FAILED" || code.includes("permission-denied")) return "No se pudo completar el acceso. Contacta al administrador.";
-      if (code === "PROFILE_NOT_FOUND") return "No se encontró un perfil válido para esta cuenta.";
+      if (code === "PROFILE_NOT_FOUND" || code === "PROFILE_QUERY_NOT_FOUND" || code === "SESSION_OPEN_FAILED") return "No se encontró un perfil válido para esta cuenta.";
+      if (code === "AUTH_INVALID_CREDENTIAL" || code.includes("invalid-credential") || code.includes("wrong-password")) return "No se pudo ingresar. Verifica tu usuario y contraseña.";
       if (code === "ROLE_INVALID") return "La cuenta no tiene un rol válido.";
       if (code === "UID_MISMATCH") return "No se pudo completar el acceso. Contacta al administrador.";
       return "No se pudo ingresar. Verifica tu usuario y contraseña.";
@@ -7974,6 +8421,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       const form = $("exploraLoginForm");
       const toggle = $("exploraPasswordToggle");
       loginInProgress = Boolean(isLoading);
+      authSessionState.loginInProgress = Boolean(isLoading);
       if (btn) {
         btn.disabled = Boolean(isLoading);
         btn.textContent = isLoading ? "Ingresando…" : "Ingresar";
@@ -7994,13 +8442,32 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       loginDevDiagnostic("LOGIN_START", { alias: maskAliasDebugValue(username) });
       await withTimeout(persistenceReadyPromise, 3000, "PERSISTENCE_TIMEOUT").catch(() => {});
 
-      const email = legacyEmailFromLogin(username);
-      if (!email) throw new Error("AUTH_INVALID_CREDENTIAL");
+      const normalizedUser = normalizeUsername(username);
+      let authEmail = "";
+      let aliasData = null;
+
+      // Si el usuario escribe un email real, se usa directo. Si escribe un alias,
+      // primero se intenta resolver login_aliases/{alias}. Si no existe o no hay permisos,
+      // se mantiene compatibilidad con EXPLORA anterior: alias@explora.local.
+      if (String(username || "").trim().includes("@")) {
+        authEmail = String(username || "").trim().toLowerCase();
+      } else {
+        try {
+          aliasData = await withTimeout(resolveLoginAlias(normalizedUser), 8000, "ALIAS_TIMEOUT");
+          authEmail = aliasData && aliasData.email ? String(aliasData.email).trim().toLowerCase() : "";
+          loginDevDiagnostic("ALIAS_RESOLVED", { alias: maskAliasDebugValue(normalizedUser), hasEmail: Boolean(authEmail), hasUid: Boolean(aliasData && aliasData.expectedUid) });
+        } catch (aliasError) {
+          loginDevDiagnostic("ALIAS_FALLBACK_LEGACY", { alias: maskAliasDebugValue(normalizedUser), code: aliasError && (aliasError.message || aliasError.code) || "unknown" });
+          authEmail = legacyEmailFromLogin(normalizedUser);
+        }
+      }
+
+      if (!authEmail || !authEmail.includes("@")) throw new Error("AUTH_INVALID_CREDENTIAL");
 
       let credential;
       try {
-        loginDevDiagnostic("AUTH_START", {});
-        credential = await withTimeout(signInWithEmailAndPassword(auth, email, password), 12000, "AUTH_TIMEOUT");
+        loginDevDiagnostic("AUTH_START", { hasAlias: Boolean(aliasData) });
+        credential = await withTimeout(signInWithEmailAndPassword(auth, authEmail, password), 12000, "AUTH_TIMEOUT");
         loginDevDiagnostic("AUTH_SUCCESS", { hasUser: Boolean(credential && credential.user) });
       } catch (error) {
         loginDevDiagnostic("AUTH_ERROR", { code: error && error.code ? error.code : error && error.message ? error.message : "unknown" });
@@ -8011,8 +8478,17 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
 
       const user = credential && credential.user;
       if (!user) throw new Error("AUTH_MISSING_USER");
+      if (aliasData && aliasData.expectedUid && aliasData.expectedUid !== user.uid) {
+        await signOut(auth).catch(() => {});
+        throw new Error("UID_MISMATCH");
+      }
+
+      try { localStorage.setItem(EXPLORA_SESSION_PREFIX + "last_username", normalizedUser); } catch (_) {}
 
       await withTimeout(openAuthenticatedExploraSession(user), 16000, "LOGIN_TIMEOUT");
+      authSessionState.authenticatedUser = user;
+      authSessionState.profile = exploraSession.profile || null;
+      authSessionState.role = exploraSession.role || null;
       loginDevDiagnostic("UI_OPENED", { role: exploraSession.role || "" });
       return credential;
     }
@@ -8037,11 +8513,16 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     if (loginForm) {
       loginForm.addEventListener("submit", async (event) => {
         event.preventDefault();
-        if (loginInProgress) return;
-        const username = normalizeUsername($("exploraLoginUsername")?.value || "");
-        const password = String($("exploraLoginPassword")?.value || "");
+        loginDevDiagnostic("LOGIN_SUBMIT", {});
+        if (authSessionState.loginInProgress || loginInProgress) return;
 
-        if (!username || !password) {
+        const usernameInput = $("exploraLoginUsername");
+        const passwordInput = $("exploraLoginPassword");
+        const rawUsername = String(usernameInput?.value || "").trim();
+        const normalizedUser = rawUsername.includes("@") ? rawUsername.toLowerCase() : normalizeUsername(rawUsername);
+        const password = String(passwordInput?.value || "");
+
+        if (!normalizedUser || !password) {
           loginMsg("Ingresá usuario y contraseña.");
           return;
         }
@@ -8050,10 +8531,25 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         loginMsg("");
 
         try {
-          await withTimeout(loginWithUsernameAndPassword(username, password), 22000, "LOGIN_TIMEOUT");
+          await withTimeout(loginWithUsernameAndPassword(normalizedUser, password), 22000, "LOGIN_TIMEOUT");
+          if (!authSessionState.uiOpened) throw new Error("SESSION_OPEN_FAILED");
+          loginMsg("");
+          // Los campos se limpian únicamente después de que Admin o Chofer ya abrió.
+          if (usernameInput) usernameInput.value = "";
+          if (passwordInput) passwordInput.value = "";
         } catch (error) {
+          loginDevDiagnostic("LOGIN_ERROR", { code: error && (error.message || error.code) || "unknown" });
           showLoginErrorForCode(error);
-          try { await signOut(auth).catch(() => {}); } catch (_) {}
+          // Mantener el usuario escrito. Vaciar solo la contraseña ante credenciales inválidas.
+          const code = String(error && (error.message || error.code) || "");
+          if ((code.includes("AUTH_INVALID_CREDENTIAL") || code.includes("invalid-credential") || code.includes("wrong-password")) && passwordInput) {
+            passwordInput.value = "";
+            passwordInput.focus();
+          }
+          // Si Authentication quedó activa pero la sesión principal no pudo abrirse, cerrar de forma controlada.
+          if (auth.currentUser && !authSessionState.uiOpened) {
+            await signOut(auth).catch(() => {});
+          }
         } finally {
           loginDevDiagnostic("LOGIN_FINALLY", {});
           resetLoginState();
@@ -8062,25 +8558,32 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     }
 
     async function logoutExplora() {
+      if (authSessionState.logoutInProgress) return;
+      authSessionState.logoutInProgress = true;
+      loginDevDiagnostic("SIGN_OUT_CALLED", { reason: "USER_ACTION" });
       try {
-        Object.keys(localStorage).forEach((key) => {
-          if (key.startsWith(EXPLORA_SESSION_PREFIX)) localStorage.removeItem(key);
-        });
-      } catch (_) {}
-      exploraSession.authUser = null;
-      exploraSession.profile = null;
-      exploraSession.driverId = "";
-      exploraSession.profileRef = null;
-      exploraSession.vehicle = null;
-      exploraSession.role = null;
-      resetExploraAccessState();
-      clearAuthenticatedUI();
-      clearDriverVisuals();
-      closeAdminCreateDriverModal();
-      resetExploraAccessState();
-      clearAuthenticatedUI();
-      await signOut(auth);
-      showLogin("");
+        try {
+          Object.keys(localStorage).forEach((key) => {
+            if (key.startsWith(EXPLORA_SESSION_PREFIX)) localStorage.removeItem(key);
+          });
+        } catch (_) {}
+        closeWeeklyClosureModal();
+        renderPendingClosureCard(null);
+        weeklyClosureState.pending = null;
+        weeklyClosureState.file = null;
+        closeAdminCreateDriverModal();
+        await signOut(auth);
+      } finally {
+        resetCurrentSessionUI();
+        authSessionState.authenticatedUser = null;
+        authSessionState.profile = null;
+        authSessionState.role = null;
+        authSessionState.uiOpened = false;
+        authSessionState.logoutInProgress = false;
+        const passwordInput = $("exploraLoginPassword");
+        if (passwordInput) passwordInput.value = "";
+        showLogin("", "USER_LOGOUT");
+      }
     }
 
     $("exploraRoleLogout")?.addEventListener("click", logoutExplora);
@@ -8172,10 +8675,22 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     }
 
     window.ExploraActions = window.ExploraActions || {};
-    window.ExploraActions["estado-al-dia"] = () => showMainToast?.("Estado operativo al día.");
-    window.ExploraActions["carga-comprobante"] = () => {
-      if (window.ExploraReceipts && typeof window.ExploraReceipts.open === "function") window.ExploraReceipts.open();
-      else if (window.ExploraActions["comprobantes"]) window.ExploraActions["comprobantes"]();
+    window.ExploraActions["driver-status"] = async () => {
+      const card = $("driverStatusCard");
+      const status = card && card.dataset.status || "loading";
+      if (status === "pending") {
+        if (!weeklyClosureState.pending) await refreshDriverPaymentStatus().catch(() => {});
+        if (weeklyClosureState.pending) openWeeklyClosureModal();
+        else showMainToast?.("No se encontró un cierre pendiente.");
+        return;
+      }
+      if (status === "ok") {
+        if (window.ExploraReceipts && typeof window.ExploraReceipts.open === "function") window.ExploraReceipts.open();
+        else if (window.ExploraActions["comprobantes"]) window.ExploraActions["comprobantes"]();
+        return;
+      }
+      renderDriverStatusCard({ status: "loading" });
+      await refreshDriverPaymentStatus().catch(() => renderDriverStatusCard({ status: "loading", message: "No se pudo comprobar el estado", detail: "Toca para reintentar" }));
     };
     window.ExploraActions["detalle-financiero"] = () => {
       if (window.ExploraActions["gastos-semanales"]) window.ExploraActions["gastos-semanales"]();
@@ -8201,8 +8716,381 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       }
     }, true);
 
-    // Perfil real
-    const profileState = { selectedFile: null, previewUrl: "", selectedBlob: null, saving: false };
+
+    // Perfil limpio + cierre semanal separado en modal global.
+    const weeklyClosureState = {
+      pending: null,
+      file: null,
+      previewUrl: "",
+      saving: false
+    };
+
+    function isClosureLikeElement(el) {
+      if (!el || el.id === "profilePendingClosureCard") return false;
+      const id = String(el.id || "").toLowerCase();
+      const cls = String(el.className || "").toLowerCase();
+      const text = String(el.textContent || "").toLowerCase();
+      return (
+        id.includes("closure") || id.includes("cierre") || cls.includes("closure") || cls.includes("cierre") ||
+        text.includes("premio semanal") || text.includes("comprobante obligatorio") ||
+        text.includes("el chofer debe depositar") || text.includes("cerrar y dejar pago pendiente") ||
+        text.includes("bono configurado") || text.includes("saldo final")
+      );
+    }
+
+    function sanitizeProfileScreen() {
+      const screen = $("profileScreen");
+      if (!screen) return;
+      Array.from(screen.children).forEach((child) => {
+        if (child.classList && (child.classList.contains("profile-shell") || child.id === "profilePendingClosureCard")) return;
+        if (isClosureLikeElement(child)) child.remove();
+      });
+      screen.querySelectorAll(".profile-shell > *").forEach((el) => {
+        if (el.closest("#profilePendingClosureCard")) return;
+        if (isClosureLikeElement(el) && !el.classList.contains("profile-card") && !el.classList.contains("profile-header")) {
+          el.remove();
+        }
+      });
+    }
+
+    function statusIconMarkup(kind) {
+      if (kind === "ok") return '<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>';
+      if (kind === "pending") return '<svg viewBox="0 0 24 24"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.6 2.7 17a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 3.6a2 2 0 0 0-3.4 0Z"/></svg>';
+      return '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 7v5l3 2"/></svg>';
+    }
+
+    function renderDriverStatusCard(result = {}) {
+      const card = $("driverStatusCard");
+      if (!card) return;
+      const status = result.status === "pending" ? "pending" : result.status === "ok" ? "ok" : "loading";
+      const pending = result.pending || null;
+      card.dataset.status = status;
+      card.setAttribute("aria-disabled", status === "loading" ? "true" : "false");
+      const icon = $("driverStatusIcon");
+      const actionIcon = $("driverStatusActionIcon");
+      if (icon) icon.innerHTML = statusIconMarkup(status);
+      if (actionIcon) actionIcon.innerHTML = status === "pending"
+        ? '<svg viewBox="0 0 24 24"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M20 16.5a4.5 4.5 0 0 1-4.5 4.5h-7A4.5 4.5 0 0 1 4 16.5"/></svg>'
+        : '<svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M9 14h6"/><path d="M9 17h4"/></svg>';
+
+      if (status === "pending") {
+        $("driverStatusTitle").textContent = "CIERRE SEMANAL PENDIENTE";
+        $("driverStatusMessage").textContent = result.message || "Debes subir el comprobante de pago.";
+        $("driverStatusDetail").textContent = pending && pending.amount ? `Monto pendiente: ${formatClosureMoney(pending.amount)}` : "Acción requerida";
+        $("driverStatusActionTitle").textContent = "SUBIR COMPROBANTE";
+        $("driverStatusActionMessage").textContent = "Toca para completar el cierre";
+        card.setAttribute("aria-label", "Cierre semanal pendiente. Subir comprobante");
+      } else if (status === "ok") {
+        $("driverStatusTitle").textContent = "ESTADO AL DÍA";
+        $("driverStatusMessage").textContent = result.message || "Todo en orden";
+        $("driverStatusDetail").textContent = result.detail || "No tienes acciones pendientes.";
+        $("driverStatusActionTitle").textContent = "COMPROBANTES AL DÍA";
+        $("driverStatusActionMessage").textContent = "Sin pagos pendientes";
+        card.setAttribute("aria-label", "Estado al día. Ver comprobantes");
+      } else {
+        $("driverStatusTitle").textContent = "COMPROBANDO ESTADO…";
+        $("driverStatusMessage").textContent = result.message || "Consultando cierres y comprobantes";
+        $("driverStatusDetail").textContent = result.detail || "Espera un momento";
+        $("driverStatusActionTitle").textContent = "VERIFICANDO";
+        $("driverStatusActionMessage").textContent = "Sin acciones disponibles";
+        card.setAttribute("aria-label", "Comprobando estado del cierre semanal");
+      }
+    }
+
+    async function resolveDriverPaymentStatus(uid, weeklyPeriodId = "") {
+      if (!uid) throw new Error("AUTH_SESSION_MISSING");
+      const pending = await loadPendingWeeklyClosureForProfile(weeklyPeriodId);
+      if (pending) {
+        return { status: "pending", pendingClosureId: pending.id, amount: pending.amount || 0, receiptRequired: true, pending, weeklyPeriodId };
+      }
+      return { status: "ok", pendingClosureId: null, amount: 0, receiptRequired: false, pending: null, weeklyPeriodId };
+    }
+
+    async function refreshDriverPaymentStatus() {
+      renderDriverStatusCard({ status: "loading" });
+      const session = await getAuthenticatedSession({ timeoutMs: 6000 });
+      const period = typeof getSaturdayPeriod === "function" ? getSaturdayPeriod() : null;
+      const result = await profileWithTimeout(resolveDriverPaymentStatus(session.uid, period && period.id || ""), 12000, "PAYMENT_STATUS_TIMEOUT");
+      weeklyClosureState.pending = result.pending || null;
+      renderPendingClosureCard(result.pending || null);
+      renderDriverStatusCard(result);
+      return result;
+    }
+    window.ExploraRefreshDriverPaymentStatus = refreshDriverPaymentStatus;
+
+    function resetWeeklyClosureUIState() {
+      weeklyClosureState.saving = false;
+      const submit = $("weeklyClosureSubmitBtn");
+      if (submit) {
+        submit.disabled = false;
+        submit.textContent = "Subir y marcar pagado";
+        submit.removeAttribute("aria-busy");
+      }
+      document.body.classList.remove("modal-open","no-scroll","is-loading","weekly-closure-saving");
+      document.documentElement.classList.remove("modal-open","no-scroll","is-loading");
+      document.body.style.pointerEvents = "";
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    }
+
+    function closeWeeklyClosureModal() {
+      const overlay = $("weeklyClosureOverlay");
+      if (overlay) {
+        overlay.hidden = true;
+        overlay.setAttribute("aria-hidden","true");
+      }
+      resetWeeklyClosureUIState();
+    }
+
+    function formatClosureMoney(value) {
+      const n = Number(value || 0);
+      return "$" + Math.round(n).toLocaleString("es-AR");
+    }
+
+    function pendingClosureBelongsToCurrentUser(data) {
+      const user = auth.currentUser;
+      if (!user) return false;
+      const uid = String(user.uid || "").toLowerCase();
+      const driverId = String(exploraSession.driverId || "").toLowerCase();
+      const email = String(user.email || "").toLowerCase();
+      const values = [
+        data.uid, data.choferUid, data.userUid, data.choferId, data.chofer, data.usuario,
+        data.driverId, data.conductorId, data.email, data.correo
+      ].map(v => String(v || "").toLowerCase());
+      return values.includes(uid) || (driverId && values.includes(driverId)) || (email && values.includes(email));
+    }
+
+    function closureDocumentTime(data = {}) {
+      for (const key of ["actualizadoEn","creadoEn","cerradoEn","fechaTimestamp","fechaCreacion"]) {
+        const value = data[key];
+        if (value && typeof value.toDate === "function") return value.toDate().getTime();
+        if (value instanceof Date) return value.getTime();
+        if (typeof value === "number") return value;
+      }
+      const raw = data.fechaISO || data.fecha || data.periodoInicio || data.periodoId || "";
+      const parsed = raw ? Date.parse(String(raw).includes("T") ? raw : `${raw}T12:00:00-03:00`) : NaN;
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    function isClosurePending(data = {}) {
+      const status = String(data.estadoPago || data.pagoEstado || data.estado || data.status || "").toLowerCase();
+      const receiptStatus = String(data.estadoComprobante || data.comprobanteEstado || "").toLowerCase();
+      const hasReceipt = Boolean(data.comprobanteUrl || data.receiptUrl || data.archivoUrl || data.comprobantePath);
+      const explicitlyPaid = data.pagado === true || data.pagoConfirmado === true || ["pagado","aprobado","confirmado"].some(value => status.includes(value));
+      const rejectedReceipt = status.includes("rechazado") || receiptStatus.includes("rechazado");
+      const explicitlyPending = data.pagoPendiente === true || data.cierrePendiente === true || data.requiereComprobante === true || data.comprobanteObligatorio === true || ["pendiente","adeudado","abierto","por_pagar"].some(value => status.includes(value));
+      const cancelled = status.includes("cancelado") || status.includes("eliminado");
+      if (cancelled) return false;
+      if (rejectedReceipt) return true;
+      if (explicitlyPaid) return false;
+      return explicitlyPending || !hasReceipt;
+    }
+
+    async function loadPendingWeeklyClosureForProfile(weeklyPeriodId = "") {
+      const session = await getAuthenticatedSession({ timeoutMs: 7000 });
+      if (!session.user) return null;
+      const collections = ["cierresSemanales","cierres_semanales","cierres","pagos_semanales"];
+      const candidates = [];
+      for (const colName of collections) {
+        try {
+          const snap = await profileWithTimeout(getDocs(collection(db, colName)), 10000, `CLOSURE_${colName}_TIMEOUT`);
+          snap.forEach((docSnap) => {
+            const data = docSnap.data() || {};
+            if (!pendingClosureBelongsToCurrentUser(data) || !isClosurePending(data)) return;
+            const periodId = String(data.periodoSemanalId || data.periodoId || data.semanaId || data.periodo || data.semana || "");
+            const amount = Number(data.saldoFinal || data.saldo || data.monto || data.total || data.importe || data.deuda || 0);
+            candidates.push({ id: docSnap.id, collection: colName, data, amount, periodId, time: closureDocumentTime(data) });
+          });
+        } catch (error) {
+          console.warn("[EXPLORA status] closure read failed", colName, error && (error.code || error.message));
+        }
+      }
+      candidates.sort((a, b) => {
+        const aCurrent = weeklyPeriodId && a.periodId === weeklyPeriodId ? 1 : 0;
+        const bCurrent = weeklyPeriodId && b.periodId === weeklyPeriodId ? 1 : 0;
+        return bCurrent - aCurrent || b.time - a.time;
+      });
+      return candidates[0] || null;
+    }
+
+    function renderPendingClosureCard(pending) {
+      weeklyClosureState.pending = pending || null;
+      const card = $("profilePendingClosureCard");
+      if (!card) return;
+      if (!pending) {
+        card.hidden = true;
+        return;
+      }
+      const title = $("profilePendingClosureTitle");
+      const text = $("profilePendingClosureText");
+      if (title) title.textContent = "Comprobante pendiente";
+      if (text) text.textContent = `Monto: ${formatClosureMoney(pending.amount)} · Tocá Ver detalle para cargarlo.`;
+      card.hidden = false;
+    }
+
+    async function refreshProfilePendingClosure() {
+      sanitizeProfileScreen();
+      return await refreshDriverPaymentStatus();
+    }
+
+    function openWeeklyClosureModal() {
+      const pending = weeklyClosureState.pending;
+      if (!pending) return;
+      const overlay = $("weeklyClosureOverlay");
+      if (!overlay) return;
+      const amount = $("weeklyClosureAmount");
+      const period = $("weeklyClosurePeriod");
+      if (amount) amount.textContent = formatClosureMoney(pending.amount);
+      if (period) {
+        const d = pending.data || {};
+        period.textContent = d.periodoId || d.periodo || d.semana || d.fecha || "Cierre pendiente";
+      }
+      $("weeklyClosureMsg") && ($("weeklyClosureMsg").textContent = "");
+      overlay.hidden = false;
+      overlay.setAttribute("aria-hidden","false");
+      document.body.classList.add("modal-open");
+    }
+
+    async function submitWeeklyClosureReceipt() {
+      if (weeklyClosureState.saving) return;
+      const pending = weeklyClosureState.pending;
+      const file = weeklyClosureState.file;
+      const msg = $("weeklyClosureMsg");
+      if (!pending) return;
+      if (!file) {
+        if (msg) msg.textContent = "Seleccioná un comprobante.";
+        return;
+      }
+      weeklyClosureState.saving = true;
+      const btn = $("weeklyClosureSubmitBtn");
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Subiendo…";
+        btn.setAttribute("aria-busy","true");
+      }
+      try {
+        const user = auth.currentUser;
+        if (!user) throw new Error("Sesión no iniciada.");
+        const ext = safeExtension(file);
+        const storagePath = `cierres/${user.uid}/${pending.id}/comprobante.${ext}`;
+        const fileRef = storageRef(storage, storagePath);
+        await uploadBytes(fileRef, file, { contentType: file.type || (ext === "pdf" ? "application/pdf" : "image/jpeg") });
+        const url = await getDownloadURL(fileRef);
+        const closureRef = doc(db, pending.collection, pending.id);
+        await setDoc(closureRef, {
+          comprobanteUrl: url,
+          comprobanteNombre: file.name || `comprobante.${ext}`,
+          comprobanteMime: file.type || "",
+          comprobanteTamano: file.size || 0,
+          comprobantePath: storagePath,
+          pagado: true,
+          pagoConfirmado: true,
+          estadoPago: "pagado",
+          actualizadoEn: serverTimestamp()
+        }, { merge: true });
+        if (msg) {
+          msg.textContent = "Comprobante cargado correctamente.";
+          msg.className = "weekly-closure-msg ok";
+        }
+        weeklyClosureState.pending = null;
+        weeklyClosureState.file = null;
+        if (weeklyClosureState.previewUrl) URL.revokeObjectURL(weeklyClosureState.previewUrl);
+        weeklyClosureState.previewUrl = "";
+        const input = $("weeklyClosureFileInput");
+        if (input) input.value = "";
+        renderPendingClosureCard(null);
+        renderDriverStatusCard({ status: "loading" });
+        closeWeeklyClosureModal();
+        await refreshDriverPaymentStatus().catch(() => renderDriverStatusCard({ status: "ok" }));
+      } catch (error) {
+        if (msg) {
+          msg.className = "weekly-closure-msg";
+          msg.textContent = "No se pudo subir el comprobante. Revisá permisos de Storage/Firestore e intentá nuevamente.";
+        }
+      } finally {
+        resetWeeklyClosureUIState();
+      }
+    }
+
+    $("profilePendingClosureBtn")?.addEventListener("click", openWeeklyClosureModal);
+    $("weeklyClosureCloseBtn")?.addEventListener("click", closeWeeklyClosureModal);
+    $("weeklyClosureKeepPendingBtn")?.addEventListener("click", closeWeeklyClosureModal);
+    $("weeklyClosureOverlay")?.addEventListener("click", (event) => {
+      if (event.target && event.target.id === "weeklyClosureOverlay") closeWeeklyClosureModal();
+    });
+    $("weeklyClosureFileInput")?.addEventListener("change", (event) => {
+      const file = event.target.files && event.target.files[0];
+      const preview = $("weeklyClosurePreview");
+      if (!file) return;
+      const allowed = ["image/jpeg","image/png","application/pdf"];
+      if (!allowed.includes(file.type)) {
+        event.target.value = "";
+        $("weeklyClosureMsg") && ($("weeklyClosureMsg").textContent = "Formato no permitido. Usá JPG, PNG o PDF.");
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        event.target.value = "";
+        $("weeklyClosureMsg") && ($("weeklyClosureMsg").textContent = "El archivo supera 10 MB.");
+        return;
+      }
+      if (weeklyClosureState.previewUrl) URL.revokeObjectURL(weeklyClosureState.previewUrl);
+      weeklyClosureState.file = file;
+      weeklyClosureState.previewUrl = file.type.startsWith("image/") ? URL.createObjectURL(file) : "";
+      if (preview) {
+        preview.hidden = false;
+        preview.innerHTML = file.type.startsWith("image/")
+          ? `<img src="${weeklyClosureState.previewUrl}" alt="Vista previa del comprobante"><small>${file.name}</small>`
+          : `<b>PDF seleccionado</b><small>${file.name}</small>`;
+      }
+    });
+    $("weeklyClosureSubmitBtn")?.addEventListener("click", submitWeeklyClosureReceipt);
+
+    // Perfil real: guardado estable de foto/avatar sin bloqueos infinitos
+    const profileState = {
+      selectedFile: null,
+      previewUrl: "",
+      saving: false,
+      lastScrollTop: 0
+    };
+
+    function profileWithTimeout(promise, milliseconds, code) {
+      return new Promise((resolve, reject) => {
+        let settled = false;
+        const timer = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          reject(new Error(code || "OPERATION_TIMEOUT"));
+        }, milliseconds);
+        Promise.resolve(promise).then((value) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          resolve(value);
+        }, (error) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          reject(error);
+        });
+      });
+    }
+
+    function profileMsg(text, type = "") {
+      const el = $("profileMessage");
+      if (!el) return;
+      el.textContent = text || "";
+      el.className = "profile-message" + (type ? " " + type : "");
+    }
+
+    function getProfileAvatarPath(data = {}) {
+      return String(data.avatarPath || data.avatarStoragePath || data.fotoPerfilPath || data.fotoPath || "").trim();
+    }
+
+    function cacheBustAvatarUrl(url, version = Date.now()) {
+      if (!url || url.startsWith("data:") || url.startsWith("blob:")) return url;
+      const sep = url.includes("?") ? "&" : "?";
+      return `${url}${sep}v=${encodeURIComponent(version)}`;
+    }
 
     function resetProfileSavingState(message = "", type = "") {
       profileState.saving = false;
@@ -8240,8 +9128,12 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       if (profile) {
         profile.style.pointerEvents = "";
         profile.removeAttribute("inert");
+        profile.classList.remove("is-loading", "profile-saving");
         if (profile.classList.contains("is-open")) {
           profile.setAttribute("aria-hidden", "false");
+          profile.style.overflowY = "auto";
+          profile.style.webkitOverflowScrolling = "touch";
+          profile.style.touchAction = "pan-y";
           document.documentElement.style.overflow = "hidden";
           document.body.style.overflow = "hidden";
         } else {
@@ -8256,23 +9148,25 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
 
       if (message) profileMsg(message, type);
     }
-    function profileMsg(text, type = "") {
-      const el = $("profileMessage");
-      if (!el) return;
-      el.textContent = text || "";
-      el.className = "profile-message" + (type ? " " + type : "");
-    }
+
     function openProfileScreen() {
       const screen = $("profileScreen");
       if (!screen) return;
       applyDriverDataToUI();
+      sanitizeProfileScreen();
+      renderDriverStatusCard({ status: "loading" });
+      refreshProfilePendingClosure().catch(() => { renderPendingClosureCard(null); renderDriverStatusCard({ status: "loading", message: "No se pudo comprobar el estado", detail: "Toca para reintentar" }); });
       screen.classList.add("is-open");
       screen.setAttribute("aria-hidden","false");
+      screen.style.overflowY = "auto";
+      screen.style.webkitOverflowScrolling = "touch";
+      screen.style.touchAction = "pan-y";
       document.documentElement.style.overflow = "hidden";
       document.body.style.overflow = "hidden";
       if (window.ExploraMainNav) window.ExploraMainNav.setActive("perfil");
       saveLastScreen("perfil");
     }
+
     function closeProfileScreen() {
       const screen = $("profileScreen");
       if (!screen) return;
@@ -8281,48 +9175,158 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       document.documentElement.style.overflow = "";
       document.body.style.overflow = "";
       profileMsg("");
+      closeWeeklyClosureModal();
+      renderPendingClosureCard(null);
+      if (profileState.previewUrl) URL.revokeObjectURL(profileState.previewUrl);
+      profileState.previewUrl = "";
+      profileState.selectedFile = null;
+      if ($("profileAvatarInput")) $("profileAvatarInput").value = "";
       if (window.ExploraMainNav) window.ExploraMainNav.setActive("inicio");
       saveLastScreen("dashboard");
     }
+
     function isValidPhone(value) {
       const cleaned = String(value || "").replace(/[\s().-]/g, "");
       return !cleaned || /^\+?[0-9]{6,18}$/.test(cleaned);
     }
-    async function createSquareAvatarBlob(file) {
-      if (!file || !file.type || !file.type.startsWith("image/")) throw new Error("El archivo seleccionado no es una imagen.");
-      if (file.size > 5 * 1024 * 1024) throw new Error("La imagen supera 5 MB.");
-      const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" }).catch(() => null);
-      const img = bitmap || await new Promise((resolve, reject) => {
+
+    function canProcessImageType(file) {
+      const type = String(file && file.type || "").toLowerCase();
+      return type.startsWith("image/") || /\.(jpe?g|png|webp|heic|heif)$/i.test(String(file && file.name || ""));
+    }
+
+    async function readImageElement(file) {
+      return await new Promise((resolve, reject) => {
         const url = URL.createObjectURL(file);
         const image = new Image();
         image.onload = () => { URL.revokeObjectURL(url); resolve(image); };
-        image.onerror = () => { URL.revokeObjectURL(url); reject(new Error("No se pudo leer la imagen.")); };
+        image.onerror = () => { URL.revokeObjectURL(url); reject(new Error("IMAGE_READ_FAILED")); };
         image.src = url;
       });
-      const side = Math.min(img.width, img.height);
-      const sx = Math.max(0, Math.floor((img.width - side) / 2));
-      const sy = Math.max(0, Math.floor((img.height - side) / 2));
-      const size = Math.min(800, side);
-      const canvas = document.createElement("canvas");
-      canvas.width = size; canvas.height = size;
-      const ctx = canvas.getContext("2d", { alpha: false });
-      ctx.fillStyle = "#111"; ctx.fillRect(0,0,size,size);
-      ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size);
-      if (bitmap && typeof bitmap.close === "function") bitmap.close();
-      return await new Promise((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(new Error("No se pudo preparar la imagen.")), "image/jpeg", .82));
     }
-    async function saveProfile(event) {
+
+    async function canvasToBlobSafe(canvas, type, quality) {
+      return await new Promise((resolve, reject) => {
+        try {
+          canvas.toBlob((blob) => {
+            if (!blob) reject(new Error("IMAGE_ENCODE_FAILED"));
+            else resolve(blob);
+          }, type, quality);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    }
+
+    async function compressProfileAvatar(file) {
+      if (!file || !canProcessImageType(file)) throw new Error("INVALID_IMAGE_FILE");
+      if (file.size > 15 * 1024 * 1024) throw new Error("IMAGE_TOO_LARGE");
+
+      const imageSource = await profileWithTimeout((async () => {
+        if ("createImageBitmap" in window) {
+          try {
+            return await createImageBitmap(file, { imageOrientation: "from-image" });
+          } catch (_) {}
+        }
+        return await readImageElement(file);
+      })(), 10000, "IMAGE_PROCESS_TIMEOUT");
+
+      const width = imageSource.width || imageSource.naturalWidth;
+      const height = imageSource.height || imageSource.naturalHeight;
+      if (!width || !height) throw new Error("IMAGE_DIMENSIONS_INVALID");
+
+      const side = Math.min(width, height);
+      const sx = Math.max(0, Math.floor((width - side) / 2));
+      const sy = Math.max(0, Math.floor((height - side) / 2));
+      const size = Math.max(320, Math.min(720, side));
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d", { alpha: false });
+      if (!ctx) throw new Error("CANVAS_UNAVAILABLE");
+      ctx.fillStyle = "#0b0f12";
+      ctx.fillRect(0, 0, size, size);
+      ctx.drawImage(imageSource, sx, sy, side, side, 0, 0, size, size);
+      if (imageSource && typeof imageSource.close === "function") imageSource.close();
+
+      let blob = null;
+      let contentType = "image/webp";
+      let extension = "webp";
+      try {
+        blob = await profileWithTimeout(canvasToBlobSafe(canvas, contentType, 0.82), 10000, "IMAGE_ENCODE_TIMEOUT");
+      } catch (_) {
+        contentType = "image/jpeg";
+        extension = "jpg";
+        blob = await profileWithTimeout(canvasToBlobSafe(canvas, contentType, 0.82), 10000, "IMAGE_ENCODE_TIMEOUT");
+      }
+      if (!blob || blob.size < 100) throw new Error("IMAGE_ENCODE_FAILED");
+      return { blob, contentType, extension, width: size, height: size };
+    }
+
+    function applyAvatarEverywhere(uid, cleanUrl, version = Date.now()) {
+      if (!cleanUrl || !uid) return;
+      const uidText = String(uid);
+      const visualUrl = cacheBustAvatarUrl(cleanUrl, version);
+      const currentUid = exploraSession.authUser && exploraSession.authUser.uid;
+
+      if (uidText === String(currentUid || "")) {
+        ["dashboardProfileAvatar", "profileAvatarPreview", "adminAvatar"].forEach((id) => {
+          const image = $(id);
+          if (image && image.tagName && image.tagName.toLowerCase() === "img") image.src = visualUrl;
+        });
+      }
+
+      document.querySelectorAll("img[data-user-id], img[data-avatar-user-id], [data-user-id] img, [data-avatar-user-id] img").forEach((image) => {
+        const owner = image.dataset.userId || image.dataset.avatarUserId || image.closest("[data-user-id]")?.dataset.userId || image.closest("[data-avatar-user-id]")?.dataset.avatarUserId || "";
+        if (String(owner) === uidText) image.src = visualUrl;
+      });
+
+      window.dispatchEvent(new CustomEvent("explora:avatar-updated", {
+        detail: { uid: uidText, avatarUrl: cleanUrl, visualUrl, version }
+      }));
+    }
+
+    async function deletePreviousAvatarSafely(oldPath, newPath) {
+      const oldClean = String(oldPath || "").trim();
+      if (!oldClean || oldClean === newPath) return;
+      if (!oldClean.startsWith("avatars/")) return;
+      try {
+        await profileWithTimeout(deleteObject(storageRef(storage, oldClean)), 15000, "OLD_AVATAR_DELETE_TIMEOUT");
+      } catch (error) {
+        console.warn("[EXPLORA profile] No se pudo eliminar avatar anterior", error && error.code ? error.code : error);
+      }
+    }
+
+    async function saveProfileChanges(event) {
       event.preventDefault();
       if (profileState.saving) return;
       const name = String($("profileNameInput")?.value || "").trim().replace(/\s+/g, " ");
       const phone = String($("profilePhoneInput")?.value || "").trim();
       if (!name) return profileMsg("El nombre no puede estar vacío.", "err");
       if (!isValidPhone(phone)) return profileMsg("Revisá el teléfono.", "err");
-      if (!exploraSession.profileRef || !exploraSession.authUser) return profileMsg("No hay sesión válida.", "err");
+
+      let authenticated;
+      try {
+        authenticated = await getAuthenticatedSession({ timeoutMs: 7000 });
+      } catch (_) {
+        return profileMsg("No se pudo validar la sesión. Vuelve a intentarlo.", "err");
+      }
+      const user = authenticated.user;
+      const uid = authenticated.uid;
+      const profileRef = authenticated.profileRef || exploraSession.profileRef || (exploraSession.driverId ? doc(db, "choferes", exploraSession.driverId) : null);
+      if (!profileRef) return profileMsg("No se encontró el perfil para guardar los cambios.", "err");
 
       const btn = $("profileSaveBtn");
+      const oldProfile = exploraSession.profile || {};
+      const oldAvatarUrl = getProfileAvatarUrl(oldProfile, user);
+      const oldAvatarPath = getProfileAvatarPath(oldProfile);
+      const changedAvatar = Boolean(profileState.selectedFile);
+      let newAvatarPath = oldAvatarPath;
+      let newAvatarUrl = oldAvatarUrl;
+      let uploadedNewPath = "";
       let finalMessage = "";
       let finalType = "";
+
       profileState.saving = true;
       if (btn) {
         btn.disabled = true;
@@ -8331,60 +9335,112 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       }
       document.body.classList.add("profile-saving");
       document.body.setAttribute("aria-busy", "true");
+      profileMsg("Guardando cambios…");
 
       try {
-        let avatarUrl = getProfileAvatarUrl(exploraSession.profile || {});
-        const changedAvatar = Boolean(profileState.selectedFile);
-        if (changedAvatar) {
-          const blob = profileState.selectedBlob || await createSquareAvatarBlob(profileState.selectedFile);
-          profileState.selectedBlob = blob;
-          const path = `avatars/${exploraSession.driverId}/profile.jpg`;
-          const fileRef = storageRef(storage, path);
-          await uploadBytes(fileRef, blob, { contentType: "image/jpeg", customMetadata: { owner: exploraSession.driverId } });
-          avatarUrl = await getDownloadURL(fileRef);
-        }
+        await profileWithTimeout((async () => {
+          if (changedAvatar) {
+            const processed = await profileWithTimeout(compressProfileAvatar(profileState.selectedFile), 10000, "IMAGE_PROCESS_TIMEOUT");
+            newAvatarPath = `avatars/${uid}/profile-${Date.now()}.${processed.extension}`;
+            uploadedNewPath = newAvatarPath;
+            const fileRef = storageRef(storage, newAvatarPath);
+            await profileWithTimeout(uploadBytes(fileRef, processed.blob, {
+              contentType: processed.contentType,
+              customMetadata: {
+                owner: uid,
+                source: "explora-profile",
+                updatedAt: String(Date.now())
+              }
+            }), 30000, "AVATAR_UPLOAD_TIMEOUT");
+            newAvatarUrl = await profileWithTimeout(getDownloadURL(fileRef), 10000, "AVATAR_URL_TIMEOUT");
+          }
 
-        const payload = { nombre: name, telefono: phone, avatarUrl, actualizado: serverTimestamp() };
-        await setDoc(exploraSession.profileRef, payload, { merge: true });
-        await updateProfile(exploraSession.authUser, { displayName: name, photoURL: avatarUrl || null }).catch(() => {});
+          const avatarVersion = Date.now();
+          const payload = {
+            nombre: name,
+            telefono: phone,
+            actualizado: serverTimestamp(),
+            actualizadoEn: serverTimestamp()
+          };
+          if (changedAvatar) {
+            payload.avatarUrl = newAvatarUrl;
+            payload.fotoPerfil = newAvatarUrl;
+            payload.avatarPath = newAvatarPath;
+            payload.avatarUpdatedAt = serverTimestamp();
+            payload.avatarVersion = avatarVersion;
+            payload.avatarMime = processed.contentType;
+          }
 
-        exploraSession.profile = { ...exploraSession.profile, ...payload };
-        applyDriverDataToUI();
-        saveVisualSession();
-        if (window.ExploraRanking && typeof window.ExploraRanking.refresh === "function") {
-          await window.ExploraRanking.refresh().catch(() => {});
-        }
+          try {
+            await profileWithTimeout(setDoc(profileRef, payload, { merge: true }), 15000, "PROFILE_UPDATE_TIMEOUT");
+          } catch (firestoreError) {
+            if (uploadedNewPath && uploadedNewPath !== oldAvatarPath) {
+              deleteObject(storageRef(storage, uploadedNewPath)).catch(() => {});
+            }
+            throw firestoreError;
+          }
+
+          await updateProfile(user, {
+            displayName: name,
+            photoURL: changedAvatar ? newAvatarUrl : (newAvatarUrl || null)
+          }).catch(() => {});
+
+          exploraSession.profile = { ...oldProfile, ...payload };
+          if (changedAvatar) {
+            exploraSession.profile.avatarUrl = newAvatarUrl;
+            exploraSession.profile.fotoPerfil = newAvatarUrl;
+            exploraSession.profile.avatarPath = newAvatarPath;
+            exploraSession.profile.avatarVersion = avatarVersion;
+          }
+          applyDriverDataToUI();
+          if (changedAvatar) applyAvatarEverywhere(uid, newAvatarUrl, avatarVersion);
+          saveVisualSession();
+
+          if (changedAvatar) {
+            await deletePreviousAvatarSafely(oldAvatarPath, newAvatarPath);
+          }
+
+          if (window.ExploraRanking && typeof window.ExploraRanking.refresh === "function") {
+            window.ExploraRanking.refresh().catch(() => {});
+          }
+        })(), 45000, "PROFILE_SAVE_TIMEOUT");
 
         if (profileState.previewUrl) URL.revokeObjectURL(profileState.previewUrl);
         profileState.previewUrl = "";
         profileState.selectedFile = null;
-        profileState.selectedBlob = null;
         if ($("profileAvatarInput")) $("profileAvatarInput").value = "";
-
-        finalMessage = changedAvatar ? "Foto de perfil actualizada" : "Perfil actualizado correctamente";
+        finalMessage = changedAvatar ? "Foto de perfil actualizada correctamente." : "Perfil actualizado correctamente.";
         finalType = "ok";
       } catch(error) {
-        finalMessage = error && error.message ? error.message : "No se pudo guardar el perfil.";
+        const code = String((error && (error.code || error.message)) || "");
+        if (code.includes("TIMEOUT")) finalMessage = "No se pudo completar el guardado. Revisa tu conexión e inténtalo nuevamente.";
+        else if (code === "INVALID_IMAGE_FILE") finalMessage = "Selecciona una imagen JPG, PNG o WebP válida.";
+        else if (code === "IMAGE_TOO_LARGE") finalMessage = "La imagen es demasiado grande. Selecciona otra fotografía.";
+        else if (code.includes("IMAGE")) finalMessage = "No se pudo procesar la imagen.";
+        else if (code.startsWith("storage/")) finalMessage = "No se pudo subir la fotografía. Inténtalo nuevamente.";
+        else if (code.includes("PROFILE_UPDATE")) finalMessage = "La fotografía se subió, pero no se pudo actualizar el perfil.";
+        else finalMessage = "No se pudo guardar el perfil. Inténtalo nuevamente.";
         finalType = "err";
+        console.warn("[EXPLORA profile] save failed", code || error);
       } finally {
         resetProfileSavingState(finalMessage, finalType);
       }
     }
+
     $("profileBackBtn")?.addEventListener("click", closeProfileScreen);
     $("profileChangePhotoBtn")?.addEventListener("click", () => $("profileAvatarInput")?.click());
     $("profileAvatarInput")?.addEventListener("change", (event) => {
       const file = event.target.files && event.target.files[0];
       if (!file) return;
-      if (!file.type.startsWith("image/")) { event.target.value = ""; return profileMsg("El archivo seleccionado no es una imagen.", "err"); }
-      if (file.size > 5 * 1024 * 1024) { event.target.value = ""; return profileMsg("La imagen supera 5 MB.", "err"); }
+      if (!canProcessImageType(file)) { event.target.value = ""; return profileMsg("Selecciona una imagen JPG, PNG o WebP válida.", "err"); }
+      if (file.size > 15 * 1024 * 1024) { event.target.value = ""; return profileMsg("La imagen es demasiado grande. Selecciona otra fotografía.", "err"); }
       if (profileState.previewUrl) URL.revokeObjectURL(profileState.previewUrl);
       profileState.selectedFile = file;
-      profileState.selectedBlob = null;
       profileState.previewUrl = URL.createObjectURL(file);
       if ($("profileAvatarPreview")) $("profileAvatarPreview").src = profileState.previewUrl;
       profileMsg("Vista previa lista. Tocá Guardar cambios para subirla.");
     });
-    $("profileForm")?.addEventListener("submit", saveProfile);
+    $("profileForm")?.addEventListener("submit", saveProfileChanges);
     window.ExploraActions["abrir-perfil"] = openProfileScreen;
 
     // Servicios vendidos
@@ -8434,33 +9490,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       if (type.includes("png") || name.endsWith(".png")) return "png";
       return "jpg";
     }
-    window.ExploraRegisterExpense = async function(payload) {
-      const user = auth.currentUser;
-      if (!user) throw new Error("Sesión no iniciada.");
-      if (!payload || !payload.comprobante) throw new Error("Falta el comprobante.");
-      const periodo = getSaturdayPeriod();
-      const monto = Number(payload.monto || 0);
-      if (!Number.isFinite(monto) || monto <= 0) throw new Error("Monto inválido.");
-      const gastoRef = doc(collection(db, "gastos"));
-      const ext = safeExtension(payload.comprobante);
-      const path = `gastos/${user.uid}/${gastoRef.id}/comprobante.${ext}`;
-      const fileRef = storageRef(storage, path);
-      await uploadBytes(fileRef, payload.comprobante, { contentType: payload.comprobante.type || (ext === "pdf" ? "application/pdf" : "image/jpeg") });
-      const url = await getDownloadURL(fileRef);
-      const gasto = {
-        tipo: payload.tipo, tipoLabel: payload.tipoLabel || payload.tipo, monto, valor: monto,
-        observaciones: payload.observaciones || "", detalle: payload.observaciones || "",
-        comprobanteUrl: url, comprobanteNombre: payload.comprobante.name || `comprobante.${ext}`,
-        comprobanteMime: payload.comprobante.type || "", comprobanteTamano: payload.comprobante.size || 0,
-        comprobantePath: path, chofer: exploraSession.driverId, choferId: exploraSession.driverId,
-        choferUid: user.uid, choferEmail: user.email || "", choferNombre: getProfileName(exploraSession.profile || {}, user),
-        estado: "registrado", fuente: "cargar_gasto_premium", fecha: localDateAR(),
-        periodoId: periodo.id, periodoInicio: periodo.start, periodoFin: periodo.end,
-        mes: periodo.mes, anio: periodo.anio, creado: serverTimestamp(), creadoEn: serverTimestamp()
-      };
-      await setDoc(gastoRef, gasto, { merge: true });
-      return { id: gastoRef.id, ...gasto };
-    };
+    /* Registro de gastos consolidado en el módulo financiero único. */
 
     // Comprobantes
     function belongsToUser(data) {
@@ -8523,6 +9553,375 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       }
     } catch (_) {}
   </script>
+
+
+
+<!-- EXPLORA v160: motor semanal unificado + splash seguro + históricos financieros -->
+<style id="exploraWeeklyFinanceStyles">
+  .explora-splash-hidden #exploraSplash,
+  body.explora-splash-hidden #exploraSplash{opacity:0!important;visibility:hidden!important;pointer-events:none!important;display:none!important}
+  .finance-history-screen{position:fixed;inset:0;z-index:850;background:#020609;color:#fff;display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(96px + env(safe-area-inset-bottom));}
+  .finance-history-screen.is-open{display:block}
+  .finance-history-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.finance-history-back{width:44px;height:44px;border:0;background:rgba(255,255,255,.06);color:#fff;border-radius:14px;font-size:24px}.finance-history-title{text-align:center;flex:1}.finance-history-title h1{font-size:24px;letter-spacing:.08em;margin:0}.finance-history-title p{margin:4px 0 0;color:rgba(255,255,255,.62)}.finance-history-icon{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:#f5b942;background:rgba(245,185,66,.1);border:1px solid rgba(245,185,66,.25)}
+  .finance-segment{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:5px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:18px;margin-bottom:14px}.finance-segment button{border:0;border-radius:14px;background:transparent;color:rgba(255,255,255,.65);min-height:42px;font-weight:800}.finance-segment button.is-active{background:linear-gradient(135deg,#f8c245,#d99b27);color:#111}
+  .finance-period-summary{border:1px solid rgba(255,255,255,.12);border-radius:24px;background:linear-gradient(180deg,rgba(18,22,27,.98),rgba(6,8,11,.98));padding:18px;margin-bottom:14px}.finance-period-summary small{color:rgba(255,255,255,.58);display:block;text-transform:uppercase;letter-spacing:.08em}.finance-period-total{font-size:32px;font-weight:900;color:#f5b942;margin:8px 0}.finance-period-meta{display:flex;gap:10px;flex-wrap:wrap;color:rgba(255,255,255,.70);font-size:14px}.finance-list{display:grid;gap:10px}.finance-row{width:100%;border:1px solid rgba(255,255,255,.1);border-radius:18px;background:rgba(255,255,255,.045);color:#fff;padding:14px;display:grid;grid-template-columns:1fr auto;gap:8px;text-align:left}.finance-row b{font-size:16px}.finance-row small{color:rgba(255,255,255,.62);line-height:1.35}.finance-row strong{color:#f5b942;white-space:nowrap}.finance-status{min-height:24px;color:rgba(255,255,255,.65);margin:8px 0}.finance-status.err{color:#ffb4b4}.finance-empty{padding:22px;text-align:center;color:rgba(255,255,255,.55);border:1px dashed rgba(255,255,255,.14);border-radius:18px}.finance-view-file{margin-top:8px;border:1px solid rgba(245,185,66,.4);background:rgba(245,185,66,.08);color:#f5b942;border-radius:12px;padding:8px 10px;font-weight:800}
+  .explora-image-viewer{position:fixed;inset:0;z-index:1200;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top) + 20px) 16px calc(env(safe-area-inset-bottom) + 20px)}.explora-image-viewer.is-open{display:flex}.explora-image-viewer img{max-width:100%;max-height:86dvh;border-radius:18px;object-fit:contain}.explora-image-viewer .viewer-close{position:absolute;top:calc(env(safe-area-inset-top) + 12px);right:14px;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.22);background:rgba(10,10,10,.8);color:#fff;font-size:24px}
+</style>
+<script id="exploraSplashEmergencyPatch">
+(function(){
+  var done=false;
+  function finish(){
+    if(done) return; done=true;
+    document.body.classList.add('explora-splash-hidden');
+    document.documentElement.style.pointerEvents='';
+    document.body.style.pointerEvents='';
+    document.documentElement.style.overflow='';
+    document.body.style.overflow='';
+    var s=document.getElementById('exploraSplash');
+    if(s){s.setAttribute('aria-hidden','true');s.style.display='none';s.style.pointerEvents='none';}
+    var hasMode=document.body.classList.contains('explora-authenticated')||document.body.classList.contains('explora-admin-authenticated')||document.body.classList.contains('explora-login-visible')||document.body.classList.contains('explora-role-blocked');
+    if(!hasMode) document.body.classList.add('explora-login-visible');
+  }
+  window.ExploraFinishSplash=finish;
+  setTimeout(finish,1000);
+  window.addEventListener('error',function(){setTimeout(finish,0);});
+  window.addEventListener('unhandledrejection',function(){setTimeout(finish,0);});
+})();
+</script>
+<script type="module" id="exploraUnifiedWeeklyFinanceModule">
+  import { collection, doc, getDoc, getDocs, query, where, setDoc, addDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+
+  const fb = window.ExploraFirebase || {};
+  const auth = fb.auth;
+  const db = fb.db;
+  const storage = fb.storage;
+  const $ = (id) => document.getElementById(id);
+  const AR_TZ = "America/Argentina/Buenos_Aires";
+
+  function withTimeout(promise, ms, code){
+    let t;
+    return Promise.race([
+      promise.finally?.(()=>clearTimeout(t)) || promise,
+      new Promise((_, reject)=>{ t=setTimeout(()=>reject(new Error(code||"TIMEOUT")), ms); })
+    ]);
+  }
+  window.ExploraWithTimeout = withTimeout;
+
+  function finishSplash(){
+    if (typeof window.ExploraFinishSplash === "function") window.ExploraFinishSplash();
+    else document.body.classList.add("explora-splash-hidden");
+  }
+  setTimeout(finishSplash, 1000);
+
+  async function getPrivateSession(timeoutMs = 8000) {
+    const resolver = window.ExploraGetAuthenticatedSession;
+    if (typeof resolver === "function") {
+      const session = await withTimeout(resolver({ timeoutMs }), timeoutMs + 1000, "PRIVATE_SESSION_TIMEOUT");
+      if (session?.user?.uid) return session;
+    }
+    const user = auth?.currentUser;
+    if (!user?.uid) throw new Error("AUTH_SESSION_MISSING");
+    const state = window.ExploraSession || {};
+    return {
+      user,
+      uid: user.uid,
+      profile: state.profile || null,
+      profileDocumentId: state.driverId || "",
+      profileRef: state.profileRef || null,
+      role: state.role || null
+    };
+  }
+  window.ExploraGetPrivateSession = getPrivateSession;
+
+  function getARParts(date=new Date()){
+    return new Intl.DateTimeFormat("en-CA",{timeZone:AR_TZ,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).formatToParts(date).reduce((a,p)=>{ if(p.type!=="literal") a[p.type]=Number(p.value); return a; },{});
+  }
+  function arLocalToUTC(y,m,d,h=0,min=0,s=0){ return new Date(Date.UTC(y,m-1,d,h+3,min,s,0)); }
+  function idDateUTC(d){ return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,"0")}-${String(d.getUTCDate()).padStart(2,"0")}`; }
+  function textDate(ms){ return new Date(ms).toLocaleDateString("es-AR",{timeZone:AR_TZ}); }
+  function monthName(y,m){ return new Intl.DateTimeFormat("es-AR",{timeZone:AR_TZ,month:"long",year:"numeric"}).format(arLocalToUTC(y,m,1,12)); }
+  function getActivePeriods(date=new Date()){
+    const p=getARParts(date);
+    const localMidnightUTC=new Date(Date.UTC(p.year,p.month-1,p.day,0,0,0));
+    const dow=localMidnightUTC.getUTCDay();
+    let diff=(dow-6+7)%7;
+    if(dow===6 && (p.hour===0 && p.minute<1)) diff=7;
+    const startLocal=new Date(localMidnightUTC); startLocal.setUTCDate(startLocal.getUTCDate()-diff);
+    const weeklyStart=arLocalToUTC(startLocal.getUTCFullYear(),startLocal.getUTCMonth()+1,startLocal.getUTCDate(),0,1,0);
+    const weeklyEnd=new Date(weeklyStart.getTime()+7*86400000-1);
+    const monthlyStart=arLocalToUTC(p.year,p.month,1,0,0,0);
+    const monthlyEnd=arLocalToUTC(p.month===12?p.year+1:p.year,p.month===12?1:p.month+1,1,0,0,0); monthlyEnd.setMilliseconds(-1);
+    const yearlyStart=arLocalToUTC(p.year,1,1,0,0,0);
+    const yearlyEnd=arLocalToUTC(p.year+1,1,1,0,0,0); yearlyEnd.setMilliseconds(-1);
+    return {
+      weeklyPeriodId:idDateUTC(startLocal), weeklyStart, weeklyEnd, weeklyStartMs:weeklyStart.getTime(), weeklyEndMs:weeklyEnd.getTime(),
+      weeklyText:`${textDate(weeklyStart.getTime())} – ${textDate(weeklyEnd.getTime())}`,
+      monthlyPeriodId:`${p.year}-${String(p.month).padStart(2,"0")}`, monthlyStart, monthlyEnd, monthlyStartMs:monthlyStart.getTime(), monthlyEndMs:monthlyEnd.getTime(), monthlyText:monthName(p.year,p.month),
+      yearlyPeriodId:String(p.year), yearlyStart, yearlyEnd, yearlyStartMs:yearlyStart.getTime(), yearlyEndMs:yearlyEnd.getTime(), yearlyText:String(p.year),
+      year:p.year, month:p.month, week:idDateUTC(startLocal)
+    };
+  }
+  window.ExploraPeriods={ getActivePeriods, getActiveWeeklyPeriod:()=>{const p=getActivePeriods(); return {id:p.weeklyPeriodId,startMs:p.weeklyStartMs,endMs:p.weeklyEndMs,inicioTexto:textDate(p.weeklyStartMs),finTexto:textDate(p.weeklyEndMs)};} };
+
+  function toNumber(v){ if(typeof v==="number") return Number.isFinite(v)?v:0; if(typeof v==="string") return Number(v.replace(/[^\d,-]/g,"").replace(/\./g,"").replace(",","."))||0; return 0; }
+  function money(v){ return "$"+Math.round(toNumber(v)).toLocaleString("es-AR"); }
+  function getDocMs(data={}){ for(const k of ["creadoEn","creado","fechaTimestamp","fechaCreacion","fechaServidor","updatedAt"]){ const v=data[k]; if(!v) continue; if(typeof v.toDate==="function") return v.toDate().getTime(); if(v instanceof Date) return v.getTime(); if(typeof v==="number") return v; } const f=data.fechaISO||data.fecha||data.date; if(f){ const d=new Date(String(f).includes("T")?f:`${f}T12:00:00-03:00`); if(!isNaN(d)) return d.getTime(); } return 0; }
+  function normalize(s){ return String(s||"").trim().toLowerCase(); }
+  function currentIds(){ const user=auth?.currentUser; const session=window.ExploraSession||{}; return { uid:user?.uid||"", email:normalize(user?.email||""), driverId:normalize(session.driverId||""), profileId:normalize(session.profileDocumentId||session.driverId||"") }; }
+  function belongsToCurrentUser(data={}){ const ids=currentIds(); const role=normalize((window.ExploraSession||{}).role); if(role==="admin"||role==="administrador") return true; const values=[data.choferUid,data.uid,data.userId,data.usuarioUid,data.chofer,data.choferId,data.driverId,data.conductorId,data.usuario,data.email,data.choferEmail,data.profileId,data.perfilId].map(v=>normalize(v)); return values.includes(ids.uid.toLowerCase()) || (ids.driverId && values.includes(ids.driverId)) || (ids.email && values.includes(ids.email)); }
+  function periodIdFor(data={}){ return String(data.periodoSemanalId||data.weeklyPeriodId||data.periodoId||data.periodId||data.semanaId||"").trim(); }
+  function belongsToPeriod(data, mode, periods){ const pid=periodIdFor(data); if(mode==="week" && pid) return pid===periods.weeklyPeriodId; if(mode==="month"){ const mp=String(data.periodoMensualId||data.monthlyPeriodId||""); if(mp) return mp===periods.monthlyPeriodId; } if(mode==="year"){ const yp=String(data.periodoAnualId||data.yearlyPeriodId||data.anio||data.año||""); if(yp) return yp===periods.yearlyPeriodId; } const ms=getDocMs(data); if(!ms) return false; if(mode==="week") return ms>=periods.weeklyStartMs && ms<=periods.weeklyEndMs; if(mode==="month") return ms>=periods.monthlyStartMs && ms<=periods.monthlyEndMs; return ms>=periods.yearlyStartMs && ms<=periods.yearlyEndMs; }
+  function validState(data={}){ const s=normalize(data.estado||data.status||data.estadoServicio||data.estadoViaje); return !["cancelado","cancelada","rechazado","rechazada","eliminado","eliminada","borrador","prueba","test"].some(x=>s.includes(x)); }
+
+  async function compressReceiptImage(file){
+    if(!file || !String(file.type||"").startsWith("image/")) return file;
+    if(file.size < 650*1024 && /webp|jpeg|jpg|png/.test(file.type)) return file;
+    const url=URL.createObjectURL(file);
+    try{
+      const img=await withTimeout(new Promise((resolve,reject)=>{ const i=new Image(); i.onload=()=>resolve(i); i.onerror=()=>reject(new Error("IMAGE_LOAD_ERROR")); i.src=url; }), 10000, "IMAGE_LOAD_TIMEOUT");
+      const max=1400; let w=img.naturalWidth||img.width, h=img.naturalHeight||img.height; const ratio=Math.min(1,max/Math.max(w,h)); w=Math.round(w*ratio); h=Math.round(h*ratio);
+      const canvas=document.createElement("canvas"); canvas.width=w; canvas.height=h; const ctx=canvas.getContext("2d"); ctx.drawImage(img,0,0,w,h);
+      const blob=await withTimeout(new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error("IMAGE_BLOB_ERROR")), "image/webp", .82)), 10000, "IMAGE_COMPRESS_TIMEOUT");
+      return new File([blob], (file.name||"comprobante").replace(/\.[^.]+$/,"")+".webp", {type:"image/webp"});
+    } finally { URL.revokeObjectURL(url); }
+  }
+
+  async function updateAccumulated(kind, amount, countField, opId){
+    const user=auth?.currentUser; if(!user) return;
+    const p=getActivePeriods();
+    const ids=currentIds();
+    const keyBase={uid:user.uid, choferUid:user.uid, choferId:(window.ExploraSession||{}).driverId||user.uid, actualizadoEn:serverTimestamp()};
+    const targets=[
+      ["acumulados_semanales", `${p.weeklyPeriodId}_${user.uid}`, {periodoId:p.weeklyPeriodId, periodoSemanalId:p.weeklyPeriodId}],
+      ["acumulados_mensuales", `${p.monthlyPeriodId}_${user.uid}`, {periodoMensualId:p.monthlyPeriodId, mes:p.month, anio:p.year}],
+      ["acumulados_anuales", `${p.yearlyPeriodId}_${user.uid}`, {periodoAnualId:p.yearlyPeriodId, anio:p.year}]
+    ];
+    for(const [col,id,periodFields] of targets){
+      const ref=doc(db,col,id);
+      await runTransaction(db, async tx=>{
+        const snap=await tx.get(ref); const data=snap.exists()?snap.data():{}; const processed=Array.isArray(data.operacionesProcesadas)?data.operacionesProcesadas:[];
+        if(opId && processed.includes(opId)) return;
+        const next={...keyBase,...periodFields};
+        next[kind]=toNumber(data[kind])+toNumber(amount);
+        if(countField) next[countField]=toNumber(data[countField])+1;
+        if(opId) next.operacionesProcesadas=[...processed.slice(-80), opId];
+        tx.set(ref,next,{merge:true});
+      }).catch(()=>{});
+    }
+  }
+
+  window.ExploraRegisterSoldService = async function(service){
+    const user=auth?.currentUser; if(!user) throw new Error("Sesión no iniciada.");
+    if(!service || !service.id) throw new Error("Servicio inválido.");
+    const p=getActivePeriods(); const valor=toNumber(service.price); if(valor<=0) throw new Error("Importe inválido.");
+    const refDoc=doc(collection(db,"viajes"));
+    const session=window.ExploraSession||{};
+    const payload={
+      id:refDoc.id, uid:user.uid, choferUid:user.uid, choferId:session.driverId||user.uid, profileId:session.driverId||user.uid,
+      choferEmail:user.email||"", choferNombre:(session.profile&&(session.profile.nombre||session.profile.nombreCompleto||session.profile.displayName))||user.displayName||"Chofer",
+      categoria:service.categoryId||"", servicioId:service.id, viajeId:refDoc.id, nombreServicio:service.name||"Servicio", servicioNombre:service.name||"Servicio",
+      origen:service.origin||"", destino:service.destination||"", ubicacion:service.location||"", descripcion:service.description||"",
+      valor, monto:valor, importe:valor, tarifaMinima:valor, estado:"vendido", completado:true, fuente:"nuevo_servicio_premium",
+      periodoSemanalId:p.weeklyPeriodId, periodoId:p.weeklyPeriodId, periodoMensualId:p.monthlyPeriodId, periodoAnualId:p.yearlyPeriodId,
+      semana:p.week, mes:p.month, anio:p.year, fecha:new Date().toLocaleDateString("es-AR",{timeZone:AR_TZ}), hora:new Date().toLocaleTimeString("es-AR",{timeZone:AR_TZ,hour:"2-digit",minute:"2-digit"}), creadoEn:serverTimestamp(), creado:serverTimestamp()
+    };
+    await withTimeout(setDoc(refDoc,payload,{merge:true}),15000,"SERVICE_WRITE_TIMEOUT");
+    await updateAccumulated("facturacion", valor, "viajes", refDoc.id);
+    window.dispatchEvent(new CustomEvent("explora:servicio-registrado",{detail:{id:refDoc.id,valor}}));
+    window.ExploraRanking?.refresh?.();
+    window.ExploraRefreshDashboardMetrics?.();
+    return payload;
+  };
+
+  let expenseSaveInProgress = false;
+  async function saveExpense(payload) {
+    if (expenseSaveInProgress) throw new Error("El gasto ya se está guardando.");
+    expenseSaveInProgress = true;
+    let uploadedPath = "";
+    try {
+      const authenticated = await getPrivateSession(8000);
+      const user = authenticated.user;
+      if (!user?.uid) throw new Error("AUTH_SESSION_MISSING");
+
+      const file = payload?.comprobante;
+      if (!file) throw new Error("Falta el comprobante.");
+      const monto = toNumber(payload.monto);
+      if (monto <= 0) throw new Error("Monto inválido.");
+
+      const p = getActivePeriods();
+      const gastoRef = doc(collection(db, "gastos"));
+      let uploadFile = file;
+      let ext = "pdf";
+      if (String(file.type || "").startsWith("image/")) {
+        uploadFile = await withTimeout(compressReceiptImage(file), 12000, "EXPENSE_IMAGE_TIMEOUT");
+        ext = uploadFile.type.includes("webp") ? "webp" : "jpg";
+      } else if (String(file.type || "").includes("pdf") || /\.pdf$/i.test(file.name || "")) {
+        ext = "pdf";
+      } else {
+        throw new Error("Formato no permitido. Selecciona JPG, PNG, WebP o PDF.");
+      }
+
+      uploadedPath = `gastos/${user.uid}/${gastoRef.id}/comprobante.${ext}`;
+      const fileRef = storageRef(storage, uploadedPath);
+      await withTimeout(uploadBytes(fileRef, uploadFile, {
+        contentType: uploadFile.type || (ext === "pdf" ? "application/pdf" : "image/webp"),
+        customMetadata: { owner: user.uid, gastoId: gastoRef.id, source: "explora-expense" }
+      }), 30000, "EXPENSE_UPLOAD_TIMEOUT");
+      const url = await withTimeout(getDownloadURL(fileRef), 10000, "EXPENSE_URL_TIMEOUT");
+
+      const state = window.ExploraSession || {};
+      const profile = authenticated.profile || state.profile || {};
+      const profileDocumentId = authenticated.profileDocumentId || state.driverId || user.uid;
+      const gasto = {
+        id: gastoRef.id,
+        gastoId: gastoRef.id,
+        uid: user.uid,
+        choferUid: user.uid,
+        creadoPorUid: user.uid,
+        choferId: profileDocumentId,
+        profileId: profileDocumentId,
+        choferEmail: user.email || "",
+        choferNombre: (profile.nombre || profile.nombreCompleto || profile.displayName) || user.displayName || "Chofer",
+        tipo: payload.tipo || "gasto",
+        tipoLabel: payload.tipoLabel || payload.tipo || "Gasto",
+        monto,
+        valor: monto,
+        observaciones: payload.observaciones || "",
+        detalle: payload.observaciones || "",
+        comprobanteUrl: url,
+        comprobantePath: uploadedPath,
+        comprobanteNombre: file.name || `comprobante.${ext}`,
+        comprobanteMime: uploadFile.type || file.type || "",
+        comprobanteTamano: uploadFile.size || file.size || 0,
+        estado: "registrado",
+        estadoComprobante: "registrado",
+        fuente: "cargar_gasto_premium",
+        periodoSemanalId: p.weeklyPeriodId,
+        periodoId: p.weeklyPeriodId,
+        periodoMensualId: p.monthlyPeriodId,
+        periodoAnualId: p.yearlyPeriodId,
+        semana: p.week,
+        mes: p.month,
+        anio: p.year,
+        fecha: new Date().toLocaleDateString("es-AR", { timeZone: AR_TZ }),
+        hora: new Date().toLocaleTimeString("es-AR", { timeZone: AR_TZ, hour: "2-digit", minute: "2-digit" }),
+        creadoEn: serverTimestamp(),
+        creado: serverTimestamp()
+      };
+
+      try {
+        await withTimeout(setDoc(gastoRef, gasto, { merge: true }), 15000, "EXPENSE_WRITE_TIMEOUT");
+      } catch (firestoreError) {
+        if (uploadedPath) deleteObject(storageRef(storage, uploadedPath)).catch(() => {});
+        throw firestoreError;
+      }
+
+      await updateAccumulated("gastos", monto, "cantidadGastos", gastoRef.id);
+      window.dispatchEvent(new CustomEvent("explora:gasto-registrado", { detail: { id: gastoRef.id, monto, gasto } }));
+      await Promise.allSettled([
+        Promise.resolve(window.ExploraRefreshDashboardMetrics?.()),
+        Promise.resolve(window.ExploraReceipts?.refresh?.("gastos"))
+      ]);
+      return gasto;
+    } finally {
+      expenseSaveInProgress = false;
+    }
+  }
+  window.ExploraRegisterExpense = saveExpense;
+  window.ExploraSaveExpense = saveExpense;
+
+  async function loadOwnedCollection(col){
+    let session;
+    try { session = await getPrivateSession(7000); } catch (_) { return []; }
+    const user = session.user;
+    const rows=[]; const seen=new Set();
+    const attempts=[query(collection(db,col),where("choferUid","==",user.uid)), query(collection(db,col),where("uid","==",user.uid))];
+    const driverId=session.profileDocumentId || (window.ExploraSession||{}).driverId;
+    if(driverId) attempts.push(query(collection(db,col),where("choferId","==",driverId)));
+    for(const q of attempts){ try{ const snap=await withTimeout(getDocs(q),10000,`READ_${col}_TIMEOUT`); snap.forEach(d=>{ if(!seen.has(d.id)){seen.add(d.id); rows.push({id:d.id, sourceCollection:col, ...d.data()});} }); }catch(_){} }
+    if(!rows.length){ try{ const snap=await withTimeout(getDocs(collection(db,col)),10000,`READ_${col}_ALL_TIMEOUT`); snap.forEach(d=>{ const data=d.data()||{}; if(belongsToCurrentUser(data) && !seen.has(d.id)){seen.add(d.id); rows.push({id:d.id, sourceCollection:col, ...data});} }); }catch(_){} }
+    return rows.filter(r=>belongsToCurrentUser(r));
+  }
+
+  async function getFinanceRows(type, mode="week"){
+    const p=getActivePeriods(); const col=type==="expenses"?"gastos":"viajes";
+    const rows=(await loadOwnedCollection(col)).filter(r=>validState(r) && belongsToPeriod(r,mode,p));
+    return rows.map(r=>({...r, amount:type==="expenses"?toNumber(r.monto||r.valor):toNumber(r.valor||r.monto||r.importe||r.tarifaMinima)}));
+  }
+  function periodLabel(mode){ const p=getActivePeriods(); return mode==="week"?p.weeklyText:mode==="month"?p.monthlyText:p.yearlyText; }
+
+  async function refreshDashboardMetrics(){
+    const p=getActivePeriods();
+    const [services,expenses,receipts]=await Promise.all([getFinanceRows("services","week"), getFinanceRows("expenses","week"), window.ExploraLoadReceipts?.("gastos").catch(()=>[])||[]]);
+    const revenue=services.reduce((s,r)=>s+r.amount,0), exp=expenses.reduce((s,r)=>s+r.amount,0);
+    const set=(id,val)=>{ const el=$(id); if(el) el.textContent=val; };
+    set("dashboardWeeklyRevenue",money(revenue)); set("dashboardWeeklyExpenses",money(exp)); set("dashboardTripsCount",String(services.length)); set("dashboardExpenseCount",String(expenses.length)); set("dashboardReceiptsCount",String(receipts.length));
+    set("dashboardWeeklyRevenueMeta",services.length?`${services.length} servicios esta semana`:"Sin servicios esta semana");
+    set("dashboardWeeklyExpensesMeta",expenses.length?`${expenses.length} gastos esta semana`:"Sin gastos esta semana");
+    set("dashboardReceiptsMeta",receipts.length?`${receipts.length} comprobantes`:"Ver y gestionar comprobantes");
+    return {revenue, expenses:exp, services, expenseRows:expenses, period:p};
+  }
+  window.ExploraRefreshDashboardMetrics=()=>withTimeout(refreshDashboardMetrics(),18000,"DASHBOARD_METRICS_TIMEOUT").catch(()=>null);
+  window.addEventListener("explora:gasto-registrado",()=>window.ExploraRefreshDashboardMetrics());
+  window.addEventListener("explora:servicio-registrado",()=>window.ExploraRefreshDashboardMetrics());
+
+  window.ExploraLoadReceipts = async function(category){
+    await getPrivateSession(7000);
+    if(category==="gastos") return (await loadOwnedCollection("gastos")).map(r=>({...r, category:"gastos"}));
+    const all=[]; for(const c of ["comprobantes","pagos","cierres","cierresSemanales"]){ all.push(...(await loadOwnedCollection(c)).map(r=>({...r, category:"pagos"}))); }
+    return all.filter(r=>!normalize(r.tipo||r.categoria||r.clase).includes("gasto"));
+  };
+
+  function ensureFinanceHistoryScreen(){
+    if($("financeHistoryScreen")) return;
+    document.body.insertAdjacentHTML("beforeend",`<section id="financeHistoryScreen" class="finance-history-screen" aria-hidden="true">
+      <header class="finance-history-header"><button id="financeHistoryBack" class="finance-history-back" type="button" aria-label="Volver">‹</button><div class="finance-history-title"><h1 id="financeHistoryTitle">FACTURACIÓN</h1><p id="financeHistorySubtitle">Histórico por período</p></div><div class="finance-history-icon">$</div></header>
+      <div class="finance-segment" role="tablist"><button type="button" data-fin-mode="week" class="is-active">Semana</button><button type="button" data-fin-mode="month">Mes</button><button type="button" data-fin-mode="year">Año</button></div>
+      <div id="financeHistoryStatus" class="finance-status"></div><section class="finance-period-summary"><small id="financeHistoryPeriod">Período</small><div id="financeHistoryTotal" class="finance-period-total">$0</div><div class="finance-period-meta"><span id="financeHistoryCount">0 registros</span><span id="financeHistoryState">Semana activa</span></div></section><div id="financeHistoryList" class="finance-list"></div><div id="financeHistoryEmpty" class="finance-empty" hidden>Sin registros en este período.</div>
+    </section>`);
+    $("financeHistoryBack").addEventListener("click",closeFinanceHistory);
+    document.querySelectorAll("[data-fin-mode]").forEach(btn=>btn.addEventListener("click",()=>{ financeState.mode=btn.dataset.finMode; document.querySelectorAll("[data-fin-mode]").forEach(b=>b.classList.toggle("is-active",b===btn)); renderFinanceHistory(); }));
+  }
+  const financeState={type:"services",mode:"week",previousScrollY:0};
+  function openFinanceHistory(type){ ensureFinanceHistoryScreen(); financeState.type=type; financeState.mode="week"; financeState.previousScrollY=window.scrollY||0; document.querySelectorAll("[data-fin-mode]").forEach(b=>b.classList.toggle("is-active",b.dataset.finMode==="week")); const s=$("financeHistoryScreen"); s.classList.add("is-open"); s.setAttribute("aria-hidden","false"); document.documentElement.style.overflow="hidden"; document.body.style.overflow="hidden"; window.ExploraMainNav?.setActive(type==="expenses"?"finanzas":"finanzas"); renderFinanceHistory(); }
+  function closeFinanceHistory(){ const s=$("financeHistoryScreen"); if(!s) return; s.classList.remove("is-open"); s.setAttribute("aria-hidden","true"); document.documentElement.style.overflow=""; document.body.style.overflow=""; window.scrollTo(0,financeState.previousScrollY||0); window.ExploraMainNav?.setActive("inicio"); }
+  async function renderFinanceHistory(){
+    const type=financeState.type, mode=financeState.mode;
+    const title=type==="expenses"?"GASTOS":"FACTURACIÓN"; $("financeHistoryTitle").textContent=title; $("financeHistorySubtitle").textContent=mode==="week"?"Detalle semanal":mode==="month"?"Detalle mensual":"Detalle anual"; $("financeHistoryStatus").textContent="Cargando…"; $("financeHistoryStatus").className="finance-status"; $("financeHistoryList").innerHTML=""; $("financeHistoryEmpty").hidden=true;
+    try{
+      const rows=await withTimeout(getFinanceRows(type,mode),18000,"FINANCE_HISTORY_TIMEOUT"); const total=rows.reduce((s,r)=>s+r.amount,0); $("financeHistoryPeriod").textContent=periodLabel(mode); $("financeHistoryTotal").textContent=money(total); $("financeHistoryCount").textContent=`${rows.length} ${rows.length===1?"registro":"registros"}`; $("financeHistoryState").textContent=mode==="week"?"Semana activa":"Histórico";
+      $("financeHistoryList").innerHTML=rows.sort((a,b)=>getDocMs(b)-getDocMs(a)).map(r=>{ const name=type==="expenses"?(r.tipoLabel||r.tipo||"Gasto"):(r.nombreServicio||r.servicioNombre||r.destino||"Servicio"); const meta=[r.fecha||"Sin fecha", r.hora||"", r.estado||"registrado"].filter(Boolean).join(" · "); const btn=(type==="expenses" && (r.comprobanteUrl||r.archivoUrl))?`<button type="button" class="finance-view-file" data-view-file="${r.comprobanteUrl||r.archivoUrl}">Ver foto</button>`:""; return `<article class="finance-row"><span><b>${name}</b><small>${meta}${r.observaciones?` · ${r.observaciones}`:""}</small>${btn}</span><strong>${money(r.amount)}</strong></article>`; }).join("");
+      $("financeHistoryEmpty").hidden=rows.length>0; $("financeHistoryStatus").textContent="";
+    }catch(e){ $("financeHistoryStatus").textContent="No se pudieron cargar los datos."; $("financeHistoryStatus").className="finance-status err"; }
+  }
+  window.ExploraActions=window.ExploraActions||{};
+  window.ExploraActions["facturacion-semanal"]=()=>openFinanceHistory("services");
+  window.ExploraActions["gastos-semanales"]=()=>openFinanceHistory("expenses");
+  window.ExploraActions["resumen-servicios"]=()=>openFinanceHistory("services");
+  window.ExploraActions["resumen-gastos"]=()=>openFinanceHistory("expenses");
+
+  function ensureViewer(){ if($("exploraImageViewer")) return; document.body.insertAdjacentHTML("beforeend",`<div id="exploraImageViewer" class="explora-image-viewer" aria-hidden="true"><button class="viewer-close" type="button" aria-label="Cerrar">×</button><img alt="Comprobante" /></div>`); $("exploraImageViewer").querySelector(".viewer-close").addEventListener("click",closeViewer); $("exploraImageViewer").addEventListener("click",e=>{if(e.target.id==="exploraImageViewer") closeViewer();}); }
+  function openViewer(url){ ensureViewer(); const v=$("exploraImageViewer"); v.querySelector("img").src=url; v.classList.add("is-open"); v.setAttribute("aria-hidden","false"); }
+  function closeViewer(){ const v=$("exploraImageViewer"); if(!v) return; v.classList.remove("is-open"); v.setAttribute("aria-hidden","true"); v.querySelector("img").src=""; }
+  document.addEventListener("click",e=>{ const b=e.target.closest?.("[data-view-file]"); if(b){ e.preventDefault(); openViewer(b.getAttribute("data-view-file")); } },true);
+
+  async function recoverPendingWeeklyClose(){
+    if(!db || !auth?.currentUser) return;
+    const p=getActivePeriods(); const prevStart=new Date(p.weeklyStartMs-1000); const prev=window.ExploraPeriods.getActiveWeeklyPeriod(prevStart);
+    const id=prev.id || prev.weeklyPeriodId; if(!id) return;
+    const ref=doc(db,"cierres_semanales",id);
+    try{ await runTransaction(db, async tx=>{ const snap=await tx.get(ref); if(snap.exists() && snap.data().cerrado) return; tx.set(ref,{periodoId:id,cerrado:true,cerradoEn:serverTimestamp(),origen:"cliente_recuperacion"},{merge:true}); }); }catch(_){ }
+  }
+  window.ExploraRecoverPendingWeeklyClose=recoverPendingWeeklyClose;
+
+  const originalRankingRefresh=window.ExploraRanking?.refresh;
+  if(window.ExploraRanking){ window.ExploraRanking.getActiveWeeklyPeriod=()=>window.ExploraPeriods.getActiveWeeklyPeriod(); window.ExploraRanking.refresh=async()=>{ await recoverPendingWeeklyClose().catch(()=>{}); return originalRankingRefresh?.(); }; }
+
+  document.addEventListener("DOMContentLoaded",()=>{ setTimeout(()=>{finishSplash(); window.ExploraRefreshDashboardMetrics?.(); recoverPendingWeeklyClose().catch(()=>{});},1000); });
+  window.addEventListener("explora:auth-ready",()=>{ finishSplash(); window.ExploraRefreshDashboardMetrics?.(); recoverPendingWeeklyClose().catch(()=>{}); });
+  setInterval(()=>{ if(document.body.classList.contains("explora-authenticated")) window.ExploraRefreshDashboardMetrics?.(); }, 60000);
+</script>
 
 </body>
 </html>
