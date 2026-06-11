@@ -2,12 +2,12 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="explora-version" content="v185-gastos-catalogo-servicios">
+  <meta name="explora-version" content="v187-login-reparado">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>EXPLORA — Dashboard v2 (185)</title>
+  <title>EXPLORA — Dashboard v2 (187)</title>
 
   <style>
     :root {
@@ -857,44 +857,40 @@
     }
 
 
-    /* NUEVO SERVICIO · CATÁLOGO OFICIAL · HTML REAL */
+    /* REGISTRAR COBRO · HTML REAL · SIN CATÁLOGO TURÍSTICO */
     .new-service-screen{
       position:fixed;inset:0;z-index:55;display:none;min-height:100dvh;overflow-y:auto;overflow-x:hidden;
       -webkit-overflow-scrolling:touch;overscroll-behavior-y:auto;touch-action:pan-y;color:#fff;
-      background:
-        radial-gradient(circle at 18% -8%,rgba(212,175,55,.13),transparent 34%),
-        radial-gradient(circle at 95% 18%,rgba(59,130,246,.10),transparent 31%),
-        linear-gradient(180deg,#050607 0%,#090c0f 52%,#030405 100%);
+      background:radial-gradient(circle at 18% -8%,rgba(212,175,55,.13),transparent 34%),radial-gradient(circle at 95% 18%,rgba(59,130,246,.10),transparent 31%),linear-gradient(180deg,#050607 0%,#090c0f 52%,#030405 100%);
       padding:max(16px,env(safe-area-inset-top)) 16px calc(98px + env(safe-area-inset-bottom));
     }
-    .new-service-screen.is-open{display:block}
-    .new-service-shell{width:100%;max-width:520px;margin:0 auto}
+    .new-service-screen.is-open{display:block}.new-service-shell{width:100%;max-width:520px;margin:0 auto}
     .new-service-header{position:relative;min-height:108px;display:grid;grid-template-columns:52px 1fr 52px;align-items:start;gap:8px;padding-top:4px}
-    .new-service-back,.new-service-bell{
-      width:48px;height:48px;min-width:48px;border-radius:16px;border:1px solid rgba(255,255,255,.10);
-      background:rgba(255,255,255,.025);color:#f8fafc;display:inline-grid;place-items:center;padding:0;cursor:pointer;
-      touch-action:manipulation;-webkit-tap-highlight-color:transparent
-    }
-    .new-service-back:active,.new-service-bell:active,.service-category-card:active,.service-row-card:active,.service-confirm-action:active,.service-option-card:active,.service-payment-option:active{opacity:.84}
+    .new-service-back,.new-service-bell{width:48px;height:48px;min-width:48px;border-radius:16px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.025);color:#f8fafc;display:inline-grid;place-items:center;padding:0;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+    .new-service-back:active,.new-service-bell:active,.billing-method-card:active,.billing-action:active,.billing-cancel-qr:active{opacity:.82}
     .new-service-back svg,.new-service-bell svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
     .new-service-bell-wrap{position:relative;justify-self:end}.new-service-bell-dot{position:absolute;right:7px;top:6px;width:11px;height:11px;border-radius:50%;background:#f5b942;box-shadow:0 0 0 3px rgba(5,6,7,.95);pointer-events:none}
     .new-service-logo-wrap{text-align:center;min-width:0}.new-service-emblem{width:62px;height:44px;margin:0 auto 3px;color:#d4af37;display:grid;place-items:center}.new-service-emblem svg{width:60px;height:43px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;opacity:.94}.new-service-logo{color:#f1c55c;font-size:clamp(23px,6.7vw,34px);line-height:1;letter-spacing:.27em;font-weight:300;margin-left:.27em}.new-service-logo-sub{margin-top:5px;color:#d8c085;font-size:clamp(8px,2.2vw,11px);letter-spacing:.36em;font-weight:800;margin-left:.36em}
-
-    .new-service-title-block{text-align:center;margin:2px 0 20px}.new-service-title-block h1{margin:0;color:#f8fafc;font-size:clamp(25px,7vw,36px);line-height:1.05;letter-spacing:.055em;font-weight:850;text-transform:uppercase}.new-service-title-block p{margin:9px 0 0;color:#c6c9ce;font-size:clamp(15px,4vw,20px);line-height:1.25}
-    .service-category-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.service-category-card{--svc-accent:#f3c45d;position:relative;min-height:clamp(132px,23vw,166px);border:1px solid rgba(255,255,255,.16);border-radius:16px;overflow:hidden;padding:13px 10px 12px;background:#111;color:#fff;box-shadow:0 10px 22px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.04);cursor:pointer;isolation:isolate;touch-action:manipulation;-webkit-tap-highlight-color:transparent}.service-category-card:focus-visible,.service-row-card:focus-visible,.new-service-back:focus-visible,.new-service-bell:focus-visible,.service-option-card:focus-visible,.service-payment-option:focus-visible{outline:2px solid rgba(245,185,66,.55);outline-offset:2px}.service-category-card::before{content:"";position:absolute;inset:0;z-index:-2;background:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.78)),var(--svc-bg);background-size:cover;background-position:center}.service-category-card::after{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(circle at 50% 20%,rgba(245,185,66,.10),transparent 34%),linear-gradient(180deg,rgba(0,0,0,.10),rgba(0,0,0,.72));pointer-events:none}
-    .svc-airport{--svc-bg:linear-gradient(135deg,rgba(19,58,83,.62),rgba(5,8,11,.92)),radial-gradient(circle at 50% 22%,rgba(75,142,177,.45),transparent 25%),linear-gradient(168deg,transparent 0 40%,rgba(210,225,235,.18) 41% 43%,transparent 44%)}.svc-city{--svc-bg:linear-gradient(135deg,rgba(80,54,30,.62),rgba(6,5,4,.92)),radial-gradient(circle at 50% 24%,rgba(245,185,66,.24),transparent 22%),repeating-linear-gradient(90deg,rgba(255,255,255,.055) 0 2px,transparent 2px 28px)}.svc-argentina,.svc-brasil{--svc-bg:linear-gradient(140deg,rgba(17,62,41,.64),rgba(2,8,9,.92)),radial-gradient(ellipse at 42% 25%,rgba(205,238,244,.38),transparent 24%),repeating-linear-gradient(100deg,rgba(255,255,255,.20) 0 4px,transparent 4px 15px)}.svc-paraguay{--svc-bg:linear-gradient(135deg,rgba(92,63,32,.62),rgba(8,5,3,.94)),radial-gradient(circle at 38% 28%,rgba(245,185,66,.24),transparent 22%),repeating-linear-gradient(90deg,rgba(255,255,255,.055) 0 2px,transparent 2px 28px)}.svc-otros{--svc-bg:linear-gradient(135deg,rgba(66,45,54,.64),rgba(5,6,9,.94)),radial-gradient(circle at 70% 28%,rgba(245,185,66,.24),transparent 23%),linear-gradient(90deg,transparent 0 20%,rgba(255,255,255,.08) 21% 22%,transparent 23% 46%,rgba(255,255,255,.06) 47% 48%,transparent 49%)}
-    .service-category-icon{width:52px;height:52px;margin:4px auto 10px;display:grid;place-items:center;color:var(--svc-accent)}.service-category-icon svg{width:49px;height:49px;fill:none;stroke:currentColor;stroke-width:1.85;stroke-linecap:round;stroke-linejoin:round}.service-category-card h2{margin:0;color:#fff;text-align:center;font-size:clamp(16px,4.2vw,22px);line-height:1.05;font-weight:900;letter-spacing:.015em;text-transform:uppercase}.service-category-card p{margin:7px auto 0;max-width:190px;color:#e1e2e5;text-align:center;font-size:clamp(11px,3vw,15px);line-height:1.18;text-shadow:0 1px 8px rgba(0,0,0,.55)}
-
-    .service-category-panel{display:none}.new-service-screen[data-view="category"] .new-service-main{display:none}.new-service-screen[data-view="category"] .service-category-panel{display:block}
-    .category-head{display:flex;align-items:center;gap:12px;margin:2px 0 16px}.category-head-icon{width:58px;height:58px;display:grid;place-items:center;color:#f3c45d;flex:0 0 auto}.category-head-icon svg{width:52px;height:52px;fill:none;stroke:currentColor;stroke-width:1.85;stroke-linecap:round;stroke-linejoin:round}.category-head h1{margin:0;color:#fff;font-size:clamp(23px,6.2vw,32px);line-height:1.03;font-weight:900;letter-spacing:.018em;text-transform:uppercase}.category-head p{margin:7px 0 0;color:#c9cdd2;font-size:clamp(14px,3.8vw,19px);line-height:1.2}
-    .service-search-wrap{position:relative;margin:0 0 14px}.service-search-wrap svg{position:absolute;left:15px;top:50%;width:22px;height:22px;transform:translateY(-50%);fill:none;stroke:#aab0b6;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.service-search{width:100%;min-height:52px;border:1px solid rgba(255,255,255,.06);border-radius:14px;background:rgba(255,255,255,.055);color:#fff;padding:12px 14px 12px 48px;font-size:clamp(15px,3.9vw,19px);outline:none}.service-search::placeholder{color:#a8adb3}.service-search:focus{border-color:rgba(245,185,66,.35);box-shadow:0 0 0 3px rgba(245,185,66,.08)}
-    .service-list{display:grid;gap:9px}.service-row-card{width:100%;min-height:82px;border:1px solid rgba(255,255,255,.11);border-radius:14px;background:rgba(12,15,17,.86);color:#fff;display:grid;grid-template-columns:68px minmax(0,1fr) auto 18px;align-items:center;gap:10px;padding:8px 10px;text-align:left;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;box-shadow:0 6px 15px rgba(0,0,0,.22)}.service-row-card:active{border-color:rgba(245,185,66,.34);background:rgba(18,21,24,.90)}.service-row-thumb{width:68px;height:60px;border-radius:10px;overflow:hidden;background:var(--thumb-bg);background-size:cover;background-position:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);display:grid;place-items:center;color:#f3c45d}.service-row-thumb img{width:100%;height:100%;object-fit:cover;display:block}.service-thumb-placeholder{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:rgba(0,0,0,.28);border:1px solid rgba(245,185,66,.22)}.service-thumb-placeholder svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.service-row-info{min-width:0}.service-row-info b{display:-webkit-box;color:#fff;font-size:clamp(14px,3.7vw,18px);line-height:1.13;font-weight:780;overflow:hidden;-webkit-line-clamp:2;-webkit-box-orient:vertical}.service-row-info small{display:block;color:#bfc4ca;font-size:clamp(11px,3vw,14px);line-height:1.18;margin-top:4px;white-space:normal;overflow-wrap:anywhere}.service-row-trip{display:block;color:#d5b65f;font-size:10px;font-weight:850;letter-spacing:.07em;margin-top:4px;text-transform:uppercase}.service-row-price{color:#f3c45d;font-size:clamp(14px,3.8vw,19px);font-weight:850;white-space:nowrap;text-align:right}.service-row-chev{color:#c6c9ce}.service-row-chev svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-    .service-empty{display:none;border:1px solid rgba(255,255,255,.10);border-radius:18px;background:rgba(255,255,255,.04);color:#c9cdd2;padding:18px;text-align:center}.service-empty.is-visible{display:block}.service-info-note{display:flex;align-items:center;gap:10px;color:#bfc4ca;font-size:clamp(12px,3.2vw,16px);line-height:1.3;margin:22px 0 8px}.service-info-note span{width:25px;height:25px;border-radius:50%;border:1px solid #8c939b;color:#c0c5cb;display:grid;place-items:center;font-weight:800;flex:0 0 auto}
-
-    .service-confirm-backdrop{position:fixed;inset:0;z-index:70;display:none;place-items:center;padding:16px;background:rgba(0,0,0,.72);overflow-y:auto}.service-confirm-backdrop.is-open{display:grid}.service-confirm-modal{width:min(100%,430px);max-height:calc(100dvh - 32px);overflow-y:auto;-webkit-overflow-scrolling:touch;border:1px solid rgba(255,255,255,.12);border-radius:24px;background:linear-gradient(180deg,#171b20,#0c0f12);box-shadow:0 24px 80px rgba(0,0,0,.66);padding:20px}.service-confirm-modal h2{margin:0 0 12px;color:#fff;font-size:23px}.service-confirm-summary{display:grid;gap:8px;margin:12px 0 14px}.service-confirm-line{display:flex;justify-content:space-between;gap:14px;color:#c7cbd1;font-size:13px}.service-confirm-line b{color:#fff;text-align:right;overflow-wrap:anywhere}.service-confirm-question{color:#f3c45d;font-weight:850;margin:15px 0 9px;font-size:13px;letter-spacing:.05em;text-transform:uppercase}.service-confirm-msg{min-height:20px;color:#bfc4ca;font-size:14px;margin:8px 0}.service-confirm-msg.ok{color:#8ff0b2}.service-confirm-msg.err{color:#ffb4b4}.service-confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.service-confirm-action{min-height:48px;border-radius:15px;border:1px solid rgba(255,255,255,.12);font-size:14px;font-weight:900;cursor:pointer}.service-confirm-cancel{background:#20252b;color:#fff}.service-confirm-primary{background:linear-gradient(180deg,#f5c553,#d99b25);color:#111;border-color:#e7b13e}.service-confirm-action:disabled{opacity:.48;cursor:not-allowed}
-    .service-field-group{display:grid;gap:8px;margin:12px 0}.service-field-group[hidden]{display:none}.service-field-label{color:#d7dade;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}.service-field-input{width:100%;min-height:48px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:#0d1013;color:#fff;padding:12px 14px;font:inherit;outline:none}.service-field-input:focus{border-color:rgba(245,185,66,.45);box-shadow:0 0 0 3px rgba(245,185,66,.08)}.service-field-help{color:#aeb3b9;font-size:12px;line-height:1.3}.service-option-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.service-option-card,.service-payment-option{min-width:0;min-height:62px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:#11151a;color:#fff;padding:10px;display:grid;gap:3px;align-content:center;text-align:center;cursor:pointer}.service-option-card strong,.service-payment-option strong{font-size:13px}.service-option-card span,.service-payment-option span{color:#bfc4ca;font-size:12px}.service-option-card.is-selected,.service-payment-option.is-selected{border-color:rgba(245,185,66,.72);background:rgba(245,185,66,.12);box-shadow:0 0 0 2px rgba(245,185,66,.08)}.service-option-card:disabled{opacity:.4;cursor:not-allowed}.service-payment-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.service-payment-option{min-height:56px;padding:8px 5px}.service-payment-option strong{font-size:11px;letter-spacing:.02em}.service-custom-minimum{color:#f3c45d;font-size:12px;font-weight:750}
-
-    @media(max-width:390px){.new-service-screen{padding-left:12px;padding-right:12px}.service-category-grid{gap:9px}.service-category-card{min-height:122px;padding:10px 7px}.service-category-icon{width:44px;height:44px;margin-bottom:7px}.service-category-icon svg{width:42px;height:42px}.service-row-card{grid-template-columns:58px minmax(0,1fr) auto 15px;gap:8px;min-height:74px;padding:7px 8px}.service-row-thumb{width:58px;height:54px}.service-payment-option strong{font-size:10px}.service-confirm-modal{padding:16px}}
+    .new-service-title-block{text-align:center;margin:2px 0 22px}.new-service-title-block h1{margin:0;color:#f8fafc;font-size:clamp(25px,7vw,36px);line-height:1.05;letter-spacing:.055em;font-weight:850;text-transform:uppercase}.new-service-title-block p{margin:9px 0 0;color:#c6c9ce;font-size:clamp(15px,4vw,20px);line-height:1.25}
+    .billing-method-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;width:100%;min-width:0}
+    .billing-method-card{--billing-accent:#f3c45d;position:relative;min-width:0;min-height:176px;border:1px solid rgba(255,255,255,.14);border-radius:20px;background:linear-gradient(180deg,rgba(26,30,34,.94),rgba(10,12,14,.96));color:#fff;padding:18px 9px 15px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:9px;box-shadow:0 14px 30px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.04);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;overflow:hidden}
+    .billing-method-card::before{content:"";position:absolute;inset:auto -30% -48% -30%;height:80%;background:radial-gradient(circle,var(--billing-glow,rgba(245,185,66,.17)),transparent 66%);pointer-events:none}
+    .billing-method-card--transfer{--billing-accent:#78b9ff;--billing-glow:rgba(48,139,245,.24)}.billing-method-card--cash{--billing-accent:#62df91;--billing-glow:rgba(42,190,100,.22)}.billing-method-card--card{--billing-accent:#f3c45d;--billing-glow:rgba(245,185,66,.22)}
+    .billing-method-icon{width:62px;height:62px;border-radius:20px;display:grid;place-items:center;color:var(--billing-accent);background:color-mix(in srgb,var(--billing-accent) 10%,transparent);border:1px solid color-mix(in srgb,var(--billing-accent) 34%,transparent)}
+    .billing-method-icon svg{width:38px;height:38px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+    .billing-method-card strong{font-size:clamp(12px,3.25vw,17px);line-height:1.08;letter-spacing:.035em;font-weight:900;overflow-wrap:anywhere}.billing-method-card small{max-width:112px;color:#bfc4ca;font-size:clamp(10px,2.7vw,13px);line-height:1.2}
+    .billing-info-note{display:flex;align-items:flex-start;gap:10px;margin:22px 2px 8px;padding:13px 14px;border:1px solid rgba(245,185,66,.14);border-radius:16px;background:rgba(245,185,66,.045);color:#c9cdd2;font-size:13px;line-height:1.35}.billing-info-note span{width:24px;height:24px;border-radius:50%;border:1px solid rgba(245,185,66,.38);color:#f3c45d;display:grid;place-items:center;flex:0 0 auto;font-weight:850}
+    .billing-form-backdrop{position:fixed;inset:0;z-index:72;display:none;place-items:center;padding:16px;background:rgba(0,0,0,.74);overflow-y:auto;-webkit-overflow-scrolling:touch}.billing-form-backdrop.is-open{display:grid}
+    .billing-form-card{width:min(100%,440px);max-height:calc(100dvh - 28px);overflow-y:auto;border:1px solid rgba(255,255,255,.12);border-radius:26px;background:linear-gradient(180deg,#191d22,#0b0e11);box-shadow:0 28px 90px rgba(0,0,0,.72);padding:20px;color:#fff}
+    .billing-form-head{display:flex;align-items:center;gap:13px;margin-bottom:16px}.billing-form-icon{width:54px;height:54px;flex:0 0 auto;border-radius:17px;display:grid;place-items:center;color:#f3c45d;background:rgba(245,185,66,.08);border:1px solid rgba(245,185,66,.24)}.billing-form-icon.is-transfer{color:#78b9ff;background:rgba(48,139,245,.10);border-color:rgba(78,160,255,.28)}.billing-form-icon.is-cash{color:#62df91;background:rgba(42,190,100,.10);border-color:rgba(74,220,126,.28)}.billing-form-icon svg{width:32px;height:32px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}.billing-form-title{min-width:0}.billing-form-title h2{margin:0;font-size:clamp(21px,5.8vw,27px);line-height:1.05}.billing-form-title p{margin:6px 0 0;color:#bfc4ca;font-size:13px}
+    .billing-invoice{display:grid;gap:0;border:1px solid rgba(255,255,255,.09);border-radius:18px;background:rgba(255,255,255,.025);overflow:hidden}.billing-invoice-row{display:grid;grid-template-columns:minmax(78px,.72fr) minmax(0,1.28fr);align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.07)}.billing-invoice-row:last-child{border-bottom:0}.billing-invoice-row span{color:#aeb4bb;font-size:12px;font-weight:750;letter-spacing:.045em;text-transform:uppercase}.billing-invoice-row strong{min-width:0;color:#fff;text-align:right;font-size:14px;overflow-wrap:anywhere}
+    .billing-amount-section{margin-top:15px}.billing-amount-label{display:block;margin-bottom:8px;color:#d8dce0;font-size:12px;font-weight:850;letter-spacing:.05em;text-transform:uppercase}.billing-amount-box{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:8px;min-height:66px;border:1px solid rgba(255,255,255,.12);border-radius:17px;background:#0a0d10;padding:9px 14px}.billing-amount-box span{font-size:28px;color:#fff}.billing-amount-input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:#fff;font-size:clamp(27px,8vw,38px);font-weight:800;line-height:1;padding:0}
+    .billing-total-panel{margin-top:12px;padding:13px 15px;border:1px solid rgba(73,220,126,.26);border-radius:17px;background:rgba(42,190,100,.09);text-align:center}.billing-total-panel span{display:block;color:#9ddbb3;font-size:11px;font-weight:850;letter-spacing:.08em}.billing-total-value{display:block;margin-top:4px;color:#62df91;font-size:clamp(31px,9vw,46px);font-weight:950;line-height:1.05;overflow-wrap:anywhere}
+    .billing-qr-panel{display:grid;gap:12px;margin-top:14px;padding:15px;border:1px solid rgba(86,165,255,.25);border-radius:18px;background:rgba(48,139,245,.07);text-align:center}.billing-qr-panel[hidden]{display:none}.billing-qr-panel h3{margin:0;color:#dcecff;font-size:15px;letter-spacing:.05em}.billing-qr-image-wrap{width:min(76vw,290px);aspect-ratio:1;margin:0 auto;border-radius:18px;background:#fff;padding:10px;display:grid;place-items:center}.billing-qr-image{width:100%;height:100%;object-fit:contain;display:block}.billing-qr-status{display:grid;gap:4px}.billing-qr-status strong{color:#fff;font-size:15px}.billing-qr-status span{color:#b9c9da;font-size:13px}.billing-qr-status[data-state="approved"] strong{color:#62df91}.billing-qr-status[data-state="rejected"] strong,.billing-qr-status[data-state="expired"] strong{color:#ff9d9d}.billing-cancel-qr{min-height:44px;border:1px solid rgba(255,255,255,.14);border-radius:14px;background:rgba(255,255,255,.04);color:#fff;font-weight:850;cursor:pointer}
+    .billing-message{min-height:22px;margin:11px 2px 0;color:#bfc4ca;font-size:13px;line-height:1.35}.billing-message.is-error{color:#ffabab}.billing-message.is-success{color:#79eaa1}
+    .billing-actions{display:grid;grid-template-columns:.78fr 1.22fr;gap:10px;margin-top:15px}.billing-action{min-height:52px;border-radius:16px;border:1px solid rgba(255,255,255,.13);font-size:14px;font-weight:900;cursor:pointer}.billing-action--exit{background:#20252b;color:#fff}.billing-action--primary{background:linear-gradient(180deg,#f5c553,#d99b25);border-color:#e7b13e;color:#111}.billing-action:disabled{opacity:.46;cursor:not-allowed}
+    @media(max-width:390px){.new-service-screen{padding-left:12px;padding-right:12px}.billing-method-grid{gap:8px}.billing-method-card{min-height:154px;padding:14px 6px 12px}.billing-method-icon{width:52px;height:52px;border-radius:17px}.billing-method-icon svg{width:31px;height:31px}.billing-form-card{padding:16px}.billing-invoice-row{padding:11px 12px}.billing-actions{grid-template-columns:1fr 1.25fr}}
+    @media(max-width:340px){.billing-method-grid{grid-template-columns:1fr}.billing-method-card{min-height:118px;display:grid;grid-template-columns:58px 1fr;grid-template-rows:auto auto;text-align:left;column-gap:12px}.billing-method-icon{grid-row:1/3}.billing-method-card small{max-width:none}.billing-actions{grid-template-columns:1fr}}
 
     /* BARRA INFERIOR PRINCIPAL · ÚNICA, FIJA AL VIEWPORT Y TRANSPARENTE */
     :root {
@@ -4588,7 +4584,7 @@
             </div>
             <div id="rankingCurrentEmpty" class="ranking-current-empty" hidden>
               <b>Sin actividad semanal</b>
-              <small>Aún no hay viajes, facturación ni derivaciones válidas en este período.</small>
+              <small>Aún no hay cobros, facturación ni derivaciones válidas en este período.</small>
             </div>
           </button>
 
@@ -4611,10 +4607,10 @@
       <section class="operations-real" aria-labelledby="operationsTitle">
         <h2 id="operationsTitle">OPERACIONES</h2>
         <div class="operations-grid-real">
-          <button type="button" class="operation-card-real op-green" data-action="nuevo-servicio" aria-label="Nuevo servicio">
+          <button type="button" class="operation-card-real op-green" data-action="nuevo-servicio" aria-label="Registrar cobro">
             <span class="operation-orb-real"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>
-            <strong>NUEVO SERVICIO</strong>
-            <small>Registrar venta</small>
+            <strong>REGISTRAR COBRO</strong>
+            <small>Efectivo, transferencia o tarjeta</small>
           </button>
           <button type="button" class="operation-card-real op-orange" data-action="cargar-gastos" aria-label="Cargar gastos">
             <span class="operation-orb-real"><svg viewBox="0 0 24 24"><path d="M4 7.5h14.5A1.5 1.5 0 0 1 20 9v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11"/><path d="M16 12h5v4h-5a2 2 0 0 1 0-4Z"/></svg></span>
@@ -4660,7 +4656,7 @@
         <div class="summary-grid-real">
           <button type="button" class="summary-card-real" data-action="resumen-servicios">
             <svg viewBox="0 0 24 24"><path d="M4 7h16v11H4z"/><path d="M7 7V5h10v2"/></svg>
-            <span>Servicios realizados</span>
+            <span>Cobros registrados</span>
             <strong id="dashboardTripsCount">0</strong>
           </button>
           <button type="button" class="summary-card-real" data-action="resumen-comprobantes">
@@ -4884,106 +4880,56 @@
     </section>
   </div>
 
-  <section id="newServiceScreen" class="new-service-screen" aria-label="Nuevo servicio" aria-hidden="true" data-view="main">
+  <section id="newServiceScreen" class="new-service-screen" aria-label="Registrar cobro" aria-hidden="true">
     <div class="new-service-shell">
       <header class="new-service-header">
         <button type="button" id="newServiceBackBtn" class="new-service-back" aria-label="Volver"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg></button>
         <div class="new-service-logo-wrap" aria-label="EXPLORA Travel Management">
           <div class="new-service-emblem"><svg viewBox="0 0 80 56" aria-hidden="true"><path d="M18 43h31"/><path d="M20 33h37"/><path d="M20 23h45"/><path d="M28 13h39"/><path d="M20 43V20c0-7 5-11 12-11h34"/></svg></div>
-          <div class="new-service-logo">EXPLORA</div>
-          <div class="new-service-logo-sub">TRAVEL MANAGEMENT</div>
+          <div class="new-service-logo">EXPLORA</div><div class="new-service-logo-sub">TRAVEL MANAGEMENT</div>
         </div>
-        <div class="new-service-bell-wrap">
-          <button type="button" id="newServiceBellBtn" class="new-service-bell" aria-label="Notificaciones"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></button>
-          <span class="new-service-bell-dot" aria-hidden="true"></span>
-        </div>
+        <div class="new-service-bell-wrap"><button type="button" id="newServiceBellBtn" class="new-service-bell" aria-label="Notificaciones"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></button><span class="new-service-bell-dot" aria-hidden="true"></span></div>
       </header>
-
       <main class="new-service-main">
-        <section class="new-service-title-block"><h1>NUEVO SERVICIO</h1><p>Selecciona una categoría</p></section>
-        <section class="service-category-grid" aria-label="Categorías de servicio">
-          <button type="button" class="service-category-card svc-airport" data-service-category="aeropuerto" aria-label="Aeropuerto">
-            <span class="service-category-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12 21 4l-5 16-4-7-7 3 4-5-6 1Z"/></svg></span>
-            <h2>AEROPUERTO</h2><p>Traslados desde el aeropuerto</p>
+        <section class="new-service-title-block"><h1>REGISTRAR COBRO</h1><p>Selecciona cómo recibiste el pago</p></section>
+        <section id="billingMethodGrid" class="billing-method-grid" aria-label="Medios de cobro">
+          <button type="button" class="billing-method-card billing-method-card--transfer" data-billing-method="transfer" aria-label="Transferencia, cobro mediante QR">
+            <span class="billing-method-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v11H4z"/><path d="M8 11h8"/><path d="m14 4 3 3-3 3"/><path d="m10 21-3-3 3-3"/></svg></span><strong>TRANSFERENCIA</strong><small>Cobro mediante QR</small>
           </button>
-          <button type="button" class="service-category-card svc-city" data-service-category="ciudad" aria-label="Ciudad">
-            <span class="service-category-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><path d="M6 20V8h5v12"/><path d="M13 20V4h5v16"/><path d="M8 11h1M8 14h1M15 7h1M15 10h1M15 13h1"/></svg></span>
-            <h2>CIUDAD</h2><p>Traslados locales dentro de la ciudad</p>
+          <button type="button" class="billing-method-card billing-method-card--cash" data-billing-method="cash" aria-label="Efectivo">
+            <span class="billing-method-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 9h.01M18 15h.01"/></svg></span><strong>EFECTIVO</strong><small>Registrar cobro en efectivo</small>
           </button>
-          <button type="button" class="service-category-card svc-argentina" data-service-category="argentina" aria-label="Argentina">
-            <span class="service-category-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20h14"/><path d="M7 20c3-5 2-11 2-16"/><path d="M12 20c2-5 1-11 1-16"/><path d="M17 20c1-5 0-11 0-16"/></svg></span>
-            <h2>ARGENTINA</h2><p>Excursiones y traslados nacionales</p>
-          </button>
-          <button type="button" class="service-category-card svc-brasil" data-service-category="brasil" aria-label="Brasil">
-            <span class="service-category-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"/><path d="M5 5c5-3 8 3 14 0v10c-6 3-9-3-14 0"/><path d="M11 10c1.4-1.8 3.6-1.8 5 0-1.4 1.8-3.6 1.8-5 0Z"/></svg></span>
-            <h2>BRASIL</h2><p>Excursiones y traslados en Brasil</p>
-          </button>
-          <button type="button" class="service-category-card svc-paraguay" data-service-category="paraguay" aria-label="Paraguay">
-            <span class="service-category-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1 13H7L6 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg></span>
-            <h2>PARAGUAY</h2><p>Compras y excursiones en Paraguay</p>
-          </button>
-          <button type="button" class="service-category-card svc-otros" data-service-category="otros-destinos" aria-label="Otros destinos">
-            <span class="service-category-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.4 7-12a7 7 0 0 0-14 0c0 6.6 7 12 7 12Z"/><circle cx="12" cy="9" r="2.4"/></svg></span>
-            <h2>OTROS DESTINOS</h2><p>Catálogo existente sin cambios</p>
+          <button type="button" class="billing-method-card billing-method-card--card" data-billing-method="card" aria-label="Tarjeta">
+            <span class="billing-method-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/><path d="M7 15h4"/></svg></span><strong>TARJETA</strong><small>Registrar cobro con tarjeta</small>
           </button>
         </section>
+        <div class="billing-info-note"><span>i</span><p>Registra únicamente cobros reales. Las transferencias se incorporan a la facturación después de la confirmación segura de Mercado Pago.</p></div>
       </main>
-
-      <section class="service-category-panel" aria-label="Listado de servicios">
-        <div class="category-head">
-          <div id="serviceCategoryIcon" class="category-head-icon"></div>
-          <div><h1 id="serviceCategoryTitle">AEROPUERTO</h1><p id="serviceCategorySubtitle">Selecciona un servicio</p></div>
-        </div>
-        <div class="service-search-wrap">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>
-          <input id="serviceCategorySearch" class="service-search" type="search" placeholder="Buscar destino…" autocomplete="off" />
-        </div>
-        <div id="serviceCategoryList" class="service-list"></div>
-        <div id="serviceCategoryEmpty" class="service-empty">No se encontraron servicios en esta categoría.</div>
-        <div class="service-info-note"><span>i</span><p>Los precios visibles corresponden a ida. El servicio se registra únicamente al confirmar.</p></div>
-      </section>
     </div>
   </section>
 
-  <div id="serviceConfirmBackdrop" class="service-confirm-backdrop" aria-hidden="true">
-    <section class="service-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="serviceConfirmTitle">
-      <h2 id="serviceConfirmTitle">CONFIRMAR SERVICIO</h2>
-      <div id="serviceConfirmSummary" class="service-confirm-summary"></div>
-
-      <div id="serviceTripSection" class="service-field-group" hidden>
-        <div class="service-confirm-question">SELECCIONA EL RECORRIDO</div>
-        <div class="service-option-grid">
-          <button id="serviceTripOneWayBtn" type="button" class="service-option-card" data-trip-type="one_way"><strong>IDA</strong><span id="serviceTripOneWayPrice">—</span></button>
-          <button id="serviceTripRoundBtn" type="button" class="service-option-card" data-trip-type="round_trip"><strong>IDA Y VUELTA</strong><span id="serviceTripRoundPrice">—</span></button>
-        </div>
-        <small id="serviceRoundTripHelp" class="service-field-help"></small>
-      </div>
-
-      <div id="serviceCustomFields" class="service-field-group" hidden>
-        <label class="service-field-label" for="serviceCustomDestination">DESTINO O DESCRIPCIÓN</label>
-        <input id="serviceCustomDestination" class="service-field-input" type="text" maxlength="90" autocomplete="off" placeholder="Escribe el destino" />
-        <label class="service-field-label" for="serviceCustomPrice">PRECIO FINAL</label>
-        <input id="serviceCustomPrice" class="service-field-input" type="text" inputmode="numeric" autocomplete="off" placeholder="$0" />
-        <small id="serviceCustomMinimum" class="service-custom-minimum"></small>
-      </div>
-
-      <div class="service-field-group">
-        <div class="service-confirm-question">FORMA DE PAGO</div>
-        <div id="servicePaymentGrid" class="service-payment-grid" role="group" aria-label="Forma de pago">
-          <button type="button" class="service-payment-option" data-payment-method="cash"><strong>EFECTIVO</strong><span>Chofer</span></button>
-          <button type="button" class="service-payment-option" data-payment-method="transfer"><strong>TRANSFERENCIA</strong><span>Admin</span></button>
-          <button type="button" class="service-payment-option" data-payment-method="card"><strong>TARJETA</strong><span>Admin</span></button>
-        </div>
-      </div>
-
-      <div id="serviceConfirmMsg" class="service-confirm-msg" aria-live="polite"></div>
-      <div class="service-confirm-actions">
-        <button id="serviceConfirmCancelBtn" type="button" class="service-confirm-action service-confirm-cancel">Volver</button>
-        <button id="serviceConfirmSaveBtn" type="button" class="service-confirm-action service-confirm-primary" disabled>CONFIRMAR SERVICIO</button>
-      </div>
-    </section>
+  <div id="billingFormBackdrop" class="billing-form-backdrop" aria-hidden="true">
+    <form id="billingForm" class="billing-form-card" role="dialog" aria-modal="true" aria-labelledby="billingFormTitle" novalidate>
+      <div class="billing-form-head"><div id="billingFormIcon" class="billing-form-icon" aria-hidden="true"></div><div class="billing-form-title"><h2 id="billingFormTitle">REGISTRAR COBRO</h2><p id="billingFormSubtitle">Completa el valor facturado</p></div></div>
+      <section class="billing-invoice" aria-label="Datos del cobro">
+        <div class="billing-invoice-row"><span>Tipo</span><strong id="billingTypeValue">—</strong></div>
+        <div class="billing-invoice-row"><span>Fecha</span><strong id="billingDateValue">—</strong></div>
+        <div class="billing-invoice-row"><span>Hora</span><strong id="billingTimeValue">—</strong></div>
+      </section>
+      <section class="billing-amount-section">
+        <label class="billing-amount-label" for="billingAmountInput">Valor</label>
+        <div class="billing-amount-box"><span>$</span><input id="billingAmountInput" class="billing-amount-input" type="text" inputmode="numeric" enterkeyhint="done" autocomplete="off" placeholder="50.000" aria-describedby="billingMessage" /></div>
+        <div class="billing-total-panel"><span>VALOR A REGISTRAR</span><output id="billingTotalValue" class="billing-total-value">$0</output></div>
+      </section>
+      <section id="billingQrPanel" class="billing-qr-panel" hidden aria-live="polite">
+        <h3>ESCANEA PARA PAGAR</h3><div class="billing-qr-image-wrap"><img id="billingQrImage" class="billing-qr-image" alt="Código QR dinámico de Mercado Pago" /></div>
+        <div id="billingQrStatus" class="billing-qr-status" data-state="pending"><strong id="billingQrStatusTitle">Esperando pago…</strong><span id="billingQrStatusMessage">La facturación se registrará cuando Mercado Pago confirme la acreditación.</span></div>
+        <button id="billingCancelQrBtn" type="button" class="billing-cancel-qr">CANCELAR COBRO</button>
+      </section>
+      <div id="billingMessage" class="billing-message" aria-live="polite"></div>
+      <div class="billing-actions"><button id="billingExitBtn" type="button" class="billing-action billing-action--exit">SALIR</button><button id="billingPrimaryBtn" type="submit" class="billing-action billing-action--primary" disabled>ACEPTAR</button></div>
+    </form>
   </div>
-
 
   <section id="expenseScreen" class="expense-screen" aria-label="Cargar gasto" aria-hidden="true">
     <div class="expense-shell">
@@ -5245,7 +5191,7 @@
         <p>El ranking se calcula con datos reales de EXPLORA y se reinicia cada sábado a las 00:01.</p>
         <ul>
           <li>Facturación: 60%.</li>
-          <li>Viajes completados: 20%.</li>
+          <li>Registros de cobro: 20%.</li>
           <li>Derivaciones aceptadas y completadas: 20%.</li>
           <li>No cuentan derivaciones pendientes, rechazadas, canceladas ni duplicadas.</li>
           <li>Las derivaciones tienen rendimiento decreciente para evitar abusos.</li>
@@ -5294,14 +5240,14 @@
         "ver-ranking": ["Ranking semanal", "Abriendo ranking real de EXPLORA."],
         "ranking-actual": ["Ranking semanal actual", "Abriendo ranking real de la semana activa."],
         "ranking-anterior": ["Ganador semana pasada", "Abriendo ganador oficial de la semana pasada."],
-        "nuevo-servicio": ["Nuevo servicio", "Aquí se conectará el flujo para crear un nuevo servicio."],
+        "nuevo-servicio": ["Registrar cobro", "Registra un monto facturado según el medio de pago."],
         "cargar-gastos": ["Cargar gastos", "Aquí se conectará el formulario para registrar un nuevo gasto."],
         "derivar-servicio": ["Derivar servicio", "Envía un servicio del catálogo oficial a otro chofer de EXPLORA."],
         "detalle-financiero": ["Detalle financiero", "Aquí se mostrará el resumen económico completo."],
         "facturacion-semanal": ["Facturación semanal", "Abriendo el detalle de la semana activa."],
         "gastos-semanales": ["Gastos semanales", "Los gastos registrados durante esta semana son $280.000."],
         "comprobantes": ["Comprobantes", "Aquí se listarán y gestionarán los comprobantes."],
-        "resumen-servicios": ["Servicios realizados", "Abriendo los servicios reales de la semana activa."],
+        "resumen-servicios": ["Cobros registrados", "Abriendo los cobros reales de la semana activa."],
         "resumen-comprobantes": ["Resumen de comprobantes", "Hay 12 comprobantes y 1 pendiente."],
         "resumen-gastos": ["Gastos semanales", "Los gastos mostrados son $280.000."],
         "objetivo-semanal": ["Objetivo semanal", "El objetivo se encuentra completado en un 82%."],
@@ -5406,374 +5352,61 @@
       "use strict";
       const screen = document.getElementById("newServiceScreen");
       if (!screen) return;
-
       const $ = (id) => document.getElementById(id);
-      const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
-      const money = (value) => "$" + Math.round(Number(value || 0)).toLocaleString("es-AR");
-      const normalizeAmount = (value) => {
-        if (typeof value === "number") return Number.isFinite(value) ? value : 0;
-        const cleaned = String(value || "").replace(/\$/g, "").replace(/\s/g, "").replace(/\./g, "").replace(/,/g, ".").replace(/[^\d.-]/g, "");
-        const number = Number(cleaned);
-        return Number.isFinite(number) ? number : 0;
-      };
-      const formatAmountInput = (value) => {
-        const digits = String(value || "").replace(/\D/g, "");
-        return digits ? Number(digits).toLocaleString("es-AR") : "";
-      };
-      const nowDate = () => new Date().toLocaleDateString("es-AR", { timeZone:"America/Argentina/Buenos_Aires" });
-      const nowTime = () => new Date().toLocaleTimeString("es-AR", { timeZone:"America/Argentina/Buenos_Aires", hour:"2-digit", minute:"2-digit" });
-
-      const iconSvg = {
-        aeropuerto: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12 21 4l-5 16-4-7-7 3 4-5-6 1Z"/></svg>',
-        ciudad: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><path d="M6 20V8h5v12"/><path d="M13 20V4h5v16"/><path d="M8 11h1M8 14h1M15 7h1M15 10h1M15 13h1"/></svg>',
-        argentina: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20h14"/><path d="M7 20c3-5 2-11 2-16"/><path d="M12 20c2-5 1-11 1-16"/><path d="M17 20c1-5 0-11 0-16"/></svg>',
-        brasil: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"/><path d="M5 5c5-3 8 3 14 0v10c-6 3-9-3-14 0"/><path d="M11 10c1.4-1.8 3.6-1.8 5 0-1.4 1.8-3.6 1.8-5 0Z"/></svg>',
-        paraguay: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1 13H7L6 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>',
-        "otros-destinos": '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.4 7-12a7 7 0 0 0-14 0c0 6.6 7 12 7 12Z"/><circle cx="12" cy="9" r="2.4"/></svg>',
-        chev: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>'
-      };
-
-      const categoryMeta = Object.freeze({
-        aeropuerto: { title:"AEROPUERTO", subtitle:"Traslados desde el aeropuerto", placeholder:"Buscar destino…" },
-        ciudad: { title:"CIUDAD", subtitle:"Traslados locales", placeholder:"Buscar servicio…" },
-        argentina: { title:"ARGENTINA", subtitle:"Excursiones y traslados nacionales", placeholder:"Buscar destino…" },
-        brasil: { title:"BRASIL", subtitle:"Excursiones y traslados en Brasil", placeholder:"Buscar destino…" },
-        paraguay: { title:"PARAGUAY", subtitle:"Compras y excursiones", placeholder:"Buscar destino…" },
-        "otros-destinos": { title:"OTROS DESTINOS", subtitle:"Catálogo existente", placeholder:"Buscar destino…" }
+      const AR_TZ = "America/Argentina/Buenos_Aires";
+      const METHOD_COPY = Object.freeze({
+        transfer:{label:"Transferencia",subtitle:"Genera un QR dinámico con importe definido",primary:"GENERAR QR",icon:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v11H4z"/><path d="M8 11h8"/><path d="m14 4 3 3-3 3"/><path d="m10 21-3-3 3-3"/></svg>'},
+        cash:{label:"Efectivo",subtitle:"El dinero queda en poder del chofer hasta el cierre",primary:"ACEPTAR",icon:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 9h.01M18 15h.01"/></svg>'},
+        card:{label:"Tarjeta",subtitle:"Confirmación manual, sin QR",primary:"ACEPTAR",icon:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/><path d="M7 15h4"/></svg>'}
       });
+      const state={method:null,amount:0,busy:false,operationId:"",unsubscribe:null,clockTimer:0,pending:false,approved:false};
 
-      const visualStyles = Object.freeze({
-        airport:"linear-gradient(135deg,#12344a,#071016),radial-gradient(circle at 65% 30%,rgba(112,194,236,.42),transparent 28%)",
-        city:"linear-gradient(135deg,#3d2a1a,#090705),repeating-linear-gradient(90deg,rgba(255,255,255,.08) 0 2px,transparent 2px 16px)",
-        falls:"linear-gradient(135deg,#0e503c,#07100d),radial-gradient(ellipse at 50% 18%,rgba(198,238,245,.46),transparent 28%)",
-        argentina:"linear-gradient(135deg,#204b70,#070b0f),linear-gradient(180deg,rgba(255,255,255,.18),transparent)",
-        brasil:"linear-gradient(135deg,#16633c,#07100a),radial-gradient(circle at 68% 25%,rgba(246,212,72,.30),transparent 24%)",
-        paraguay:"linear-gradient(135deg,#6f382d,#080606),radial-gradient(circle at 65% 28%,rgba(66,130,220,.26),transparent 25%)",
-        custom:"linear-gradient(135deg,#5d4721,#0b0905),radial-gradient(circle at 50% 25%,rgba(245,185,66,.32),transparent 30%)",
-        monument:"linear-gradient(135deg,#55402e,#0a0806),radial-gradient(circle at 48% 26%,rgba(245,185,66,.22),transparent 28%)",
-        forest:"linear-gradient(135deg,#1d5135,#07100b),radial-gradient(circle at 55% 22%,rgba(117,220,149,.22),transparent 30%)",
-        forest2:"linear-gradient(135deg,#3f4f2a,#090c06),radial-gradient(circle at 58% 20%,rgba(212,175,55,.23),transparent 30%)",
-        night:"linear-gradient(135deg,#28345d,#080912),radial-gradient(circle at 60% 28%,rgba(115,155,255,.25),transparent 28%)",
-        river:"linear-gradient(135deg,#174f67,#071016),radial-gradient(ellipse at 50% 30%,rgba(108,203,230,.28),transparent 30%)",
-        stones:"linear-gradient(135deg,#6b3f42,#0b0708),radial-gradient(circle at 55% 25%,rgba(255,180,188,.22),transparent 30%)",
-        temple:"linear-gradient(135deg,#724126,#0a0705),radial-gradient(circle at 50% 28%,rgba(245,185,66,.25),transparent 28%)"
-      });
+      function parseBillingAmount(value){
+        if(typeof value==="number") return Number.isFinite(value)&&value>0?Math.round(value):0;
+        let raw=String(value||"").trim().replace(/\$/g,"").replace(/\s/g,"");
+        if(!raw) return 0;
+        if(raw.includes(",")) raw=raw.replace(/\./g,"").replace(",","."); else raw=raw.replace(/\./g,"");
+        raw=raw.replace(/[^\d.-]/g,"");
+        const amount=Number(raw); return Number.isFinite(amount)&&amount>0?Math.round(amount):0;
+      }
+      window.parseBillingAmount=parseBillingAmount;
+      const money=(value)=>new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(Math.max(0,Number(value)||0)).replace(/\s/g,"");
+      const formatInput=(value)=>{const digits=String(value||"").replace(/\D/g,"");return digits?Number(digits).toLocaleString("es-AR"):"";};
+      function nowParts(){const now=new Date();return {date:now.toLocaleDateString("es-AR",{timeZone:AR_TZ}),time:now.toLocaleTimeString("es-AR",{timeZone:AR_TZ,hour:"2-digit",minute:"2-digit"})};}
+      function updateClock(){const parts=nowParts();$("billingDateValue").textContent=parts.date;$("billingTimeValue").textContent=parts.time;}
+      function setMessage(message="",type=""){$("billingMessage").textContent=message;$("billingMessage").className=`billing-message${type?` is-${type}`:""}`;}
+      function createOperationId(){const uid=String(window.ExploraFirebase?.auth?.currentUser?.uid||"anon").slice(0,10).replace(/[^a-zA-Z0-9]/g,"");const random=globalThis.crypto?.randomUUID?.().replace(/-/g,"").slice(0,12)||Math.random().toString(36).slice(2,14);return `bill_${uid}_${Date.now()}_${random}`.slice(0,64);}
+      function stopOperationListener(){try{state.unsubscribe?.();}catch(_){}state.unsubscribe=null;}
+      function resetQr(){stopOperationListener();state.operationId="";state.pending=false;state.approved=false;$("billingQrPanel").hidden=true;$("billingQrImage").removeAttribute("src");$("billingQrStatus").dataset.state="pending";$("billingQrStatusTitle").textContent="Esperando pago…";$("billingQrStatusMessage").textContent="La facturación se registrará cuando Mercado Pago confirme la acreditación.";}
+      function updatePrimary(){const button=$("billingPrimaryBtn");const valid=state.amount>0;if(state.busy){button.disabled=true;return;}if(state.method==="transfer"&&state.pending){button.disabled=true;button.textContent="ESPERANDO PAGO…";return;}button.disabled=!valid;button.textContent=METHOD_COPY[state.method]?.primary||"ACEPTAR";}
+      function setBusy(busy,label=""){state.busy=busy;$("billingAmountInput").disabled=busy||state.pending;$("billingExitBtn").disabled=busy;$("billingPrimaryBtn").disabled=busy;if(label)$("billingPrimaryBtn").textContent=label;else updatePrimary();}
+      function setAmountFromInput(){const input=$("billingAmountInput");input.value=formatInput(input.value);state.amount=parseBillingAmount(input.value);$("billingTotalValue").textContent=money(state.amount);updatePrimary();setMessage("");}
+      function cleanupForm(){clearInterval(state.clockTimer);state.clockTimer=0;resetQr();state.method=null;state.amount=0;state.busy=false;$("billingAmountInput").value="";$("billingTotalValue").textContent="$0";setMessage("");}
+      async function cancelPendingOperation(){if(!state.operationId||state.approved)return;try{await window.ExploraPayments?.cancelDynamicQr?.({operationId:state.operationId});}catch(error){console.warn("BILLING_QR_CANCEL_WARNING",error?.code||error?.message);}}
+      async function closeBillingForm({cancelRemote=true}={}){if(state.busy)return;if(cancelRemote&&state.pending)await cancelPendingOperation();cleanupForm();$("billingFormBackdrop").classList.remove("is-open");$("billingFormBackdrop").setAttribute("aria-hidden","true");}
+      function closeNewServiceScreen(){closeBillingForm({cancelRemote:true}).catch(()=>{});screen.classList.remove("is-open");screen.setAttribute("aria-hidden","true");document.body.classList.remove("new-service-open");window.ExploraMainNav?.setActive?.("inicio");}
+      function openNewServiceScreen(){screen.classList.add("is-open");screen.setAttribute("aria-hidden","false");document.body.classList.add("new-service-open");window.ExploraMainNav?.setActive?.("operaciones");}
+      function openBillingForm(paymentMethod){if(!METHOD_COPY[paymentMethod])return;cleanupForm();state.method=paymentMethod;const copy=METHOD_COPY[paymentMethod];$("billingTypeValue").textContent=copy.label;$("billingFormSubtitle").textContent=copy.subtitle;$("billingFormIcon").innerHTML=copy.icon;$("billingFormIcon").className=`billing-form-icon is-${paymentMethod}`;updateClock();state.clockTimer=setInterval(updateClock,30000);$("billingFormBackdrop").classList.add("is-open");$("billingFormBackdrop").setAttribute("aria-hidden","false");updatePrimary();setTimeout(()=>$("billingAmountInput").focus({preventScroll:false}),120);}
+      function mapPaymentError(error){const code=String(error?.code||error?.message||"").toLowerCase();if(code.includes("unauthenticated")||code.includes("auth"))return"No se pudo verificar tu sesión.";if(code.includes("not-found")||code.includes("unavailable")||code.includes("not_configured")||code.includes("pos_not_found"))return"La integración de Mercado Pago todavía no está disponible.";if(code.includes("expired"))return"El código QR venció. Genera uno nuevo.";if(code.includes("permission"))return"No tienes permisos para registrar este cobro.";if(code.includes("network")||code.includes("fetch"))return"No se pudo conectar con el servicio de cobro.";return state.method==="transfer"?"No se pudo generar el QR.":"No se pudo registrar el cobro.";}
+      async function registerManualBilling(){const operationId=createOperationId();const result=await window.ExploraRegisterBillingRecord({operationId,amount:state.amount,paymentMethod:state.method});setMessage("Cobro registrado correctamente.","success");window.dispatchEvent(new CustomEvent("explora:cobro-registrado",{detail:result}));setTimeout(()=>{closeBillingForm({cancelRemote:false}).then(closeNewServiceScreen);},520);}
+      function renderOperationStatus(data={}){const status=String(data.status||"pending").toLowerCase();const statusBox=$("billingQrStatus");statusBox.dataset.state=status;if(status==="approved"){state.approved=true;state.pending=false;stopOperationListener();$("billingQrStatusTitle").textContent="Pago acreditado";$("billingQrStatusMessage").textContent="Mercado Pago confirmó la transferencia. El cobro ya fue facturado.";$("billingPrimaryBtn").textContent="PAGO ACREDITADO";$("billingPrimaryBtn").disabled=true;setMessage("Pago acreditado correctamente.","success");window.invalidateWeeklyFinancialEngine?.("transfer-approved");window.refreshWeeklyFinancialEngine?.({reason:"transfer-approved"}).catch?.(()=>{});setTimeout(()=>{closeBillingForm({cancelRemote:false}).then(closeNewServiceScreen);},950);return;}if(status==="expired"){state.pending=false;stopOperationListener();$("billingQrStatusTitle").textContent="QR vencido";$("billingQrStatusMessage").textContent="Genera un código nuevo para continuar.";setMessage("El código QR venció. Genera uno nuevo.","error");$("billingAmountInput").disabled=false;updatePrimary();return;}if(status==="rejected"||status==="error"){state.pending=false;stopOperationListener();$("billingQrStatusTitle").textContent=status==="rejected"?"Pago rechazado":"Error en el cobro";$("billingQrStatusMessage").textContent="No se registró facturación.";setMessage(status==="rejected"?"El pago fue rechazado.":"No se pudo procesar el cobro.","error");$("billingAmountInput").disabled=false;updatePrimary();return;}if(status==="canceled"){state.pending=false;stopOperationListener();$("billingQrStatusTitle").textContent="Cobro cancelado";$("billingQrStatusMessage").textContent="No se registró facturación.";updatePrimary();return;}state.pending=true;$("billingQrStatusTitle").textContent="Esperando pago…";$("billingQrStatusMessage").textContent=`Monto: ${money(state.amount)} · El QR vence automáticamente.`;updatePrimary();}
+      async function generateDynamicQr(){state.operationId=createOperationId();setBusy(true,"GENERANDO QR…");setMessage("Creando cobro seguro…");try{if(!window.ExploraPayments?.createDynamicQr)throw new Error("MERCADO_PAGO_NOT_CONFIGURED");const period=window.ExploraPeriods?.getActivePeriods?.()||{};const result=await window.ExploraPayments.createDynamicQr({driverUid:window.ExploraFirebase?.auth?.currentUser?.uid,amount:state.amount,operationId:state.operationId,weeklyPeriodId:period.weeklyPeriodId||""});if(!result?.qrImageUrl&&!result?.qrImageDataUrl)throw new Error("QR_DATA_MISSING");$("billingQrImage").src=result.qrImageUrl||result.qrImageDataUrl;$("billingQrPanel").hidden=false;state.pending=true;state.unsubscribe=window.ExploraPayments.subscribeOperation(state.operationId,renderOperationStatus,(error)=>{console.warn("BILLING_OPERATION_LISTENER",error?.code||error?.message);setMessage("No se pudo actualizar el estado del pago.","error");});renderOperationStatus({status:result.status||"pending"});setMessage("");}catch(error){console.warn("BILLING_QR_ERROR",error?.code||error?.message);state.pending=false;state.operationId="";setMessage(mapPaymentError(error),"error");}finally{setBusy(false);}}
+      async function handleBillingSubmit(event){event.preventDefault();if(state.busy||state.pending||state.approved)return;state.amount=parseBillingAmount($("billingAmountInput").value);if(!(state.amount>0)){setMessage("Ingresa un valor válido.","error");updatePrimary();return;}if(!window.ExploraFirebase?.auth?.currentUser?.uid){setMessage("No se pudo verificar tu sesión.","error");return;}if(state.method==="transfer"){await generateDynamicQr();return;}setBusy(true,"REGISTRANDO…");setMessage("Registrando cobro…");try{await registerManualBilling();}catch(error){console.warn("BILLING_REGISTER_ERROR",error?.code||error?.message);setMessage(mapPaymentError(error),"error");}finally{setBusy(false);}}
 
-      function catalogService(data) {
-        const oneWayPrice = data.oneWayPrice == null ? null : Number(data.oneWayPrice);
-        const roundTripPrice = data.roundTripPrice == null ? null : Number(data.roundTripPrice);
-        return Object.freeze({
-          serviceId:String(data.serviceId), id:String(data.serviceId),
-          categoryId:String(data.categoryId), categoryName:String(data.categoryName),
-          name:String(data.name), origin:String(data.origin || ""), destination:String(data.destination || ""),
-          oneWayPrice:Number.isFinite(oneWayPrice) ? oneWayPrice : null,
-          roundTripPrice:Number.isFinite(roundTripPrice) ? roundTripPrice : null,
-          supportsOneWay:data.supportsOneWay !== false,
-          supportsRoundTrip:Boolean(data.supportsRoundTrip),
-          isCustomPrice:Boolean(data.isCustomPrice),
-          minimumCustomPrice:Number(data.minimumCustomPrice || 0),
-          imageUrl:String(data.imageUrl || ""),
-          visualKey:String(data.visualKey || data.categoryId || "custom"),
-          active:data.active !== false,
-          description:String(data.description || ""), location:String(data.location || ""),
-          price:Number.isFinite(oneWayPrice) ? oneWayPrice : 0
-        });
-      }
-
-      const serviceCatalog = Object.freeze({
-        aeropuerto: Object.freeze([
-          catalogService({serviceId:"aeropuerto-iguazu",categoryId:"aeropuerto",categoryName:"Aeropuerto",name:"Traslado a Iguazú",origin:"Aeropuerto",destination:"Iguazú",oneWayPrice:25000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:false,isCustomPrice:false,minimumCustomPrice:0,imageUrl:"",visualKey:"airport",active:true}),
-          catalogService({serviceId:"aeropuerto-foz",categoryId:"aeropuerto",categoryName:"Aeropuerto",name:"Traslado a Foz",origin:"Aeropuerto",destination:"Foz",oneWayPrice:85000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:false,isCustomPrice:false,minimumCustomPrice:0,imageUrl:"",visualKey:"airport",active:true}),
-          catalogService({serviceId:"aeropuerto-ciudad-del-este",categoryId:"aeropuerto",categoryName:"Aeropuerto",name:"Traslado a Ciudad del Este",origin:"Aeropuerto",destination:"Ciudad del Este",oneWayPrice:134000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:false,isCustomPrice:false,minimumCustomPrice:0,imageUrl:"",visualKey:"airport",active:true}),
-          catalogService({serviceId:"aeropuerto-otro-destino",categoryId:"aeropuerto",categoryName:"Aeropuerto",name:"Otro destino",origin:"Aeropuerto",destination:"Destino a definir",oneWayPrice:null,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:false,isCustomPrice:true,minimumCustomPrice:25000,imageUrl:"",visualKey:"custom",active:true})
-        ]),
-        ciudad: Object.freeze([
-          catalogService({serviceId:"ciudad-viaje-local",categoryId:"ciudad",categoryName:"Ciudad",name:"Viaje local",origin:"Ciudad",destination:"Destino local",oneWayPrice:10000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,minimumCustomPrice:0,imageUrl:"",visualKey:"city",active:true})
-        ]),
-        argentina: Object.freeze([
-          catalogService({serviceId:"argentina-cataratas",categoryId:"argentina",categoryName:"Argentina",name:"Cataratas Argentina",origin:"Puerto Iguazú",destination:"Cataratas Argentina",oneWayPrice:25000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,minimumCustomPrice:0,imageUrl:"",visualKey:"falls",active:true}),
-          catalogService({serviceId:"argentina-wanda",categoryId:"argentina",categoryName:"Argentina",name:"Wanda",origin:"Puerto Iguazú",destination:"Wanda",oneWayPrice:40000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,minimumCustomPrice:0,imageUrl:"",visualKey:"stones",active:true}),
-          catalogService({serviceId:"argentina-ruinas",categoryId:"argentina",categoryName:"Argentina",name:"Ruinas",origin:"Puerto Iguazú",destination:"Ruinas de San Ignacio",oneWayPrice:200000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,minimumCustomPrice:0,imageUrl:"",visualKey:"monument",active:true}),
-          catalogService({serviceId:"argentina-hito",categoryId:"argentina",categoryName:"Argentina",name:"Hito",origin:"Puerto Iguazú",destination:"Hito Tres Fronteras",oneWayPrice:12000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,minimumCustomPrice:0,imageUrl:"",visualKey:"monument",active:true}),
-          catalogService({serviceId:"argentina-cabalgata",categoryId:"argentina",categoryName:"Argentina",name:"Cabalgata",origin:"Puerto Iguazú",destination:"Cabalgata",oneWayPrice:15000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,minimumCustomPrice:0,imageUrl:"",visualKey:"forest",active:true}),
-          catalogService({serviceId:"argentina-salto-turista-mbocay",categoryId:"argentina",categoryName:"Argentina",name:"Salto Turista / Mbocay",origin:"Puerto Iguazú",destination:"Salto Turista / Mbocay",oneWayPrice:20000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,minimumCustomPrice:0,imageUrl:"",visualKey:"falls",active:true}),
-          catalogService({serviceId:"argentina-excursion-libre",categoryId:"argentina",categoryName:"Argentina",name:"Excursión libre",origin:"Puerto Iguazú",destination:"Destino a definir",oneWayPrice:null,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:true,minimumCustomPrice:70000,imageUrl:"",visualKey:"custom",active:true})
-        ]),
-        brasil: Object.freeze([
-          catalogService({serviceId:"brasil-cataratas",categoryId:"brasil",categoryName:"Brasil",name:"Cataratas Brasil",origin:"Puerto Iguazú",destination:"Cataratas Brasil",oneWayPrice:35000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,imageUrl:"",visualKey:"falls",active:true}),
-          catalogService({serviceId:"brasil-parque-das-aves",categoryId:"brasil",categoryName:"Brasil",name:"Parque das Aves",origin:"Puerto Iguazú",destination:"Parque das Aves",oneWayPrice:35000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,imageUrl:"",visualKey:"brasil",active:true}),
-          catalogService({serviceId:"brasil-aquafoz",categoryId:"brasil",categoryName:"Brasil",name:"Aquafoz",origin:"Puerto Iguazú",destination:"Aquafoz",oneWayPrice:35000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,imageUrl:"",visualKey:"brasil",active:true}),
-          catalogService({serviceId:"brasil-blue-park",categoryId:"brasil",categoryName:"Brasil",name:"Blue Park",origin:"Puerto Iguazú",destination:"Blue Park",oneWayPrice:35000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,imageUrl:"",visualKey:"brasil",active:true}),
-          catalogService({serviceId:"brasil-aqua-mania",categoryId:"brasil",categoryName:"Brasil",name:"Aqua Manía",origin:"Puerto Iguazú",destination:"Aqua Manía",oneWayPrice:35000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,imageUrl:"",visualKey:"brasil",active:true}),
-          catalogService({serviceId:"brasil-helicoptero",categoryId:"brasil",categoryName:"Brasil",name:"Helicóptero",origin:"Puerto Iguazú",destination:"Helicóptero",oneWayPrice:35000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,imageUrl:"",visualKey:"brasil",active:true}),
-          catalogService({serviceId:"brasil-mezquita",categoryId:"brasil",categoryName:"Brasil",name:"Mezquita",origin:"Puerto Iguazú",destination:"Mezquita",oneWayPrice:35000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,imageUrl:"",visualKey:"brasil",active:true}),
-          catalogService({serviceId:"brasil-templo-buda",categoryId:"brasil",categoryName:"Brasil",name:"Templo del Buda",origin:"Puerto Iguazú",destination:"Templo del Buda",oneWayPrice:35000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,imageUrl:"",visualKey:"temple",active:true}),
-          catalogService({serviceId:"brasil-rafain-cena-show",categoryId:"brasil",categoryName:"Brasil",name:"Rafain Cena Show",origin:"Puerto Iguazú",destination:"Rafain Cena Show",oneWayPrice:30000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,imageUrl:"",visualKey:"night",active:true}),
-          catalogService({serviceId:"brasil-shopping",categoryId:"brasil",categoryName:"Brasil",name:"Shopping",origin:"Puerto Iguazú",destination:"Shopping",oneWayPrice:30000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,imageUrl:"",visualKey:"city",active:true}),
-          catalogService({serviceId:"brasil-excursion-libre",categoryId:"brasil",categoryName:"Brasil",name:"Excursión libre",origin:"Puerto Iguazú",destination:"Destino a definir",oneWayPrice:null,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:true,minimumCustomPrice:120000,imageUrl:"",visualKey:"custom",active:true})
-        ]),
-        paraguay: Object.freeze([
-          catalogService({serviceId:"paraguay-compras",categoryId:"paraguay",categoryName:"Paraguay",name:"Compras en Paraguay",origin:"Puerto Iguazú",destination:"Ciudad del Este",oneWayPrice:40000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,imageUrl:"",visualKey:"paraguay",active:true}),
-          catalogService({serviceId:"paraguay-saltos-monday",categoryId:"paraguay",categoryName:"Paraguay",name:"Saltos del Monday",origin:"Puerto Iguazú",destination:"Saltos del Monday",oneWayPrice:50000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:false,imageUrl:"",visualKey:"falls",active:true}),
-          catalogService({serviceId:"paraguay-excursion-libre",categoryId:"paraguay",categoryName:"Paraguay",name:"Excursión libre",origin:"Puerto Iguazú",destination:"Destino a definir",oneWayPrice:null,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:true,isCustomPrice:true,minimumCustomPrice:150000,imageUrl:"",visualKey:"custom",active:true})
-        ]),
-        "otros-destinos": Object.freeze([
-          catalogService({serviceId:"hito-tres-fronteras",categoryId:"otros-destinos",categoryName:"Otros destinos",name:"Hito Tres Fronteras",origin:"Hotel / Centro",destination:"Hito Tres Fronteras",oneWayPrice:20000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:false,isCustomPrice:false,imageUrl:"",visualKey:"monument",active:true,description:"Atractivo local",location:"Puerto Iguazú"}),
-          catalogService({serviceId:"guira-oga",categoryId:"otros-destinos",categoryName:"Otros destinos",name:"Güirá Oga",origin:"Hotel / Centro",destination:"Güirá Oga",oneWayPrice:18000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:false,isCustomPrice:false,imageUrl:"",visualKey:"forest",active:true,description:"Reserva de fauna",location:"Puerto Iguazú"}),
-          catalogService({serviceId:"la-aripuca",categoryId:"otros-destinos",categoryName:"Otros destinos",name:"La Aripuca",origin:"Hotel / Centro",destination:"La Aripuca",oneWayPrice:18000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:false,isCustomPrice:false,imageUrl:"",visualKey:"forest2",active:true,description:"Atractivo turístico",location:"Puerto Iguazú"}),
-          catalogService({serviceId:"icebar",categoryId:"otros-destinos",categoryName:"Otros destinos",name:"Icebar",origin:"Hotel / Centro",destination:"Icebar",oneWayPrice:18000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:false,isCustomPrice:false,imageUrl:"",visualKey:"night",active:true,description:"Bar de hielo",location:"Puerto Iguazú"}),
-          catalogService({serviceId:"catamaran",categoryId:"otros-destinos",categoryName:"Otros destinos",name:"Catamarán",origin:"Hotel / Centro",destination:"Catamarán",oneWayPrice:18000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:false,isCustomPrice:false,imageUrl:"",visualKey:"river",active:true,description:"Paseo náutico",location:"Puerto Iguazú"}),
-          catalogService({serviceId:"minas-wanda",categoryId:"otros-destinos",categoryName:"Otros destinos",name:"Minas de Wanda",origin:"Hotel / Centro",destination:"Minas de Wanda",oneWayPrice:70000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:false,isCustomPrice:false,imageUrl:"",visualKey:"stones",active:true,description:"Excursión provincial",location:"Misiones"}),
-          catalogService({serviceId:"templo-budista",categoryId:"otros-destinos",categoryName:"Otros destinos",name:"Templo Budista",origin:"Hotel / Centro",destination:"Templo Budista",oneWayPrice:70000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:false,isCustomPrice:false,imageUrl:"",visualKey:"temple",active:true,description:"Atractivo brasileño",location:"Foz do Iguaçu"}),
-          catalogService({serviceId:"saltos-monday",categoryId:"otros-destinos",categoryName:"Otros destinos",name:"Saltos del Monday",origin:"Hotel / Centro",destination:"Saltos del Monday",oneWayPrice:100000,roundTripPrice:null,supportsOneWay:true,supportsRoundTrip:false,isCustomPrice:false,imageUrl:"",visualKey:"falls",active:true,description:"Atractivo paraguayo",location:"Paraguay"})
-        ])
-      });
-
-      const state = {
-        previousScrollY:0, currentCategory:"", selectedService:null, selectedTripType:null,
-        selectedPaymentMethod:null, customDestination:"", customPrice:0, saving:false
-      };
-
-      function getOfficialServicePrice(service, tripType, customPrice) {
-        if (!service || service.active === false) throw new Error("SERVICE_INVALID");
-        if (service.isCustomPrice) {
-          const price = normalizeAmount(customPrice);
-          if (!(price >= Number(service.minimumCustomPrice || 0))) throw new Error("CUSTOM_PRICE_MINIMUM");
-          return price;
-        }
-        if (tripType === "one_way" && service.supportsOneWay && Number(service.oneWayPrice) > 0) return Number(service.oneWayPrice);
-        if (tripType === "round_trip" && service.supportsRoundTrip && Number(service.roundTripPrice) > 0) return Number(service.roundTripPrice);
-        if (tripType === "round_trip") throw new Error("ROUND_TRIP_PRICE_UNAVAILABLE");
-        throw new Error("SERVICE_PRICE_UNAVAILABLE");
-      }
-      window.getOfficialServicePrice = getOfficialServicePrice;
-
-      function lockBody(on) {
-        if (on) {
-          screen.dataset.previousHtmlOverflow = document.documentElement.style.overflow || "";
-          screen.dataset.previousBodyOverflow = document.body.style.overflow || "";
-          document.documentElement.style.overflow = "hidden";
-          document.body.style.overflow = "hidden";
-        } else {
-          document.documentElement.style.overflow = screen.dataset.previousHtmlOverflow || "";
-          document.body.style.overflow = screen.dataset.previousBodyOverflow || "";
-          delete screen.dataset.previousHtmlOverflow;
-          delete screen.dataset.previousBodyOverflow;
-        }
-      }
-      function toast(message) { const element = $("toast"); if (!element) return; clearTimeout(toast.timer); element.textContent = message; element.classList.add("show"); toast.timer = setTimeout(() => element.classList.remove("show"), 2200); }
-      function setConfirmMsg(message, type = "") { const element = $("serviceConfirmMsg"); element.textContent = message || ""; element.className = "service-confirm-msg" + (type ? " " + type : ""); }
-      function allServices() { return Object.values(serviceCatalog).flat(); }
-      function getServiceById(serviceId) { return allServices().find((service) => service.serviceId === String(serviceId)) || null; }
-      function serviceMatches(service, query) { if (!query) return true; return [service.name,service.origin,service.destination,service.location,service.description,service.categoryName].join(" ").toLowerCase().includes(String(query).trim().toLowerCase()); }
-      function resetPendingService() { state.selectedService = null; state.selectedTripType = null; state.selectedPaymentMethod = null; state.customDestination = ""; state.customPrice = 0; }
-
-      function openNewServiceScreen() {
-        state.previousScrollY = window.scrollY || 0;
-        screen.classList.add("is-open"); screen.setAttribute("aria-hidden","false"); screen.dataset.view = "main"; screen.scrollTop = 0;
-        lockBody(true); if (window.ExploraMainNav) window.ExploraMainNav.setActive("operaciones");
-      }
-      function closeNewServiceScreen() {
-        closeServiceConfirmation(); resetPendingService();
-        screen.classList.remove("is-open"); screen.setAttribute("aria-hidden","true"); screen.dataset.view = "main";
-        lockBody(false); if (window.ExploraMainNav) window.ExploraMainNav.setActive("inicio");
-        requestAnimationFrame(() => window.scrollTo(0, state.previousScrollY || 0));
-      }
-      function openNewServiceMain() { screen.dataset.view = "main"; screen.scrollTop = 0; state.currentCategory = ""; const search = $("serviceCategorySearch"); if (search) search.value = ""; }
-
-      function renderServiceCategory(categoryId) {
-        const meta = categoryMeta[categoryId]; if (!meta) return;
-        state.currentCategory = categoryId;
-        $("serviceCategoryTitle").textContent = meta.title;
-        $("serviceCategorySubtitle").textContent = meta.subtitle;
-        $("serviceCategoryIcon").innerHTML = iconSvg[categoryId] || iconSvg["otros-destinos"];
-        const search = $("serviceCategorySearch"); if (search) { search.value = ""; search.placeholder = meta.placeholder; }
-        renderServiceList("");
-      }
-      function serviceThumbMarkup(service) {
-        const background = visualStyles[service.visualKey] || visualStyles.custom;
-        if (service.imageUrl) {
-          return `<span class="service-row-thumb" style="--thumb-bg:${background}"><img src="${escapeHtml(service.imageUrl)}" alt="" loading="lazy" onerror="this.remove()"></span>`;
-        }
-        return `<span class="service-row-thumb" style="--thumb-bg:${background}"><span class="service-thumb-placeholder">${iconSvg[service.categoryId] || iconSvg["otros-destinos"]}</span></span>`;
-      }
-      function renderServiceList(queryText = "") {
-        const list = $("serviceCategoryList"); const empty = $("serviceCategoryEmpty");
-        const services = (serviceCatalog[state.currentCategory] || []).filter((service) => service.active && serviceMatches(service, queryText));
-        list.innerHTML = services.map((service) => {
-          const route = [service.origin, service.destination].filter(Boolean).join(" → ");
-          const price = service.isCustomPrice ? `Desde ${money(service.minimumCustomPrice)}` : money(service.oneWayPrice);
-          return `<button type="button" class="service-row-card" data-service-id="${escapeHtml(service.serviceId)}" aria-label="${escapeHtml(service.name)} ${escapeHtml(price)}">
-            ${serviceThumbMarkup(service)}
-            <span class="service-row-info"><b>${escapeHtml(service.name)}</b><small>${escapeHtml(route)}</small><span class="service-row-trip">IDA</span></span>
-            <span class="service-row-price">${escapeHtml(price)}</span><span class="service-row-chev">${iconSvg.chev}</span>
-          </button>`;
-        }).join("");
-        empty.classList.toggle("is-visible", services.length === 0);
-      }
-      function openServiceCategory(categoryId) { renderServiceCategory(categoryId); screen.dataset.view = "category"; screen.scrollTop = 0; }
-
-      function setSelectedTrip(tripType) {
-        const service = state.selectedService; if (!service) return;
-        if (tripType === "round_trip" && !(service.supportsRoundTrip && Number(service.roundTripPrice) > 0)) return;
-        if (tripType === "one_way" && !service.supportsOneWay) return;
-        state.selectedTripType = tripType;
-        document.querySelectorAll("[data-trip-type]").forEach((button) => button.classList.toggle("is-selected", button.dataset.tripType === tripType));
-        updateConfirmation();
-      }
-      function setSelectedPayment(paymentMethod) {
-        state.selectedPaymentMethod = paymentMethod;
-        document.querySelectorAll("[data-payment-method]").forEach((button) => button.classList.toggle("is-selected", button.dataset.paymentMethod === paymentMethod));
-        updateConfirmation();
-      }
-      function getCustomDestination() { return String($("serviceCustomDestination")?.value || "").trim(); }
-      function getCustomPrice() { return normalizeAmount($("serviceCustomPrice")?.value || ""); }
-      function finalDestination(service) { return service.isCustomPrice ? getCustomDestination() : service.destination; }
-      function validationState() {
-        const service = state.selectedService;
-        if (!service) return { valid:false, message:"Selecciona un servicio." };
-        const tripType = state.selectedTripType || (!service.supportsRoundTrip ? "one_way" : null);
-        if (!tripType) return { valid:false, message:"Selecciona Ida o Ida y vuelta." };
-        if (service.isCustomPrice && !getCustomDestination()) return { valid:false, message:"Indica el destino o la excursión." };
-        let finalPrice = 0;
-        try { finalPrice = getOfficialServicePrice(service, tripType, getCustomPrice()); }
-        catch (error) {
-          if (String(error.message).includes("CUSTOM_PRICE_MINIMUM")) return { valid:false, message:`La tarifa mínima para este servicio es de ${money(service.minimumCustomPrice)}.` };
-          if (String(error.message).includes("ROUND_TRIP")) return { valid:false, message:"Precio de ida y vuelta pendiente de configurar." };
-          return { valid:false, message:"No se encontró el precio oficial del servicio." };
-        }
-        if (!state.selectedPaymentMethod) return { valid:false, message:"Selecciona una forma de pago.", finalPrice, tripType };
-        return { valid:true, message:"", finalPrice, tripType };
-      }
-      function updateConfirmation() {
-        const service = state.selectedService; if (!service) return;
-        const validation = validationState();
-        const tripLabel = (state.selectedTripType || (!service.supportsRoundTrip ? "one_way" : null)) === "round_trip" ? "Ida y vuelta" : "Ida";
-        const destination = finalDestination(service) || service.destination || "Destino pendiente";
-        const displayPrice = validation.finalPrice || (service.isCustomPrice ? getCustomPrice() : (state.selectedTripType === "round_trip" ? service.roundTripPrice : service.oneWayPrice));
-        $("serviceConfirmSummary").innerHTML = `
-          <div class="service-confirm-line"><span>Categoría</span><b>${escapeHtml(service.categoryName)}</b></div>
-          <div class="service-confirm-line"><span>Servicio</span><b>${escapeHtml(service.name)}</b></div>
-          <div class="service-confirm-line"><span>Origen</span><b>${escapeHtml(service.origin || "-")}</b></div>
-          <div class="service-confirm-line"><span>Destino</span><b>${escapeHtml(destination)}</b></div>
-          <div class="service-confirm-line"><span>Recorrido</span><b>${escapeHtml(tripLabel)}</b></div>
-          <div class="service-confirm-line"><span>Precio final</span><b>${displayPrice > 0 ? money(displayPrice) : "Pendiente"}</b></div>
-          <div class="service-confirm-line"><span>Fecha y hora</span><b>${escapeHtml(nowDate())} · ${escapeHtml(nowTime())}</b></div>`;
-        const button = $("serviceConfirmSaveBtn"); button.disabled = !validation.valid || state.saving;
-        if (!state.saving) button.textContent = "CONFIRMAR SERVICIO";
-        setConfirmMsg(validation.valid ? "" : validation.message, validation.message ? "err" : "");
-      }
-      function openServiceConfirmation(service) {
-        resetPendingService(); state.selectedService = service;
-        state.selectedTripType = service.supportsRoundTrip ? null : "one_way";
-        $("serviceCustomDestination").value = ""; $("serviceCustomPrice").value = "";
-        const tripSection = $("serviceTripSection"); tripSection.hidden = !service.supportsRoundTrip;
-        $("serviceTripOneWayPrice").textContent = Number(service.oneWayPrice) > 0 ? money(service.oneWayPrice) : "Tarifa libre";
-        const roundAvailable = service.supportsRoundTrip && (service.isCustomPrice || Number(service.roundTripPrice) > 0);
-        $("serviceTripRoundBtn").disabled = !roundAvailable;
-        $("serviceTripRoundPrice").textContent = service.isCustomPrice ? "Tarifa libre" : (Number(service.roundTripPrice) > 0 ? money(service.roundTripPrice) : "Pendiente");
-        $("serviceRoundTripHelp").textContent = service.supportsRoundTrip && !roundAvailable ? "Precio de ida y vuelta pendiente de configurar." : "";
-        $("serviceCustomFields").hidden = !service.isCustomPrice;
-        $("serviceCustomMinimum").textContent = service.isCustomPrice ? `Tarifa mínima permitida: ${money(service.minimumCustomPrice)}` : "";
-        document.querySelectorAll("[data-trip-type],[data-payment-method]").forEach((button) => button.classList.remove("is-selected"));
-        if (state.selectedTripType) $("serviceTripOneWayBtn").classList.add("is-selected");
-        $("serviceConfirmBackdrop").classList.add("is-open"); $("serviceConfirmBackdrop").setAttribute("aria-hidden","false");
-        updateConfirmation();
-      }
-      function closeServiceConfirmation() {
-        const backdrop = $("serviceConfirmBackdrop"); if (!backdrop) return;
-        backdrop.classList.remove("is-open"); backdrop.setAttribute("aria-hidden","true");
-        state.saving = false; $("serviceConfirmSaveBtn").disabled = false; $("serviceConfirmSaveBtn").textContent = "CONFIRMAR SERVICIO";
-      }
-
-      async function confirmSelectedService(event) {
-        event?.preventDefault?.();
-        if (state.saving) return;
-        const validation = validationState();
-        if (!validation.valid) { setConfirmMsg(validation.message, "err"); updateConfirmation(); return; }
-        const user = window.ExploraFirebase?.auth?.currentUser;
-        if (!user?.uid) { setConfirmMsg("No se pudo verificar tu sesión.", "err"); return; }
-        state.saving = true;
-        const button = $("serviceConfirmSaveBtn"); button.disabled = true; button.textContent = "REGISTRANDO SERVICIO…";
-        setConfirmMsg("Registrando servicio…");
-        try {
-          if (typeof window.ExploraRegisterSoldService !== "function") throw new Error("SERVICE_MODULE_UNAVAILABLE");
-          const service = state.selectedService;
-          const destination = finalDestination(service);
-          const record = {
-            serviceId:service.serviceId, id:service.serviceId, catalogServiceId:service.serviceId,
-            categoryId:service.categoryId, categoryName:service.categoryName,
-            name:service.name, serviceName:service.name,
-            origin:service.origin, destination,
-            tripType:validation.tripType,
-            oneWayPrice:service.oneWayPrice,
-            roundTripPrice:service.roundTripPrice,
-            customPrice:service.isCustomPrice ? validation.finalPrice : null,
-            finalPrice:validation.finalPrice, price:validation.finalPrice,
-            paymentMethod:state.selectedPaymentMethod,
-            isCustomPrice:service.isCustomPrice,
-            minimumCustomPrice:service.minimumCustomPrice,
-            source:"manual_service", status:"completed"
-          };
-          await window.ExploraRegisterSoldService(record);
-          setConfirmMsg("Servicio registrado correctamente.", "ok"); toast("Servicio registrado correctamente");
-          resetPendingService();
-          setTimeout(() => { closeServiceConfirmation(); closeNewServiceScreen(); }, 420);
-        } catch (error) {
-          console.warn("SERVICE_CONFIRM_ERROR", error?.code || error?.message);
-          const code = String(error?.code || error?.message || "");
-          const message = code.includes("AUTH") || code.includes("Sesión") ? "No se pudo verificar tu sesión."
-            : code.includes("PRICE") || code.includes("Importe") ? "No se encontró el precio oficial del servicio."
-            : code.includes("payment") || code.includes("PAYMENT") ? "Selecciona una forma de pago."
-            : "No se pudo registrar el servicio.";
-          setConfirmMsg(message, "err"); state.saving = false; updateConfirmation();
-        } finally {
-          if (state.saving) state.saving = false;
-          if ($("serviceConfirmBackdrop").classList.contains("is-open")) updateConfirmation();
-        }
-      }
-
-      window.ExploraActions = window.ExploraActions || {};
-      window.ExploraActions["nuevo-servicio"] = openNewServiceScreen;
-      window.ExploraNewService = {
-        open:openNewServiceScreen, close:closeNewServiceScreen, openCategory:openServiceCategory,
-        getState:() => ({ currentCategory:state.currentCategory, selectedService:state.selectedService, selectedTripType:state.selectedTripType, selectedPaymentMethod:state.selectedPaymentMethod }),
-        getCatalog:() => serviceCatalog, getOfficialServicePrice
-      };
-
-      document.addEventListener("DOMContentLoaded", () => {
-        $("newServiceBackBtn").addEventListener("click", () => { if (screen.dataset.view === "category") openNewServiceMain(); else closeNewServiceScreen(); });
-        $("newServiceBellBtn").addEventListener("click", () => { const api = window.ExploraDerivations; if (api && typeof api.openNotifications === "function") api.openNotifications(); else toast("No tienes derivaciones pendientes"); });
-        $("serviceCategorySearch").addEventListener("input", (event) => renderServiceList(event.target.value));
-        $("serviceConfirmCancelBtn").addEventListener("click", closeServiceConfirmation);
-        $("serviceConfirmSaveBtn").addEventListener("click", confirmSelectedService);
-        $("serviceConfirmBackdrop").addEventListener("click", (event) => { if (event.target.id === "serviceConfirmBackdrop" && !state.saving) closeServiceConfirmation(); });
-        $("serviceTripSection").addEventListener("click", (event) => { const button = event.target.closest("[data-trip-type]"); if (button && !button.disabled) setSelectedTrip(button.dataset.tripType); });
-        $("servicePaymentGrid").addEventListener("click", (event) => { const button = event.target.closest("[data-payment-method]"); if (button) setSelectedPayment(button.dataset.paymentMethod); });
-        $("serviceCustomDestination").addEventListener("input", updateConfirmation);
-        $("serviceCustomPrice").addEventListener("input", (event) => { event.target.value = formatAmountInput(event.target.value); updateConfirmation(); });
-
-        screen.addEventListener("click", (event) => {
-          const categoryButton = event.target.closest("[data-service-category]");
-          if (categoryButton) { openServiceCategory(categoryButton.dataset.serviceCategory); return; }
-          const serviceButton = event.target.closest("[data-service-id]");
-          if (serviceButton) { const service = getServiceById(serviceButton.dataset.serviceId); if (service) openServiceConfirmation(service); return; }
-          const navButton = event.target.closest("[data-new-service-nav]"); if (!navButton) return;
-          const nav = navButton.dataset.newServiceNav;
-          if (nav === "inicio") { closeNewServiceScreen(); return; }
-          if (nav === "operaciones") { openNewServiceMain(); return; }
-          if (nav === "finanzas") { closeNewServiceScreen(); document.querySelector('[data-action="nav-finanzas"], [aria-label="Finanzas"]')?.click(); return; }
-          if (nav === "comprobantes") { closeNewServiceScreen(); document.querySelector('[data-action="nav-comprobantes"], [aria-label="Comprobantes"]')?.click(); return; }
-          if (nav === "perfil") { closeNewServiceScreen(); window.ExploraActions?.["abrir-perfil"]?.(); }
-        });
-        document.addEventListener("keydown", (event) => {
-          if (event.key !== "Escape") return;
-          if ($("serviceConfirmBackdrop").classList.contains("is-open") && !state.saving) closeServiceConfirmation();
-          else if (screen.classList.contains("is-open")) closeNewServiceScreen();
-        });
+      window.ExploraActions=window.ExploraActions||{};window.ExploraActions["nuevo-servicio"]=openNewServiceScreen;window.ExploraActions["registrar-cobro"]=openNewServiceScreen;
+      window.ExploraNewService={open:openNewServiceScreen,close:closeNewServiceScreen,getCatalog:()=>({}),getState:()=>({paymentMethod:state.method,amount:state.amount})};
+      window.ExploraBilling={open:openNewServiceScreen,openForm:openBillingForm,close:closeNewServiceScreen,parseBillingAmount};
+      document.addEventListener("DOMContentLoaded",()=>{
+        $("newServiceBackBtn").addEventListener("click",closeNewServiceScreen);$("newServiceBellBtn").addEventListener("click",()=>{const api=window.ExploraDerivations;if(api?.openNotifications)api.openNotifications();else window.showMainToast?.("No tienes notificaciones pendientes");});
+        $("billingMethodGrid").addEventListener("click",(event)=>{const button=event.target.closest("[data-billing-method]");if(button)openBillingForm(button.dataset.billingMethod);});
+        $("billingForm").addEventListener("submit",handleBillingSubmit);$("billingAmountInput").addEventListener("input",setAmountFromInput);$("billingExitBtn").addEventListener("click",()=>closeBillingForm({cancelRemote:true}));$("billingCancelQrBtn").addEventListener("click",async()=>{if(state.busy)return;setBusy(true,"CANCELANDO…");await cancelPendingOperation();resetQr();setBusy(false);setMessage("Cobro cancelado.");});
+        $("billingFormBackdrop").addEventListener("click",(event)=>{if(event.target.id==="billingFormBackdrop"&&!state.busy)closeBillingForm({cancelRemote:true});});
+        document.addEventListener("keydown",(event)=>{if(event.key!=="Escape")return;if($("billingFormBackdrop").classList.contains("is-open")&&!state.busy)closeBillingForm({cancelRemote:true});else if(screen.classList.contains("is-open"))closeNewServiceScreen();});
+        if(window.visualViewport){const applyViewport=()=>document.documentElement.style.setProperty("--explora-visual-height",`${window.visualViewport.height}px`);window.visualViewport.addEventListener("resize",applyViewport,{passive:true});applyViewport();}
       });
     })();
   </script>
+
 
 
 
@@ -6570,6 +6203,7 @@
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, getDocs, query, where, limit, serverTimestamp, runTransaction, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
     import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js";
 
     const EXPLORA_FIREBASE_CONFIG = {
 apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
@@ -6584,6 +6218,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     const auth = getAuth(app);
     const db = getFirestore(app);
     const storage = getStorage(app);
+    const functions = getFunctions(app, "southamerica-east1");
 
     const persistenceReadyPromise = setPersistence(auth, browserLocalPersistence).catch((error) => {
       console.warn("[EXPLORA login] persistence:error", error && error.code ? error.code : "unknown");
@@ -6744,7 +6379,18 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     };
 
     window.ExploraSession = exploraSession;
-    window.ExploraFirebase = { app, auth, db, storage };
+    window.ExploraFirebase = { app, auth, db, storage, functions, httpsCallable };
+    const createMercadoPagoDynamicQrCallable = httpsCallable(functions, "createMercadoPagoDynamicQr");
+    const cancelMercadoPagoDynamicQrCallable = httpsCallable(functions, "cancelMercadoPagoDynamicQr");
+    window.ExploraPayments = {
+      async createDynamicQr(payload) { const response = await createMercadoPagoDynamicQrCallable(payload); return response?.data || {}; },
+      async cancelDynamicQr(payload) { const response = await cancelMercadoPagoDynamicQrCallable(payload); return response?.data || {}; },
+      subscribeOperation(operationId, onValue, onError) {
+        const safeId = String(operationId || "").replace(/[^a-zA-Z0-9_-]/g, "");
+        if (!safeId) throw new Error("PAYMENT_OPERATION_ID_INVALID");
+        return onSnapshot(doc(db, "payment_operations", safeId), (snapshot) => onValue?.(snapshot.exists() ? { id:snapshot.id, ...snapshot.data() } : { id:safeId, status:"draft" }), onError);
+      }
+    };
 
     let authenticatedSessionWaitPromise = null;
     let sessionProfileRecoveryPromise = null;
@@ -7251,12 +6897,12 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     }
 
     function getDriverIdFromTrip(data = {}) {
-      return String(data.choferId || data.chofer || data.driverId || data.conductorId || data.choferUid || data.uid || data.usuario || "").trim();
+      return String(data.choferId || data.chofer || data.driverId || data.driverUid || data.conductorId || data.choferUid || data.uid || data.usuario || "").trim();
     }
 
     function getServiceOperationId(data = {}, fallback = "") {
       return String(
-        data.operationId || data.operacionId || data.registroId || data.viajeId ||
+        data.operationId || data.operacionId || data.billingId || data.registroId || data.viajeId ||
         data.documentId || fallback || data.id || ""
       ).trim();
     }
@@ -7327,12 +6973,12 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     }
 
     function getDriverUidFromRecord(data = {}) {
-      return String(data.choferUid || data.uid || data.userId || data.usuarioUid || "").trim();
+      return String(data.driverUid || data.choferUid || data.uid || data.userId || data.usuarioUid || "").trim();
     }
 
     function getRecordDriverAliases(data = {}) {
       return [
-        data.choferId, data.driverId, data.profileId, data.perfilId, data.conductorId,
+        data.choferId, data.driverId, data.driverUid, data.profileId, data.perfilId, data.conductorId,
         data.choferUid, data.uid, data.userId, data.usuarioUid, data.usuario, data.chofer,
         data.choferEmail, data.email
       ].map(value => String(value || "").trim()).filter(Boolean);
@@ -7687,8 +7333,8 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
 
     const WEEKLY_SNAPSHOT_COLLECTION = "acumulados_semanales";
     const OPERATIONAL_LOAN_COLLECTION = "prestamos_operativos";
-    const WEEKLY_ENGINE_SCHEMA_VERSION = 184;
-    const WEEKLY_CACHE_PREFIX = "explora_weekly_v184_";
+    const WEEKLY_ENGINE_SCHEMA_VERSION = 186;
+    const WEEKLY_CACHE_PREFIX = "explora_weekly_v186_";
     const weeklyMaterializedRankingCache = new Map();
 
     function normalizePaymentMethod(data = {}) {
@@ -8198,7 +7844,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         uid:uid || auth.currentUser?.uid || "", weeklyPeriodId:period.id,
         startAt:new Date(period.startMs), endAt:new Date(period.endMs), timezone:"America/Argentina/Buenos_Aires",
         services:currentServices, expenses:expenseRows, operationalLoans, derivations:currentDerivations,
-        serviceCount:currentServices.length, grossBilling, expenseCount:expenseRows.length, totalExpenses,
+        billingRecords:currentServices, billingCount:currentServices.length, serviceCount:currentServices.length, grossBilling, expenseCount:expenseRows.length, totalExpenses,
         validDerivations:row ? Number(row.derivacionesValidas || 0) : currentDerivations.length,
         rankingPoints:row ? Number(row.puntajeFinal || 0) : 0,
         dailyBilling, rankingResult, operationLedger, processedOperationIds:operationLedger.map((row)=>row.id),
@@ -8243,7 +7889,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         ...(weeklyState.snapshot || {}),
         uid:weeklyState.uid, weeklyPeriodId:weeklyState.weeklyPeriodId, period:weeklyState.period,
         snapshot:weeklyState.snapshot, services:weeklyState.services, currentServices:weeklyState.currentServices,
-        serviceCount:weeklyState.serviceCount, grossBilling:weeklyState.grossBilling,
+        billingCount:weeklyState.serviceCount, serviceCount:weeklyState.serviceCount, grossBilling:weeklyState.grossBilling,
         validDerivations:weeklyState.validDerivations, expenses:weeklyState.expenses,
         totalExpenses:weeklyState.totalExpenses, expenseCount:weeklyState.expenseCount,
         expenseRows:weeklyState.expenseRows, operationalLoans:weeklyState.operationalLoans,
@@ -8284,7 +7930,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     async function loadWeeklySources(period, options = {}) {
       const allowLegacyScan = options.allowLegacyScan === true;
       const names = ["viajes","derivaciones","gastos","prestamos","bonos"];
-      const collections = ["viajes","derivaciones","gastos",OPERATIONAL_LOAN_COLLECTION,"bonos_semanales"];
+      const collections = ["billing_records","derivaciones","gastos",OPERATIONAL_LOAN_COLLECTION,"bonos_semanales"];
       const settled = await Promise.allSettled(collections.map(name => getPeriodDocs(name, period, { allowLegacyScan })));
       const sources = { viajes:[], derivaciones:[], gastos:[], prestamos:[], bonos:[] };
       const errors = {};
@@ -8498,7 +8144,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         const processed = Array.isArray(data.processedOperationIds) ? [...data.processedOperationIds]
           : Array.isArray(data.operacionesProcesadas) ? [...data.operacionesProcesadas] : [];
         let ledger = Array.isArray(data.operationLedger) ? data.operationLedger.map((row)=>({...row})) : [];
-        if (processed.includes(operationId) || ledger.some((row)=>row.id===operationId && row.type===kind)) return { ...data, _duplicate:true };
+        if (processed.includes(operationId) || ledger.some((row)=>row.id===operationId && ((["service","billing"].includes(row.type)&&["service","billing"].includes(kind))||row.type===kind))) return { ...data, _duplicate:true };
 
         const current = snapshotFromMaterialized(data, userUid, period, weeklyState.rankingResult || null);
         let dailyBilling = Array.isArray(current.dailyBilling) ? [...current.dailyBilling] : Array(7).fill(0);
@@ -8518,7 +8164,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         let operationalLoanAdminShare = Number(current.operationalLoanAdminShare || 0);
         let validDerivations = Math.max(0, Number(current.validDerivations || current.derivacionesValidas || 0));
 
-        if (kind === "service") {
+        if (kind === "service" || kind === "billing") {
           const amount = Math.max(0, getMoneyValue(record));
           if (!(amount > 0) || !isServiceValidForWeeklyTotals(record)) return { ...data, _ignored:true };
           serviceCount += 1; grossBilling += amount;
@@ -8529,7 +8175,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
           const timestamp = getDocTimeMs(record) || Date.now();
           const dayIndex = Math.min(6, Math.max(0, Math.floor((timestamp - period.startMs) / 86400000)));
           dailyBilling[dayIndex] = Number(dailyBilling[dayIndex] || 0) + amount;
-          ledger.push({ id:operationId, type:"service", amount, paymentMethod:method });
+          ledger.push({ id:operationId, type:"billing", amount, paymentMethod:method });
         } else if (kind === "expense") {
           const amount = Math.max(0, toNumberSafe(record.amount ?? getMoneyValue(record)));
           if (!(amount > 0) || !isValidWeeklyExpense(record)) return { ...data, _ignored:true };
@@ -8586,7 +8232,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
           choferId:userUid===auth.currentUser?.uid ? (exploraSession.profileDocumentId || exploraSession.driverId || userUid) : (data.choferId || userUid),
           driverName:userUid===auth.currentUser?.uid ? getProfileName(exploraSession.profile || {},auth.currentUser) : (data.driverName || data.choferNombre || "Chofer"),
           weeklyPeriodId:period.id, periodoSemanalId:period.id, periodoId:period.id,
-          serviceCount, viajes:serviceCount, grossBilling, facturacion:grossBilling,
+          billingCount:serviceCount, serviceCount, viajes:serviceCount, grossBilling, facturacion:grossBilling,
           expenseCount, cantidadGastos:expenseCount, totalExpenses, gastos:totalExpenses,
           validDerivations, derivacionesValidas:validDerivations,
           cashCollectedByDriver, transferCollectedByAdmin, cardCollectedByAdmin,
@@ -8614,9 +8260,8 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     function applyExpenseToWeeklyEngine(expense) {
       return applyWeeklyOperationIncrementally("expense",expense);
     }
-    function applyServiceToWeeklyEngine(service) {
-      return applyWeeklyOperationIncrementally("service",service);
-    }
+    function applyServiceToWeeklyEngine(service) { return applyWeeklyOperationIncrementally("billing",service); }
+    function applyBillingToWeeklyEngine(record) { return applyWeeklyOperationIncrementally("billing",record); }
     function applyOperationalLoanToWeeklyEngine(loan, explicitUid = "") {
       return applyWeeklyOperationIncrementally("loan",loan,explicitUid);
     }
@@ -8633,7 +8278,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       getState:weeklyStatePublicSnapshot,getSnapshot:()=>weeklyState.snapshot,getRankingResult:()=>weeklyState.rankingResult,
       getCurrentDriverServices:()=>[...weeklyState.currentServices],getCurrentExpenseRows:()=>[...weeklyState.expenseRows],
       getDriverWeeklySummary:getDriverWeeklySnapshot,getDriverWeeklySnapshot,getDriverWeeklyFinancialSnapshot:getDriverWeeklySnapshot,
-      attachClosure:attachClosureToWeeklySnapshot,applyExpense:applyExpenseToWeeklyEngine,applyService:applyServiceToWeeklyEngine,
+      attachClosure:attachClosureToWeeklySnapshot,applyExpense:applyExpenseToWeeklyEngine,applyService:applyServiceToWeeklyEngine,applyBilling:applyBillingToWeeklyEngine,
       applyOperationalLoan:applyOperationalLoanToWeeklyEngine,applyOperationalLoanForUid:(uid,loan)=>applyOperationalLoanToWeeklyEngine(loan,uid),
       applyDerivation:applyDerivationToWeeklyEngine,applyDerivationForUid:(uid,derivation)=>applyDerivationToWeeklyEngine(derivation,uid),
       persistCurrent:()=>weeklyState.snapshot?persistMaterializedWeeklySnapshot(weeklyState.snapshot):Promise.resolve(),
@@ -8677,7 +8322,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         if (live && live.periodoId === period.id) return live;
       }
       const [viajesDocs, derivacionesDocs] = await Promise.all([
-        getPeriodDocs("viajes", period),
+        getPeriodDocs("billing_records", period),
         getPeriodDocs("derivaciones", period)
       ]);
       return buildWeeklyRankingResult(period, viajesDocs, derivacionesDocs);
@@ -8842,7 +8487,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         metrics.hidden = false;
         metrics.innerHTML = `
           <span class="winner-metric" aria-label="Facturación ${moneyARS(winnerDoc.facturacion)}">${winnerMetricSvg("money")}<b>${moneyARS(winnerDoc.facturacion)}</b></span>
-          <span class="winner-metric" aria-label="Viajes ${winnerDoc.viajes || 0}">${winnerMetricSvg("trip")}<b>${winnerDoc.viajes || 0}</b></span>
+          <span class="winner-metric" aria-label="Cobros ${winnerDoc.viajes || 0}">${winnerMetricSvg("trip")}<b>${winnerDoc.viajes || 0}</b></span>
           <span class="winner-metric" aria-label="Derivaciones ${winnerDoc.derivacionesValidas || 0}">${winnerMetricSvg("ref")}<b>${winnerDoc.derivacionesValidas || 0}</b></span>
         `;
       }
@@ -8864,7 +8509,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
           <div class="ranking-pos">${row.posicion}</div>
           <div class="ranking-person">
             <b>${row.nombre}</b>
-            <small>${moneyARS(row.facturacion)} · ${row.viajes} viajes · ${row.derivacionesValidas} derivaciones válidas</small>
+            <small>${moneyARS(row.facturacion)} · ${row.viajes} cobros · ${row.derivacionesValidas} derivaciones válidas</small>
           </div>
           <div class="ranking-score-box">
             <b>${scoreText(row.puntajeFinal)}</b>
@@ -9922,7 +9567,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         previousCard?.removeAttribute("disabled");
       }
       const ops = dashboardOperationCards();
-      setCardCopy(ops[0], "NUEVO SERVICIO", "Registrar venta", "nuevo-servicio", "Nuevo servicio");
+      setCardCopy(ops[0], "REGISTRAR COBRO", "Efectivo, transferencia o tarjeta", "nuevo-servicio", "Registrar cobro");
       setCardCopy(ops[1], "CARGAR GASTOS", "Combustible, peajes y más", "cargar-gastos", "Cargar gastos");
       setCardCopy(ops[2], "DERIVAR SERVICIO", "Pasar a otro chofer", "derivar-servicio", "Derivar servicio");
       const fin = dashboardFinanceCards();
@@ -9932,7 +9577,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       const detailLink = document.querySelector('.finance-real [data-action]');
       if (detailLink) { detailLink.dataset.action = "detalle-financiero"; detailLink.textContent = "Ver detalle financiero ›"; }
       const summary = dashboardSummaryCards();
-      if (summary[0]) { summary[0].querySelector("span").textContent = "Servicios realizados"; summary[0].dataset.action = "resumen-servicios"; }
+      if (summary[0]) { summary[0].querySelector("span").textContent = "Cobros registrados"; summary[0].dataset.action = "resumen-servicios"; }
       if (summary[1]) { summary[1].querySelector("span").textContent = "Comprobantes"; summary[1].dataset.action = "resumen-comprobantes"; }
       if (summary[2]) { summary[2].querySelector("span").textContent = "Gastos semanales"; summary[2].dataset.action = "resumen-gastos"; }
       if (summary[3]) { summary[3].querySelector("span").textContent = "Objetivo semanal"; summary[3].dataset.action = "objetivo-semanal"; }
@@ -10128,7 +9773,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
 
     async function loadAdminHistoricalRows(type, mode) {
       const range = adminPeriodRange(mode);
-      const collectionName = type === "expenses" ? "gastos" : "viajes";
+      const collectionName = type === "expenses" ? "gastos" : "billing_records";
       const snap = await getDocs(collection(db, collectionName));
       const rows = [];
       snap.forEach(docSnap => {
@@ -11194,7 +10839,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       if (window.ExploraActions["gastos-semanales"]) window.ExploraActions["gastos-semanales"]();
     };
     window.ExploraActions["facturacion-semanal"] = () => showMainToast?.("Facturación semanal actualizada desde servicios vendidos.");
-    window.ExploraActions["resumen-servicios"] = () => showMainToast?.("Servicios realizados: ver detalle en ranking o comprobantes.");
+    window.ExploraActions["resumen-servicios"] = () => showMainToast?.("Cobros registrados: ver detalle en facturación o ranking.");
     window.ExploraActions["resumen-comprobantes"] = () => {
       if (window.ExploraActions["comprobantes"]) window.ExploraActions["comprobantes"]();
     };
@@ -12070,7 +11715,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       const totalExpenses = Number.isFinite(Number(weeklySnapshot.totalExpenses)) ? Number(weeklySnapshot.totalExpenses) : closureNumber(closure,["totalGastos","gastos","totalExpenses"]);
       const netBeforeSplit = grossBilling - totalExpenses;
       setClosureDetail("weeklyClosureBilling", formatClosureMoney(grossBilling));
-      setClosureDetail("weeklyClosureServices", String(Number(weeklySnapshot.serviceCount || closureNumber(closure,["cantidadServicios","serviceCount","cantidadViajes"]))));
+      setClosureDetail("weeklyClosureServices", String(Number(weeklySnapshot.billingCount ?? weeklySnapshot.serviceCount ?? closureNumber(closure,["cantidadServicios","serviceCount","cantidadViajes"]))));
       setClosureDetail("weeklyClosureExpenses", formatClosureMoney(totalExpenses));
       setClosureDetail("weeklyClosureNetBeforeSplit", formatClosureMoney(netBeforeSplit));
       setClosureDetail("weeklyClosureDriverShare", formatClosureMoney(weeklySnapshot.driverBaseShare ?? closureNumber(closure,["mitadChofer","parteChofer","driverShare"])));
@@ -13403,7 +13048,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     const card=document.querySelector('[data-action="facturacion-semanal"]'),amountEl=$("dashboardWeeklyRevenue"),metaEl=$("dashboardWeeklyRevenueMeta"),tripsEl=$("dashboardTripsCount"),pathEl=$("dashboardWeeklyRevenueSparklinePath");if(!card||!amountEl||!metaEl)return;
     if(data.loading){card.dataset.billingState="loading";amountEl.textContent="Cargando…";metaEl.textContent="Preparando semana activa";if(tripsEl)tripsEl.textContent="—";if(pathEl)pathEl.setAttribute("d","M2 28 L118 28");return;}
     if(data.error&&!data.loaded){card.dataset.billingState="error";amountEl.textContent="—";metaEl.textContent="No se pudo actualizar · Toca para reintentar";if(tripsEl)tripsEl.textContent="—";return;}
-    const total=Math.max(0,toNumber(data.grossBilling??data.total)),count=Math.max(0,Number(data.serviceCount||0));card.dataset.billingState=count?"ready":"empty";amountEl.textContent=formatARS(total);metaEl.textContent=count?`${count} ${count===1?"servicio registrado":"servicios registrados"}`:"Sin servicios esta semana";if(tripsEl)tripsEl.textContent=String(count);if(pathEl)pathEl.setAttribute("d",weeklyBillingPath(data.dailyBilling||data.dailyTotals));
+    const total=Math.max(0,toNumber(data.grossBilling??data.total)),count=Math.max(0,Number(data.serviceCount||0));card.dataset.billingState=count?"ready":"empty";amountEl.textContent=formatARS(total);metaEl.textContent=count?`${count} ${count===1?"cobro registrado":"cobros registrados"}`:"Sin cobros esta semana";if(tripsEl)tripsEl.textContent=String(count);if(pathEl)pathEl.setAttribute("d",weeklyBillingPath(data.dailyBilling||data.dailyTotals));
   }
   window.ExploraRenderWeeklyBillingCard=renderWeeklyBillingCard;
   function stopWeeklyBillingListener({reset=true}={}){try{weeklyBillingState.unsubscribe?.();}catch(_){}weeklyBillingState.unsubscribe=null;weeklyBillingState.listenerKey="";if(reset)renderWeeklyBillingCard({loading:true});}
@@ -13506,59 +13151,19 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
 
   window.ExploraUpdateHistoricalAccumulated=updateHistoricalAccumulated;
 
-  window.ExploraRegisterSoldService=async function(service){
-    const user = auth?.currentUser;
-    if (!user?.uid) throw new Error("AUTH_REQUIRED");
-    const catalogServiceId = String(service?.catalogServiceId || service?.serviceId || service?.id || "").trim();
-    if (!catalogServiceId) throw new Error("SERVICE_INVALID");
-    const paymentMethod = normalize(service?.paymentMethod || "");
-    if (!["cash","transfer","card"].includes(paymentMethod)) throw new Error("PAYMENT_METHOD_REQUIRED");
-    const finalPrice = toNumber(service?.finalPrice ?? service?.price ?? service?.amount);
-    if (!(finalPrice > 0)) throw new Error("SERVICE_PRICE_INVALID");
-    const tripType = String(service?.tripType || "one_way");
-    if (!["one_way","round_trip"].includes(tripType)) throw new Error("TRIP_TYPE_INVALID");
-    const minimumCustomPrice = toNumber(service?.minimumCustomPrice);
-    if (service?.isCustomPrice && minimumCustomPrice > 0 && finalPrice < minimumCustomPrice) throw new Error("CUSTOM_PRICE_MINIMUM");
-
-    const p = getActivePeriods();
-    const refDoc = doc(collection(db,"viajes"));
-    const session = window.ExploraSession || {};
-    const categoryId = String(service?.categoryId || "");
-    const categoryName = String(service?.categoryName || categoryId);
-    const serviceName = String(service?.serviceName || service?.name || "Servicio");
-    const origin = String(service?.origin || "");
-    const destination = String(service?.destination || "");
-    const payload = {
-      serviceRecordId:refDoc.id, id:refDoc.id, operationId:refDoc.id, viajeId:refDoc.id,
-      uid:user.uid, driverUid:user.uid, choferUid:user.uid, choferId:session.driverId || user.uid, profileId:session.driverId || user.uid,
-      choferEmail:user.email || "", choferNombre:(session.profile && (session.profile.nombre || session.profile.nombreCompleto || session.profile.displayName)) || user.displayName || "Chofer",
-      catalogServiceId, serviceId:catalogServiceId, servicioId:catalogServiceId,
-      categoryId, categoryName, categoria:categoryId,
-      serviceName, nombreServicio:serviceName, servicioNombre:serviceName,
-      origin, originLabel:origin, origen:origin, destination, destino:destination,
-      tripType, tipoRecorrido:tripType,
-      oneWayPrice:service?.oneWayPrice == null ? null : toNumber(service.oneWayPrice),
-      roundTripPrice:service?.roundTripPrice == null ? null : toNumber(service.roundTripPrice),
-      customPrice:service?.customPrice == null ? null : toNumber(service.customPrice),
-      finalPrice, amount:finalPrice, valor:finalPrice, monto:finalPrice, importe:finalPrice, tarifaMinima:service?.isCustomPrice ? minimumCustomPrice : finalPrice,
-      paymentMethod, metodoPago:paymentMethod, pago:paymentMethod,
-      source:"manual_service", fuente:"nuevo_servicio_premium", status:"completed", estado:"completado", completado:true,
-      weeklyPeriodId:p.weeklyPeriodId, periodoSemanalId:p.weeklyPeriodId, periodoId:p.weeklyPeriodId,
-      monthlyPeriodId:p.monthlyPeriodId, periodoMensualId:p.monthlyPeriodId,
-      yearlyPeriodId:p.yearlyPeriodId, periodoAnualId:p.yearlyPeriodId,
-      semana:p.week, mes:p.month, anio:p.year,
-      fecha:new Date().toLocaleDateString("es-AR",{timeZone:AR_TZ}),
-      hora:new Date().toLocaleTimeString("es-AR",{timeZone:AR_TZ,hour:"2-digit",minute:"2-digit"}),
-      completedAt:serverTimestamp(), createdAt:serverTimestamp(), updatedAt:serverTimestamp(), creadoEn:serverTimestamp(), creado:serverTimestamp(), schemaVersion:185
-    };
-    await withTimeout(setDoc(refDoc,payload,{merge:false}),15000,"SERVICE_WRITE_TIMEOUT");
-    await Promise.resolve(window.ExploraWeeklyEngine?.applyService?.(payload));
-    window.invalidateWeeklyFinancialEngine?.("service-created");
-    window.ExploraInvalidateWeeklyClosure?.("service-created",{refresh:false});
-    updateHistoricalAccumulated("facturacion",finalPrice,"viajes",refDoc.id).catch(() => {});
-    window.dispatchEvent(new CustomEvent("explora:servicio-registrado",{detail:{id:refDoc.id,valor:finalPrice,payload}}));
+  window.ExploraRegisterBillingRecord=async function(input){
+    const user=auth?.currentUser;if(!user?.uid)throw new Error("AUTH_REQUIRED");
+    const paymentMethod=normalize(input?.paymentMethod||"");if(!["cash","card"].includes(paymentMethod))throw new Error("MANUAL_PAYMENT_METHOD_INVALID");
+    const amount=Math.round(toNumber(input?.amount));if(!(amount>0))throw new Error("BILLING_AMOUNT_INVALID");
+    const operationId=String(input?.operationId||"").replace(/[^a-zA-Z0-9_-]/g,"").slice(0,80)||`bill_${user.uid.slice(0,10)}_${Date.now()}`;
+    const billingRef=doc(db,"billing_records",operationId);const p=getActivePeriods();const session=window.ExploraSession||{};const clientNow=Date.now();
+    let payload=null;let created=false;
+    await runTransaction(db,async(tx)=>{const snap=await tx.get(billingRef);if(snap.exists()){const existing=snap.data()||{};if(String(existing.driverUid||existing.uid||"")!==user.uid)throw new Error("BILLING_OPERATION_CONFLICT");payload={id:snap.id,...existing};return;}
+      payload={billingId:operationId,id:operationId,operationId,driverUid:user.uid,uid:user.uid,choferUid:user.uid,choferId:session.profileDocumentId||session.driverId||user.uid,profileDocumentId:session.profileDocumentId||session.driverId||user.uid,driverName:(session.profile&&(session.profile.nombre||session.profile.nombreCompleto||session.profile.displayName))||user.displayName||"Chofer",amount,valor:amount,monto:amount,importe:amount,finalPrice:amount,paymentMethod,metodoPago:paymentMethod,paymentProvider:paymentMethod==="card"?"manual_card":"manual",paymentStatus:"manually_confirmed",source:"manual_billing",fuente:"registro_cobro",status:"completed",estado:"completado",completado:true,weeklyPeriodId:p.weeklyPeriodId,periodoSemanalId:p.weeklyPeriodId,periodoId:p.weeklyPeriodId,monthlyPeriodId:p.monthlyPeriodId,periodoMensualId:p.monthlyPeriodId,yearlyPeriodId:p.yearlyPeriodId,periodoAnualId:p.yearlyPeriodId,semana:p.week,mes:p.month,anio:p.year,localDateKey:new Date().toLocaleDateString("en-CA",{timeZone:AR_TZ}),timezone:AR_TZ,clientCreatedAtMs:clientNow,fecha:new Date().toLocaleDateString("es-AR",{timeZone:AR_TZ}),hora:new Date().toLocaleTimeString("es-AR",{timeZone:AR_TZ,hour:"2-digit",minute:"2-digit"}),completedAt:serverTimestamp(),createdAt:serverTimestamp(),updatedAt:serverTimestamp(),creadoEn:serverTimestamp(),schemaVersion:186};tx.set(billingRef,payload,{merge:false});created=true;});
+    if(created){await Promise.resolve(window.ExploraWeeklyEngine?.applyBilling?.(payload));window.invalidateWeeklyFinancialEngine?.("billing-created");window.ExploraInvalidateWeeklyClosure?.("billing-created",{refresh:false});updateHistoricalAccumulated("facturacion",amount,"cobros",operationId).catch(()=>{});window.dispatchEvent(new CustomEvent("explora:cobro-registrado",{detail:{id:operationId,amount,paymentMethod,payload}}));}
     return payload;
   };
+  window.ExploraRegisterSoldService=window.ExploraRegisterBillingRecord;
 
   let expenseSaveInProgress = false;
 
@@ -13717,11 +13322,11 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         return source.map(r=>({...r, amount:type==="expenses"?toNumber(r.amount??r.monto??r.valor??r._amount):toNumber(r.amount??r._amount??r.valor??r.monto??r.importe??r.tarifaMinima)}));
       }
       // Los detalles históricos se consultan bajo demanda; el Dashboard nunca espera esta lectura.
-      const col=type==="expenses"?"gastos":"viajes";
+      const col=type==="expenses"?"gastos":"billing_records";
       const fallback=(await loadOwnedCollection(col)).filter(r=>validState(r) && belongsToPeriod(r,"week",p));
       return fallback.map(r=>({...r, amount:type==="expenses"?toNumber(r.amount??r.monto??r.valor):toNumber(r.amount??r.valor??r.monto??r.importe??r.tarifaMinima)}));
     }
-    const col=type==="expenses"?"gastos":"viajes";
+    const col=type==="expenses"?"gastos":"billing_records";
     const rows=(await loadOwnedCollection(col)).filter(r=>validState(r) && belongsToPeriod(r,mode,p));
     return rows.map(r=>({...r, amount:type==="expenses"?toNumber(r.monto||r.valor):toNumber(r.valor||r.monto||r.importe||r.tarifaMinima)}));
   }
@@ -13855,7 +13460,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
   if (!auth || !db) console.warn("[EXPLORA derivaciones] Firebase no disponible al iniciar el módulo");
 
   const DERIVATION_COLLECTION = "derivaciones";
-  const SERVICE_COLLECTION = "viajes";
+  const SERVICE_COLLECTION = "billing_records";
   const RANKING_EVENT_COLLECTION = "eventos_ranking";
   const INVALIDATION_COLLECTION = "invalidaciones_semanales";
   const DRIVER_COLLECTION = "choferes";
@@ -14129,7 +13734,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         const [derivationSnap,serviceSnap]=await Promise.all([tx.get(derivationRef),tx.get(serviceRef)]);if(!derivationSnap.exists())throw new Error("DERIVATION_NOT_FOUND");const row=normalizeDerivation(derivationSnap.data()||{},derivationSnap.id);
         if(row.receiverUid!==session.uid)throw new Error("FORBIDDEN");if(row.status==="completed"||row.billingServiceId||serviceSnap.exists())throw new Error("DERIVATION_ALREADY_COMPLETED");if(row.status!=="accepted_pending_completion")throw new Error("INVALID_TRANSITION");if(!(row.fixedPrice>0))throw new Error("INVALID_PRICE");
         const now=new Date();const senderPoints=Math.max(0,Number(rankingConfig.derivationSenderPoints||1));const receiverPoints=Math.max(0,Number(rankingConfig.derivationReceiverPoints||1));const receiverProfile=window.ExploraSession?.profile||{};const receiverProfileId=window.ExploraSession?.profileDocumentId||window.ExploraSession?.driverId||session.uid;
-        const servicePayload={id:serviceId,operationId:serviceId,serviceId,viajeId:serviceId,uid:session.uid,choferUid:session.uid,driverUid:session.uid,choferId:receiverProfileId,profileId:receiverProfileId,choferNombre:profileName(receiverProfile),categoria:row.serviceCategory||"derivacion",servicioId:row.serviceId,nombreServicio:row.serviceName,servicioNombre:row.serviceName,origen:row.origin,destino:row.destination,valor:row.fixedPrice,monto:row.fixedPrice,importe:row.fixedPrice,amount:row.fixedPrice,estado:"completado",status:"completed",completado:true,fuente:"derivacion_interna",source:"derivation",derivationId:id,originalSenderUid:row.senderUid,senderUid:row.senderUid,receiverUid:row.receiverUid,paymentMethod,metodoPago:paymentMethod,pago:paymentMethod,weeklyPeriodId:periodId,periodoSemanalId:periodId,periodoId:periodId,periodoMensualId:periods.monthlyPeriodId||"",periodoAnualId:periods.yearlyPeriodId||String(now.getFullYear()),semana:periods.week||periodId,mes:periods.month||now.getMonth()+1,anio:periods.year||now.getFullYear(),fecha:now.toLocaleDateString("es-AR",{timeZone:"America/Argentina/Buenos_Aires"}),hora:now.toLocaleTimeString("es-AR",{timeZone:"America/Argentina/Buenos_Aires",hour:"2-digit",minute:"2-digit"}),completedAt:serverTimestamp(),creadoEn:serverTimestamp(),createdAt:serverTimestamp(),schemaVersion:184};
+        const servicePayload={billingId:serviceId,id:serviceId,operationId:serviceId,driverUid:session.uid,uid:session.uid,choferUid:session.uid,choferId:receiverProfileId,profileDocumentId:receiverProfileId,driverName:profileName(receiverProfile),amount:row.fixedPrice,valor:row.fixedPrice,monto:row.fixedPrice,importe:row.fixedPrice,finalPrice:row.fixedPrice,paymentMethod,metodoPago:paymentMethod,paymentProvider:paymentMethod==="card"?"manual_card":"manual",paymentStatus:"manually_confirmed",status:"completed",estado:"completado",completado:true,source:"derivation",fuente:"derivacion_interna",derivationId:id,originalSenderUid:row.senderUid,senderUid:row.senderUid,receiverUid:row.receiverUid,weeklyPeriodId:periodId,periodoSemanalId:periodId,periodoId:periodId,periodoMensualId:periods.monthlyPeriodId||"",periodoAnualId:periods.yearlyPeriodId||String(now.getFullYear()),semana:periods.week||periodId,mes:periods.month||now.getMonth()+1,anio:periods.year||now.getFullYear(),fecha:now.toLocaleDateString("es-AR",{timeZone:"America/Argentina/Buenos_Aires"}),hora:now.toLocaleTimeString("es-AR",{timeZone:"America/Argentina/Buenos_Aires",hour:"2-digit",minute:"2-digit"}),completedAt:serverTimestamp(),creadoEn:serverTimestamp(),createdAt:serverTimestamp(),updatedAt:serverTimestamp(),schemaVersion:186};
         const eventBase={derivationId:id,senderUid:row.senderUid,receiverUid:row.receiverUid,weeklyPeriodId:periodId,reason:"completed_internal_derivation",status:"awarded",awardedAt:serverTimestamp(),billingServiceId:serviceId};
         tx.set(serviceRef,servicePayload,{merge:false});tx.set(senderEventRef,{...eventBase,participantUid:row.senderUid,participantRole:"sender",points:senderPoints},{merge:false});tx.set(receiverEventRef,{...eventBase,participantUid:row.receiverUid,participantRole:"receiver",points:receiverPoints},{merge:false});
         tx.set(senderInvalidationRef,{uid:row.senderUid,weeklyPeriodId:periodId,reason:"derivation-completed",derivationId:id,createdAt:serverTimestamp(),processed:false},{merge:true});tx.set(receiverInvalidationRef,{uid:row.receiverUid,weeklyPeriodId:periodId,reason:"derivation-completed",derivationId:id,createdAt:serverTimestamp(),processed:false},{merge:true});
@@ -14139,7 +13744,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       const senderPoints=Math.max(0,Number(rankingConfig.derivationSenderPoints||1));const receiverPoints=Math.max(0,Number(rankingConfig.derivationReceiverPoints||1));const engine=window.ExploraWeeklyEngine;
       await engine?.applyService?.(committedService);
       await Promise.allSettled([engine?.applyDerivationForUid?.(committedDerivation.senderUid,{...committedDerivation,operationId:`${id}:sender`,participantRole:"sender",derivationPoints:senderPoints}),engine?.applyDerivationForUid?.(committedDerivation.receiverUid,{...committedDerivation,operationId:`${id}:receiver`,participantRole:"receiver",derivationPoints:receiverPoints})]);
-      window.ExploraUpdateHistoricalAccumulated?.("facturacion",committedService.amount,"viajes",committedService.id)?.catch?.(()=>{});engine?.invalidate?.("derivation-completed",{refresh:false});window.ExploraInvalidateWeeklyClosure?.("derivation-completed",{refresh:false});
+      window.ExploraUpdateHistoricalAccumulated?.("facturacion",committedService.amount,"cobros",committedService.id)?.catch?.(()=>{});engine?.invalidate?.("derivation-completed",{refresh:false});window.ExploraInvalidateWeeklyClosure?.("derivation-completed",{refresh:false});
       window.dispatchEvent(new CustomEvent("explora:derivation-completed",{detail:{derivationId:id,serviceId,receiverUid:committedDerivation.receiverUid,senderUid:committedDerivation.senderUid,weeklyPeriodId:periodId}}));
       const replace=(rows)=>rows.map(row=>row.id===id?normalizeDerivation({...row,...committedDerivation},id):row);state.sent=replace(state.sent);state.received=replace(state.received);state.pendingCompletion=state.pendingCompletion.filter(row=>row.id!==id);state.pendingCompletionLoadedAt=Date.now();renderHistory();closeFinalize();closeReminder();setMessage("derivationFinalizeMessage","","");showToast("Derivación finalizada. Facturación y puntos registrados una sola vez.");
     }catch(error){console.warn("DERIVATION_COMPLETE_ERROR",error?.code||error?.message);const code=String(error?.message||error?.code||"");setMessage("derivationFinalizeMessage",code.includes("ALREADY")?"Esta derivación ya fue finalizada.":"No se pudo registrar el servicio derivado.","err");}
