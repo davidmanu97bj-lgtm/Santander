@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="explora-version" content="v191-motor-unico-comprobantes">
+  <meta name="explora-version" content="v193-cargar-gasto-uploadbytes-directo">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -1474,6 +1474,200 @@
 
     .expense-message.ok { color: #8ff0b2; }
     .expense-message.err { color: #ffb4b4; }
+
+    .expense-upload-progress {
+      margin: 10px 0 4px;
+      min-height: 42px;
+      border: 1px solid rgba(245,185,66,.30);
+      border-radius: 13px;
+      background: rgba(245,185,66,.07);
+      color: #f3c45d;
+      display: grid;
+      place-items: center;
+      padding: 9px 12px;
+      font-size: 14px;
+      font-weight: 850;
+      letter-spacing: .025em;
+    }
+
+    .expense-upload-progress[hidden] { display: none; }
+
+    .expense-diagnostic {
+      margin: 14px 0 8px;
+      border: 1px solid rgba(255,112,112,.42);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(82,18,24,.34), rgba(27,8,11,.92));
+      box-shadow: 0 18px 40px rgba(0,0,0,.32);
+      overflow: hidden;
+    }
+
+    .expense-diagnostic[hidden] { display: none; }
+
+    .expense-diagnostic-head {
+      display: grid;
+      grid-template-columns: minmax(0,1fr) 38px;
+      align-items: start;
+      gap: 10px;
+      padding: 14px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+
+    .expense-diagnostic-head strong {
+      display: block;
+      color: #ffb4b4;
+      font-size: 15px;
+      letter-spacing: .055em;
+    }
+
+    .expense-diagnostic-head small {
+      display: block;
+      margin-top: 5px;
+      color: rgba(255,255,255,.66);
+      line-height: 1.35;
+    }
+
+    .expense-diagnostic-close {
+      width: 36px;
+      height: 36px;
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 50%;
+      background: rgba(255,255,255,.05);
+      color: #fff;
+      font-size: 20px;
+    }
+
+    .expense-diagnostic-grid {
+      display: grid;
+      grid-template-columns: minmax(112px,.78fr) minmax(0,1.22fr);
+      gap: 0;
+      padding: 8px 14px;
+    }
+
+    .expense-diagnostic-grid span,
+    .expense-diagnostic-grid b {
+      min-width: 0;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,.055);
+      overflow-wrap: anywhere;
+      line-height: 1.35;
+    }
+
+    .expense-diagnostic-grid span {
+      padding-right: 10px;
+      color: rgba(255,255,255,.56);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .035em;
+    }
+
+    .expense-diagnostic-grid b {
+      color: #fff;
+      font-size: 12px;
+      font-weight: 720;
+    }
+
+    .expense-diagnostic-actions {
+      display: grid;
+      grid-template-columns: repeat(2,minmax(0,1fr));
+      gap: 9px;
+      padding: 12px 14px 14px;
+    }
+
+    .expense-diagnostic-actions button {
+      min-height: 45px;
+      border-radius: 13px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.055);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .025em;
+    }
+
+    #expenseDiagnosticCopyBtn {
+      border-color: rgba(245,185,66,.40);
+      background: rgba(245,185,66,.10);
+      color: #f3c45d;
+    }
+
+    .expense-storage-success {
+      margin: 14px 0 8px;
+      border: 1px solid rgba(86,225,143,.42);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(18,82,49,.34), rgba(6,30,17,.94));
+      box-shadow: 0 18px 40px rgba(0,0,0,.32);
+      overflow: hidden;
+    }
+
+    .expense-storage-success[hidden] { display: none; }
+
+    .expense-storage-success-head {
+      padding: 15px 14px 13px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+
+    .expense-storage-success-head strong {
+      display: block;
+      color: #8ff0b2;
+      font-size: 15px;
+      letter-spacing: .055em;
+    }
+
+    .expense-storage-success-head small {
+      display: block;
+      margin-top: 5px;
+      color: rgba(255,255,255,.68);
+      line-height: 1.35;
+    }
+
+    .expense-storage-success-grid {
+      display: grid;
+      grid-template-columns: minmax(112px,.78fr) minmax(0,1.22fr);
+      padding: 8px 14px;
+    }
+
+    .expense-storage-success-grid span,
+    .expense-storage-success-grid b {
+      min-width: 0;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,.055);
+      overflow-wrap: anywhere;
+      line-height: 1.35;
+    }
+
+    .expense-storage-success-grid span {
+      padding-right: 10px;
+      color: rgba(255,255,255,.58);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .035em;
+    }
+
+    .expense-storage-success-grid b {
+      color: #fff;
+      font-size: 12px;
+      font-weight: 760;
+    }
+
+    .expense-storage-success-accept {
+      width: calc(100% - 28px);
+      min-height: 46px;
+      margin: 4px 14px 14px;
+      border: 1px solid rgba(86,225,143,.42);
+      border-radius: 13px;
+      background: rgba(86,225,143,.13);
+      color: #8ff0b2;
+      font-size: 13px;
+      font-weight: 950;
+      letter-spacing: .04em;
+    }
+
+    @media (max-width: 360px) {
+      .expense-diagnostic-grid { grid-template-columns: 1fr; }
+      .expense-diagnostic-grid span { padding-bottom: 2px; border-bottom: 0; }
+      .expense-diagnostic-grid b { padding-top: 2px; }
+      .expense-diagnostic-actions { grid-template-columns: 1fr; }
+    }
 
     @media (max-width: 390px) {
       .expense-screen { padding-left: 12px; padding-right: 12px; }
@@ -5172,7 +5366,7 @@
 
           <div class="expense-form-section">
             <label>Comprobante</label>
-            <input id="expenseReceiptInput" class="expense-file-input" type="file" accept="image/*,application/pdf" />
+            <input id="expenseReceiptInput" name="expenseReceipt" class="expense-file-input" type="file" accept="image/jpeg,image/png,image/webp" aria-label="Seleccionar o tomar una foto del comprobante" />
             <button id="expenseUploadBtn" type="button" class="expense-upload-zone" aria-label="Subir comprobante">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 18a5 5 0 0 0 0-10 6 6 0 0 0-11.5 2A4 4 0 0 0 6 18h11"/><path d="M12 12v8"/><path d="m8 16 4-4 4 4"/></svg>
               <span><b>Subir comprobante</b><small>Toca para seleccionar o tomar foto</small></span>
@@ -5182,7 +5376,7 @@
               <div class="expense-preview-info"><b id="expensePreviewName"></b><small id="expensePreviewSize"></small></div>
               <button id="expenseRemoveFileBtn" type="button" class="expense-remove-file" aria-label="Eliminar comprobante">×</button>
             </div>
-            <p class="expense-help">Formatos permitidos: JPG, PNG, WebP, PDF. Máx. 10 MB</p>
+            <p class="expense-help">Formatos permitidos: JPG, PNG y WebP. La imagen se optimiza antes de subir.</p>
           </div>
 
           <div class="expense-form-section">
@@ -5196,7 +5390,79 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h9l3 3v15l-2-1-2 1-2-1-2 1-2-1-2 1z"/><path d="M16 3v4h4"/><path d="M9 11h6"/><path d="M9 15h4"/><path d="M18 14v6"/><path d="M15 17h6"/></svg>
           <span>CARGAR GASTO</span>
         </button>
-        <div id="expenseMessage" class="expense-message"></div>
+        <div id="expenseUploadProgress" class="expense-upload-progress" hidden aria-live="polite"></div>
+        <div id="expenseMessage" class="expense-message" aria-live="polite"></div>
+
+        <section id="expenseDiagnosticPanel" class="expense-diagnostic" hidden aria-live="polite" aria-label="Diagnóstico de carga del gasto">
+          <div class="expense-diagnostic-head">
+            <div>
+              <strong>EXPLORA - ERROR CARGAR GASTO</strong>
+              <small>Error nativo y etapa real del intento actual.</small>
+            </div>
+            <button id="expenseDiagnosticCloseBtn" type="button" class="expense-diagnostic-close" aria-label="Cerrar diagnóstico">×</button>
+          </div>
+          <div class="expense-diagnostic-grid">
+            <span>ETAPA DONDE FALLÓ</span><b id="expenseDiagnosticFailureStage">—</b>
+            <span>ÚLTIMA ETAPA EJECUTADA</span><b id="expenseDiagnosticCurrentStage">—</b>
+            <span>NOMBRE DEL ERROR</span><b id="expenseDiagnosticErrorName">—</b>
+            <span>CÓDIGO FIREBASE</span><b id="expenseDiagnosticFirebaseCode">—</b>
+            <span>CÓDIGO INTERNO</span><b id="expenseDiagnosticInternalCode">—</b>
+            <span>MENSAJE</span><b id="expenseDiagnosticMessage">—</b>
+            <span>SDK</span><b id="expenseDiagnosticSdk">—</b>
+            <span>MISMA APP FIREBASE</span><b id="expenseDiagnosticSameApp">—</b>
+            <span>PROYECTO FIREBASE</span><b id="expenseDiagnosticProject">—</b>
+            <span>BUCKET CONFIGURADO</span><b id="expenseDiagnosticConfiguredBucket">—</b>
+            <span>BUCKET EFECTIVO</span><b id="expenseDiagnosticEffectiveBucket">—</b>
+            <span>COINCIDENCIA DEL BUCKET</span><b id="expenseDiagnosticBucketMatch">—</b>
+            <span>APP CHECK</span><b id="expenseDiagnosticAppCheck">—</b>
+            <span>NAVIGATOR.ONLINE</span><b id="expenseDiagnosticOnline">—</b>
+            <span>INICIO DE SOLICITUD</span><b id="expenseDiagnosticStartedAt">—</b>
+            <span>RESOLUCIÓN DE SOLICITUD</span><b id="expenseDiagnosticResolvedAt">—</b>
+            <span>ARCHIVO ORIGINAL</span><b id="expenseDiagnosticFile">—</b>
+            <span>MIME ORIGINAL</span><b id="expenseDiagnosticOriginalMime">—</b>
+            <span>MIME PROCESADO</span><b id="expenseDiagnosticProcessedMime">—</b>
+            <span>EXTENSIÓN PROCESADA</span><b id="expenseDiagnosticProcessedExtension">—</b>
+            <span>PESO ORIGINAL</span><b id="expenseDiagnosticOriginalSize">—</b>
+            <span>PESO PROCESADO</span><b id="expenseDiagnosticProcessedSize">—</b>
+            <span>BLOB VÁLIDO</span><b id="expenseDiagnosticBlob">—</b>
+            <span>CONSTRUCTOR DEL BLOB</span><b id="expenseDiagnosticBlobConstructor">—</b>
+            <span>SESIÓN</span><b id="expenseDiagnosticSession">—</b>
+            <span>UID</span><b id="expenseDiagnosticUid">—</b>
+            <span>EXPENSE ID</span><b id="expenseDiagnosticExpenseId">—</b>
+            <span>PERÍODO SEMANAL</span><b id="expenseDiagnosticWeeklyPeriodId">—</b>
+            <span>RUTA</span><b id="expenseDiagnosticPath">—</b>
+            <span>RUTA CONTIENE UNDEFINED</span><b id="expenseDiagnosticPathUndefined">—</b>
+            <span>STORAGE INICIALIZADO</span><b id="expenseDiagnosticStorage">—</b>
+            <span>FIRESTORE INICIALIZADO</span><b id="expenseDiagnosticFirestore">—</b>
+            <span>LIMPIEZA DE ARCHIVO HUÉRFANO</span><b id="expenseDiagnosticOrphanCleanup">—</b>
+            <span>TIEMPO DE PROCESAMIENTO</span><b id="expenseDiagnosticProcessingTime">—</b>
+            <span>TIEMPO ESPERANDO STORAGE</span><b id="expenseDiagnosticUploadTime">—</b>
+            <span>TIEMPO DE GETDOWNLOADURL</span><b id="expenseDiagnosticGetUrlTime">—</b>
+            <span>TIEMPO DE FIRESTORE</span><b id="expenseDiagnosticWriteTime">—</b>
+            <span>TIEMPO TOTAL</span><b id="expenseDiagnosticTotalTime">—</b>
+            <span>ÚLTIMA ETAPA DE LIMPIEZA</span><b id="expenseDiagnosticFinally">—</b>
+          </div>
+          <div class="expense-diagnostic-actions">
+            <button id="expenseDiagnosticCopyBtn" type="button">COPIAR DIAGNÓSTICO</button>
+            <button id="expenseDiagnosticDismissBtn" type="button">CERRAR DIAGNÓSTICO</button>
+          </div>
+        </section>
+
+        <section id="expenseStorageSuccessPanel" class="expense-storage-success" hidden aria-live="polite" aria-label="Prueba de Storage exitosa">
+          <div class="expense-storage-success-head">
+            <strong>PRUEBA DE STORAGE EXITOSA</strong>
+            <small>Storage, URL y Firestore completados en un único intento.</small>
+          </div>
+          <div class="expense-storage-success-grid">
+            <span>RUTA</span><b id="expenseSuccessPath">—</b>
+            <span>PESO</span><b id="expenseSuccessSize">—</b>
+            <span>TIEMPO DE SUBIDA</span><b id="expenseSuccessUploadTime">—</b>
+            <span>URL OBTENIDA</span><b id="expenseSuccessUrl">—</b>
+            <span>FIRESTORE REGISTRADO</span><b id="expenseSuccessFirestore">—</b>
+          </div>
+          <button id="expenseStorageSuccessAcceptBtn" type="button" class="expense-storage-success-accept">ACEPTAR</button>
+        </section>
+        </section>
       </form>
     </div>
   </section>
@@ -5814,37 +6080,558 @@
     })();
   </script>
 
-  <script id="exploraExpenseV188">
+  <script id="exploraExpenseV192">
 (()=>{
   "use strict";
-  const screen=document.getElementById("expenseScreen");if(!screen)return;
+  const screen=document.getElementById("expenseScreen");
+  if(!screen)return;
   const $=id=>document.getElementById(id);
   const labels={combustible:"Combustible",peajes:"Peajes",estacionamiento:"Estacionamiento",lavado:"Lavado",mantenimiento:"Mantenimiento",compras:"Compras"};
-  const state={type:"combustible",file:null,previewUrl:"",saving:false,operationId:"",previousScrollY:0};
-  function parseAmount(value){return window.parseCurrencyInput?.(value)||0;}
-  function formatAmount(value){return window.formatCurrencyInput?.(value)||"";}
-  function updateAmountState(){const amount=parseAmount($("expenseAmountInput").value);const box=$("expenseAmountInput").closest(".expense-amount-box");box?.classList.toggle("is-valid",amount>0);box?.classList.toggle("is-invalid",!(amount>0));return amount;}
-  function message(text="",type=""){const element=$("expenseMessage");element.textContent=text;element.className=`expense-message${type?` ${type}`:""}`;}
-  function setLoading(on,text=""){state.saving=on;const button=$("expenseSubmitBtn");button.disabled=on;button.setAttribute("aria-busy",on?"true":"false");button.querySelector("span").textContent=on?(text||"PREPARANDO…"):"CARGAR GASTO";}
-  function clearFile(){window.ExploraReceiptEngine?.resetUploadState?.("expense");state.file=null;state.previewUrl="";const input=$("expenseReceiptInput");if(input)input.value="";$("expenseFilePreview").classList.remove("is-visible");$("expensePreviewThumb").textContent="PDF";}
-  function selectFile(file){if(!file)return;try{const selected=window.ExploraReceiptEngine?.selectUploadFile?.(file,"expense",{allowPdf:true});if(!selected?.file)throw new Error("RECEIPT_REQUIRED");state.file=selected.file;state.previewUrl=selected.previewUrl||"";$("expensePreviewName").textContent=file.name||"Comprobante";$("expensePreviewSize").textContent=`${file.type||"Archivo"} · ${Math.max(1,Math.round(file.size/1024))} KB`;if(state.previewUrl)$("expensePreviewThumb").innerHTML=`<img alt="Vista previa" src="${state.previewUrl}">`;else $("expensePreviewThumb").textContent="PDF";$("expenseFilePreview").classList.add("is-visible");message("");}catch(error){console.warn("EXPENSE_FILE_SELECT",error);message(String(error?.message||"").includes("TOO_LARGE")?"El comprobante es demasiado pesado. Selecciona otro archivo.":"Formato no compatible.","err");}}
+  const expenseUploadState={file:null,previewUrl:null,processedFile:null,uploading:false,expenseId:null,currentStage:"idle",failureStage:"",lastCleanupStage:"",lastError:null};
+  let expenseSaveInProgress=false;
+  let expensePendingMessageTimers=[];
+  const state={type:"combustible",previousScrollY:0};
+  const diagnostic={startedAt:0,startedAtIso:"",resolvedAtIso:"",currentStage:"idle",failureStage:"",stageRows:[],metricStarts:{},durations:{processing:0,upload:0,getUrl:0,write:0,engine:0},details:{},lastError:null,finallyExecuted:false};
+
+  const now=()=>performance.now();
+  const elapsed=()=>diagnostic.startedAt?Math.max(0,Math.round(now()-diagnostic.startedAt)):0;
+  const bytes=value=>{const n=Number(value||0);if(!(n>0))return"—";if(n<1024)return`${n} B`;if(n<1024*1024)return`${(n/1024).toFixed(n<10240?1:0)} KB`;return`${(n/1024/1024).toFixed(2)} MB`;};
+  const safeUid=value=>{const text=String(value||"");return text?`${text.slice(0,6)}…`:"No";};
+  const parseAmount=value=>window.parseCurrencyInput?.(value)||0;
+  const formatAmount=value=>window.formatCurrencyInput?.(value)||"";
+  const makeError=(code,message,cause=null)=>{const error=new Error(message||code);error.code=code;if(cause)error.cause=cause;return error;};
+  const errorCode=error=>String(error?.code||error?.cause?.code||error?.message||"UNKNOWN");
+  const errorMessage=error=>String(error?.message||error?.cause?.message||errorCode(error)||"Error desconocido").slice(0,280);
+  const firebaseErrorCode=error=>{const codes=[error?.code,error?.cause?.code].map(value=>String(value||""));return codes.find(code=>/^(storage|auth|firestore|functions)\//i.test(code))||"—";};
+  const internalErrorCode=error=>{const direct=String(error?.internalCode||"");if(direct)return direct;const code=String(error?.code||"");return code&&!/^(storage|auth|firestore|functions)\//i.test(code)?code:"—";};
+  const errorName=error=>String(error?.name||error?.cause?.name||"Error");
+  const sanitizeFirebaseName=value=>{const text=String(value||"").trim();if(!text)return"—";const parts=text.replace(/^gs:\/\//i,"").split(".");const first=parts.shift()||"";const masked=first.length>12?`${first.slice(0,7)}…${first.slice(-6)}`:first;return [masked,...parts].join(".");};
+
+  function setExpenseDiagnosticStage(stage,details={}){
+    const stamp=now();
+    expenseUploadState.currentStage=stage;
+    diagnostic.currentStage=stage;
+    diagnostic.details={...diagnostic.details,...details};
+    diagnostic.stageRows.push({stage,elapsedMs:elapsed(),status:details.status||"active",detail:details.detail||""});
+    if(stage==="EXPENSE_IMAGE_PROCESS_START")diagnostic.metricStarts.processing=stamp;
+    if(stage==="EXPENSE_IMAGE_PROCESS_END"&&diagnostic.metricStarts.processing)diagnostic.durations.processing=Math.round(stamp-diagnostic.metricStarts.processing);
+    if(stage==="EXPENSE_UPLOAD_START")diagnostic.metricStarts.upload=stamp;
+    if(stage==="EXPENSE_UPLOAD_END"&&diagnostic.metricStarts.upload)diagnostic.durations.upload=Math.round(stamp-diagnostic.metricStarts.upload);
+    if(stage==="EXPENSE_GET_URL_START")diagnostic.metricStarts.getUrl=stamp;
+    if(stage==="EXPENSE_GET_URL_END"&&diagnostic.metricStarts.getUrl)diagnostic.durations.getUrl=Math.round(stamp-diagnostic.metricStarts.getUrl);
+    if(stage==="EXPENSE_FIRESTORE_WRITE_START"&&!diagnostic.metricStarts.write)diagnostic.metricStarts.write=stamp;
+    if(stage==="EXPENSE_FIRESTORE_WRITE_END"&&diagnostic.metricStarts.write)diagnostic.durations.write=Math.round(stamp-diagnostic.metricStarts.write);
+    if(stage==="EXPENSE_ENGINE_REFRESH_START")diagnostic.metricStarts.engine=stamp;
+    if(stage==="EXPENSE_ENGINE_REFRESH_END"&&diagnostic.metricStarts.engine)diagnostic.durations.engine=Math.round(stamp-diagnostic.metricStarts.engine);
+    try{console.info("[EXPLORA expense]",{stage,elapsedMs:elapsed(),...details});}catch(_){}
+  }
+  window.setExpenseDiagnosticStage=setExpenseDiagnosticStage;
+
+  function resetDiagnosticRun(){
+    diagnostic.startedAt=now();
+    diagnostic.startedAtIso=new Date().toISOString();
+    diagnostic.resolvedAtIso="";
+    diagnostic.currentStage="idle";
+    diagnostic.failureStage="";
+    diagnostic.stageRows=[];
+    diagnostic.metricStarts={};
+    diagnostic.durations={processing:0,upload:0,getUrl:0,write:0,engine:0};
+    diagnostic.details={navigatorOnline:navigator.onLine!==false};
+    diagnostic.lastError=null;
+    diagnostic.finallyExecuted=false;
+    expenseUploadState.currentStage="idle";
+    expenseUploadState.failureStage="";
+    expenseUploadState.lastCleanupStage="";
+    expenseUploadState.lastError=null;
+  }
+
+  function updateAmountState(){
+    const input=$("expenseAmountInput");
+    const amount=parseAmount(input?.value);
+    const box=input?.closest(".expense-amount-box");
+    box?.classList.toggle("is-valid",amount>0);
+    box?.classList.toggle("is-invalid",!(amount>0));
+    return amount;
+  }
+  function message(text="",type=""){
+    const element=$("expenseMessage");
+    if(!element)return;
+    element.textContent=text;
+    element.className=`expense-message${type?` ${type}`:""}`;
+  }
+  function setProgress(text=""){
+    const element=$("expenseUploadProgress");
+    if(!element)return;
+    element.hidden=!text;
+    element.textContent=text||"";
+  }
+  function setLoading(on,text=""){
+    const button=$("expenseSubmitBtn");
+    if(!button)return;
+    button.disabled=Boolean(on);
+    button.setAttribute("aria-busy",on?"true":"false");
+    const span=button.querySelector("span");
+    if(span)span.textContent=on?(text||"PREPARANDO COMPROBANTE…"):"CARGAR GASTO";
+  }
+  function restoreExpenseSubmitButton(){setLoading(false);setProgress("");}
+  window.restoreExpenseSubmitButton=restoreExpenseSubmitButton;
+  function hideExpenseLoadingOverlay(){document.body.classList.remove("expense-uploading");}
+  window.hideExpenseLoadingOverlay=hideExpenseLoadingOverlay;
+
+  function clearExpensePendingMessages(){
+    expensePendingMessageTimers.forEach(timer=>clearTimeout(timer));
+    expensePendingMessageTimers=[];
+  }
+  function startExpensePendingMessages(){
+    clearExpensePendingMessages();
+    expensePendingMessageTimers.push(setTimeout(()=>{
+      if(expenseSaveInProgress&&expenseUploadState.currentStage==="EXPENSE_UPLOAD_START")setProgress("Firebase todavía está procesando la solicitud…");
+    },10000));
+    expensePendingMessageTimers.push(setTimeout(()=>{
+      if(expenseSaveInProgress&&expenseUploadState.currentStage==="EXPENSE_UPLOAD_START")setProgress("La solicitud continúa pendiente. No cierres esta pantalla.");
+    },30000));
+  }
+  function hideStorageSuccess(){const panel=$("expenseStorageSuccessPanel");if(panel)panel.hidden=true;}
+  function showStorageSuccess(){
+    setText("expenseSuccessPath",safeRoute(diagnostic.details.path));
+    setText("expenseSuccessSize",bytes(expenseUploadState.processedFile?.processedSize||expenseUploadState.processedFile?.blob?.size));
+    setText("expenseSuccessUploadTime",`${diagnostic.durations.upload||0} ms`);
+    setText("expenseSuccessUrl",diagnostic.details.urlAvailable?"Sí":"No");
+    setText("expenseSuccessFirestore",diagnostic.details.firestoreRegistered?"Sí":"No");
+    const panel=$("expenseStorageSuccessPanel");
+    if(panel){panel.hidden=false;requestAnimationFrame(()=>panel.scrollIntoView({behavior:"smooth",block:"nearest"}));}
+  }
+
+  function hideDiagnostic(){const panel=$("expenseDiagnosticPanel");if(panel)panel.hidden=true;}
+  function setText(id,value){const element=$(id);if(element)element.textContent=value??"—";}
+  function safeRoute(route){
+    const uid=window.ExploraFirebase?.auth?.currentUser?.uid||"";
+    const id=expenseUploadState.expenseId||"";
+    return String(route||"").replace(uid,"[uid]").replace(id,"[expenseId]").replace(/https?:\/\/[^\s]+/g,"[url ocultada]")||"—";
+  }
+  function buildDiagnosticText(){
+    const d=diagnostic.details;
+    return [
+      "EXPLORA - ERROR CARGAR GASTO",
+      `Etapa donde falló: ${diagnostic.failureStage||expenseUploadState.failureStage||"—"}`,
+      `Última etapa ejecutada: ${diagnostic.currentStage||"—"}`,
+      `Nombre del error: ${errorName(diagnostic.lastError)}`,
+      `Código Firebase: ${firebaseErrorCode(diagnostic.lastError)}`,
+      `Código interno: ${internalErrorCode(diagnostic.lastError)}`,
+      `Mensaje: ${errorMessage(diagnostic.lastError)||"—"}`,
+      `SDK: ${d.sdkMode||"—"} ${d.sdkVersion||"—"}`,
+      `Aplicación Firebase coincide: ${d.sameFirebaseApp===true?"Sí":d.sameFirebaseApp===false?"No":"No determinado"}`,
+      `Proyecto: ${sanitizeFirebaseName(d.projectId)}`,
+      `Bucket configurado: ${sanitizeFirebaseName(d.configuredBucket)}`,
+      `Bucket efectivo: ${sanitizeFirebaseName(d.effectiveBucket)}`,
+      `Coincidencia del bucket: ${d.bucketMatches===true?"Sí":d.bucketMatches===false?"No":"No determinado"}`,
+      `App Check: ${d.appCheckStatus||"No determinado"}`,
+      `navigator.onLine: ${d.navigatorOnline===false?"No":"Sí"}`,
+      `Inicio de solicitud: ${diagnostic.startedAtIso||"—"}`,
+      `Resolución de solicitud: ${diagnostic.resolvedAtIso||"—"}`,
+      `Archivo original: ${expenseUploadState.file?.name||"—"}`,
+      `MIME original: ${expenseUploadState.file?.type||"—"}`,
+      `MIME procesado: ${d.processedMimeType||expenseUploadState.processedFile?.blob?.type||expenseUploadState.processedFile?.mimeType||"—"}`,
+      `Extensión procesada: ${d.processedExtension||expenseUploadState.processedFile?.extension||"—"}`,
+      `Peso original: ${bytes(expenseUploadState.file?.size)}`,
+      `Peso procesado: ${bytes(expenseUploadState.processedFile?.processedSize||expenseUploadState.processedFile?.blob?.size)}`,
+      `Blob válido: ${d.blobValid?"Sí":"No"}`,
+      `Blob constructor: ${d.blobConstructor||"—"}`,
+      `Sesión: ${d.authenticated?"Sí":"No"}`,
+      `UID: ${safeUid(d.uid)}`,
+      `expenseId: ${expenseUploadState.expenseId?"Sí":"No"}`,
+      `weeklyPeriodId: ${d.weeklyPeriodId||"No"}`,
+      `Ruta: ${safeRoute(d.path)}`,
+      `Ruta contiene undefined: ${d.pathHasUndefined?"Sí":"No"}`,
+      `Storage inicializado: ${d.storageInitialized?"Sí":"No"}`,
+      `Firestore inicializado: ${d.firestoreInitialized?"Sí":"No"}`,
+      `Limpieza de archivo huérfano: ${d.orphanCleanupStatus||"No requerida"}`,
+      `Tiempo de procesamiento: ${diagnostic.durations.processing||0} ms`,
+      `Tiempo esperando Storage: ${diagnostic.durations.upload||0} ms`,
+      `Tiempo de getDownloadURL: ${diagnostic.durations.getUrl||0} ms`,
+      `Tiempo de Firestore: ${diagnostic.durations.write||0} ms`,
+      `Tiempo total: ${elapsed()} ms`,
+      `Última etapa de limpieza: EXPENSE_FINALLY ejecutado ${diagnostic.finallyExecuted?"Sí":"No"}`
+    ].join("\n");
+  }
+  function renderDiagnostic({scroll=true}={}){
+    const d=diagnostic.details;
+    setText("expenseDiagnosticFailureStage",diagnostic.failureStage||expenseUploadState.failureStage||"—");
+    setText("expenseDiagnosticCurrentStage",diagnostic.currentStage||"—");
+    setText("expenseDiagnosticErrorName",errorName(diagnostic.lastError));
+    setText("expenseDiagnosticFirebaseCode",firebaseErrorCode(diagnostic.lastError));
+    setText("expenseDiagnosticInternalCode",internalErrorCode(diagnostic.lastError));
+    setText("expenseDiagnosticMessage",errorMessage(diagnostic.lastError)||"—");
+    setText("expenseDiagnosticSdk",`${d.sdkMode||"—"} ${d.sdkVersion||"—"}`.trim());
+    setText("expenseDiagnosticSameApp",d.sameFirebaseApp===true?"Sí":d.sameFirebaseApp===false?"No":"No determinado");
+    setText("expenseDiagnosticProject",sanitizeFirebaseName(d.projectId));
+    setText("expenseDiagnosticConfiguredBucket",sanitizeFirebaseName(d.configuredBucket));
+    setText("expenseDiagnosticEffectiveBucket",sanitizeFirebaseName(d.effectiveBucket));
+    setText("expenseDiagnosticBucketMatch",d.bucketMatches===true?"Sí":d.bucketMatches===false?"No":"No determinado");
+    setText("expenseDiagnosticAppCheck",d.appCheckStatus||"No determinado");
+    setText("expenseDiagnosticOnline",d.navigatorOnline===false?"No":"Sí");
+    setText("expenseDiagnosticStartedAt",diagnostic.startedAtIso||"—");
+    setText("expenseDiagnosticResolvedAt",diagnostic.resolvedAtIso||"—");
+    setText("expenseDiagnosticFile",expenseUploadState.file?.name||"—");
+    setText("expenseDiagnosticOriginalMime",expenseUploadState.file?.type||"—");
+    setText("expenseDiagnosticProcessedMime",d.processedMimeType||expenseUploadState.processedFile?.blob?.type||expenseUploadState.processedFile?.mimeType||"—");
+    setText("expenseDiagnosticProcessedExtension",d.processedExtension||expenseUploadState.processedFile?.extension||"—");
+    setText("expenseDiagnosticOriginalSize",bytes(expenseUploadState.file?.size));
+    setText("expenseDiagnosticProcessedSize",bytes(expenseUploadState.processedFile?.processedSize||expenseUploadState.processedFile?.blob?.size));
+    setText("expenseDiagnosticBlob",d.blobValid?"Sí":"No");
+    setText("expenseDiagnosticBlobConstructor",d.blobConstructor||"—");
+    setText("expenseDiagnosticSession",d.authenticated?"Sí":"No");
+    setText("expenseDiagnosticUid",d.uid?safeUid(d.uid):"No");
+    setText("expenseDiagnosticExpenseId",expenseUploadState.expenseId?"Sí":"No");
+    setText("expenseDiagnosticWeeklyPeriodId",d.weeklyPeriodId||"No");
+    setText("expenseDiagnosticPath",safeRoute(d.path));
+    setText("expenseDiagnosticStorage",d.storageInitialized?"Sí":"No");
+    setText("expenseDiagnosticPathUndefined",d.pathHasUndefined?"Sí":"No");
+    setText("expenseDiagnosticFirestore",d.firestoreInitialized?"Sí":"No");
+    setText("expenseDiagnosticOrphanCleanup",d.orphanCleanupStatus||"No requerida");
+    setText("expenseDiagnosticTotalTime",`${elapsed()} ms`);
+    setText("expenseDiagnosticProcessingTime",`${diagnostic.durations.processing||0} ms`);
+    setText("expenseDiagnosticUploadTime",`${diagnostic.durations.upload||0} ms`);
+    setText("expenseDiagnosticGetUrlTime",`${diagnostic.durations.getUrl||0} ms`);
+    setText("expenseDiagnosticWriteTime",`${diagnostic.durations.write||0} ms`);
+    setText("expenseDiagnosticFinally",`EXPENSE_FINALLY ejecutado ${diagnostic.finallyExecuted?"Sí":"No"}`);
+    const panel=$("expenseDiagnosticPanel");
+    if(panel){panel.hidden=false;if(scroll)requestAnimationFrame(()=>panel.scrollIntoView({behavior:"smooth",block:"nearest"}));}
+  }
+  function mapExpenseError(error,stage){
+    const code=errorCode(error).toLowerCase();
+    if(code.includes("auth")||code.includes("session"))return"No se encontró una sesión autenticada.";
+    if(code.includes("file_required")||code.includes("file_invalid")||code.includes("receipt_required"))return"No se encontró el archivo seleccionado.";
+    if(code.includes("format")||code.includes("mime"))return"El formato seleccionado no es compatible.";
+    if(code.includes("process")||code.includes("decode")||code.includes("canvas")||code.includes("encode")||code.includes("image"))return"No se pudo procesar la imagen.";
+    if(code.includes("storage_not_initialized"))return"Firebase Storage no está inicializado.";
+    if(code.includes("bucket_mismatch"))return"El bucket configurado no coincide con el bucket efectivo de Firebase Storage.";
+    if(code.includes("bucket"))return"Firebase Storage no tiene un bucket válido configurado.";
+    if(code.includes("path")||code.includes("undefined"))return"No se pudo construir la ruta del comprobante.";
+    if(code.includes("storage/unauthorized")||code.includes("permission-denied"))return stage.startsWith("EXPENSE_FIRESTORE")?"El comprobante se subió, pero el gasto no pudo registrarse.":"Firebase Storage rechazó la subida por falta de permisos.";
+    if(code.includes("storage/bucket-not-found"))return"Firebase no encontró el bucket configurado.";
+    if(code.includes("storage/project-not-found"))return"Firebase no encontró el proyecto asociado a Storage.";
+    if(code.includes("storage/invalid-url"))return"Firebase recibió una referencia de Storage inválida.";
+    if(code.includes("storage/retry-limit-exceeded"))return"Firebase agotó sus reintentos internos de subida.";
+    if(code.includes("storage/server-file-wrong-size"))return"Firebase informó un tamaño de archivo distinto al enviado.";
+    if(code.includes("too_large")||code.includes("size"))return"El archivo procesado continúa siendo demasiado grande.";
+    if(stage==="EXPENSE_GET_URL_START"||code.includes("object-not-found"))return"El archivo se subió, pero no pudo obtenerse su URL.";
+    if(stage==="EXPENSE_FIRESTORE_WRITE_START"||code.includes("firestore"))return"El comprobante se subió, pero el gasto no pudo registrarse.";
+    if(code.includes("network-request-failed")||navigator.onLine===false)return"No hay conexión disponible para completar la solicitud.";
+    if(stage.startsWith("EXPENSE_UPLOAD"))return"Firebase Storage no pudo almacenar el comprobante.";
+    return"No se pudo registrar el gasto.";
+  }
+  function showExpenseDiagnosticError(error,stage,startedAt){
+    diagnostic.lastError=error;
+    expenseUploadState.lastError=error;
+    const failedStage=stage||expenseUploadState.currentStage||diagnostic.currentStage||"EXPENSE_ERROR";
+    expenseUploadState.failureStage=failedStage;
+    diagnostic.failureStage=failedStage;
+    diagnostic.currentStage=expenseUploadState.currentStage||failedStage;
+    diagnostic.resolvedAtIso=diagnostic.resolvedAtIso||new Date().toISOString();
+    const stamp=now();
+    if(failedStage==="EXPENSE_UPLOAD_START"&&diagnostic.metricStarts.upload&&!diagnostic.durations.upload)diagnostic.durations.upload=Math.round(stamp-diagnostic.metricStarts.upload);
+    if(failedStage==="EXPENSE_GET_URL_START"&&diagnostic.metricStarts.getUrl&&!diagnostic.durations.getUrl)diagnostic.durations.getUrl=Math.round(stamp-diagnostic.metricStarts.getUrl);
+    if(failedStage==="EXPENSE_FIRESTORE_WRITE_START"&&diagnostic.metricStarts.write&&!diagnostic.durations.write)diagnostic.durations.write=Math.round(stamp-diagnostic.metricStarts.write);
+    diagnostic.details={...diagnostic.details,navigatorOnline:navigator.onLine!==false};
+    const visibleMessage=mapExpenseError(error,failedStage);
+    message(visibleMessage,"err");
+    hideStorageSuccess();
+    renderDiagnostic();
+    try{
+      console.group("EXPLORA EXPENSE UPLOAD ERROR");
+      console.error("failureStage",failedStage);
+      console.error("currentStage",diagnostic.currentStage);
+      console.error("error.name",errorName(error));
+      console.error("error.code",error?.code||"");
+      console.error("error.message",errorMessage(error));
+      console.info("file.type",expenseUploadState.file?.type||"");
+      console.info("file.size",Number(expenseUploadState.file?.size||0));
+      console.info("processed.type",expenseUploadState.processedFile?.blob?.type||expenseUploadState.processedFile?.mimeType||"");
+      console.info("processed.size",Number(expenseUploadState.processedFile?.processedSize||expenseUploadState.processedFile?.blob?.size||0));
+      console.info("auth.currentUser",Boolean(window.ExploraFirebase?.auth?.currentUser));
+      console.info("expenseId",Boolean(expenseUploadState.expenseId));
+      console.info("weeklyPeriodId",Boolean(diagnostic.details.weeklyPeriodId));
+      console.info("storage",Boolean(window.ExploraFirebase?.storage));
+      console.info("db",Boolean(window.ExploraFirebase?.db));
+      console.info("path",safeRoute(diagnostic.details.path));
+      console.info("timings",{totalMs:Math.max(0,Math.round(now()-(startedAt||diagnostic.startedAt||now()))),...diagnostic.durations});
+      console.groupEnd();
+    }catch(_){}
+  }
+  window.showExpenseDiagnosticError=showExpenseDiagnosticError;
+
+  function revokePreview(){
+    if(expenseUploadState.previewUrl){try{URL.revokeObjectURL(expenseUploadState.previewUrl);}catch(_){}}
+    expenseUploadState.previewUrl=null;
+  }
+  function clearFile({hidePanel=false}={}){
+    revokePreview();
+    expenseUploadState.file=null;
+    expenseUploadState.processedFile=null;
+    expenseUploadState.expenseId=null;
+    expenseUploadState.currentStage="idle";
+    expenseUploadState.failureStage="";
+    expenseUploadState.lastCleanupStage="";
+    expenseUploadState.lastError=null;
+    const input=$("expenseReceiptInput");if(input)input.value="";
+    const preview=$("expenseFilePreview");if(preview)preview.classList.remove("is-visible");
+    const thumb=$("expensePreviewThumb");if(thumb){thumb.innerHTML="";thumb.textContent="IMG";}
+    if(hidePanel){hideDiagnostic();hideStorageSuccess();}
+  }
+
+  function handleExpenseReceiptSelection(event){
+    hideDiagnostic();
+    const file=event?.target?.files?.[0]||null;
+    revokePreview();
+    expenseUploadState.file=null;
+    expenseUploadState.processedFile=null;
+    expenseUploadState.expenseId=null;
+    expenseUploadState.lastError=null;
+    if(!file)return;
+    try{
+      if(!(file instanceof File))throw makeError("EXPENSE_FILE_INVALID","El selector no devolvió un File válido.");
+      const mime=String(file.type||"").toLowerCase();
+      const allowed=["image/jpeg","image/png","image/webp"];
+      const extOk=/\.(jpe?g|png|webp)$/i.test(file.name||"");
+      if(!allowed.includes(mime)&&!(!mime&&extOk))throw makeError("EXPENSE_FILE_FORMAT_INVALID","Formato incompatible.");
+      if(!(file.size>0))throw makeError("EXPENSE_FILE_EMPTY","El archivo está vacío.");
+      if(file.size>20*1024*1024)throw makeError("EXPENSE_FILE_TOO_LARGE","El archivo original supera 20 MB.");
+      expenseUploadState.file=file;
+      expenseUploadState.previewUrl=URL.createObjectURL(file);
+      const thumb=$("expensePreviewThumb");
+      if(thumb){thumb.innerHTML="";const img=document.createElement("img");img.alt="Vista previa del comprobante";img.src=expenseUploadState.previewUrl;thumb.appendChild(img);}
+      setText("expensePreviewName",file.name||"Comprobante");
+      setText("expensePreviewSize",`${mime||"imagen"} · ${bytes(file.size)}`);
+      $("expenseFilePreview")?.classList.add("is-visible");
+      message("");
+      setProgress("");
+    }catch(error){
+      expenseUploadState.lastError=error;
+      expenseUploadState.stage="EXPENSE_FILE_VALIDATION";
+      diagnostic.startedAt=now();
+      diagnostic.details={authenticated:Boolean(window.ExploraFirebase?.auth?.currentUser),uid:window.ExploraFirebase?.auth?.currentUser?.uid||"",storageInitialized:Boolean(window.ExploraFirebase?.storage),firestoreInitialized:Boolean(window.ExploraFirebase?.db)};
+      showExpenseDiagnosticError(error,"EXPENSE_FILE_VALIDATION",diagnostic.startedAt);
+      if(event?.target)event.target.value="";
+    }
+  }
+  window.handleExpenseReceiptSelection=handleExpenseReceiptSelection;
+
+  function loadExpenseImage(file){
+    return new Promise((resolve,reject)=>{
+      const objectUrl=URL.createObjectURL(file);
+      const image=new Image();
+      let settled=false;
+      const finish=(error)=>{
+        if(settled)return;
+        settled=true;
+        clearTimeout(timer);
+        image.onload=null;image.onerror=null;
+        if(error){try{URL.revokeObjectURL(objectUrl);}catch(_){}reject(error);return;}
+        const width=image.naturalWidth||image.width,height=image.naturalHeight||image.height;
+        if(!(width>0&&height>0)){try{URL.revokeObjectURL(objectUrl);}catch(_){}reject(makeError("EXPENSE_IMAGE_DIMENSIONS_INVALID","La imagen no tiene dimensiones válidas."));return;}
+        resolve({image,width,height,cleanup:()=>{try{URL.revokeObjectURL(objectUrl);}catch(_){}}});
+      };
+      const timer=setTimeout(()=>finish(makeError("EXPENSE_IMAGE_DECODE_TIMEOUT","La imagen tardó demasiado en decodificarse.")),20000);
+      image.onload=()=>finish();
+      image.onerror=()=>finish(makeError("EXPENSE_IMAGE_DECODE_FAILED","El navegador no pudo decodificar la imagen."));
+      image.src=objectUrl;
+    });
+  }
+  function canvasToExpenseBlob(canvas,mimeType,quality){
+    return new Promise((resolve,reject)=>{
+      let settled=false;
+      const timer=setTimeout(()=>{if(!settled){settled=true;reject(makeError("EXPENSE_IMAGE_ENCODE_TIMEOUT","La compresión no respondió."));}},15000);
+      try{
+        canvas.toBlob(blob=>{
+          if(settled)return;
+          settled=true;clearTimeout(timer);
+          if(!blob?.size){reject(makeError("EXPENSE_IMAGE_ENCODE_EMPTY","La compresión devolvió un archivo vacío."));return;}
+          resolve(blob);
+        },mimeType,quality);
+      }catch(error){if(!settled){settled=true;clearTimeout(timer);reject(makeError("EXPENSE_IMAGE_ENCODE_FAILED","No se pudo codificar la imagen.",error));}}
+    });
+  }
+  async function prepareExpenseReceipt(file){
+    if(!(file instanceof File))throw makeError("EXPENSE_FILE_INVALID","No se encontró un File válido.");
+    const mime=String(file.type||"").toLowerCase();
+    if(!["image/jpeg","image/png","image/webp"].includes(mime)&&!(!mime&&/\.(jpe?g|png|webp)$/i.test(file.name||"")))throw makeError("EXPENSE_FILE_FORMAT_INVALID","Formato de imagen incompatible.");
+    const decoded=await loadExpenseImage(file);
+    let canvas=null,smallest=null;
+    const plans=[
+      {max:1400,qualities:[.75,.68,.60]},
+      {max:1100,qualities:[.68,.60,.54]},
+      {max:900,qualities:[.60,.52,.46]}
+    ];
+    try{
+      for(const plan of plans){
+        const ratio=Math.min(1,plan.max/Math.max(decoded.width,decoded.height));
+        const width=Math.max(1,Math.round(decoded.width*ratio));
+        const height=Math.max(1,Math.round(decoded.height*ratio));
+        if(canvas){canvas.width=1;canvas.height=1;}
+        canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;
+        const context=canvas.getContext("2d",{alpha:false});
+        if(!context)throw makeError("EXPENSE_CANVAS_UNAVAILABLE","Canvas no está disponible.");
+        context.fillStyle="#fff";context.fillRect(0,0,width,height);context.imageSmoothingEnabled=true;if("imageSmoothingQuality" in context)context.imageSmoothingQuality="high";
+        try{context.drawImage(decoded.image,0,0,decoded.width,decoded.height,0,0,width,height);}catch(error){throw makeError("EXPENSE_CANVAS_DRAW_FAILED","No se pudo dibujar la imagen.",error);}
+        for(const outputType of ["image/webp","image/jpeg"]){
+          for(const quality of plan.qualities){
+            let blob;
+            try{blob=await canvasToExpenseBlob(canvas,outputType,quality);}catch(_){continue;}
+            if(outputType==="image/webp"&&!String(blob.type||"").includes("webp"))continue;
+            if(!smallest||blob.size<smallest.blob.size)smallest={blob,mimeType:outputType,width,height};
+            if(blob.size<=600*1024){
+              return {blob,mimeType:outputType,extension:outputType==="image/webp"?"webp":"jpg",originalSize:file.size,processedSize:blob.size,width,height};
+            }
+          }
+        }
+      }
+      if(!smallest?.blob?.size||smallest.blob.size>600*1024)throw makeError("EXPENSE_PROCESSED_TOO_LARGE","La imagen no pudo reducirse por debajo de 600 KB.");
+      return {...smallest,extension:smallest.mimeType==="image/webp"?"webp":"jpg",originalSize:file.size,processedSize:smallest.blob.size};
+    }finally{
+      try{decoded.cleanup?.();}catch(_){}
+      if(canvas){canvas.width=1;canvas.height=1;}
+    }
+  }
+  window.prepareExpenseReceipt=prepareExpenseReceipt;
+
   function open(){state.previousScrollY=window.scrollY||0;screen.classList.add("is-open");screen.setAttribute("aria-hidden","false");screen.scrollTop=0;window.lockPageScroll?.("expense");window.ExploraMainNav?.setActive?.("finanzas");updateAmountState();}
-  function close(){if(state.saving)return;screen.classList.remove("is-open");screen.setAttribute("aria-hidden","true");window.unlockPageScroll?.("expense");window.ExploraMainNav?.setActive?.("inicio");requestAnimationFrame(()=>window.scrollTo(0,state.previousScrollY||0));}
-  function reset(){state.operationId="";$("expenseAmountInput").value="";$("expenseNotesInput").value="";$("expenseNotesCounter").textContent="0/150";clearFile();state.type="combustible";document.querySelectorAll("[data-expense-type]").forEach(card=>card.classList.toggle("is-selected",card.dataset.expenseType==="combustible"));updateAmountState();}
-  function mapError(error){const code=String(error?.code||error?.message||"").toLowerCase();if(code.includes("auth")||code.includes("session"))return"No se pudo verificar tu sesión. Vuelve a intentarlo.";if(code.includes("permission")||code.includes("unauthorized"))return"No tienes permiso para subir este comprobante.";if(code.includes("too_large")||code.includes("size"))return"El comprobante es demasiado pesado. Selecciona otra imagen.";if(code.includes("decode")||code.includes("image")||code.includes("format")||code.includes("canvas")||code.includes("encode"))return"No se pudo preparar el comprobante.";if(code.includes("storage"))return"No se pudo almacenar el comprobante.";if(code.includes("network"))return"No hay conexión disponible.";return"No se pudo registrar el gasto.";}
-  async function submitExpense(event){event.preventDefault();if(state.saving)return;const amount=updateAmountState();if(!amount){message("Ingresa un monto válido.","err");return;}if(!state.file){message("Selecciona un comprobante.","err");return;}setLoading(true,"PREPARANDO…");message("Preparando comprobante…");try{state.operationId=state.operationId||`exp_${Date.now()}_${globalThis.crypto?.randomUUID?.().slice(0,8)||Math.random().toString(36).slice(2,10)}`;const result=await window.ExploraRegisterExpense({operationId:state.operationId,tipo:state.type,tipoLabel:labels[state.type]||state.type,monto:amount,observaciones:$("expenseNotesInput").value.trim(),comprobante:state.file,onProgress:percent=>{setLoading(true,`SUBIENDO ${percent} %`);message(`Subiendo comprobante: ${percent} %`);}});window.dispatchEvent(new CustomEvent("explora:gasto-registrado",{detail:result}));window.showExploraSuccess?.({title:"¡EXITOSO!",message:"Gasto cargado correctamente.",onAccept:()=>{reset();close();}});}catch(error){console.error("EXPENSE_SAVE",error);message(mapError(error),"err");}finally{setLoading(false);window.unlockPageScroll?.("expense-upload");}}
-  window.ExploraActions=window.ExploraActions||{};window.ExploraActions["cargar-gastos"]=open;
-  window.ExploraExpense={open,close,getState:()=>({type:state.type,amount:parseAmount($("expenseAmountInput").value),file:state.file?.name||""})};
+  function close(){if(expenseSaveInProgress)return;screen.classList.remove("is-open");screen.setAttribute("aria-hidden","true");window.unlockPageScroll?.("expense");window.ExploraMainNav?.setActive?.("inicio");requestAnimationFrame(()=>window.scrollTo(0,state.previousScrollY||0));}
+  function reset(){
+    $("expenseAmountInput").value="";$("expenseNotesInput").value="";$("expenseNotesCounter").textContent="0/150";
+    clearFile({hidePanel:true});state.type="combustible";
+    document.querySelectorAll("[data-expense-type]").forEach(card=>card.classList.toggle("is-selected",card.dataset.expenseType==="combustible"));
+    updateAmountState();message("");setProgress("");
+  }
+
+  async function submitExpense(event){
+    event.preventDefault();
+    if(expenseSaveInProgress)return;
+    expenseSaveInProgress=true;
+    expenseUploadState.uploading=true;
+    resetDiagnosticRun();
+    const startedAt=diagnostic.startedAt;
+    setLoading(true,"PREPARANDO COMPROBANTE…");
+    setProgress("Preparando comprobante…");
+    let result=null;
+    try{
+      setExpenseDiagnosticStage("EXPENSE_SUBMIT_START");
+      setExpenseDiagnosticStage("EXPENSE_SESSION_CHECK");
+      const firebase=window.ExploraFirebase||{};
+      const user=firebase.auth?.currentUser||null;
+      diagnostic.details={...diagnostic.details,authenticated:Boolean(user?.uid),uid:user?.uid||"",storageInitialized:Boolean(firebase.storage),firestoreInitialized:Boolean(firebase.db),bucketConfigured:Boolean(firebase.storage?.app?.options?.storageBucket)};
+      if(!user?.uid)throw makeError("EXPENSE_AUTH_REQUIRED","No existe una sesión autenticada.");
+
+      setExpenseDiagnosticStage("EXPENSE_FORM_VALIDATION");
+      const amount=updateAmountState();
+      if(!state.type)throw makeError("EXPENSE_CATEGORY_REQUIRED","Selecciona una categoría.");
+      if(!(amount>0))throw makeError("EXPENSE_AMOUNT_INVALID","Ingresa un monto válido.");
+
+      setExpenseDiagnosticStage("EXPENSE_FILE_VALIDATION");
+      if(!(expenseUploadState.file instanceof File))throw makeError("EXPENSE_FILE_REQUIRED","No se encontró el archivo seleccionado.");
+      expenseUploadState.expenseId=expenseUploadState.expenseId||`exp_${Date.now()}_${globalThis.crypto?.randomUUID?.().slice(0,8)||Math.random().toString(36).slice(2,10)}`.replace(/[^a-zA-Z0-9_-]/g,"").slice(0,110);
+      const period=window.ExploraWeeklyEngine?.getActiveWeeklyPeriod?.()||window.ExploraPeriods?.getActivePeriods?.()||{};
+      const weeklyPeriodId=period.id||period.weeklyPeriodId||"";
+      diagnostic.details={...diagnostic.details,weeklyPeriodId};
+      if(!weeklyPeriodId)throw makeError("EXPENSE_WEEKLY_PERIOD_MISSING","No se pudo determinar la semana activa.");
+
+      setExpenseDiagnosticStage("EXPENSE_IMAGE_PROCESS_START");
+      setLoading(true,"PREPARANDO COMPROBANTE…");
+      const prepared=await prepareExpenseReceipt(expenseUploadState.file);
+      expenseUploadState.processedFile=prepared;
+      diagnostic.details={...diagnostic.details,blobValid:prepared?.blob instanceof Blob&&prepared.blob.size>0&&String(prepared.blob.type||"").startsWith("image/"),blobConstructor:prepared?.blob?.constructor?.name||"otro",processedSize:prepared?.processedSize||0,processedMimeType:prepared?.blob?.type||prepared?.mimeType||"",processedExtension:prepared?.extension||""};
+      setExpenseDiagnosticStage("EXPENSE_IMAGE_PROCESS_END",{originalSize:prepared.originalSize,processedSize:prepared.processedSize,width:prepared.width,height:prepared.height,mimeType:prepared.blob?.type||prepared.mimeType,processedMimeType:prepared.blob?.type||prepared.mimeType,processedExtension:prepared.extension,blobConstructor:prepared?.blob?.constructor?.name||"otro",blobValid:prepared?.blob instanceof Blob&&prepared.blob.size>0&&String(prepared.blob.type||"").startsWith("image/")});
+
+      if(!window.ExploraExpenseStorageService?.registerExpense)throw makeError("EXPENSE_STORAGE_SERVICE_MISSING","El servicio de carga del gasto no está disponible.");
+      result=await window.ExploraExpenseStorageService.registerExpense({
+        expenseId:expenseUploadState.expenseId,
+        category:state.type,
+        categoryLabel:labels[state.type]||state.type,
+        amount,
+        notes:$("expenseNotesInput").value.trim(),
+        weeklyPeriodId,
+        originalFile:expenseUploadState.file,
+        prepared,
+        onStage:(stage,details={})=>{
+          diagnostic.details={...diagnostic.details,...details};
+          setExpenseDiagnosticStage(stage,details);
+          if(stage==="EXPENSE_UPLOAD_START"){setLoading(true,"SUBIENDO COMPROBANTE…");setProgress("SUBIENDO COMPROBANTE…");startExpensePendingMessages();}
+          if(stage==="EXPENSE_UPLOAD_END"){clearExpensePendingMessages();setLoading(true,"OBTENIENDO URL…");setProgress("Obteniendo URL segura…");}
+          if(stage==="EXPENSE_GET_URL_START"){setLoading(true,"OBTENIENDO URL…");setProgress("Obteniendo URL segura…");}
+          if(stage==="EXPENSE_FIRESTORE_WRITE_START"){setLoading(true,"REGISTRANDO GASTO…");setProgress("Registrando gasto…");}
+        }
+      });
+
+      setExpenseDiagnosticStage("EXPENSE_ENGINE_REFRESH_START");
+      try{
+        window.invalidateWeeklyFinancialEngine?.("expense-created");
+        if(window.refreshWeeklyFinancialEngine)await window.refreshWeeklyFinancialEngine({reason:"expense-created"});
+        else await Promise.resolve(window.ExploraWeeklyEngine?.applyExpense?.(result));
+        window.invalidateReceiptCache?.("gastos");
+        window.ExploraReceipts?.invalidate?.("gastos");
+        setExpenseDiagnosticStage("EXPENSE_ENGINE_REFRESH_END");
+      }catch(engineError){
+        console.warn("EXPENSE_ENGINE_REFRESH_WARNING",engineError?.code||engineError?.message);
+        setExpenseDiagnosticStage("EXPENSE_ENGINE_REFRESH_END",{status:"warning",detail:String(engineError?.code||engineError?.message||"refresh warning")});
+      }
+
+      setExpenseDiagnosticStage("EXPENSE_SUCCESS");
+      diagnostic.resolvedAtIso=new Date().toISOString();
+      hideDiagnostic();
+      showStorageSuccess();
+      setLoading(true,"GASTO REGISTRADO");
+      setProgress("");
+      message("Gasto y comprobante registrados correctamente.","ok");
+      window.dispatchEvent(new CustomEvent("explora:gasto-registrado",{detail:result}));
+      window.showExploraSuccess?.({title:"¡EXITOSO!",message:"Gasto y comprobante registrados correctamente.",onAccept:()=>{reset();close();}});
+    }catch(error){
+      showExpenseDiagnosticError(error,expenseUploadState.currentStage||diagnostic.currentStage,startedAt);
+    }finally{
+      clearExpensePendingMessages();
+      diagnostic.resolvedAtIso=diagnostic.resolvedAtIso||new Date().toISOString();
+      diagnostic.finallyExecuted=true;
+      expenseUploadState.lastCleanupStage="EXPENSE_FINALLY";
+      console.debug("EXPENSE_FINALLY ejecutado");
+      expenseSaveInProgress=false;
+      expenseUploadState.uploading=false;
+      restoreExpenseSubmitButton();
+      hideExpenseLoadingOverlay();
+      window.unlockPageScroll?.("expense-upload");
+      if(diagnostic.lastError&&!$("expenseDiagnosticPanel")?.hidden)renderDiagnostic({scroll:false});
+    }
+  }
+
+  window.ExploraActions=window.ExploraActions||{};
+  window.ExploraActions["cargar-gastos"]=open;
+  window.ExploraExpense={open,close,getState:()=>({type:state.type,amount:parseAmount($("expenseAmountInput").value),file:expenseUploadState.file?.name||"",stage:expenseUploadState.currentStage,failureStage:expenseUploadState.failureStage})};
+
   document.addEventListener("DOMContentLoaded",()=>{
     $("expenseBackBtn")?.addEventListener("click",close);
-    $("expenseTypeGrid")?.addEventListener("click",event=>{const card=event.target.closest("[data-expense-type]");if(!card)return;state.type=card.dataset.expenseType;state.operationId="";document.querySelectorAll("[data-expense-type]").forEach(item=>item.classList.toggle("is-selected",item===card));});
-    $("expenseAmountInput")?.addEventListener("input",event=>{state.operationId="";event.target.value=formatAmount(event.target.value);updateAmountState();});
-    $("expenseClearAmountBtn")?.addEventListener("click",()=>{$("expenseAmountInput").value="";updateAmountState();$("expenseAmountInput").focus();});
-    $("expenseUploadBtn")?.addEventListener("click",()=>$("expenseReceiptInput").click());
-    $("expenseReceiptInput")?.addEventListener("change",event=>selectFile(event.target.files?.[0]));
-    $("expenseRemoveFileBtn")?.addEventListener("click",clearFile);
+    $("expenseTypeGrid")?.addEventListener("click",event=>{const card=event.target.closest("[data-expense-type]");if(!card)return;state.type=card.dataset.expenseType;expenseUploadState.expenseId=null;document.querySelectorAll("[data-expense-type]").forEach(item=>item.classList.toggle("is-selected",item===card));});
+    $("expenseAmountInput")?.addEventListener("input",event=>{expenseUploadState.expenseId=null;event.target.value=formatAmount(event.target.value);updateAmountState();});
+    $("expenseClearAmountBtn")?.addEventListener("click",()=>{$("expenseAmountInput").value="";expenseUploadState.expenseId=null;updateAmountState();$("expenseAmountInput").focus();});
+    const expenseReceiptInput=$("expenseReceiptInput");
+    const expenseUploadBtn=$("expenseUploadBtn");
+    expenseUploadBtn?.addEventListener("click",()=>{
+      if(expenseSaveInProgress||!expenseReceiptInput)return;
+      expenseReceiptInput.click();
+    });
+    expenseReceiptInput?.addEventListener("change",event=>{
+      handleExpenseReceiptSelection(event);
+      if(event.target)event.target.value="";
+    });
+    $("expenseRemoveFileBtn")?.addEventListener("click",()=>clearFile({hidePanel:false}));
     $("expenseNotesInput")?.addEventListener("input",event=>{$("expenseNotesCounter").textContent=`${event.target.value.length}/150`;});
     $("expenseForm")?.addEventListener("submit",submitExpense);
+    $("expenseDiagnosticCopyBtn")?.addEventListener("click",async()=>{
+      const text=buildDiagnosticText();
+      try{await navigator.clipboard.writeText(text);message("Diagnóstico copiado.","ok");}
+      catch(_){const area=document.createElement("textarea");area.value=text;area.style.position="fixed";area.style.opacity="0";document.body.appendChild(area);area.select();document.execCommand("copy");area.remove();message("Diagnóstico copiado.","ok");}
+    });
+    const dismiss=()=>hideDiagnostic();
+    $("expenseDiagnosticCloseBtn")?.addEventListener("click",dismiss);
+    $("expenseDiagnosticDismissBtn")?.addEventListener("click",dismiss);
+    $("expenseStorageSuccessAcceptBtn")?.addEventListener("click",()=>hideStorageSuccess());
     updateAmountState();
   });
 })();
@@ -12558,7 +13345,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
 </script>
 <script type="module" id="exploraUnifiedWeeklyFinanceModule">
 import { collection, doc, getDocs, query, where, setDoc, runTransaction, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-import { ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+import { ref as storageRef, uploadBytes, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
 
 const fb = window.ExploraFirebase || {};
 const auth = fb.auth;
@@ -13108,42 +13895,193 @@ window.ExploraRegisterBillingRecord = async function(input = {}) {
 window.ExploraRegisterSoldService = window.ExploraRegisterBillingRecord;
 
 let expenseSaving = false;
-window.ExploraRegisterExpense = window.ExploraSaveExpense = async function(input = {}) {
-  if (expenseSaving) throw new Error("EXPENSE_ALREADY_SAVING");
-  expenseSaving = true;
-  let receipt = null;
-  try {
-    const session = await getSession();
-    const amount = parseCurrencyInput(input.monto);
-    if (!(amount > 0)) throw new Error("EXPENSE_AMOUNT_INVALID");
-    if (!input.tipo) throw new Error("EXPENSE_TYPE_REQUIRED");
-    if (!input.comprobante) throw new Error("EXPENSE_RECEIPT_REQUIRED");
-    const expenseId = String(input.operationId || stableId("exp", session.uid)).replace(/[^a-zA-Z0-9_-]/g, "").slice(0,110);
-    const periods = activePeriods();
-    receipt = await processAndUploadFile({ file:input.comprobante, contextType:"expense", ownerUid:session.uid, recordId:expenseId, weeklyPeriodId:periods.weeklyPeriodId, allowPdf:true, uploadedByUid:session.uid, uploadedByRole:"driver", onProgress:input.onProgress });
-    const now = new Date();
-    const payload = {
-      id:expenseId, gastoId:expenseId, operationId:expenseId, driverUid:session.uid, uid:session.uid, choferUid:session.uid,
-      choferId:session.profileDocumentId, profileDocumentId:session.profileDocumentId, driverName:getDriverName(session), choferNombre:getDriverName(session),
-      category:input.tipo, categoria:input.tipo, tipo:input.tipo, tipoLabel:input.tipoLabel || input.tipo, amount, monto:amount,
-      notes:String(input.observaciones || "").trim(), observaciones:String(input.observaciones || "").trim(),
-      ...saveReceiptMetadata(receipt, { ownerUid:session.uid, uploadedByUid:session.uid, uploadedByRole:"driver" }),
-      status:"active", estado:"registrado", payerRole:"driver", sharedRate:.5, weeklyPeriodId:periods.weeklyPeriodId, periodoSemanalId:periods.weeklyPeriodId,
-      monthlyPeriodId:periods.monthlyPeriodId, yearlyPeriodId:periods.yearlyPeriodId, year:periods.year, month:periods.month,
-      fecha:now.toLocaleDateString("es-AR", { timeZone:AR_TZ }), hora:now.toLocaleTimeString("es-AR", { timeZone:AR_TZ, hour:"2-digit", minute:"2-digit" }),
-      createdAt:serverTimestamp(), updatedAt:serverTimestamp()
-    };
+function makeExpenseServiceError(code, message, cause = null) {
+  const error = new Error(message || code);
+  error.code = code;
+  if (cause) error.cause = cause;
+  return error;
+}
+function expenseSafePath(path, uid, expenseId) {
+  return String(path || "").replace(String(uid || ""), "[uid]").replace(String(expenseId || ""), "[expenseId]");
+}
+function resolveExpenseReceipt(record = {}) {
+  return {
+    url:String(record.receiptUrl || record.comprobanteUrl || record.imageUrl || record.photoUrl || record.archivoUrl || record.comprobante || "").trim(),
+    path:String(record.receiptPath || record.comprobantePath || record.imagePath || record.photoPath || record.archivoPath || "").trim(),
+    mimeType:String(record.receiptMimeType || record.comprobanteMime || record.mimeType || "").trim(),
+    fileName:String(record.receiptFileName || record.comprobanteNombre || record.fileName || "").trim(),
+    fileSize:Number(record.receiptSize || record.comprobanteTamano || record.fileSize || 0)
+  };
+}
+window.resolveExpenseReceipt = window.ExploraResolveExpenseReceipt = resolveExpenseReceipt;
+
+window.ExploraExpenseStorageService = {
+  async registerExpense(input = {}) {
+    if (expenseSaving) throw makeExpenseServiceError("EXPENSE_ALREADY_SAVING", "Ya existe una carga de gasto en curso.");
+    expenseSaving = true;
+    let uploadSnapshot = null;
     try {
-      const batch = writeBatch(db);
-      batch.set(doc(db, "gastos", expenseId), payload, { merge:false });
-      const indexPayload = buildReceiptIndexPayload({ category:"expense", recordId:expenseId, driverUid:session.uid, ownerUid:session.uid, uploadedByUid:session.uid, uploadedByRole:"driver", weeklyPeriodId:periods.weeklyPeriodId, amount, receipt, status:"uploaded" });
-      batch.set(doc(db, "receipt_index", indexPayload.receiptId), indexPayload, { merge:false });
-      await batch.commit();
-    } catch (error) { await rollbackReceipt(receipt); throw error; }
-    await Promise.resolve(window.ExploraWeeklyEngine?.applyExpense?.(payload));
-    refreshAfter("expense-created", "gastos");
-    return { id:expenseId, ...payload };
-  } finally { expenseSaving = false; }
+      const session = await getSession();
+      const amount = parseCurrencyInput(input.amount);
+      const expenseId = String(input.expenseId || "").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 110);
+      const weeklyPeriodId = String(input.weeklyPeriodId || "").trim();
+      const prepared = input.prepared || {};
+      const blob = prepared.blob;
+      const blobMimeType = String(blob?.type || "").trim().toLowerCase();
+      const extensionByMime = { "image/webp":"webp", "image/jpeg":"jpg", "image/png":"png" };
+      const extension = extensionByMime[blobMimeType] || "";
+      const configuredBucket = String(fb.app?.options?.storageBucket || storage?.app?.options?.storageBucket || "").trim().replace(/^gs:\/\//i, "").replace(/\/+$/, "");
+      let effectiveBucket = "";
+      try { effectiveBucket = String(storageRef(storage, "").bucket || "").trim().replace(/^gs:\/\//i, "").replace(/\/+$/, ""); } catch (_) {}
+      const projectId = String(fb.app?.options?.projectId || storage?.app?.options?.projectId || "").trim();
+      const sameFirebaseApp = Boolean(fb.app && auth?.app === fb.app && db?.app === fb.app && storage?.app === fb.app);
+      const bucketMatches = Boolean(configuredBucket && effectiveBucket && configuredBucket.toLowerCase() === effectiveBucket.toLowerCase());
+      const appCheckDetected = Boolean(fb.appCheck || window.ExploraAppCheck || document.querySelector('script[src*="firebase-app-check"]'));
+      const appCheckStatus = appCheckDetected ? "Sí" : "No determinado";
+
+      input.onStage?.("EXPENSE_STORAGE_INIT", {
+        sdkMode:"modular",
+        sdkVersion:"10.12.5",
+        storageInitialized:Boolean(storage),
+        firestoreInitialized:Boolean(db),
+        configuredBucket,
+        effectiveBucket,
+        bucketConfigured:Boolean(configuredBucket),
+        bucketMatches,
+        projectId,
+        sameFirebaseApp,
+        appCheckStatus,
+        navigatorOnline:navigator.onLine !== false,
+        authenticated:Boolean(auth?.currentUser?.uid),
+        uid:session.uid,
+        weeklyPeriodId
+      });
+
+      if (!storage) throw makeExpenseServiceError("STORAGE_NOT_INITIALIZED", "Firebase Storage no está inicializado.");
+      if (!db) throw makeExpenseServiceError("FIRESTORE_NOT_INITIALIZED", "Cloud Firestore no está inicializado.");
+      if (!sameFirebaseApp) throw makeExpenseServiceError("EXPENSE_FIREBASE_APP_MISMATCH", "Authentication, Firestore y Storage no pertenecen a la misma aplicación Firebase.");
+      if (!configuredBucket) throw makeExpenseServiceError("STORAGE_BUCKET_MISSING", "Firebase Storage no tiene un bucket configurado.");
+      if (!effectiveBucket) throw makeExpenseServiceError("STORAGE_EFFECTIVE_BUCKET_MISSING", "No se pudo leer el bucket efectivo de Firebase Storage.");
+      if (!bucketMatches) throw makeExpenseServiceError("EXPENSE_STORAGE_BUCKET_MISMATCH", "El bucket configurado no coincide con el bucket efectivo.");
+      if (!session.uid || !auth?.currentUser?.uid) throw makeExpenseServiceError("EXPENSE_AUTH_REQUIRED", "No existe una sesión autenticada.");
+      if (session.uid !== auth.currentUser.uid) throw makeExpenseServiceError("EXPENSE_AUTH_UID_MISMATCH", "La sesión activa no coincide con el usuario autenticado.");
+      if (!expenseId) throw makeExpenseServiceError("EXPENSE_ID_MISSING", "No se pudo crear el identificador del gasto.");
+      if (!weeklyPeriodId) throw makeExpenseServiceError("EXPENSE_WEEKLY_PERIOD_MISSING", "No se pudo determinar el período semanal.");
+      if (!input.category) throw makeExpenseServiceError("EXPENSE_CATEGORY_REQUIRED", "Selecciona una categoría.");
+      if (!(amount > 0)) throw makeExpenseServiceError("EXPENSE_AMOUNT_INVALID", "Ingresa un monto válido.");
+      if (!(blob instanceof Blob) || !(blob.size > 0) || !blobMimeType.startsWith("image/")) throw makeExpenseServiceError("EXPENSE_BLOB_INVALID", "El archivo procesado no es un Blob de imagen válido.");
+      if (blob.size > 600 * 1024) throw makeExpenseServiceError("EXPENSE_PROCESSED_TOO_LARGE", "El archivo procesado supera 600 KB.");
+      if (!extension) throw makeExpenseServiceError("EXPENSE_MIME_INVALID", "El MIME procesado no tiene una extensión permitida.");
+      if (prepared.mimeType && String(prepared.mimeType).toLowerCase() !== blobMimeType) throw makeExpenseServiceError("EXPENSE_PROCESSED_MIME_MISMATCH", "El MIME declarado no coincide con el Blob procesado.");
+      if (prepared.extension && String(prepared.extension).toLowerCase().replace(/^jpeg$/, "jpg") !== extension) throw makeExpenseServiceError("EXPENSE_PROCESSED_EXTENSION_MISMATCH", "La extensión procesada no coincide con el MIME del Blob.");
+
+      const path = `gastos/${session.uid}/${expenseId}/comprobante.${extension}`;
+      const pathHasUndefined = /(?:undefined|null|\[object Object\])/i.test(path);
+      const pathIsAbsoluteOrUrl = /^(?:\/|gs:\/\/|https?:\/\/)/i.test(path);
+      const safePath = expenseSafePath(path, session.uid, expenseId);
+      input.onStage?.("EXPENSE_UPLOAD_START", {
+        path,
+        safePath,
+        pathHasUndefined,
+        pathIsAbsoluteOrUrl,
+        blobValid:true,
+        blobConstructor:blob?.constructor?.name || "otro",
+        processedMimeType:blobMimeType,
+        processedExtension:extension,
+        storageInitialized:true,
+        firestoreInitialized:true,
+        configuredBucket,
+        effectiveBucket,
+        bucketMatches,
+        sameFirebaseApp,
+        processedSize:blob.size
+      });
+      if (pathHasUndefined || pathIsAbsoluteOrUrl) throw makeExpenseServiceError("EXPENSE_PATH_INVALID", "La ruta relativa del comprobante no es válida.");
+
+      const fileRef = storageRef(storage, path);
+      const metadata = {
+        contentType:blob.type,
+        customMetadata:{
+          driverUid:String(session.uid),
+          expenseId:String(expenseId),
+          weeklyPeriodId:String(weeklyPeriodId),
+          context:"expense_receipt"
+        }
+      };
+
+      uploadSnapshot = await uploadBytes(fileRef, blob, metadata);
+      input.onStage?.("EXPENSE_UPLOAD_END", {
+        path:uploadSnapshot.ref.fullPath,
+        safePath:expenseSafePath(uploadSnapshot.ref.fullPath, session.uid, expenseId),
+        processedSize:blob.size
+      });
+
+      input.onStage?.("EXPENSE_GET_URL_START", { path:uploadSnapshot.ref.fullPath, safePath });
+      const receiptUrl = await getDownloadURL(uploadSnapshot.ref);
+      if (!receiptUrl) throw makeExpenseServiceError("EXPENSE_GET_URL_EMPTY", "Firebase devolvió una URL vacía.");
+      input.onStage?.("EXPENSE_GET_URL_END", { path:uploadSnapshot.ref.fullPath, safePath, urlAvailable:true });
+
+      const payload = {
+        expenseId,
+        driverUid:session.uid,
+        category:input.category,
+        amount,
+        notes:String(input.notes || "").trim(),
+        weeklyPeriodId,
+        receiptUrl,
+        receiptPath:uploadSnapshot.ref.fullPath,
+        receiptMimeType:blobMimeType,
+        receiptFileName:`comprobante.${extension}`,
+        receiptSize:Number(prepared.processedSize || blob.size),
+        status:"active",
+        createdAt:serverTimestamp(),
+        receiptUploadedAt:serverTimestamp(),
+        updatedAt:serverTimestamp()
+      };
+
+      input.onStage?.("EXPENSE_FIRESTORE_WRITE_START", { path:uploadSnapshot.ref.fullPath, safePath, firestoreInitialized:true });
+      try {
+        const batch = writeBatch(db);
+        batch.set(doc(db, "gastos", expenseId), payload, { merge:false });
+        const indexPayload = buildReceiptIndexPayload({
+          category:"expense",
+          recordId:expenseId,
+          driverUid:session.uid,
+          ownerUid:session.uid,
+          uploadedByUid:session.uid,
+          uploadedByRole:"driver",
+          weeklyPeriodId,
+          amount,
+          receipt:{ fileUrl:receiptUrl, filePath:uploadSnapshot.ref.fullPath, mimeType:blobMimeType, fileName:payload.receiptFileName, fileSize:blob.size },
+          status:"uploaded"
+        });
+        batch.set(doc(db, "receipt_index", indexPayload.receiptId), indexPayload, { merge:false });
+        await batch.commit();
+      } catch (error) {
+        let orphanCleanupStatus = "Falló";
+        try {
+          await deleteObject(uploadSnapshot.ref);
+          orphanCleanupStatus = "Eliminado correctamente";
+        } catch (cleanupError) {
+          orphanCleanupStatus = `No eliminado: ${cleanupError?.code || cleanupError?.message || "error desconocido"}`;
+          console.warn("EXPENSE_ORPHAN_CLEANUP_WARNING", cleanupError?.code || cleanupError?.message);
+        }
+        input.onStage?.("EXPENSE_FIRESTORE_WRITE_START", { path:uploadSnapshot.ref.fullPath, safePath, firestoreInitialized:true, orphanCleanupStatus });
+        throw error;
+      }
+      input.onStage?.("EXPENSE_FIRESTORE_WRITE_END", { path:uploadSnapshot.ref.fullPath, safePath, firestoreRegistered:true, urlAvailable:true, orphanCleanupStatus:"No requerida" });
+      return payload;
+    } finally {
+      expenseSaving = false;
+    }
+  }
+};
+
+window.ExploraRegisterExpense = window.ExploraSaveExpense = async function(input = {}) {
+  if (!input.prepared) {
+    throw makeExpenseServiceError("EXPENSE_DIAGNOSTIC_FLOW_REQUIRED", "Cargar gasto debe utilizar el flujo aislado de diagnóstico.");
+  }
+  return window.ExploraExpenseStorageService.registerExpense(input);
 };
 
 function installmentAmounts(total, count) {
