@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
+  <meta name="explora-version" content="v167-perfil-guardado-estable">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -627,6 +628,7 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
+      padding-bottom: calc(var(--explora-bottom-nav-height, 78px) + env(safe-area-inset-bottom) + 32px);
     }
 
     .profile-header {
@@ -680,10 +682,11 @@
     }
 
     .profile-avatar-preview {
-      width: 88px;
-      height: 88px;
+      width: 112px;
+      height: 112px;
       border-radius: 50%;
       object-fit: cover;
+      object-position: center;
       background: linear-gradient(135deg,#111,#2c2c2c);
       border: 2px solid rgba(245,185,66,.78);
       box-shadow: 0 0 28px rgba(245,185,66,.15);
@@ -811,8 +814,11 @@
     .profile-message {
       min-height: 20px;
       font-size: 14px;
-      line-height: 1.35;
+      line-height: 1.45;
       color: #b6bdc4;
+      overflow-wrap: anywhere;
+      white-space: normal;
+      scroll-margin-bottom: calc(var(--explora-bottom-nav-height, 78px) + env(safe-area-inset-bottom) + 24px);
     }
 
     .profile-message.ok { color: #8ff0b2; }
@@ -1147,8 +1153,7 @@
 
     .expense-type-card:active,
     .expense-submit:active,
-    .expense-upload-zone:active,
-    .expense-confirm-action:active {
+    .expense-upload-zone:active {
       opacity: .84;
     }
 
@@ -1460,88 +1465,6 @@
 
     .expense-message.ok { color: #8ff0b2; }
     .expense-message.err { color: #ffb4b4; }
-
-    .expense-confirm-backdrop {
-      position: fixed;
-      inset: 0;
-      z-index: 75;
-      display: none;
-      place-items: center;
-      padding: 20px;
-      background: rgba(0,0,0,.68);
-    }
-
-    .expense-confirm-backdrop.is-open { display: grid; }
-
-    .expense-confirm-modal {
-      width: min(100%, 420px);
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 24px;
-      background: linear-gradient(180deg,#171b20,#0c0f12);
-      box-shadow: 0 24px 80px rgba(0,0,0,.66);
-      padding: 20px;
-    }
-
-    .expense-confirm-modal h2 {
-      margin: 0 0 12px;
-      color: #fff;
-      font-size: 24px;
-    }
-
-    .expense-confirm-summary {
-      display: grid;
-      gap: 9px;
-      margin: 12px 0 14px;
-    }
-
-    .expense-confirm-line {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      color: #c7cbd1;
-      font-size: 14px;
-    }
-
-    .expense-confirm-line b {
-      color: #fff;
-      text-align: right;
-      word-break: break-word;
-    }
-
-    .expense-confirm-question {
-      color: #f3c45d;
-      font-weight: 850;
-      margin: 14px 0;
-    }
-
-    .expense-confirm-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 14px;
-    }
-
-    .expense-confirm-action {
-      min-height: 48px;
-      border-radius: 15px;
-      border: 1px solid rgba(255,255,255,.12);
-      font-size: 15px;
-      font-weight: 900;
-      cursor: pointer;
-    }
-
-    .expense-confirm-cancel {
-      background: #20252b;
-      color: #fff;
-    }
-
-    .expense-confirm-primary {
-      background: linear-gradient(180deg,#f5c553,#d99b25);
-      color: #111;
-      border-color: #e7b13e;
-    }
-
-    .expense-confirm-action:disabled { opacity: .65; cursor: not-allowed; }
 
     @media (max-width: 390px) {
       .expense-screen { padding-left: 12px; padding-right: 12px; }
@@ -4646,11 +4569,11 @@
           <button type="button" data-action="detalle-financiero" class="section-link-real">Ver detalle financiero ›</button>
         </header>
         <div class="finance-grid-real">
-          <button type="button" class="finance-card-real finance-green" data-action="facturacion-semanal">
+          <button type="button" class="finance-card-real finance-green" data-action="facturacion-semanal" data-billing-state="loading" aria-live="polite">
             <span class="finance-label-real"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10"/></svg>FACTURACIÓN SEMANAL</span>
-            <strong id="dashboardWeeklyRevenue">$0</strong>
-            <small id="dashboardWeeklyRevenueMeta">Esta semana</small>
-            <svg class="sparkline-real" viewBox="0 0 120 34" aria-hidden="true"><path d="M2 29 C18 27 20 18 33 21 S50 28 62 18 83 8 98 13 110 6 118 3"/></svg>
+            <strong id="dashboardWeeklyRevenue">Cargando…</strong>
+            <small id="dashboardWeeklyRevenueMeta">Consultando semana activa</small>
+            <svg class="sparkline-real" viewBox="0 0 120 34" aria-hidden="true"><path id="dashboardWeeklyRevenueSparklinePath" d="M2 28 L118 28"/></svg>
           </button>
           <button type="button" class="finance-card-real finance-red" data-action="gastos-semanales">
             <span class="finance-label-real"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10"/></svg>GASTOS SEMANALES</span>
@@ -4765,7 +4688,7 @@
 
           <div class="profile-field">
             <label for="profileEmailInput">Correo electrónico</label>
-            <input id="profileEmailInput" type="email" readonly disabled />
+            <input id="profileEmailInput" type="email" readonly aria-readonly="true" tabindex="-1" />
           </div>
 
           <div class="profile-readonly-grid">
@@ -4810,7 +4733,7 @@
           <b>Subir comprobante</b>
           <small>Seleccionar foto o archivo</small>
         </label>
-        <input id="weeklyClosureFileInput" type="file" accept="image/jpeg,image/png,application/pdf" hidden />
+        <input id="weeklyClosureFileInput" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" hidden />
 
         <div id="weeklyClosurePreview" class="weekly-closure-preview" hidden></div>
         <div id="weeklyClosureMsg" class="weekly-closure-msg" role="status" aria-live="polite"></div>
@@ -4952,7 +4875,7 @@
 
           <div class="expense-form-section">
             <label>Comprobante</label>
-            <input id="expenseFileInput" class="expense-file-input" type="file" accept="image/jpeg,image/png,application/pdf" />
+            <input id="expenseFileInput" class="expense-file-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" />
             <button id="expenseUploadBtn" type="button" class="expense-upload-zone" aria-label="Subir comprobante">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 18a5 5 0 0 0 0-10 6 6 0 0 0-11.5 2A4 4 0 0 0 6 18h11"/><path d="M12 12v8"/><path d="m8 16 4-4 4 4"/></svg>
               <span><b>Subir comprobante</b><small>Toca para seleccionar o tomar foto</small></span>
@@ -4962,7 +4885,7 @@
               <div class="expense-preview-info"><b id="expensePreviewName"></b><small id="expensePreviewSize"></small></div>
               <button id="expenseRemoveFileBtn" type="button" class="expense-remove-file" aria-label="Eliminar comprobante">×</button>
             </div>
-            <p class="expense-help">Formatos permitidos: JPG, PNG, PDF. Máx. 10 MB</p>
+            <p class="expense-help">Formatos permitidos: JPG, PNG, WebP, PDF. Máx. 10 MB</p>
           </div>
 
           <div class="expense-form-section">
@@ -4980,20 +4903,6 @@
       </form>
     </div>
   </section>
-
-  <div id="expenseConfirmBackdrop" class="expense-confirm-backdrop" aria-hidden="true">
-    <section class="expense-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="expenseConfirmTitle">
-      <h2 id="expenseConfirmTitle">Confirmar gasto</h2>
-      <div id="expenseConfirmSummary" class="expense-confirm-summary"></div>
-      <p class="expense-confirm-question">¿Confirmas que deseas registrar este gasto?</p>
-      <div class="expense-confirm-actions">
-        <button id="expenseConfirmCancelBtn" type="button" class="expense-confirm-action expense-confirm-cancel">Cancelar</button>
-        <button id="expenseConfirmSaveBtn" type="button" class="expense-confirm-action expense-confirm-primary">Confirmar gasto</button>
-      </div>
-    </section>
-  </div>
-
-
 
   <section id="receiptsScreen" class="receipts-screen" aria-label="Comprobantes" aria-hidden="true" data-view="main">
     <div class="receipts-shell">
@@ -5151,10 +5060,10 @@
         "cargar-gastos": ["Cargar gastos", "Aquí se conectará el formulario para registrar un nuevo gasto."],
         "derivar-servicio": ["Derivar servicio", "Aquí se conectará la selección de chofer y la derivación del servicio."],
         "detalle-financiero": ["Detalle financiero", "Aquí se mostrará el resumen económico completo."],
-        "facturacion-semanal": ["Facturación semanal", "Facturación mostrada en la maqueta: $1.250.000."],
+        "facturacion-semanal": ["Facturación semanal", "Abriendo el detalle de la semana activa."],
         "gastos-semanales": ["Gastos semanales", "Los gastos registrados durante esta semana son $280.000."],
         "comprobantes": ["Comprobantes", "Aquí se listarán y gestionarán los comprobantes."],
-        "resumen-servicios": ["Servicios realizados", "Esta semana se registran 18 servicios."],
+        "resumen-servicios": ["Servicios realizados", "Abriendo los servicios reales de la semana activa."],
         "resumen-comprobantes": ["Resumen de comprobantes", "Hay 12 comprobantes y 1 pendiente."],
         "resumen-gastos": ["Gastos semanales", "Los gastos mostrados son $280.000."],
         "objetivo-semanal": ["Objetivo semanal", "El objetivo se encuentra completado en un 82%."],
@@ -5610,6 +5519,7 @@
         filePreviewUrl: "",
         amount: 0,
         saving: false,
+        operationId: "",
         previousScrollY: 0
       };
 
@@ -5661,7 +5571,6 @@
       }
 
       function closeExpenseScreen() {
-        closeExpenseConfirm();
         screen.classList.remove("is-open");
         screen.setAttribute("aria-hidden", "true");
         lockBody(false);
@@ -5677,7 +5586,18 @@
       }
 
       function onlyDigits(value) {
-        return String(value || "").replace(/\D/g, "");
+        return String(value || "").replace(/[^\d]/g, "");
+      }
+
+      function parseExpenseAmount(value) {
+        const normalized = String(value ?? "")
+          .replace(/\$/g, "")
+          .replace(/\s/g, "")
+          .replace(/\./g, "")
+          .replace(/,/g, ".")
+          .replace(/[^0-9.]/g, "");
+        const amount = Number(normalized);
+        return Number.isFinite(amount) && amount > 0 ? Math.round(amount) : 0;
       }
 
       function formatAmount(value) {
@@ -5687,8 +5607,18 @@
       }
 
       function parseAmount() {
-        const raw = onlyDigits($("expenseAmountInput").value);
-        return raw ? Number(raw) : 0;
+        return parseExpenseAmount($("expenseAmountInput").value);
+      }
+
+      function invalidateExpenseOperation() {
+        if (!expenseState.saving) expenseState.operationId = "";
+      }
+
+      function createExpenseOperationId() {
+        if (expenseState.operationId) return expenseState.operationId;
+        const random = globalThis.crypto?.randomUUID?.() || `exp-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+        expenseState.operationId = String(random).replace(/[^a-zA-Z0-9_-]/g, "");
+        return expenseState.operationId;
       }
 
       function formatBytes(bytes) {
@@ -5706,6 +5636,7 @@
 
       function clearSelectedFile() {
         revokePreviewUrl();
+        invalidateExpenseOperation();
         expenseState.file = null;
         const input = $("expenseFileInput");
         if (input) input.value = "";
@@ -5717,11 +5648,11 @@
 
       function validateFile(file) {
         if (!file) throw new Error("Selecciona un comprobante.");
-        const allowed = ["image/jpeg", "image/png", "application/pdf"];
+        const allowed = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
         const name = String(file.name || "").toLowerCase();
-        const extOk = name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".png") || name.endsWith(".pdf");
+        const extOk = name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".png") || name.endsWith(".webp") || name.endsWith(".pdf");
         if (!allowed.includes(file.type) && !extOk) {
-          throw new Error("Formato no permitido. Selecciona una imagen JPG, PNG o un archivo PDF.");
+          throw new Error("Formato no permitido. Selecciona una imagen JPG, PNG, WebP o un archivo PDF.");
         }
         if (file.size > 10 * 1024 * 1024) {
           throw new Error("El comprobante supera el máximo permitido de 10 MB.");
@@ -5759,32 +5690,27 @@
         return { type: expenseState.selectedType, amount, notes, file: expenseState.file };
       }
 
-      function openExpenseConfirm(data) {
-        $("expenseConfirmSummary").innerHTML = `
-          <div class="expense-confirm-line"><span>Tipo</span><b>${typeLabels[data.type] || data.type}</b></div>
-          <div class="expense-confirm-line"><span>Monto</span><b>$${data.amount.toLocaleString("es-AR")}</b></div>
-          <div class="expense-confirm-line"><span>Comprobante</span><b>${data.file.name || "Archivo"}</b></div>
-          <div class="expense-confirm-line"><span>Observaciones</span><b>${data.notes || "Sin observaciones"}</b></div>
-        `;
-        $("expenseConfirmSaveBtn").disabled = false;
-        $("expenseConfirmSaveBtn").textContent = "Confirmar gasto";
-        $("expenseConfirmBackdrop").classList.add("is-open");
-        $("expenseConfirmBackdrop").setAttribute("aria-hidden", "false");
+      function setExpenseLoading(isLoading) {
+        expenseState.saving = Boolean(isLoading);
+        const button = $("expenseSubmitBtn");
+        if (!button) return;
+        button.disabled = Boolean(isLoading);
+        button.setAttribute("aria-busy", isLoading ? "true" : "false");
+        const label = button.querySelector("span");
+        if (label) label.textContent = isLoading ? "CARGANDO GASTO…" : "CARGAR GASTO";
       }
 
-      function closeExpenseConfirm() {
-        const backdrop = $("expenseConfirmBackdrop");
-        if (!backdrop) return;
-        backdrop.classList.remove("is-open");
-        backdrop.setAttribute("aria-hidden", "true");
-      }
-
-      function setSaving(isSaving) {
-        expenseState.saving = !!isSaving;
-        $("expenseSubmitBtn").disabled = !!isSaving;
-        $("expenseConfirmSaveBtn").disabled = !!isSaving;
-        $("expenseSubmitBtn").querySelector("span").textContent = isSaving ? "GUARDANDO…" : "CARGAR GASTO";
-        $("expenseConfirmSaveBtn").textContent = isSaving ? "Guardando…" : "Confirmar gasto";
+      function restoreExpenseInteractionState() {
+        setExpenseLoading(false);
+        const form = $("expenseForm");
+        if (form) {
+          form.removeAttribute("inert");
+          form.style.pointerEvents = "";
+          form.style.touchAction = "";
+        }
+        screen.classList.remove("is-saving", "is-loading");
+        screen.style.pointerEvents = "";
+        screen.style.touchAction = "pan-y";
       }
 
       function resetExpenseForm() {
@@ -5792,59 +5718,65 @@
         $("expenseNotesInput").value = "";
         $("expenseNotesCounter").textContent = "0/150";
         clearSelectedFile();
+        expenseState.operationId = "";
         selectExpenseType("combustible");
       }
 
-      async function submitExpense() {
-        if (expenseState.saving) return;
-        let data;
-        try {
-          data = validateExpenseForm();
-        } catch (error) {
-          setExpenseMsg(error.message || "Revisa los datos del gasto.", "err");
-          return;
-        }
-        openExpenseConfirm(data);
+      function mapExpenseError(error) {
+        const code = String(error?.code || error?.message || "");
+        if (code.includes("AUTH") || code.includes("SESSION") || code.includes("PRIVATE_SESSION")) return "No se pudo verificar tu sesión. Vuelve a intentarlo.";
+        if (code.includes("AMOUNT") || code.includes("Monto") || code.includes("monto")) return "Ingresa un monto válido.";
+        if (code.includes("FORMAT") || code.includes("IMAGE") || code.includes("FILE") || code.includes("comprobante")) return error?.message || "No se pudo procesar el comprobante.";
+        if (code.includes("UPLOAD") || code.includes("storage/")) return "No se pudo subir el comprobante.";
+        if (code.includes("WRITE") || code.includes("firestore") || code.includes("permission-denied")) return "No se pudo guardar el gasto.";
+        if (code.includes("network") || code.includes("NETWORK")) return "No hay conexión. Revisa Internet e inténtalo nuevamente.";
+        if (code.includes("TIMEOUT")) return "La carga está demorando demasiado. Inténtalo nuevamente.";
+        return error?.message || "No se pudo guardar el gasto.";
       }
 
-      async function confirmExpenseSave() {
+      async function handleExpenseSubmit(event) {
+        event.preventDefault();
         if (expenseState.saving) return;
+
         let data;
         try {
+          console.info("EXPENSE_SUBMIT");
           data = validateExpenseForm();
+          console.info("VALIDATION_OK");
         } catch (error) {
           setExpenseMsg(error.message || "Revisa los datos del gasto.", "err");
-          closeExpenseConfirm();
           return;
         }
 
-        setSaving(true);
-        setExpenseMsg("Guardando gasto…");
+        const operationId = createExpenseOperationId();
+        setExpenseLoading(true);
+        setExpenseMsg("Cargando gasto…");
+
         try {
           if (typeof window.ExploraRegisterExpense !== "function") {
-            throw new Error("Firebase aún no está disponible para registrar gastos.");
+            throw new Error("EXPENSE_MODULE_UNAVAILABLE");
           }
-          await window.ExploraRegisterExpense({
+          const result = await window.ExploraRegisterExpense({
+            operationId,
             tipo: data.type,
             tipoLabel: typeLabels[data.type] || data.type,
             monto: data.amount,
             observaciones: data.notes,
             comprobante: data.file
           });
-          closeExpenseConfirm();
-          setExpenseMsg("Gasto cargado correctamente", "ok");
+
+          console.info("EXPENSE_UI_SUCCESS");
+          setExpenseMsg(result?.accumulatorWarning
+            ? "Gasto cargado correctamente. Los totales se actualizarán en breve."
+            : "Gasto cargado correctamente.", "ok");
           toast("Gasto cargado correctamente");
           resetExpenseForm();
         } catch (error) {
-          const code = String(error && (error.code || error.message) || "");
-          const message = code.includes("AUTH_SESSION") || code.includes("PRIVATE_SESSION")
-            ? "No se pudo validar la sesión. Espera un momento e inténtalo nuevamente."
-            : code.includes("TIMEOUT")
-              ? "El guardado está demorando demasiado. Revisa tu conexión."
-              : (error.message || "No se pudo guardar el gasto.");
-          setExpenseMsg(message, "err");
+          console.warn("EXPENSE_ERROR", error?.code || error?.message);
+          setExpenseMsg(mapExpenseError(error), "err");
         } finally {
-          setSaving(false);
+          console.info("EXPENSE_FINALLY");
+          restoreExpenseInteractionState();
         }
       }
 
@@ -5861,13 +5793,17 @@
         $("expenseBackBtn").addEventListener("click", closeExpenseScreen);
         $("expenseTypeGrid").addEventListener("click", (event) => {
           const card = event.target.closest("[data-expense-type]");
-          if (card) selectExpenseType(card.dataset.expenseType);
+          if (card) {
+            invalidateExpenseOperation();
+            selectExpenseType(card.dataset.expenseType);
+          }
         });
         $("expenseAmountInput").addEventListener("input", (event) => {
-          const formatted = formatAmount(event.target.value);
-          event.target.value = formatted;
+          invalidateExpenseOperation();
+          event.target.value = formatAmount(event.target.value);
         });
         $("expenseClearAmountBtn").addEventListener("click", () => {
+          invalidateExpenseOperation();
           $("expenseAmountInput").value = "";
           $("expenseAmountInput").focus();
         });
@@ -5875,21 +5811,13 @@
         $("expenseFileInput").addEventListener("change", (event) => handleExpenseFileSelection(event.target.files && event.target.files[0]));
         $("expenseRemoveFileBtn").addEventListener("click", clearSelectedFile);
         $("expenseNotesInput").addEventListener("input", (event) => {
+          invalidateExpenseOperation();
           if (event.target.value.length > 150) event.target.value = event.target.value.slice(0, 150);
           $("expenseNotesCounter").textContent = event.target.value.length + "/150";
         });
-        $("expenseForm").addEventListener("submit", (event) => {
-          event.preventDefault();
-          submitExpense();
-        });
-        $("expenseConfirmCancelBtn").addEventListener("click", closeExpenseConfirm);
-        $("expenseConfirmSaveBtn").addEventListener("click", confirmExpenseSave);
-        $("expenseConfirmBackdrop").addEventListener("click", (event) => {
-          if (event.target.id === "expenseConfirmBackdrop") closeExpenseConfirm();
-        });
+        $("expenseForm").addEventListener("submit", handleExpenseSubmit);
         document.addEventListener("keydown", (event) => {
-          if (event.key === "Escape" && $("expenseConfirmBackdrop").classList.contains("is-open")) closeExpenseConfirm();
-          else if (event.key === "Escape" && screen.classList.contains("is-open")) closeExpenseScreen();
+          if (event.key === "Escape" && screen.classList.contains("is-open") && !expenseState.saving) closeExpenseScreen();
         });
       });
     })();
@@ -6636,6 +6564,29 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       return String(name || "Chofer").trim().split(/\s+/)[0] || "Chofer";
     }
 
+    function profileVehicleLabel(vehicle, profile = exploraSession.profile || {}) {
+      const driverName = String(getProfileName(profile, exploraSession.authUser) || "").trim().toLowerCase();
+      const username = String(profile.usuario || profile.username || exploraSession.driverId || "").trim().toLowerCase();
+      const source = vehicle && typeof vehicle === "object" ? vehicle : {};
+      const make = String(source.marca || source.brand || "").trim();
+      const model = String(source.modelo || source.model || source.marcaModelo || source.tipoVehiculo || source.tipo || "").trim();
+      const plate = String(source.patente || source.matricula || source.dominio || source.plate || "").trim();
+      const embeddedModel = String(profile.modeloVehiculo || profile.vehiculoModelo || profile.autoModelo || profile.marcaModelo || "").trim();
+      const embeddedMake = String(profile.marcaVehiculo || profile.vehiculoMarca || profile.autoMarca || "").trim();
+      const embeddedPlate = String(profile.patenteVehiculo || profile.vehiculoPatente || profile.autoPatente || profile.patente || profile.matricula || "").trim();
+      let resolvedModel = [make, model].filter(Boolean).join(" ").trim() || [embeddedMake, embeddedModel].filter(Boolean).join(" ").trim();
+      let resolvedPlate = plate || embeddedPlate;
+      const isDriverText = (value) => {
+        const normalized = String(value || "").trim().toLowerCase();
+        return normalized && (normalized === driverName || normalized === username);
+      };
+      if (isDriverText(resolvedModel)) resolvedModel = "";
+      if (isDriverText(resolvedPlate)) resolvedPlate = "";
+      if (!resolvedModel && !resolvedPlate) return "Vehículo no asignado";
+      if (resolvedModel && resolvedPlate) return `${resolvedModel} · ${resolvedPlate}`;
+      return resolvedModel || resolvedPlate;
+    }
+
     function applyDriverGreeting(name, vehicle) {
       const greetingName = $("driverGreetingName");
       const greetingDate = $("driverGreetingDate");
@@ -6678,7 +6629,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       if (profilePhone) profilePhone.value = phone;
       if (profileEmail) profileEmail.value = email;
       if (profileDriverId) profileDriverId.textContent = exploraSession.driverId || "—";
-      if (profileVehicle) profileVehicle.textContent = vehicleLabel(vehicle);
+      if (profileVehicle) profileVehicle.textContent = profileVehicleLabel(vehicle, profile);
     }
 
     function clearDriverVisuals() {
@@ -7832,6 +7783,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     }
 
     function resetCurrentSessionUI() {
+      window.ExploraStopWeeklyBilling?.();
       authSessionState.profile = null;
       authSessionState.role = null;
       authSessionState.uiOpened = false;
@@ -8623,22 +8575,10 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       if (!auth.currentUser || !exploraSession.driverId) return;
       const driverId = String(exploraSession.driverId || "").toLowerCase();
       const uid = String(auth.currentUser.uid || "").toLowerCase();
-      let revenue = 0, expenses = 0, trips = 0, expenseCount = 0, receipts = 0;
+      let expenses = 0, expenseCount = 0, receipts = 0;
 
-      try {
-        const viajesSnap = await getDocs(collection(db, "viajes"));
-        viajesSnap.forEach((snap) => {
-          const data = snap.data() || {};
-          const values = [data.chofer, data.choferId, data.usuario, data.uid, data.choferUid]
-            .map(v => String(v || "").toLowerCase());
-          if (!values.includes(driverId) && !values.includes(uid)) return;
-          const estado = String(data.estado || "").toLowerCase();
-          if (["cancelado","rechazado","eliminado"].includes(estado)) return;
-          trips += 1;
-          revenue += Number(data.valor || data.monto || data.tarifaMinima || data.precio || 0);
-        });
-      } catch (_) {}
-
+      // La facturación y la cantidad de servicios se escriben exclusivamente desde
+      // renderWeeklyBillingCard(), usando el UID autenticado y el período del Ranking.
       try {
         const gastosSnap = await getDocs(collection(db, "gastos"));
         gastosSnap.forEach((snap) => {
@@ -8664,14 +8604,12 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         }
       } catch (_) {}
 
-      setText("dashboardWeeklyRevenue", formatMoneyAR(revenue));
       setText("dashboardWeeklyExpenses", formatMoneyAR(expenses));
-      setText("dashboardTripsCount", String(trips));
       setText("dashboardReceiptsCount", String(receipts));
       setText("dashboardExpenseCount", String(expenseCount));
       setText("dashboardReceiptsMeta", receipts ? `${receipts} comprobantes` : "Ver y gestionar comprobantes");
-      setText("dashboardWeeklyRevenueMeta", trips ? `${trips} servicios registrados` : "Sin servicios esta semana");
       setText("dashboardWeeklyExpensesMeta", expenseCount ? `${expenseCount} gastos registrados` : "Sin gastos esta semana");
+      window.ExploraEnsureWeeklyBilling?.();
     }
 
     window.ExploraActions = window.ExploraActions || {};
@@ -9082,6 +9020,95 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       el.className = "profile-message" + (type ? " " + type : "");
     }
 
+    function createProfileSaveError(code, cause = null) {
+      const error = new Error(code);
+      error.code = code;
+      if (cause) error.cause = cause;
+      return error;
+    }
+
+    function profileDiagnostic(stage, detail = {}) {
+      try { console.info(`[EXPLORA profile] ${stage}`, detail); } catch (_) {}
+    }
+
+    function mapProfileSaveError(error) {
+      const code = String((error && (error.code || error.message)) || "");
+      const lower = code.toLowerCase();
+      if (lower.includes("auth_required") || lower.includes("auth_session") || lower.includes("user-token-expired")) {
+        return "No se pudo verificar tu sesión. Vuelve a ingresar.";
+      }
+      if (lower.includes("profile_not_found") || lower.includes("invalid_profile_document")) {
+        return "No se encontró el perfil asociado a tu cuenta.";
+      }
+      if (lower.includes("permission-denied") || lower.includes("profile_permission_denied")) {
+        return "No tienes permisos para actualizar estos datos.";
+      }
+      if (lower.includes("storage/unauthorized") || lower.includes("storage_permission_denied")) {
+        return "No se pudo subir la fotografía por falta de permisos.";
+      }
+      if (lower.includes("invalid_image") || lower.includes("image_too_large")) {
+        return lower.includes("too_large") ? "La imagen es demasiado grande. Selecciona otra fotografía." : "Selecciona una imagen JPG, PNG o WebP válida.";
+      }
+      if (lower.includes("image_") || lower.includes("canvas")) {
+        return "No se pudo procesar la fotografía seleccionada.";
+      }
+      if (lower.includes("storage/") || lower.includes("avatar_upload") || lower.includes("image_upload_failed")) {
+        return "No se pudo subir la fotografía.";
+      }
+      if (lower.includes("profile_update") || lower.includes("firestore") || lower.includes("not-found")) {
+        return "No se pudieron guardar los cambios del perfil.";
+      }
+      if (lower.includes("network") || lower.includes("unavailable")) {
+        return "No hay conexión. Revisa Internet e inténtalo nuevamente.";
+      }
+      if (lower.includes("timeout")) {
+        return "El guardado está demorando demasiado. Inténtalo nuevamente.";
+      }
+      return "No se pudieron guardar los cambios del perfil.";
+    }
+
+    async function resolveWritableProfileDocument(authenticated) {
+      const user = authenticated && authenticated.user;
+      if (!user || !user.uid) throw createProfileSaveError("AUTH_REQUIRED");
+      let profileRef = authenticated.profileRef || exploraSession.profileRef || null;
+      const profileDocumentId = String(authenticated.profileDocumentId || exploraSession.driverId || "").trim();
+      if (!profileRef && profileDocumentId) profileRef = doc(db, "choferes", profileDocumentId);
+      if (!profileRef) throw createProfileSaveError("PROFILE_NOT_FOUND");
+      const snap = await profileWithTimeout(getDoc(profileRef), 8000, "PROFILE_RESOLVE_TIMEOUT");
+      if (!snap.exists()) throw createProfileSaveError("PROFILE_NOT_FOUND");
+      const data = snap.data() || {};
+      const declaredUid = String(data.uid || data.authUid || data.firebaseUid || data.userId || "").trim();
+      if (declaredUid && declaredUid !== user.uid) throw createProfileSaveError("INVALID_PROFILE_DOCUMENT");
+      const declaredEmail = String(data.email || data.correo || "").trim().toLowerCase();
+      const authEmail = String(user.email || "").trim().toLowerCase();
+      if (!declaredUid && declaredEmail && authEmail && declaredEmail !== authEmail) {
+        throw createProfileSaveError("INVALID_PROFILE_DOCUMENT");
+      }
+      return { profileRef, profileDocumentId: snap.id, profile: data };
+    }
+
+    function chooseExistingField(data, candidates, fallback) {
+      return candidates.find((key) => Object.prototype.hasOwnProperty.call(data || {}, key)) || fallback;
+    }
+
+    function buildSafeProfileUpdates(currentProfile, values) {
+      const nameKey = chooseExistingField(currentProfile, ["nombre", "nombreCompleto", "displayName", "name"], "nombre");
+      const phoneKey = chooseExistingField(currentProfile, ["telefono", "phone", "celular"], "telefono");
+      const updates = {
+        [nameKey]: values.name,
+        [phoneKey]: values.phone
+      };
+      if (values.changedAvatar) {
+        const avatarKey = chooseExistingField(currentProfile, ["avatarUrl", "fotoPerfil", "avatar", "foto", "photoURL"], "avatarUrl");
+        const pathKey = chooseExistingField(currentProfile, ["avatarPath", "avatarStoragePath", "fotoPerfilPath", "fotoPath"], "avatarPath");
+        updates[avatarKey] = values.avatarUrl;
+        updates[pathKey] = values.avatarPath;
+        updates.avatarUpdatedAt = serverTimestamp();
+        updates.avatarVersion = values.avatarVersion;
+      }
+      return { updates, nameKey, phoneKey };
+    }
+
     function getProfileAvatarPath(data = {}) {
       return String(data.avatarPath || data.avatarStoragePath || data.fotoPerfilPath || data.fotoPath || "").trim();
     }
@@ -9286,10 +9313,11 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       }));
     }
 
-    async function deletePreviousAvatarSafely(oldPath, newPath) {
+    async function deletePreviousAvatarSafely(oldPath, newPath, uid = "") {
       const oldClean = String(oldPath || "").trim();
+      const uidClean = String(uid || "").trim();
       if (!oldClean || oldClean === newPath) return;
-      if (!oldClean.startsWith("avatars/")) return;
+      if (!uidClean || !oldClean.startsWith(`avatars/${uidClean}/`)) return;
       try {
         await profileWithTimeout(deleteObject(storageRef(storage, oldClean)), 15000, "OLD_AVATAR_DELETE_TIMEOUT");
       } catch (error) {
@@ -9300,34 +9328,15 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     async function saveProfileChanges(event) {
       event.preventDefault();
       if (profileState.saving) return;
+
       const name = String($("profileNameInput")?.value || "").trim().replace(/\s+/g, " ");
       const phone = String($("profilePhoneInput")?.value || "").trim();
-      if (!name) return profileMsg("El nombre no puede estar vacío.", "err");
-      if (!isValidPhone(phone)) return profileMsg("Revisá el teléfono.", "err");
-
-      let authenticated;
-      try {
-        authenticated = await getAuthenticatedSession({ timeoutMs: 7000 });
-      } catch (_) {
-        return profileMsg("No se pudo validar la sesión. Vuelve a intentarlo.", "err");
-      }
-      const user = authenticated.user;
-      const uid = authenticated.uid;
-      const profileRef = authenticated.profileRef || exploraSession.profileRef || (exploraSession.driverId ? doc(db, "choferes", exploraSession.driverId) : null);
-      if (!profileRef) return profileMsg("No se encontró el perfil para guardar los cambios.", "err");
-
-      const btn = $("profileSaveBtn");
-      const oldProfile = exploraSession.profile || {};
-      const oldAvatarUrl = getProfileAvatarUrl(oldProfile, user);
-      const oldAvatarPath = getProfileAvatarPath(oldProfile);
-      const changedAvatar = Boolean(profileState.selectedFile);
-      let newAvatarPath = oldAvatarPath;
-      let newAvatarUrl = oldAvatarUrl;
-      let uploadedNewPath = "";
-      let finalMessage = "";
-      let finalType = "";
+      if (!name || name.length < 2 || !/[\p{L}]/u.test(name)) return profileMsg("Ingresa un nombre válido.", "err");
+      if (name.length > 80) return profileMsg("El nombre es demasiado largo.", "err");
+      if (!isValidPhone(phone)) return profileMsg("Revisa el número de teléfono.", "err");
 
       profileState.saving = true;
+      const btn = $("profileSaveBtn");
       if (btn) {
         btn.disabled = true;
         btn.textContent = "Guardando…";
@@ -9336,94 +9345,134 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       document.body.classList.add("profile-saving");
       document.body.setAttribute("aria-busy", "true");
       profileMsg("Guardando cambios…");
+      profileDiagnostic("PROFILE_SAVE_START", { hasNewImage: Boolean(profileState.selectedFile) });
+
+      let uploadedNewPath = "";
+      let oldAvatarPath = "";
+      let finalMessage = "";
+      let finalType = "";
 
       try {
-        await profileWithTimeout((async () => {
-          if (changedAvatar) {
-            const processed = await profileWithTimeout(compressProfileAvatar(profileState.selectedFile), 10000, "IMAGE_PROCESS_TIMEOUT");
-            newAvatarPath = `avatars/${uid}/profile-${Date.now()}.${processed.extension}`;
-            uploadedNewPath = newAvatarPath;
-            const fileRef = storageRef(storage, newAvatarPath);
-            await profileWithTimeout(uploadBytes(fileRef, processed.blob, {
-              contentType: processed.contentType,
+        const authenticated = await getAuthenticatedSession({ timeoutMs: 8000 }).catch((error) => {
+          throw createProfileSaveError("AUTH_REQUIRED", error);
+        });
+        profileDiagnostic("PROFILE_SESSION_OK", { uidPresent: Boolean(authenticated && authenticated.uid) });
+
+        const resolved = await resolveWritableProfileDocument(authenticated);
+        profileDiagnostic("PROFILE_DOCUMENT_RESOLVED", { documentIdPresent: Boolean(resolved.profileDocumentId) });
+        const user = authenticated.user;
+        const uid = authenticated.uid;
+        const currentProfile = resolved.profile || {};
+        oldAvatarPath = getProfileAvatarPath(currentProfile);
+        const oldAvatarUrl = getProfileAvatarUrl(currentProfile, user);
+        const changedAvatar = Boolean(profileState.selectedFile);
+        let newAvatarPath = oldAvatarPath;
+        let newAvatarUrl = oldAvatarUrl;
+        let processedImage = null;
+        profileDiagnostic("PROFILE_VALIDATION_OK", { changedAvatar });
+
+        if (changedAvatar) {
+          profileDiagnostic("PROFILE_IMAGE_COMPRESS_START");
+          processedImage = await profileWithTimeout(compressProfileAvatar(profileState.selectedFile), 12000, "IMAGE_PROCESS_TIMEOUT");
+          profileDiagnostic("PROFILE_IMAGE_COMPRESS_SUCCESS", { bytes: processedImage.blob.size, type: processedImage.contentType });
+
+          newAvatarPath = `avatars/${uid}/profile-${Date.now()}.${processedImage.extension}`;
+          uploadedNewPath = newAvatarPath;
+          const fileRef = storageRef(storage, newAvatarPath);
+          profileDiagnostic("PROFILE_UPLOAD_START", { pathOwnedByUser: newAvatarPath.startsWith(`avatars/${uid}/`) });
+          try {
+            await profileWithTimeout(uploadBytes(fileRef, processedImage.blob, {
+              contentType: processedImage.contentType,
               customMetadata: {
-                owner: uid,
-                source: "explora-profile",
-                updatedAt: String(Date.now())
+                ownerUid: uid,
+                type: "profile-avatar"
               }
             }), 30000, "AVATAR_UPLOAD_TIMEOUT");
-            newAvatarUrl = await profileWithTimeout(getDownloadURL(fileRef), 10000, "AVATAR_URL_TIMEOUT");
+          } catch (error) {
+            if (String(error && error.code || "").includes("unauthorized")) throw createProfileSaveError("STORAGE_PERMISSION_DENIED", error);
+            throw createProfileSaveError("IMAGE_UPLOAD_FAILED", error);
           }
+          profileDiagnostic("PROFILE_UPLOAD_SUCCESS");
+          newAvatarUrl = await profileWithTimeout(getDownloadURL(fileRef), 10000, "AVATAR_URL_TIMEOUT");
+          if (!newAvatarUrl) throw createProfileSaveError("IMAGE_UPLOAD_FAILED");
+          profileDiagnostic("PROFILE_URL_SUCCESS");
+        }
 
-          const avatarVersion = Date.now();
-          const payload = {
-            nombre: name,
-            telefono: phone,
-            actualizado: serverTimestamp(),
-            actualizadoEn: serverTimestamp()
-          };
-          if (changedAvatar) {
-            payload.avatarUrl = newAvatarUrl;
-            payload.fotoPerfil = newAvatarUrl;
-            payload.avatarPath = newAvatarPath;
-            payload.avatarUpdatedAt = serverTimestamp();
-            payload.avatarVersion = avatarVersion;
-            payload.avatarMime = processed.contentType;
-          }
+        const avatarVersion = Date.now();
+        const safe = buildSafeProfileUpdates(currentProfile, {
+          name,
+          phone,
+          changedAvatar,
+          avatarUrl: newAvatarUrl,
+          avatarPath: newAvatarPath,
+          avatarVersion
+        });
 
-          try {
-            await profileWithTimeout(setDoc(profileRef, payload, { merge: true }), 15000, "PROFILE_UPDATE_TIMEOUT");
-          } catch (firestoreError) {
-            if (uploadedNewPath && uploadedNewPath !== oldAvatarPath) {
-              deleteObject(storageRef(storage, uploadedNewPath)).catch(() => {});
-            }
-            throw firestoreError;
-          }
+        profileDiagnostic("PROFILE_FIRESTORE_START", { updatedFields: Object.keys(safe.updates) });
+        try {
+          await profileWithTimeout(updateDoc(resolved.profileRef, safe.updates), 15000, "PROFILE_UPDATE_TIMEOUT");
+        } catch (error) {
+          if (uploadedNewPath) deleteObject(storageRef(storage, uploadedNewPath)).catch(() => {});
+          if (String(error && error.code || "").includes("permission-denied")) throw createProfileSaveError("PROFILE_PERMISSION_DENIED", error);
+          throw createProfileSaveError("PROFILE_UPDATE_FAILED", error);
+        }
+        profileDiagnostic("PROFILE_FIRESTORE_SUCCESS");
 
-          await updateProfile(user, {
-            displayName: name,
-            photoURL: changedAvatar ? newAvatarUrl : (newAvatarUrl || null)
-          }).catch(() => {});
+        const mergedProfile = { ...currentProfile, ...safe.updates };
+        mergedProfile.nombre = name;
+        mergedProfile.telefono = phone;
+        if (changedAvatar) {
+          mergedProfile.avatarUrl = newAvatarUrl;
+          mergedProfile.fotoPerfil = newAvatarUrl;
+          mergedProfile.avatarPath = newAvatarPath;
+          mergedProfile.avatarVersion = avatarVersion;
+        }
+        exploraSession.profile = mergedProfile;
+        exploraSession.profileRef = resolved.profileRef;
+        exploraSession.driverId = resolved.profileDocumentId;
+        if (exploraAccessState && exploraAccessState.user && exploraAccessState.user.uid === uid) {
+          exploraAccessState.profile = mergedProfile;
+        }
 
-          exploraSession.profile = { ...oldProfile, ...payload };
-          if (changedAvatar) {
-            exploraSession.profile.avatarUrl = newAvatarUrl;
-            exploraSession.profile.fotoPerfil = newAvatarUrl;
-            exploraSession.profile.avatarPath = newAvatarPath;
-            exploraSession.profile.avatarVersion = avatarVersion;
-          }
-          applyDriverDataToUI();
-          if (changedAvatar) applyAvatarEverywhere(uid, newAvatarUrl, avatarVersion);
-          saveVisualSession();
+        await updateProfile(user, {
+          displayName: name,
+          ...(changedAvatar ? { photoURL: newAvatarUrl } : {})
+        }).catch((error) => console.warn("[EXPLORA profile] AUTH_PROFILE_UPDATE_WARNING", error && error.code ? error.code : error));
 
-          if (changedAvatar) {
-            await deletePreviousAvatarSafely(oldAvatarPath, newAvatarPath);
-          }
+        applyDriverDataToUI();
+        if (changedAvatar) applyAvatarEverywhere(uid, newAvatarUrl, avatarVersion);
+        saveVisualSession();
+        profileDiagnostic("PROFILE_UI_UPDATED");
 
-          if (window.ExploraRanking && typeof window.ExploraRanking.refresh === "function") {
-            window.ExploraRanking.refresh().catch(() => {});
-          }
-        })(), 45000, "PROFILE_SAVE_TIMEOUT");
+        if (changedAvatar && oldAvatarPath && oldAvatarPath !== newAvatarPath) {
+          profileDiagnostic("PROFILE_OLD_IMAGE_DELETE", { eligible: oldAvatarPath.startsWith(`avatars/${uid}/`) });
+          await deletePreviousAvatarSafely(oldAvatarPath, newAvatarPath, uid);
+        }
+
+        if (window.ExploraRanking && typeof window.ExploraRanking.refresh === "function") {
+          window.ExploraRanking.refresh().catch(() => {});
+        }
+        if (typeof window.refreshAdminDriverList === "function") {
+          Promise.resolve(window.refreshAdminDriverList()).catch(() => {});
+        }
 
         if (profileState.previewUrl) URL.revokeObjectURL(profileState.previewUrl);
         profileState.previewUrl = "";
         profileState.selectedFile = null;
         if ($("profileAvatarInput")) $("profileAvatarInput").value = "";
-        finalMessage = changedAvatar ? "Foto de perfil actualizada correctamente." : "Perfil actualizado correctamente.";
+        finalMessage = "Perfil actualizado correctamente.";
         finalType = "ok";
-      } catch(error) {
-        const code = String((error && (error.code || error.message)) || "");
-        if (code.includes("TIMEOUT")) finalMessage = "No se pudo completar el guardado. Revisa tu conexión e inténtalo nuevamente.";
-        else if (code === "INVALID_IMAGE_FILE") finalMessage = "Selecciona una imagen JPG, PNG o WebP válida.";
-        else if (code === "IMAGE_TOO_LARGE") finalMessage = "La imagen es demasiado grande. Selecciona otra fotografía.";
-        else if (code.includes("IMAGE")) finalMessage = "No se pudo procesar la imagen.";
-        else if (code.startsWith("storage/")) finalMessage = "No se pudo subir la fotografía. Inténtalo nuevamente.";
-        else if (code.includes("PROFILE_UPDATE")) finalMessage = "La fotografía se subió, pero no se pudo actualizar el perfil.";
-        else finalMessage = "No se pudo guardar el perfil. Inténtalo nuevamente.";
+      } catch (error) {
+        finalMessage = mapProfileSaveError(error);
         finalType = "err";
-        console.warn("[EXPLORA profile] save failed", code || error);
+        profileDiagnostic("PROFILE_SAVE_ERROR", { code: String((error && (error.code || error.message)) || "UNKNOWN") });
       } finally {
+        profileDiagnostic("PROFILE_SAVE_FINALLY");
         resetProfileSavingState(finalMessage, finalType);
+        const message = $("profileMessage");
+        if (message) {
+          requestAnimationFrame(() => message.scrollIntoView({ block: "nearest", behavior: "smooth" }));
+        }
       }
     }
 
@@ -9589,8 +9638,8 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
 })();
 </script>
 <script type="module" id="exploraUnifiedWeeklyFinanceModule">
-  import { collection, doc, getDoc, getDocs, query, where, setDoc, addDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-  import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+  import { collection, doc, getDoc, getDocs, query, where, setDoc, addDoc, runTransaction, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { ref as storageRef, uploadBytes, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
 
   const fb = window.ExploraFirebase || {};
   const auth = fb.auth;
@@ -9674,41 +9723,279 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
   function belongsToPeriod(data, mode, periods){ const pid=periodIdFor(data); if(mode==="week" && pid) return pid===periods.weeklyPeriodId; if(mode==="month"){ const mp=String(data.periodoMensualId||data.monthlyPeriodId||""); if(mp) return mp===periods.monthlyPeriodId; } if(mode==="year"){ const yp=String(data.periodoAnualId||data.yearlyPeriodId||data.anio||data.año||""); if(yp) return yp===periods.yearlyPeriodId; } const ms=getDocMs(data); if(!ms) return false; if(mode==="week") return ms>=periods.weeklyStartMs && ms<=periods.weeklyEndMs; if(mode==="month") return ms>=periods.monthlyStartMs && ms<=periods.monthlyEndMs; return ms>=periods.yearlyStartMs && ms<=periods.yearlyEndMs; }
   function validState(data={}){ const s=normalize(data.estado||data.status||data.estadoServicio||data.estadoViaje); return !["cancelado","cancelada","rechazado","rechazada","eliminado","eliminada","borrador","prueba","test"].some(x=>s.includes(x)); }
 
+
+  const weeklyBillingState = {
+    unsubscribe: null,
+    listenerKey: "",
+    loading: true,
+    error: null,
+    data: null
+  };
+
+  function formatARS(value){
+    const numeric = Math.max(0, toNumber(value));
+    return new Intl.NumberFormat("es-AR", {
+      style: "currency",
+      currency: "ARS",
+      maximumFractionDigits: 0
+    }).format(numeric).replace(/\s/g, "");
+  }
+
+  function weeklyBillingPath(dailyTotals){
+    const values = Array.from({length: 7}, (_, index) => Math.max(0, toNumber(dailyTotals?.[index])));
+    const max = Math.max(...values);
+    if (!max) return "M2 28 L118 28";
+    return values.map((value, index) => {
+      const x = 2 + (116 / 6) * index;
+      const y = 30 - (value / max) * 26;
+      return `${index ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`;
+    }).join(" ");
+  }
+
+  function renderWeeklyBillingCard(data = {}){
+    const card = document.querySelector('[data-action="facturacion-semanal"]');
+    const amountEl = $("dashboardWeeklyRevenue");
+    const metaEl = $("dashboardWeeklyRevenueMeta");
+    const tripsEl = $("dashboardTripsCount");
+    const pathEl = $("dashboardWeeklyRevenueSparklinePath");
+    if (!card || !amountEl || !metaEl) return;
+
+    if (data.loading) {
+      weeklyBillingState.loading = true;
+      weeklyBillingState.error = null;
+      card.dataset.billingState = "loading";
+      amountEl.textContent = "Cargando…";
+      metaEl.textContent = "Consultando semana activa";
+      if (tripsEl) tripsEl.textContent = "—";
+      if (pathEl) pathEl.setAttribute("d", "M2 28 L118 28");
+      return;
+    }
+
+    if (data.error) {
+      weeklyBillingState.loading = false;
+      weeklyBillingState.error = data.error;
+      card.dataset.billingState = "error";
+      amountEl.textContent = "—";
+      metaEl.textContent = "No se pudo cargar · Toca para reintentar";
+      if (tripsEl) tripsEl.textContent = "—";
+      if (pathEl) pathEl.setAttribute("d", "M2 28 L118 28");
+      return;
+    }
+
+    const total = Math.max(0, toNumber(data.total));
+    const serviceCount = Math.max(0, Number(data.serviceCount || 0));
+    weeklyBillingState.loading = false;
+    weeklyBillingState.error = null;
+    weeklyBillingState.data = data;
+    card.dataset.billingState = serviceCount ? "ready" : "empty";
+    amountEl.textContent = formatARS(total);
+    metaEl.textContent = serviceCount === 0
+      ? "Sin servicios esta semana"
+      : `${serviceCount} ${serviceCount === 1 ? "servicio registrado" : "servicios registrados"}`;
+    if (tripsEl) tripsEl.textContent = String(serviceCount);
+    if (pathEl) pathEl.setAttribute("d", weeklyBillingPath(data.dailyTotals));
+  }
+  window.ExploraRenderWeeklyBillingCard = renderWeeklyBillingCard;
+
+  function isBillableService(data = {}){
+    if (!validState(data)) return false;
+    const state = normalize(data.estado || data.status || data.estadoServicio || data.estadoViaje);
+    if (["pendiente", "en espera", "presupuesto", "cotizado"].some(value => state.includes(value))) return false;
+    const amount = toNumber(data.valor ?? data.monto ?? data.importe ?? data.tarifaMinima ?? data.precio);
+    if (!(amount > 0)) return false;
+    if (data.cancelado === true || data.anulado === true || data.eliminado === true) return false;
+    return Boolean(
+      data.completado === true ||
+      data.vendido === true ||
+      !state ||
+      ["vendido", "completado", "confirmado", "aceptado", "realizado", "finalizado", "registrado"]
+        .some(value => state.includes(value))
+    );
+  }
+
+  function serviceAmount(data = {}){
+    return Math.max(0, toNumber(data.valor ?? data.monto ?? data.importe ?? data.tarifaMinima ?? data.precio));
+  }
+
+  function stopWeeklyBillingListener({ reset = true } = {}){
+    if (typeof weeklyBillingState.unsubscribe === "function") {
+      try { weeklyBillingState.unsubscribe(); } catch (_) {}
+    }
+    weeklyBillingState.unsubscribe = null;
+    weeklyBillingState.listenerKey = "";
+    weeklyBillingState.data = null;
+    weeklyBillingState.error = null;
+    if (reset) renderWeeklyBillingCard({ loading: true });
+  }
+  window.ExploraStopWeeklyBilling = stopWeeklyBillingListener;
+
+  async function startWeeklyBillingListener({ force = false } = {}){
+    const session = await getPrivateSession(7000);
+    const user = session?.user || auth?.currentUser;
+    if (!user?.uid) {
+      stopWeeklyBillingListener();
+      return;
+    }
+
+    const periods = getActivePeriods();
+    const listenerKey = `${user.uid}|${periods.weeklyPeriodId}`;
+    if (!force && weeklyBillingState.unsubscribe && weeklyBillingState.listenerKey === listenerKey) return;
+
+    stopWeeklyBillingListener({ reset: false });
+    weeklyBillingState.listenerKey = listenerKey;
+    renderWeeklyBillingCard({ loading: true });
+
+    // Los servicios nuevos de EXPLORA se guardan en viajes con choferUid.
+    // La semana se filtra con el mismo getActivePeriods() utilizado por Ranking.
+    const ownedServicesQuery = query(
+      collection(db, "viajes"),
+      where("choferUid", "==", user.uid)
+    );
+
+    weeklyBillingState.unsubscribe = onSnapshot(
+      ownedServicesQuery,
+      (snapshot) => {
+        // Si el sábado a las 00:01 cambió el período, reiniciar el listener y la tarjeta.
+        const currentPeriods = getActivePeriods();
+        const currentKey = `${user.uid}|${currentPeriods.weeklyPeriodId}`;
+        if (currentKey !== weeklyBillingState.listenerKey) {
+          startWeeklyBillingListener({ force: true }).catch((error) => {
+            console.warn("[EXPLORA weekly billing] period refresh", error?.code || error?.message);
+            renderWeeklyBillingCard({ error });
+          });
+          return;
+        }
+
+        const services = [];
+        snapshot.forEach((documentSnapshot) => {
+          const row = { id: documentSnapshot.id, ...(documentSnapshot.data() || {}) };
+          if (!belongsToPeriod(row, "week", currentPeriods)) return;
+          if (!isBillableService(row)) return;
+          services.push(row);
+        });
+
+        const dailyTotals = Array(7).fill(0);
+        let total = 0;
+        services.forEach((service) => {
+          const amount = serviceAmount(service);
+          total += amount;
+          const timestamp = getDocMs(service);
+          if (timestamp >= currentPeriods.weeklyStartMs && timestamp <= currentPeriods.weeklyEndMs) {
+            const dayIndex = Math.min(6, Math.max(0, Math.floor((timestamp - currentPeriods.weeklyStartMs) / 86400000)));
+            dailyTotals[dayIndex] += amount;
+          }
+        });
+
+        renderWeeklyBillingCard({
+          total,
+          serviceCount: services.length,
+          dailyTotals,
+          weeklyPeriodId: currentPeriods.weeklyPeriodId,
+          services,
+          loading: false,
+          error: null
+        });
+      },
+      (error) => {
+        console.warn("[EXPLORA weekly billing] listener", error?.code || error?.message);
+        renderWeeklyBillingCard({ error });
+      }
+    );
+  }
+  window.ExploraEnsureWeeklyBilling = startWeeklyBillingListener;
+
   async function compressReceiptImage(file){
-    if(!file || !String(file.type||"").startsWith("image/")) return file;
-    if(file.size < 650*1024 && /webp|jpeg|jpg|png/.test(file.type)) return file;
-    const url=URL.createObjectURL(file);
-    try{
-      const img=await withTimeout(new Promise((resolve,reject)=>{ const i=new Image(); i.onload=()=>resolve(i); i.onerror=()=>reject(new Error("IMAGE_LOAD_ERROR")); i.src=url; }), 10000, "IMAGE_LOAD_TIMEOUT");
-      const max=1400; let w=img.naturalWidth||img.width, h=img.naturalHeight||img.height; const ratio=Math.min(1,max/Math.max(w,h)); w=Math.round(w*ratio); h=Math.round(h*ratio);
-      const canvas=document.createElement("canvas"); canvas.width=w; canvas.height=h; const ctx=canvas.getContext("2d"); ctx.drawImage(img,0,0,w,h);
-      const blob=await withTimeout(new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error("IMAGE_BLOB_ERROR")), "image/webp", .82)), 10000, "IMAGE_COMPRESS_TIMEOUT");
-      return new File([blob], (file.name||"comprobante").replace(/\.[^.]+$/,"")+".webp", {type:"image/webp"});
-    } finally { URL.revokeObjectURL(url); }
+    if (!file || !String(file.type || "").startsWith("image/")) return file;
+    console.info("COMPRESS_START");
+    if (file.size > 15 * 1024 * 1024) throw new Error("EXPENSE_FILE_TOO_LARGE");
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await withTimeout(new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error("EXPENSE_IMAGE_LOAD_ERROR"));
+        image.src = url;
+      }), 12000, "EXPENSE_IMAGE_LOAD_TIMEOUT");
+      const sourceWidth = img.naturalWidth || img.width;
+      const sourceHeight = img.naturalHeight || img.height;
+      if (!sourceWidth || !sourceHeight) throw new Error("EXPENSE_IMAGE_DIMENSIONS_INVALID");
+      const maxSide = 1600;
+      const ratio = Math.min(1, maxSide / Math.max(sourceWidth, sourceHeight));
+      const width = Math.max(1, Math.round(sourceWidth * ratio));
+      const height = Math.max(1, Math.round(sourceHeight * ratio));
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext("2d", { alpha: false });
+      if (!context) throw new Error("EXPENSE_CANVAS_UNAVAILABLE");
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, width, height);
+      context.drawImage(img, 0, 0, width, height);
+      const blob = await withTimeout(new Promise((resolve, reject) => {
+        canvas.toBlob((result) => result ? resolve(result) : reject(new Error("EXPENSE_IMAGE_BLOB_EMPTY")), "image/webp", 0.82);
+      }), 12000, "EXPENSE_IMAGE_COMPRESS_TIMEOUT");
+      console.info("COMPRESS_SUCCESS");
+      return new File([blob], `${String(file.name || "comprobante").replace(/\.[^.]+$/, "")}.webp`, { type: "image/webp", lastModified: Date.now() });
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  function uploadReceiptWithTimeout(fileRef, file, metadata, timeoutMs = 30000){
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      const task = uploadBytesResumable(fileRef, file, metadata);
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        try { task.cancel(); } catch (_) {}
+        reject(new Error("EXPENSE_UPLOAD_TIMEOUT"));
+      }, timeoutMs);
+      task.on("state_changed", () => {}, (error) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        reject(error);
+      }, () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(task.snapshot);
+      });
+    });
   }
 
   async function updateAccumulated(kind, amount, countField, opId){
-    const user=auth?.currentUser; if(!user) return;
-    const p=getActivePeriods();
-    const ids=currentIds();
-    const keyBase={uid:user.uid, choferUid:user.uid, choferId:(window.ExploraSession||{}).driverId||user.uid, actualizadoEn:serverTimestamp()};
-    const targets=[
-      ["acumulados_semanales", `${p.weeklyPeriodId}_${user.uid}`, {periodoId:p.weeklyPeriodId, periodoSemanalId:p.weeklyPeriodId}],
-      ["acumulados_mensuales", `${p.monthlyPeriodId}_${user.uid}`, {periodoMensualId:p.monthlyPeriodId, mes:p.month, anio:p.year}],
-      ["acumulados_anuales", `${p.yearlyPeriodId}_${user.uid}`, {periodoAnualId:p.yearlyPeriodId, anio:p.year}]
+    const user = auth?.currentUser;
+    if (!user?.uid) return { ok: false, failed: ["session"] };
+    const p = getActivePeriods();
+    const keyBase = { uid: user.uid, choferUid: user.uid, choferId: (window.ExploraSession || {}).driverId || user.uid, actualizadoEn: serverTimestamp() };
+    const targets = [
+      ["acumulados_semanales", `${p.weeklyPeriodId}_${user.uid}`, { periodoId: p.weeklyPeriodId, periodoSemanalId: p.weeklyPeriodId }],
+      ["acumulados_mensuales", `${p.monthlyPeriodId}_${user.uid}`, { periodoMensualId: p.monthlyPeriodId, mes: p.month, anio: p.year }],
+      ["acumulados_anuales", `${p.yearlyPeriodId}_${user.uid}`, { periodoAnualId: p.yearlyPeriodId, anio: p.year }]
     ];
-    for(const [col,id,periodFields] of targets){
-      const ref=doc(db,col,id);
-      await runTransaction(db, async tx=>{
-        const snap=await tx.get(ref); const data=snap.exists()?snap.data():{}; const processed=Array.isArray(data.operacionesProcesadas)?data.operacionesProcesadas:[];
-        if(opId && processed.includes(opId)) return;
-        const next={...keyBase,...periodFields};
-        next[kind]=toNumber(data[kind])+toNumber(amount);
-        if(countField) next[countField]=toNumber(data[countField])+1;
-        if(opId) next.operacionesProcesadas=[...processed.slice(-80), opId];
-        tx.set(ref,next,{merge:true});
-      }).catch(()=>{});
-    }
+    const results = await Promise.all(targets.map(async ([collectionName, id, periodFields]) => {
+      const accumulatedRef = doc(db, collectionName, id);
+      try {
+        await withTimeout(runTransaction(db, async (transaction) => {
+          const snapshot = await transaction.get(accumulatedRef);
+          const data = snapshot.exists() ? snapshot.data() : {};
+          const processed = Array.isArray(data.operacionesProcesadas) ? data.operacionesProcesadas : [];
+          if (opId && processed.includes(opId)) return;
+          const next = { ...keyBase, ...periodFields };
+          next[kind] = toNumber(data[kind]) + toNumber(amount);
+          if (countField) next[countField] = toNumber(data[countField]) + 1;
+          if (opId) next.operacionesProcesadas = [...processed.slice(-80), opId];
+          transaction.set(accumulatedRef, next, { merge: true });
+        }), 15000, `ACCUMULATOR_${collectionName}_TIMEOUT`);
+        return { ok: true, collectionName };
+      } catch (error) {
+        console.warn("EXPENSE_ACCUMULATOR_ERROR", collectionName, error?.code || error?.message);
+        return { ok: false, collectionName, error };
+      }
+    }));
+    return { ok: results.every((result) => result.ok), failed: results.filter((result) => !result.ok) };
   }
 
   window.ExploraRegisterSoldService = async function(service){
@@ -9735,97 +10022,115 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
   };
 
   let expenseSaveInProgress = false;
+
+  async function getExpenseAuthenticatedSession(){
+    let user = auth?.currentUser;
+    if (!user?.uid) {
+      const restored = await withTimeout(getPrivateSession(7000), 8000, "EXPENSE_SESSION_TIMEOUT");
+      user = restored?.user || auth?.currentUser;
+    }
+    if (!user?.uid) throw new Error("AUTH_REQUIRED");
+    let state = window.ExploraSession || {};
+    if ((!state.profile || !state.driverId) && typeof window.ExploraGetAuthenticatedSession === "function") {
+      try {
+        await withTimeout(window.ExploraGetAuthenticatedSession({ timeoutMs: 7000 }), 8000, "EXPENSE_PROFILE_TIMEOUT");
+        state = window.ExploraSession || state;
+      } catch (error) {
+        console.warn("EXPENSE_SESSION_PROFILE_WARNING", error?.code || error?.message);
+      }
+    }
+    console.info("SESSION_OK");
+    return { user, uid: user.uid, profile: state.profile || {}, profileDocumentId: state.driverId || user.uid, role: state.role || null };
+  }
+
   async function saveExpense(payload) {
-    if (expenseSaveInProgress) throw new Error("El gasto ya se está guardando.");
+    if (expenseSaveInProgress) throw new Error("EXPENSE_ALREADY_SAVING");
     expenseSaveInProgress = true;
     let uploadedPath = "";
+    let expenseCreated = false;
     try {
-      const authenticated = await getPrivateSession(8000);
+      const authenticated = await getExpenseAuthenticatedSession();
       const user = authenticated.user;
-      if (!user?.uid) throw new Error("AUTH_SESSION_MISSING");
-
       const file = payload?.comprobante;
-      if (!file) throw new Error("Falta el comprobante.");
-      const monto = toNumber(payload.monto);
-      if (monto <= 0) throw new Error("Monto inválido.");
-
+      if (!payload?.tipo) throw new Error("EXPENSE_TYPE_REQUIRED");
+      if (!file) throw new Error("EXPENSE_RECEIPT_REQUIRED");
+      const monto = toNumber(payload?.monto);
+      if (!(monto > 0)) throw new Error("EXPENSE_AMOUNT_INVALID");
+      if (String(payload?.observaciones || "").length > 150) throw new Error("EXPENSE_NOTES_TOO_LONG");
+      const operationId = String(payload?.operationId || "").replace(/[^a-zA-Z0-9_-]/g, "");
+      const gastoRef = operationId ? doc(db, "gastos", operationId) : doc(collection(db, "gastos"));
+      const expenseId = gastoRef.id;
       const p = getActivePeriods();
-      const gastoRef = doc(collection(db, "gastos"));
       let uploadFile = file;
-      let ext = "pdf";
-      if (String(file.type || "").startsWith("image/")) {
-        uploadFile = await withTimeout(compressReceiptImage(file), 12000, "EXPENSE_IMAGE_TIMEOUT");
-        ext = uploadFile.type.includes("webp") ? "webp" : "jpg";
-      } else if (String(file.type || "").includes("pdf") || /\.pdf$/i.test(file.name || "")) {
-        ext = "pdf";
+      let extension = "pdf";
+      const originalType = String(file.type || "").toLowerCase();
+      if (originalType.startsWith("image/")) {
+        uploadFile = await compressReceiptImage(file);
+        extension = uploadFile.type.includes("webp") ? "webp" : "jpg";
+      } else if (originalType.includes("pdf") || /\.pdf$/i.test(file.name || "")) {
+        extension = "pdf";
       } else {
-        throw new Error("Formato no permitido. Selecciona JPG, PNG, WebP o PDF.");
+        throw new Error("EXPENSE_FILE_FORMAT_INVALID");
       }
-
-      uploadedPath = `gastos/${user.uid}/${gastoRef.id}/comprobante.${ext}`;
+      uploadedPath = `gastos/${user.uid}/${expenseId}/comprobante.${extension}`;
       const fileRef = storageRef(storage, uploadedPath);
-      await withTimeout(uploadBytes(fileRef, uploadFile, {
-        contentType: uploadFile.type || (ext === "pdf" ? "application/pdf" : "image/webp"),
-        customMetadata: { owner: user.uid, gastoId: gastoRef.id, source: "explora-expense" }
-      }), 30000, "EXPENSE_UPLOAD_TIMEOUT");
-      const url = await withTimeout(getDownloadURL(fileRef), 10000, "EXPENSE_URL_TIMEOUT");
-
-      const state = window.ExploraSession || {};
-      const profile = authenticated.profile || state.profile || {};
-      const profileDocumentId = authenticated.profileDocumentId || state.driverId || user.uid;
+      console.info("UPLOAD_START");
+      await uploadReceiptWithTimeout(fileRef, uploadFile, {
+        contentType: uploadFile.type || (extension === "pdf" ? "application/pdf" : "image/webp"),
+        customMetadata: { owner: user.uid, gastoId: expenseId, source: "explora-expense" }
+      }, 30000);
+      console.info("UPLOAD_SUCCESS");
+      const url = await withTimeout(getDownloadURL(fileRef), 10000, "EXPENSE_DOWNLOAD_URL_TIMEOUT");
+      console.info("DOWNLOAD_URL_OK");
+      const profile = authenticated.profile || {};
+      const profileDocumentId = authenticated.profileDocumentId || user.uid;
+      const driverName = (profile.nombre || profile.nombreCompleto || profile.displayName || user.displayName || "Chofer").trim();
       const gasto = {
-        id: gastoRef.id,
-        gastoId: gastoRef.id,
-        uid: user.uid,
-        choferUid: user.uid,
-        creadoPorUid: user.uid,
-        choferId: profileDocumentId,
-        profileId: profileDocumentId,
-        choferEmail: user.email || "",
-        choferNombre: (profile.nombre || profile.nombreCompleto || profile.displayName) || user.displayName || "Chofer",
-        tipo: payload.tipo || "gasto",
-        tipoLabel: payload.tipoLabel || payload.tipo || "Gasto",
-        monto,
-        valor: monto,
-        observaciones: payload.observaciones || "",
-        detalle: payload.observaciones || "",
-        comprobanteUrl: url,
-        comprobantePath: uploadedPath,
-        comprobanteNombre: file.name || `comprobante.${ext}`,
-        comprobanteMime: uploadFile.type || file.type || "",
-        comprobanteTamano: uploadFile.size || file.size || 0,
-        estado: "registrado",
-        estadoComprobante: "registrado",
-        fuente: "cargar_gasto_premium",
-        periodoSemanalId: p.weeklyPeriodId,
-        periodoId: p.weeklyPeriodId,
-        periodoMensualId: p.monthlyPeriodId,
-        periodoAnualId: p.yearlyPeriodId,
-        semana: p.week,
-        mes: p.month,
-        anio: p.year,
+        id: expenseId, gastoId: expenseId, uid: user.uid, choferUid: user.uid, creadoPorUid: user.uid,
+        choferId: profileDocumentId, profileDocumentId, profileId: profileDocumentId, choferEmail: user.email || "", choferNombre: driverName,
+        tipo: payload.tipo, categoria: payload.tipo, tipoLabel: payload.tipoLabel || payload.tipo, monto, valor: monto,
+        observaciones: String(payload.observaciones || "").trim(), detalle: String(payload.observaciones || "").trim(),
+        comprobanteUrl: url, receiptUrl: url, comprobantePath: uploadedPath, receiptPath: uploadedPath,
+        comprobanteNombre: file.name || `comprobante.${extension}`, receiptFileName: file.name || `comprobante.${extension}`,
+        comprobanteMime: uploadFile.type || file.type || "", receiptMimeType: uploadFile.type || file.type || "",
+        comprobanteTamano: uploadFile.size || file.size || 0, estado: "registrado", status: "active", estadoComprobante: "registrado",
+        fuente: "cargar_gasto_premium", origenRegistro: "cargar_gasto",
+        periodoSemanalId: p.weeklyPeriodId, weeklyPeriodId: p.weeklyPeriodId, periodoId: p.weeklyPeriodId,
+        periodoMensualId: p.monthlyPeriodId, monthlyPeriodId: p.monthlyPeriodId,
+        periodoAnualId: p.yearlyPeriodId, yearlyPeriodId: p.yearlyPeriodId,
+        semana: p.week, mes: p.month, month: p.month, anio: p.year, year: p.year,
         fecha: new Date().toLocaleDateString("es-AR", { timeZone: AR_TZ }),
         hora: new Date().toLocaleTimeString("es-AR", { timeZone: AR_TZ, hour: "2-digit", minute: "2-digit" }),
-        creadoEn: serverTimestamp(),
-        creado: serverTimestamp()
+        creadoEn: serverTimestamp(), createdAt: serverTimestamp(), actualizadoEn: serverTimestamp(), updatedAt: serverTimestamp()
       };
-
+      console.info("FIRESTORE_START");
       try {
         await withTimeout(setDoc(gastoRef, gasto, { merge: true }), 15000, "EXPENSE_WRITE_TIMEOUT");
+        expenseCreated = true;
       } catch (firestoreError) {
-        if (uploadedPath) deleteObject(storageRef(storage, uploadedPath)).catch(() => {});
+        if (uploadedPath) {
+          await withTimeout(deleteObject(storageRef(storage, uploadedPath)), 10000, "EXPENSE_ROLLBACK_TIMEOUT").catch((rollbackError) => {
+            console.warn("EXPENSE_ROLLBACK_FILE_ERROR", rollbackError?.code || rollbackError?.message);
+          });
+        }
         throw firestoreError;
       }
-
-      await updateAccumulated("gastos", monto, "cantidadGastos", gastoRef.id);
-      window.dispatchEvent(new CustomEvent("explora:gasto-registrado", { detail: { id: gastoRef.id, monto, gasto } }));
+      console.info("FIRESTORE_SUCCESS");
+      console.info("ACCUMULATOR_START");
+      const accumulatorResult = await updateAccumulated("gastos", monto, "cantidadGastos", expenseId);
+      console.info("ACCUMULATOR_SUCCESS");
+      window.dispatchEvent(new CustomEvent("explora:gasto-registrado", { detail: { id: expenseId, monto, gasto } }));
       await Promise.allSettled([
         Promise.resolve(window.ExploraRefreshDashboardMetrics?.()),
         Promise.resolve(window.ExploraReceipts?.refresh?.("gastos"))
       ]);
-      return gasto;
+      return { ...gasto, accumulatorWarning: !accumulatorResult.ok };
+    } catch (error) {
+      console.warn("EXPENSE_ERROR", error?.code || error?.message);
+      throw error;
     } finally {
       expenseSaveInProgress = false;
+      console.info("EXPENSE_FINALLY");
     }
   }
   window.ExploraRegisterExpense = saveExpense;
@@ -9853,18 +10158,29 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
 
   async function refreshDashboardMetrics(){
     const p=getActivePeriods();
-    const [services,expenses,receipts]=await Promise.all([getFinanceRows("services","week"), getFinanceRows("expenses","week"), window.ExploraLoadReceipts?.("gastos").catch(()=>[])||[]]);
-    const revenue=services.reduce((s,r)=>s+r.amount,0), exp=expenses.reduce((s,r)=>s+r.amount,0);
+    const [expenses,receipts]=await Promise.all([
+      getFinanceRows("expenses","week"),
+      window.ExploraLoadReceipts?.("gastos").catch(()=>[])||[]
+    ]);
+    const exp=expenses.reduce((s,r)=>s+r.amount,0);
     const set=(id,val)=>{ const el=$(id); if(el) el.textContent=val; };
-    set("dashboardWeeklyRevenue",money(revenue)); set("dashboardWeeklyExpenses",money(exp)); set("dashboardTripsCount",String(services.length)); set("dashboardExpenseCount",String(expenses.length)); set("dashboardReceiptsCount",String(receipts.length));
-    set("dashboardWeeklyRevenueMeta",services.length?`${services.length} servicios esta semana`:"Sin servicios esta semana");
+    set("dashboardWeeklyExpenses",money(exp));
+    set("dashboardExpenseCount",String(expenses.length));
+    set("dashboardReceiptsCount",String(receipts.length));
     set("dashboardWeeklyExpensesMeta",expenses.length?`${expenses.length} gastos esta semana`:"Sin gastos esta semana");
     set("dashboardReceiptsMeta",receipts.length?`${receipts.length} comprobantes`:"Ver y gestionar comprobantes");
-    return {revenue, expenses:exp, services, expenseRows:expenses, period:p};
+    await startWeeklyBillingListener().catch((error)=>renderWeeklyBillingCard({error}));
+    return {expenses:exp, expenseRows:expenses, period:p};
   }
-  window.ExploraRefreshDashboardMetrics=()=>withTimeout(refreshDashboardMetrics(),18000,"DASHBOARD_METRICS_TIMEOUT").catch(()=>null);
+  window.ExploraRefreshDashboardMetrics=()=>withTimeout(refreshDashboardMetrics(),18000,"DASHBOARD_METRICS_TIMEOUT").catch((error)=>{
+    console.warn("[EXPLORA dashboard metrics]", error?.code || error?.message);
+    return null;
+  });
   window.addEventListener("explora:gasto-registrado",()=>window.ExploraRefreshDashboardMetrics());
-  window.addEventListener("explora:servicio-registrado",()=>window.ExploraRefreshDashboardMetrics());
+  window.addEventListener("explora:servicio-registrado",()=>{
+    // onSnapshot actualiza total, cantidad y gráfico con la escritura local/servidor.
+    if (!weeklyBillingState.unsubscribe) startWeeklyBillingListener().catch((error)=>renderWeeklyBillingCard({error}));
+  });
 
   window.ExploraLoadReceipts = async function(category){
     await getPrivateSession(7000);
@@ -9896,7 +10212,13 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     }catch(e){ $("financeHistoryStatus").textContent="No se pudieron cargar los datos."; $("financeHistoryStatus").className="finance-status err"; }
   }
   window.ExploraActions=window.ExploraActions||{};
-  window.ExploraActions["facturacion-semanal"]=()=>openFinanceHistory("services");
+  window.ExploraActions["facturacion-semanal"]=()=>{
+    if (weeklyBillingState.error) {
+      startWeeklyBillingListener({ force: true }).catch((error)=>renderWeeklyBillingCard({error}));
+      return;
+    }
+    openFinanceHistory("services");
+  };
   window.ExploraActions["gastos-semanales"]=()=>openFinanceHistory("expenses");
   window.ExploraActions["resumen-servicios"]=()=>openFinanceHistory("services");
   window.ExploraActions["resumen-gastos"]=()=>openFinanceHistory("expenses");
