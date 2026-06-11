@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="explora-version" content="v183-motor-financiero-unificado-rapido">
+  <meta name="explora-version" content="v184-derivaciones-integradas">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -4337,7 +4337,7 @@
   </style>
 
 
-  <style id="explora-v183-performance-css">
+  <style id="explora-v184-performance-css">
     .admin-loan-title{margin:0;font-size:20px;letter-spacing:.025em}
     .admin-loan-copy{margin:0;color:var(--explora-muted);font-size:13px;line-height:1.45}
     .admin-loan-form{display:grid;gap:12px}
@@ -4347,6 +4347,54 @@
     .admin-loan-form select option{color:#111}
     .weekly-closure-content .closure-detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
     @media(max-width:390px){.weekly-closure-content .closure-detail-grid{grid-template-columns:1fr}}
+  </style>
+
+
+  <style id="explora-v184-derivations-css">
+    .derivation-notification-stack{display:grid;gap:10px;margin:0 0 18px;min-width:0}
+    .derivation-notification-stack[hidden]{display:none}
+    .derivation-notification-card{min-width:0;border:1px solid rgba(183,146,255,.32);border-radius:22px;background:linear-gradient(135deg,rgba(103,65,170,.22),rgba(23,16,35,.88));padding:14px;box-shadow:0 16px 36px rgba(0,0,0,.22)}
+    .derivation-notification-head{display:flex;gap:10px;align-items:center;min-width:0}
+    .derivation-notification-icon{width:42px;height:42px;flex:0 0 42px;border-radius:15px;display:grid;place-items:center;background:rgba(183,146,255,.15);color:#cdb7ff}
+    .derivation-notification-icon svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .derivation-notification-copy{min-width:0;display:grid;gap:3px}.derivation-notification-copy strong{font-size:13px;letter-spacing:.07em;color:#d9caff}.derivation-notification-copy b{font-size:15px;overflow-wrap:anywhere}.derivation-notification-copy small{color:rgba(255,255,255,.62);line-height:1.35;overflow-wrap:anywhere}
+    .derivation-notification-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
+    .derivation-notification-actions button{min-height:44px;border-radius:14px;border:1px solid rgba(255,255,255,.1);font:inherit;font-weight:900;letter-spacing:.035em;color:#fff;background:rgba(255,255,255,.06)}
+    .derivation-notification-actions .accept{background:linear-gradient(180deg,#d4af37,#a87919);color:#070707;border-color:rgba(245,205,92,.5)}
+    .derivation-notification-more{border:0;background:transparent;color:#cdb7ff;font-weight:800;padding:8px 4px 0;text-align:left}
+
+    .derivation-screen{position:fixed;inset:0;z-index:70;display:none;min-height:100dvh;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:auto;touch-action:pan-y;color:#fff;background:radial-gradient(circle at 18% -8%,rgba(183,146,255,.16),transparent 34%),radial-gradient(circle at 96% 18%,rgba(212,175,55,.08),transparent 30%),linear-gradient(180deg,#050607,#090b0e 54%,#030405);padding:calc(env(safe-area-inset-top) + 14px) 16px calc(var(--explora-bottom-nav-height,78px) + env(safe-area-inset-bottom) + 34px)}
+    .derivation-screen.is-open{display:block}.derivation-shell{width:min(100%,520px);margin:0 auto;display:grid;gap:14px}
+    .derivation-header{display:grid;grid-template-columns:48px minmax(0,1fr) 48px;align-items:center;gap:9px;min-width:0}
+    .derivation-back,.derivation-refresh{width:46px;height:46px;border:1px solid rgba(255,255,255,.09);border-radius:15px;background:rgba(255,255,255,.035);color:#fff;display:grid;place-items:center;font-size:25px}
+    .derivation-back svg,.derivation-refresh svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .derivation-heading{min-width:0;text-align:center}.derivation-heading h1{margin:0;font-size:clamp(20px,5.5vw,28px);letter-spacing:.06em}.derivation-heading p{margin:4px 0 0;color:rgba(255,255,255,.57);font-size:12px;line-height:1.35}
+    .derivation-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;padding:5px;border:1px solid rgba(255,255,255,.07);border-radius:17px;background:rgba(255,255,255,.025)}
+    .derivation-tab{min-width:0;min-height:42px;border:0;border-radius:13px;background:transparent;color:rgba(255,255,255,.58);font-size:11px;font-weight:900;letter-spacing:.055em}.derivation-tab.is-active{color:#080808;background:linear-gradient(180deg,#efd36a,#b98a20);box-shadow:0 8px 20px rgba(212,175,55,.16)}
+    .derivation-panel{display:none;gap:13px;min-width:0}.derivation-panel.is-active{display:grid}
+    .derivation-section-card{min-width:0;padding:14px;border:1px solid rgba(255,255,255,.075);border-radius:22px;background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.018));box-shadow:0 16px 36px rgba(0,0,0,.16)}
+    .derivation-section-card h2{margin:0;font-size:15px;letter-spacing:.035em}.derivation-section-card>p{margin:5px 0 12px;color:rgba(255,255,255,.57);font-size:12px;line-height:1.4}
+    .derivation-search{width:100%;box-sizing:border-box;border:1px solid rgba(255,255,255,.09);border-radius:14px;background:rgba(0,0,0,.24);color:#fff;padding:12px 13px;font:inherit;outline:none;margin-bottom:10px}
+    .derivation-driver-grid,.derivation-service-grid{display:grid;gap:9px;max-height:330px;overflow:auto;-webkit-overflow-scrolling:touch;padding-right:2px}
+    .derivation-driver-card,.derivation-service-card{width:100%;min-width:0;display:grid;align-items:center;gap:10px;border:1px solid rgba(255,255,255,.075);border-radius:17px;background:rgba(255,255,255,.032);color:#fff;padding:10px;text-align:left;font:inherit}
+    .derivation-driver-card{grid-template-columns:48px minmax(0,1fr) 22px}.derivation-service-card{grid-template-columns:minmax(0,1fr) auto 22px}
+    .derivation-driver-card.is-selected,.derivation-service-card.is-selected{border-color:rgba(212,175,55,.54);background:rgba(212,175,55,.08);box-shadow:inset 0 0 0 1px rgba(212,175,55,.16)}
+    .derivation-avatar{position:relative;width:48px;height:48px;border-radius:16px;background:linear-gradient(145deg,#3c314a,#17131e);display:grid;place-items:center;overflow:hidden;color:#e7ddff;font-weight:900}.derivation-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.derivation-avatar span{position:relative;z-index:0}
+    .derivation-card-copy{min-width:0;display:grid;gap:3px}.derivation-card-copy strong{font-size:14px;overflow-wrap:anywhere}.derivation-card-copy small{font-size:11px;color:rgba(255,255,255,.56);line-height:1.35;overflow-wrap:anywhere}.derivation-select-dot{width:18px;height:18px;border:1px solid rgba(255,255,255,.22);border-radius:50%}.is-selected .derivation-select-dot{border:5px solid #d4af37;background:#fff}
+    .derivation-service-price{font-weight:950;color:#efcc59;white-space:nowrap}.derivation-empty{padding:18px;text-align:center;color:rgba(255,255,255,.52);font-size:13px}
+    .derivation-summary{display:grid;gap:8px;padding:13px;border-radius:17px;background:rgba(183,146,255,.075);border:1px solid rgba(183,146,255,.18)}.derivation-summary-row{display:flex;gap:10px;justify-content:space-between;align-items:flex-start}.derivation-summary-row span{color:rgba(255,255,255,.56);font-size:12px}.derivation-summary-row strong{text-align:right;font-size:13px;overflow-wrap:anywhere}.derivation-summary-row .price{font-size:20px;color:#efcc59}
+    .derivation-note-label{display:grid;gap:7px;color:rgba(255,255,255,.68);font-size:12px;font-weight:800}.derivation-note-label textarea{width:100%;box-sizing:border-box;min-height:82px;resize:vertical;border:1px solid rgba(255,255,255,.09);border-radius:15px;background:rgba(0,0,0,.22);color:#fff;padding:12px;font:inherit;outline:none}
+    .derivation-primary{min-height:50px;border:0;border-radius:16px;background:linear-gradient(180deg,#efd36a,#b98a20);color:#070707;font:inherit;font-weight:950;letter-spacing:.055em;box-shadow:0 14px 28px rgba(212,175,55,.18)}.derivation-primary:disabled{opacity:.52;box-shadow:none}.derivation-message{min-height:18px;font-size:12px;text-align:center;color:rgba(255,255,255,.63)}.derivation-message.ok{color:#73e69a}.derivation-message.err{color:#ff8e8e}
+    .derivation-filter-row{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}.derivation-filter-row::-webkit-scrollbar{display:none}.derivation-filter{flex:0 0 auto;min-height:36px;border:1px solid rgba(255,255,255,.08);border-radius:999px;background:rgba(255,255,255,.035);color:rgba(255,255,255,.62);padding:0 12px;font-size:10px;font-weight:900;letter-spacing:.045em}.derivation-filter.is-active{color:#070707;background:#d4af37;border-color:#d4af37}
+    .derivation-list{display:grid;gap:10px}.derivation-history-card{min-width:0;border:1px solid rgba(255,255,255,.075);border-radius:19px;background:rgba(255,255,255,.032);padding:12px;display:grid;gap:10px}.derivation-history-head{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:9px;align-items:center}.derivation-history-head .derivation-avatar{width:44px;height:44px;border-radius:14px}.derivation-history-state{font-size:9px;font-weight:950;letter-spacing:.055em;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.72);white-space:nowrap}.derivation-history-state.pending{color:#f1ce62;background:rgba(212,175,55,.1)}.derivation-history-state.accepted{color:#cdb7ff;background:rgba(183,146,255,.1)}.derivation-history-state.completed{color:#79e39a;background:rgba(45,190,92,.1)}.derivation-history-state.rejected,.derivation-history-state.canceled{color:#ff9696;background:rgba(220,55,55,.1)}
+    .derivation-history-service{display:grid;gap:4px;padding-top:9px;border-top:1px solid rgba(255,255,255,.055)}.derivation-history-service strong{font-size:14px}.derivation-history-service span{font-size:12px;color:rgba(255,255,255,.57)}.derivation-history-meta{display:flex;justify-content:space-between;gap:10px;color:rgba(255,255,255,.48);font-size:11px}.derivation-history-actions{display:flex;gap:8px;flex-wrap:wrap}.derivation-history-actions button{min-height:40px;border:1px solid rgba(255,255,255,.09);border-radius:13px;background:rgba(255,255,255,.05);color:#fff;padding:0 13px;font:inherit;font-size:11px;font-weight:900}.derivation-history-actions .primary{background:linear-gradient(180deg,#d4af37,#a87919);color:#070707;border-color:transparent}.derivation-history-actions .danger{color:#ff9d9d;border-color:rgba(255,90,90,.22)}
+    .derivation-modal-backdrop{position:fixed;inset:0;z-index:2400;display:none;place-items:end center;padding:calc(env(safe-area-inset-top) + 14px) 12px calc(env(safe-area-inset-bottom) + 12px);background:rgba(0,0,0,.76);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}.derivation-modal-backdrop.is-open{display:grid}
+    .derivation-modal{width:min(100%,520px);max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 28px);overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid rgba(255,255,255,.1);border-radius:24px;background:linear-gradient(180deg,#101318,#07090c);padding:16px;box-shadow:0 28px 70px rgba(0,0,0,.54)}.derivation-modal h2{margin:0;font-size:20px;letter-spacing:.035em}.derivation-modal>p{margin:5px 0 13px;color:rgba(255,255,255,.58);font-size:12px;line-height:1.4}.derivation-reminder-list{display:grid;gap:9px}.derivation-reminder-row{display:grid;gap:7px;padding:12px;border:1px solid rgba(183,146,255,.18);border-radius:17px;background:rgba(183,146,255,.06)}.derivation-reminder-row strong{font-size:14px}.derivation-reminder-row small{color:rgba(255,255,255,.57)}.derivation-reminder-row button{min-height:42px;border:0;border-radius:13px;background:#d4af37;color:#070707;font-weight:950}.derivation-modal-footer{display:grid;grid-template-columns:1fr;gap:8px;margin-top:13px}.derivation-modal-footer button{min-height:46px;border:1px solid rgba(255,255,255,.09);border-radius:14px;background:rgba(255,255,255,.05);color:#fff;font:inherit;font-weight:900}.derivation-modal-footer .primary{background:linear-gradient(180deg,#efd36a,#b98a20);color:#070707;border:0}
+    .derivation-payment-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}.derivation-payment-option{min-width:0;min-height:66px;border:1px solid rgba(255,255,255,.09);border-radius:15px;background:rgba(255,255,255,.035);color:#fff;font:inherit;font-size:11px;font-weight:900}.derivation-payment-option.is-selected{border-color:#d4af37;background:rgba(212,175,55,.1);color:#efcc59}
+    .derivation-finalize-summary{display:grid;gap:7px;padding:12px;border-radius:16px;background:rgba(255,255,255,.035)}.derivation-finalize-summary div{display:flex;justify-content:space-between;gap:10px}.derivation-finalize-summary span{color:rgba(255,255,255,.56);font-size:12px}.derivation-finalize-summary strong{text-align:right;font-size:12px;overflow-wrap:anywhere}
+    .derivation-badge{position:fixed;z-index:1100;right:max(10px,env(safe-area-inset-right));bottom:calc(var(--explora-bottom-nav-height,78px) + env(safe-area-inset-bottom) + 10px);min-width:25px;height:25px;padding:0 7px;border-radius:999px;background:#b52b42;color:#fff;display:none;place-items:center;font-size:10px;font-weight:950;border:2px solid #07090b}.derivation-badge.is-visible{display:grid}
+    body.explora-shared-admin .derivation-notification-stack,body.explora-shared-admin .derivation-badge{display:none}
+    @media(max-width:390px){.derivation-screen{padding-left:12px;padding-right:12px}.derivation-tabs{gap:4px}.derivation-tab{font-size:10px}.derivation-payment-grid{grid-template-columns:1fr}.derivation-history-head{grid-template-columns:40px minmax(0,1fr)}.derivation-history-state{grid-column:2;justify-self:start}.derivation-notification-actions{grid-template-columns:1fr 1fr}}
   </style>
 
 </head>
@@ -4520,6 +4568,8 @@
           </span>
         </button>
       </section>
+
+      <section id="derivationNotificationStack" class="derivation-notification-stack" aria-label="Derivaciones pendientes" aria-live="polite" hidden></section>
 
       <section id="weeklyRankingLive" class="weekly-ranking-real" aria-label="Ranking semanal dinámico">
         <header class="section-header-real">
@@ -5063,6 +5113,87 @@
 
 
 
+
+  <section id="derivationScreen" class="derivation-screen" aria-label="Derivar servicio" aria-hidden="true">
+    <div class="derivation-shell">
+      <header class="derivation-header">
+        <button id="derivationBackBtn" class="derivation-back" type="button" aria-label="Volver"><svg viewBox="0 0 24 24"><path d="M15 5 8 12l7 7"/></svg></button>
+        <div class="derivation-heading"><h1>DERIVAR SERVICIO</h1><p>Envía un servicio a otro chofer de EXPLORA.</p></div>
+        <button id="derivationRefreshBtn" class="derivation-refresh" type="button" aria-label="Actualizar"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.2 5.5"/><path d="M20 4v7h-7"/></svg></button>
+      </header>
+
+      <nav class="derivation-tabs" aria-label="Secciones de derivaciones">
+        <button type="button" class="derivation-tab is-active" data-derivation-tab="new">NUEVA</button>
+        <button type="button" class="derivation-tab" data-derivation-tab="sent">ENVIADAS</button>
+        <button type="button" class="derivation-tab" data-derivation-tab="received">RECIBIDAS</button>
+      </nav>
+
+      <section id="derivationNewPanel" class="derivation-panel is-active" data-derivation-panel="new">
+        <form id="derivationForm" novalidate>
+          <div class="derivation-section-card">
+            <h2>1. Chofer receptor</h2><p>Solo aparecen choferes activos habilitados. No puedes enviarte una derivación a ti mismo.</p>
+            <input id="derivationDriverSearch" class="derivation-search" type="search" placeholder="Buscar chofer…" autocomplete="off">
+            <div id="derivationDriverGrid" class="derivation-driver-grid"></div>
+          </div>
+          <div class="derivation-section-card">
+            <h2>2. Servicio</h2><p>El precio se toma del mismo catálogo oficial de Nuevo servicio y no puede editarse.</p>
+            <input id="derivationServiceSearch" class="derivation-search" type="search" placeholder="Buscar servicio o destino…" autocomplete="off">
+            <div id="derivationServiceGrid" class="derivation-service-grid"></div>
+          </div>
+          <div class="derivation-section-card">
+            <h2>Resumen</h2><p>La forma de pago se seleccionará únicamente cuando el receptor finalice el servicio.</p>
+            <div class="derivation-summary">
+              <div class="derivation-summary-row"><span>Receptor</span><strong id="derivationSummaryReceiver">Sin seleccionar</strong></div>
+              <div class="derivation-summary-row"><span>Servicio</span><strong id="derivationSummaryService">Sin seleccionar</strong></div>
+              <div class="derivation-summary-row"><span>Precio oficial</span><strong id="derivationSummaryPrice" class="price">$0</strong></div>
+            </div>
+            <label class="derivation-note-label">Observación opcional<textarea id="derivationNotes" maxlength="240" placeholder="Información útil para el chofer receptor"></textarea></label>
+            <div id="derivationFormMessage" class="derivation-message" aria-live="polite"></div>
+            <button id="derivationSendBtn" class="derivation-primary" type="submit" disabled>ENVIAR DERIVACIÓN</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="derivationSentPanel" class="derivation-panel" data-derivation-panel="sent">
+        <div class="derivation-filter-row" data-derivation-filter-group="sent">
+          <button type="button" class="derivation-filter is-active" data-derivation-filter="all">TODAS</button><button type="button" class="derivation-filter" data-derivation-filter="pending">PENDIENTES</button><button type="button" class="derivation-filter" data-derivation-filter="accepted">ACEPTADAS</button><button type="button" class="derivation-filter" data-derivation-filter="completed">FINALIZADAS</button><button type="button" class="derivation-filter" data-derivation-filter="rejected">RECHAZADAS</button>
+        </div>
+        <div id="derivationSentList" class="derivation-list"></div>
+      </section>
+
+      <section id="derivationReceivedPanel" class="derivation-panel" data-derivation-panel="received">
+        <div class="derivation-filter-row" data-derivation-filter-group="received">
+          <button type="button" class="derivation-filter is-active" data-derivation-filter="all">TODAS</button><button type="button" class="derivation-filter" data-derivation-filter="pending">PENDIENTES</button><button type="button" class="derivation-filter" data-derivation-filter="accepted">ACEPTADAS</button><button type="button" class="derivation-filter" data-derivation-filter="completed">FINALIZADAS</button><button type="button" class="derivation-filter" data-derivation-filter="rejected">RECHAZADAS</button>
+        </div>
+        <div id="derivationReceivedList" class="derivation-list"></div>
+      </section>
+    </div>
+  </section>
+
+  <div id="derivationReminderBackdrop" class="derivation-modal-backdrop" aria-hidden="true">
+    <section class="derivation-modal" role="dialog" aria-modal="true" aria-labelledby="derivationReminderTitle">
+      <h2 id="derivationReminderTitle">DERIVACIÓN PENDIENTE</h2><p>Antes de registrar otro servicio, puedes finalizar una derivación aceptada. También puedes continuar y hacerlo más tarde.</p>
+      <div id="derivationReminderList" class="derivation-reminder-list"></div>
+      <div class="derivation-modal-footer"><button id="derivationReminderLaterBtn" type="button">AÚN NO · CONTINUAR CON NUEVO SERVICIO</button></div>
+    </section>
+  </div>
+
+  <div id="derivationFinalizeBackdrop" class="derivation-modal-backdrop" aria-hidden="true">
+    <section class="derivation-modal" role="dialog" aria-modal="true" aria-labelledby="derivationFinalizeTitle">
+      <h2 id="derivationFinalizeTitle">FINALIZAR DERIVACIÓN</h2><p>Selecciona cómo pagó realmente el pasajero. Recién al confirmar se registrarán facturación y puntos.</p>
+      <div id="derivationFinalizeSummary" class="derivation-finalize-summary"></div>
+      <div class="derivation-payment-grid" aria-label="Forma de pago real">
+        <button type="button" class="derivation-payment-option" data-derivation-payment="cash">EFECTIVO</button>
+        <button type="button" class="derivation-payment-option" data-derivation-payment="transfer">TRANSFERENCIA</button>
+        <button type="button" class="derivation-payment-option" data-derivation-payment="card">TARJETA</button>
+      </div>
+      <div id="derivationFinalizeMessage" class="derivation-message" aria-live="polite"></div>
+      <div class="derivation-modal-footer"><button id="derivationFinalizeCancelBtn" type="button">CANCELAR</button><button id="derivationFinalizeConfirmBtn" class="primary" type="button" disabled>CONFIRMAR SERVICIO FINALIZADO</button></div>
+    </section>
+  </div>
+  <span id="derivationGlobalBadge" class="derivation-badge" aria-label="Derivaciones pendientes"></span>
+
+
   <section id="rankingScreen" class="ranking-screen" aria-label="Ranking semanal" aria-hidden="true">
     <div class="ranking-shell">
       <header class="ranking-header">
@@ -5145,7 +5276,7 @@
         "ranking-anterior": ["Ganador semana pasada", "Abriendo ganador oficial de la semana pasada."],
         "nuevo-servicio": ["Nuevo servicio", "Aquí se conectará el flujo para crear un nuevo servicio."],
         "cargar-gastos": ["Cargar gastos", "Aquí se conectará el formulario para registrar un nuevo gasto."],
-        "derivar-servicio": ["Derivar servicio", "Aquí se conectará la selección de chofer y la derivación del servicio."],
+        "derivar-servicio": ["Derivar servicio", "Envía un servicio del catálogo oficial a otro chofer de EXPLORA."],
         "detalle-financiero": ["Detalle financiero", "Aquí se mostrará el resumen económico completo."],
         "facturacion-semanal": ["Facturación semanal", "Abriendo el detalle de la semana activa."],
         "gastos-semanales": ["Gastos semanales", "Los gastos registrados durante esta semana son $280.000."],
@@ -5447,7 +5578,7 @@
 
       document.addEventListener("DOMContentLoaded",()=>{
         $("newServiceBackBtn").addEventListener("click",()=>{ if(screen.dataset.view==="category") openNewServiceMain(); else closeNewServiceScreen(); });
-        $("newServiceBellBtn").addEventListener("click",()=>toast("No tienes notificaciones nuevas"));
+        $("newServiceBellBtn").addEventListener("click",()=>{ const api=window.ExploraDerivations; if(api&&typeof api.openNotifications==="function") api.openNotifications(); else toast("No tienes derivaciones pendientes"); });
         $("serviceCategorySearch").addEventListener("input",(e)=>renderServiceList(e.target.value));
         $("serviceConfirmCancelBtn").addEventListener("click",closeServiceConfirmation);
         $("serviceConfirmSaveBtn").addEventListener("click",confirmServiceSale);
@@ -5492,10 +5623,15 @@
 
       function closeInternalScreensExcept(except) {
         const newService = document.getElementById("newServiceScreen");
+        const derivations = document.getElementById("derivationScreen");
         const profile = document.getElementById("profileScreen");
         const adminShared = document.getElementById("adminSharedScreen");
         if (except !== "admin-shared" && adminShared && adminShared.classList.contains("is-open")) {
           window.ExploraAdminShared?.close?.();
+        }
+
+        if (except !== "derivations" && derivations && derivations.classList.contains("is-open")) {
+          window.ExploraDerivations?.close?.();
         }
 
         if (except !== "new-service" && newService && newService.classList.contains("is-open")) {
@@ -6294,6 +6430,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     };
 
     function resetExploraAccessState() {
+      window.ExploraDerivations?.stopSession?.();
       exploraAccessState.user = null;
       exploraAccessState.uid = null;
       exploraAccessState.profile = null;
@@ -6411,7 +6548,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
 
 
     const EXPLORA_SESSION_PREFIX = "explora_sesion_nueva_";
-    const EXPLORA_ALLOWED_SCREENS = new Set(["dashboard","operaciones","nuevo-servicio","cargar-gasto","comprobantes","perfil"]);
+    const EXPLORA_ALLOWED_SCREENS = new Set(["dashboard","operaciones","nuevo-servicio","derivaciones","cargar-gasto","comprobantes","perfil"]);
     const MIN_SPLASH_MS = 420;
     const MAX_SPLASH_MS = 1000;
     const splashStartedAt = Date.now();
@@ -6793,6 +6930,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       window.ExploraWeeklyEngine?.restoreCache?.();
       window.ExploraRestoreWeeklyClosureCache?.();
       queueMicrotask(() => {
+        window.ExploraDerivations?.startForCurrentSession?.().catch?.((error)=>console.warn("[EXPLORA derivaciones] start", error?.code || error?.message));
         if (typeof window.ExploraLoadWeeklySession === "function") {
           window.ExploraLoadWeeklySession().catch((error) => console.warn("[EXPLORA weekly session]", error?.code || error?.message));
         } else {
@@ -6836,6 +6974,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       } catch (_) {}
       if (screen === "perfil" && window.ExploraActions && window.ExploraActions["abrir-perfil"]) window.ExploraActions["abrir-perfil"]();
       else if ((screen === "operaciones" || screen === "nuevo-servicio") && window.ExploraActions && window.ExploraActions["nuevo-servicio"]) window.ExploraActions["nuevo-servicio"]();
+      else if (screen === "derivaciones" && window.ExploraActions && window.ExploraActions["derivar-servicio"]) window.ExploraActions["derivar-servicio"]();
       else if (screen === "cargar-gasto" && window.ExploraActions && window.ExploraActions["cargar-gastos"]) window.ExploraActions["cargar-gastos"]();
       else if (screen === "comprobantes" && window.ExploraReceipts && window.ExploraReceipts.open) window.ExploraReceipts.open();
       else if (window.ExploraMainNav) window.ExploraMainNav.setActive("inicio");
@@ -7082,26 +7221,26 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     }
 
     function getDerivationOrigin(data = {}) {
-      return String(data.choferOrigenId || data.origenChoferId || data.choferOrigen || data.origen || data.derivadorId || data.fromChoferId || data.creadoPor || data.emisorId || "").trim();
+      return String(data.senderUid || data.emisorUid || data.choferOrigenUid || data.choferOrigenId || data.origenChoferId || data.choferOrigen || data.derivadorId || data.fromChoferId || data.creadoPor || data.emisorId || "").trim();
     }
 
     function getDerivationReceiver(data = {}) {
-      return String(data.choferReceptorId || data.receptorChoferId || data.choferDestino || data.receptor || data.recibidoPor || data.toChoferId || data.destinoChoferId || "").trim();
+      return String(data.receiverUid || data.receptorUid || data.choferReceptorUid || data.choferReceptorId || data.receptorChoferId || data.choferDestino || data.receptor || data.recibidoPor || data.toChoferId || data.destinoChoferId || "").trim();
     }
 
     function getDerivationServiceId(data = {}) {
       return String(
-        data.viajeRelacionadoId || data.viajeId || data.operationId || data.operacionId ||
-        data.servicioRef || data.referenciaServicio || data.servicioId || ""
+        data.billingServiceId || data.viajeRelacionadoId || data.viajeId || data.operationId || data.operacionId ||
+        data.servicioRef || data.referenciaServicio || data.servicioId || data.derivationId || ""
       ).trim();
     }
 
     function isCompletedDerivation(data = {}) {
-      const s = normalizeStatus(data.estado || data.status || data.estadoDerivacion);
+      const s = normalizeStatus(data.status || data.estado || data.estadoDerivacion);
+      if (["rejected","canceled","sent_pending_response","accepted_pending_completion"].includes(s)) return false;
       if (isInvalidState(s)) return false;
-      const accepted = s.includes("acept") || data.aceptada === true || data.aceptado === true;
-      const completed = s.includes("complet") || s.includes("finaliz") || s.includes("cerrad") || data.completada === true || data.completado === true || data.viajeCompletado === true;
-      return completed || (accepted && (data.viajeCompletado === true || data.servicioCompletado === true));
+      const completed = s === "completed" || s.includes("complet") || s.includes("finaliz") || s.includes("cerrad") || data.completada === true || data.completado === true || data.viajeCompletado === true;
+      return completed && Boolean(data.billingServiceId || data.viajeId || data.servicioId || data.operationId || data.derivationId);
     }
 
     const weeklyProfileCache = new Map();
@@ -7256,13 +7395,20 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         if (countedDerivations.has(dedupKey)) continue;
         countedDerivations.add(dedupKey);
 
-        const agg = ensure(origin);
-        if (!agg) continue;
-        addAggAlias(agg, rawOrigin);
-        agg.derivacionesValidas += 1;
-        agg.activo = true;
+        const senderAgg = ensure(origin);
+        const receiverAgg = ensure(receiver);
+        if (!senderAgg || !receiverAgg) continue;
+        addAggAlias(senderAgg, rawOrigin);
+        addAggAlias(receiverAgg, rawReceiver);
+        const senderUnits = Math.max(0, Number(der.senderPoints ?? der.puntosEmisor ?? 1)) || 1;
+        const receiverUnits = Math.max(0, Number(der.receiverPoints ?? der.puntosReceptor ?? 1)) || 1;
+        senderAgg.derivacionesValidas += senderUnits;
+        receiverAgg.derivacionesValidas += receiverUnits;
+        senderAgg.activo = true;
+        receiverAgg.activo = true;
         const ms = getDocTimeMs(der);
-        if (ms && ms < agg.firstCompletedAt) agg.firstCompletedAt = ms;
+        if (ms && ms < senderAgg.firstCompletedAt) senderAgg.firstCompletedAt = ms;
+        if (ms && ms < receiverAgg.firstCompletedAt) receiverAgg.firstCompletedAt = ms;
         validDerivations.push({ ...der, _origin: origin, _receiver: receiver, _operationId: operationId });
       }
 
@@ -7367,8 +7513,8 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
 
     const WEEKLY_SNAPSHOT_COLLECTION = "acumulados_semanales";
     const OPERATIONAL_LOAN_COLLECTION = "prestamos_operativos";
-    const WEEKLY_ENGINE_SCHEMA_VERSION = 183;
-    const WEEKLY_CACHE_PREFIX = "explora_weekly_v183_";
+    const WEEKLY_ENGINE_SCHEMA_VERSION = 184;
+    const WEEKLY_CACHE_PREFIX = "explora_weekly_v184_";
     const weeklyMaterializedRankingCache = new Map();
 
     function normalizePaymentMethod(data = {}) {
@@ -8196,6 +8342,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         let operationalLoanTotal = Number(current.operationalLoanTotal || 0);
         let operationalLoanDriverShare = Number(current.operationalLoanDriverShare || 0);
         let operationalLoanAdminShare = Number(current.operationalLoanAdminShare || 0);
+        let validDerivations = Math.max(0, Number(current.validDerivations || current.derivacionesValidas || 0));
 
         if (kind === "service") {
           const amount = Math.max(0, getMoneyValue(record));
@@ -8246,6 +8393,10 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
           operationalLoanAdminShare += adminShare;
           adminExpenseCredit += driverShare;
           ledger.push({ id:operationId, type:"loan", amount:loan.amount, driverShare, adminShare, linkedExpenseId:loan.linkedExpenseId || "" });
+        } else if (kind === "derivation") {
+          const units = Math.max(0, Number(record.derivationPoints ?? record.points ?? record.puntos ?? 1)) || 1;
+          validDerivations += units;
+          ledger.push({ id:operationId, type:"derivation", units, derivationId:String(record.derivationId || record.id || ""), participantRole:String(record.participantRole || "") });
         } else return { ...data, _ignored:true };
 
         ledger = ledger.slice(-160);
@@ -8263,6 +8414,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
           weeklyPeriodId:period.id, periodoSemanalId:period.id, periodoId:period.id,
           serviceCount, viajes:serviceCount, grossBilling, facturacion:grossBilling,
           expenseCount, cantidadGastos:expenseCount, totalExpenses, gastos:totalExpenses,
+          validDerivations, derivacionesValidas:validDerivations,
           cashCollectedByDriver, transferCollectedByAdmin, cardCollectedByAdmin,
           totalCollectedByAdmin:transferCollectedByAdmin+cardCollectedByAdmin,
           driverPaidSharedExpenses, adminPaidSharedExpenses, driverExpenseCredit, adminExpenseCredit,
@@ -8294,6 +8446,9 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     function applyOperationalLoanToWeeklyEngine(loan, explicitUid = "") {
       return applyWeeklyOperationIncrementally("loan",loan,explicitUid);
     }
+    function applyDerivationToWeeklyEngine(derivation, explicitUid = "") {
+      return applyWeeklyOperationIncrementally("derivation",derivation,explicitUid);
+    }
 
     window.ExploraWeeklyState=weeklyState;
     window.ExploraWeeklyFinancialState=weeklyState;
@@ -8306,6 +8461,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       getDriverWeeklySummary:getDriverWeeklySnapshot,getDriverWeeklySnapshot,getDriverWeeklyFinancialSnapshot:getDriverWeeklySnapshot,
       attachClosure:attachClosureToWeeklySnapshot,applyExpense:applyExpenseToWeeklyEngine,applyService:applyServiceToWeeklyEngine,
       applyOperationalLoan:applyOperationalLoanToWeeklyEngine,applyOperationalLoanForUid:(uid,loan)=>applyOperationalLoanToWeeklyEngine(loan,uid),
+      applyDerivation:applyDerivationToWeeklyEngine,applyDerivationForUid:(uid,derivation)=>applyDerivationToWeeklyEngine(derivation,uid),
       persistCurrent:()=>weeklyState.snapshot?persistMaterializedWeeklySnapshot(weeklyState.snapshot):Promise.resolve(),
       calculateFinancialSettlement:calculateWeeklyFinancialSettlement,
       subscribe(callback){if(typeof callback!=="function")return()=>{};weeklyState.subscribers.add(callback);try{callback(weeklyStatePublicSnapshot());}catch(_){}return()=>weeklyState.subscribers.delete(callback);}
@@ -9743,6 +9899,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     }
 
     function showAdminApp() {
+      window.ExploraDerivations?.stopSession?.();
       const user = auth.currentUser;
       if (!user || !EXPLORA_ADMIN_UIDS.has(user.uid) || legacyProfileRole(exploraSession.profile || {}) !== "admin") {
         throw new Error("PROFILE_ROLE_INVALID");
@@ -13169,6 +13326,8 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     }));
   }
 
+  window.ExploraUpdateHistoricalAccumulated=updateHistoricalAccumulated;
+
   window.ExploraRegisterSoldService=async function(service){
     const user=auth?.currentUser;if(!user?.uid)throw new Error("Sesión no iniciada.");if(!service?.id)throw new Error("Servicio inválido.");
     const p=getActivePeriods(),valor=toNumber(service.price);if(valor<=0)throw new Error("Importe inválido.");const refDoc=doc(collection(db,"viajes"));const session=window.ExploraSession||{};
@@ -13437,7 +13596,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         settlementAmount:Number(snapshot.settlementAmount||0),payerRole:snapshot.payerRole||null,payeeRole:snapshot.payeeRole||null,balanced:snapshot.balanced===true,
         choferDebe:snapshot.payerRole==="driver"?Number(snapshot.settlementAmount||0):0,davidDebe:snapshot.payerRole==="admin"?Number(snapshot.settlementAmount||0):0,
         sentido:snapshot.payerRole==="driver"?"chofer_a_david":snapshot.payerRole==="admin"?"david_a_chofer":"sin_diferencia",
-        derivacionesValidas:Number(snapshot.validDerivations||0),rankingPoints:Number(snapshot.rankingPoints||0),receiptRequired:!snapshot.balanced,bonusEligible:true,cerrado:true,cerradoEn:serverTimestamp(),closedAt:serverTimestamp(),snapshotSchemaVersion:183,origenSnapshot:"motor_financiero_semanal_v183"
+        derivacionesValidas:Number(snapshot.validDerivations||0),rankingPoints:Number(snapshot.rankingPoints||0),receiptRequired:!snapshot.balanced,bonusEligible:true,cerrado:true,cerradoEn:serverTimestamp(),closedAt:serverTimestamp(),snapshotSchemaVersion:184,origenSnapshot:"motor_financiero_semanal_v184"
       },{merge:true});});return snapshot;
     })().finally(()=>{pendingCloseRecoveryPromise=null;});
     return pendingCloseRecoveryPromise;
@@ -13455,6 +13614,336 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
   window.addEventListener("explora:operational-loan-created",()=>{
     window.ExploraInvalidateWeeklyClosure?.("operational-loan-created",{refresh:false});
   });
+</script>
+
+
+<script type="module" id="exploraDerivationsModule">
+  import { collection, doc, getDoc, getDocs, query, where, setDoc, updateDoc, runTransaction, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  const firebase = window.ExploraFirebase || {};
+  const auth = firebase.auth;
+  const db = firebase.db;
+  if (!auth || !db) console.warn("[EXPLORA derivaciones] Firebase no disponible al iniciar el módulo");
+
+  const DERIVATION_COLLECTION = "derivaciones";
+  const SERVICE_COLLECTION = "viajes";
+  const RANKING_EVENT_COLLECTION = "eventos_ranking";
+  const INVALIDATION_COLLECTION = "invalidaciones_semanales";
+  const DRIVER_COLLECTION = "choferes";
+  const ALLOWED_STATES = new Set(["sent_pending_response","accepted_pending_completion","rejected","completed","canceled"]);
+  const rankingConfig = window.ExploraRankingConfig = Object.freeze({
+    ...(window.ExploraRankingConfig || {}),
+    derivationSenderPoints: Number(window.ExploraRankingConfig?.derivationSenderPoints ?? 1),
+    derivationReceiverPoints: Number(window.ExploraRankingConfig?.derivationReceiverPoints ?? 1)
+  });
+
+  const $ = (id) => document.getElementById(id);
+  const state = {
+    sent: [], received: [], pendingResponse: [], pendingCompletion: [],
+    drivers: [], driverMap: new Map(), profileCache: new Map(),
+    selectedReceiverUid: "", selectedServiceId: "", selectedPayment: "", selectedFinalizeId: "",
+    activeTab: "new", sentFilter: "all", receivedFilter: "all",
+    loading: false, loaded: false, historyLoadedAt: 0, pendingCompletionLoadedAt: 0,
+    loadPromise: null, pendingCompletionPromise: null, unsubscribePending: null,
+    pendingListenerUid: "", pendingFallbackActive: false, previousScrollY: 0,
+    actionBusy: new Set(), originalNewServiceAction: null
+  };
+  window.ExploraDerivationState = state;
+
+  function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>'"]/g, (char) => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[char]));
+  }
+  function normalize(value) { return String(value || "").trim().toLowerCase(); }
+  function money(value) { return new Intl.NumberFormat("es-AR", { style:"currency", currency:"ARS", maximumFractionDigits:0 }).format(Number(value || 0)); }
+  function timestampMs(value) {
+    if (!value) return 0;
+    if (typeof value.toDate === "function") return value.toDate().getTime();
+    if (value instanceof Date) return value.getTime();
+    if (typeof value === "number") return value;
+    const parsed = new Date(value); return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+  }
+  function recordTime(row) { return timestampMs(row.updatedAt || row.completedAt || row.acceptedAt || row.rejectedAt || row.canceledAt || row.sentAt || row.createdAt); }
+  function formatDate(row) {
+    const ms = recordTime(row); if (!ms) return "Fecha pendiente";
+    return new Intl.DateTimeFormat("es-AR", { timeZone:"America/Argentina/Buenos_Aires", day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" }).format(new Date(ms));
+  }
+  function initials(name) { return String(name || "CH").trim().split(/\s+/).slice(0,2).map(part => part.charAt(0)).join("").toUpperCase() || "CH"; }
+  function profileAvatar(profile = {}) { return String(profile.avatarUrl || profile.avatar || profile.fotoPerfil || profile.foto || profile.photoURL || profile.profilePhoto || "").trim(); }
+  function profileName(profile = {}) { return String(profile.nombreCompleto || profile.nombre || profile.displayName || profile.name || profile.usuario || profile.username || "Chofer").trim(); }
+  function profileUid(profile = {}) { return String(profile.uid || profile.authUid || profile.firebaseUid || profile.userUid || "").trim(); }
+  function profileRole(profile = {}) { return normalize(profile.rol || profile.role || profile.tipo || "chofer"); }
+  function profileActive(profile = {}) { return !(profile.activo === false || profile.active === false || normalize(profile.estado) === "inactivo" || profile.habilitadoDerivaciones === false); }
+  function vehicleLabel(profile = {}) {
+    const vehicle = profile.vehiculo && typeof profile.vehiculo === "object" ? profile.vehiculo : {};
+    const brand = String(vehicle.marca || profile.marcaVehiculo || profile.vehicleBrand || "").trim();
+    const model = String(vehicle.modelo || profile.modeloVehiculo || profile.vehicleModel || profile.auto || "").trim();
+    const plate = String(vehicle.patente || profile.patente || profile.matricula || profile.vehiclePlate || "").trim();
+    const direct = String(typeof profile.vehiculo === "string" ? profile.vehiculo : profile.vehicleName || profile.nombreVehiculo || "").trim();
+    const label = [brand, model].filter(Boolean).join(" ") || direct;
+    return [label, plate].filter(Boolean).join(" · ") || "Vehículo no asignado";
+  }
+  function avatarMarkup(uid, name, avatar) {
+    return `<span class="derivation-avatar" data-user-id="${escapeHtml(uid)}"><span>${escapeHtml(initials(name))}</span>${avatar ? `<img src="${escapeHtml(avatar)}" alt="" loading="lazy">` : ""}</span>`;
+  }
+  function showToast(message) {
+    const toast = $("toast"); if (!toast) return;
+    clearTimeout(showToast.timer); toast.textContent = message; toast.classList.add("show");
+    showToast.timer = setTimeout(() => toast.classList.remove("show"), 2400);
+  }
+  function setMessage(id, message = "", type = "") { const el = $(id); if (!el) return; el.textContent = message; el.className = "derivation-message" + (type ? ` ${type}` : ""); }
+  function setButtonBusy(button, busy, busyText = "Procesando…", idleText = "") {
+    if (!button) return;
+    if (busy) { if (!button.dataset.idleText) button.dataset.idleText = idleText || button.textContent; button.disabled = true; button.setAttribute("aria-busy","true"); button.textContent = busyText; }
+    else { button.disabled = false; button.setAttribute("aria-busy","false"); button.textContent = idleText || button.dataset.idleText || button.textContent; delete button.dataset.idleText; }
+  }
+  function lockPage(open) {
+    if (open) { state.previousScrollY = window.scrollY || 0; document.documentElement.dataset.derivationOverflow = document.documentElement.style.overflow || ""; document.body.dataset.derivationOverflow = document.body.style.overflow || ""; document.documentElement.style.overflow = "hidden"; document.body.style.overflow = "hidden"; }
+    else { document.documentElement.style.overflow = document.documentElement.dataset.derivationOverflow || ""; document.body.style.overflow = document.body.dataset.derivationOverflow || ""; delete document.documentElement.dataset.derivationOverflow; delete document.body.dataset.derivationOverflow; }
+  }
+  async function getSession() {
+    const session = typeof window.ExploraGetAuthenticatedSession === "function" ? await window.ExploraGetAuthenticatedSession({ timeoutMs:5000 }) : { user:auth.currentUser, uid:auth.currentUser?.uid, profile:window.ExploraSession?.profile, profileDocumentId:window.ExploraSession?.profileDocumentId };
+    if (!session?.user?.uid || !session.uid) throw new Error("AUTH_REQUIRED");
+    if (normalize(session.role || window.ExploraSession?.role) === "admin") throw new Error("DRIVER_REQUIRED");
+    return session;
+  }
+  function getPeriods() {
+    if (window.ExploraPeriods?.getActivePeriods) return window.ExploraPeriods.getActivePeriods(new Date());
+    const weekly = window.ExploraWeeklyEngine?.getActiveWeeklyPeriod?.(new Date()) || {};
+    const now = new Date();
+    return { weeklyPeriodId:weekly.id || weekly.weeklyPeriodId || "", monthlyPeriodId:`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`, yearlyPeriodId:String(now.getFullYear()), week:weekly.id || "", month:now.getMonth()+1, year:now.getFullYear() };
+  }
+  function officialCatalog() {
+    const catalog = window.ExploraNewService?.getCatalog?.() || {};
+    return Object.entries(catalog).flatMap(([categoryId, rows]) => (Array.isArray(rows) ? rows : []).map(row => ({ ...row, categoryId:row.categoryId || categoryId })));
+  }
+  function findOfficialService(serviceId) { return officialCatalog().find(row => String(row.id) === String(serviceId)) || null; }
+  function normalizeDerivation(raw = {}, id = "") {
+    const status = normalize(raw.status || raw.estado || "sent_pending_response");
+    return { ...raw, id:id || raw.derivationId || raw.id || "", derivationId:id || raw.derivationId || raw.id || "", status:ALLOWED_STATES.has(status) ? status : "sent_pending_response", senderUid:String(raw.senderUid || raw.emisorUid || raw.choferOrigenUid || ""), receiverUid:String(raw.receiverUid || raw.receptorUid || raw.choferReceptorUid || ""), fixedPrice:Number(raw.fixedPrice ?? raw.valor ?? raw.monto ?? raw.importe ?? 0), serviceName:String(raw.serviceName || raw.nombreServicio || raw.servicioNombre || "Servicio"), origin:String(raw.origin || raw.origen || ""), destination:String(raw.destination || raw.destino || ""), senderName:String(raw.senderName || raw.emisorNombre || "Chofer"), receiverName:String(raw.receiverName || raw.receptorNombre || "Chofer") };
+  }
+
+  async function loadDriverDirectory(force = false) {
+    if (!force && state.drivers.length) return state.drivers;
+    const current = await getSession();
+    const snap = await getDocs(collection(db, DRIVER_COLLECTION));
+    const drivers = [];
+    snap.forEach((document) => {
+      const profile = { ...(document.data() || {}), documentId:document.id };
+      const uid = profileUid(profile);
+      const role = profileRole(profile);
+      if (!uid || uid === current.uid || !profileActive(profile) || !["chofer","driver","conductor"].includes(role)) return;
+      const item = { uid, documentId:document.id, name:profileName(profile), avatar:profileAvatar(profile), vehicle:vehicleLabel(profile), profile };
+      drivers.push(item); state.driverMap.set(uid,item); state.profileCache.set(uid,item);
+    });
+    drivers.sort((a,b) => a.name.localeCompare(b.name,"es")); state.drivers = drivers; renderDriverOptions(); return drivers;
+  }
+  function renderDriverOptions(queryText = "") {
+    const grid = $("derivationDriverGrid"); if (!grid) return;
+    const q = normalize(queryText); const rows = state.drivers.filter(row => !q || normalize(`${row.name} ${row.vehicle}`).includes(q));
+    grid.innerHTML = rows.length ? rows.map(row => `<button type="button" class="derivation-driver-card${state.selectedReceiverUid===row.uid?" is-selected":""}" data-select-derivation-driver="${escapeHtml(row.uid)}">${avatarMarkup(row.uid,row.name,row.avatar)}<span class="derivation-card-copy"><strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.vehicle)}</small></span><span class="derivation-select-dot" aria-hidden="true"></span></button>`).join("") : `<div class="derivation-empty">No hay otros choferes activos habilitados.</div>`;
+  }
+  function renderServiceOptions(queryText = "") {
+    const grid = $("derivationServiceGrid"); if (!grid) return;
+    const q = normalize(queryText); const rows = officialCatalog().filter(row => Number(row.price)>0 && (!q || normalize(`${row.name} ${row.origin} ${row.destination} ${row.location} ${row.categoryId}`).includes(q)));
+    grid.innerHTML = rows.length ? rows.map(row => `<button type="button" class="derivation-service-card${state.selectedServiceId===String(row.id)?" is-selected":""}" data-select-derivation-service="${escapeHtml(row.id)}"><span class="derivation-card-copy"><strong>${escapeHtml(row.name)}</strong><small>${escapeHtml([row.origin,row.destination].filter(Boolean).join(" → ") || row.location || row.categoryId)}</small></span><span class="derivation-service-price">${money(row.price)}</span><span class="derivation-select-dot" aria-hidden="true"></span></button>`).join("") : `<div class="derivation-empty">No se encontraron servicios activos.</div>`;
+  }
+  function updateComposeSummary() {
+    const driver = state.driverMap.get(state.selectedReceiverUid); const service = findOfficialService(state.selectedServiceId);
+    $("derivationSummaryReceiver").textContent = driver?.name || "Sin seleccionar";
+    $("derivationSummaryService").textContent = service?.name || "Sin seleccionar";
+    $("derivationSummaryPrice").textContent = money(service?.price || 0);
+    $("derivationSendBtn").disabled = !(driver && service && Number(service.price)>0);
+  }
+  function resetComposeForm() {
+    state.selectedReceiverUid = ""; state.selectedServiceId = "";
+    if ($("derivationNotes")) $("derivationNotes").value = "";
+    if ($("derivationDriverSearch")) $("derivationDriverSearch").value = "";
+    if ($("derivationServiceSearch")) $("derivationServiceSearch").value = "";
+    renderDriverOptions(); renderServiceOptions(); updateComposeSummary(); setMessage("derivationFormMessage","");
+  }
+
+  async function sendDerivation(event) {
+    event?.preventDefault?.(); const button = $("derivationSendBtn"); if (state.actionBusy.has("send")) return;
+    state.actionBusy.add("send"); setButtonBusy(button,true,"Enviando…","ENVIAR DERIVACIÓN"); setMessage("derivationFormMessage","Validando servicio oficial…");
+    try {
+      const session = await getSession(); const receiver = state.driverMap.get(state.selectedReceiverUid); const service = findOfficialService(state.selectedServiceId);
+      if (!receiver || receiver.uid === session.uid || !profileActive(receiver.profile)) throw new Error("INVALID_RECEIVER");
+      if (!service || !(Number(service.price)>0)) throw new Error("INVALID_SERVICE");
+      const officialAgain = findOfficialService(service.id); if (!officialAgain || Number(officialAgain.price)!==Number(service.price)) throw new Error("SERVICE_PRICE_MISMATCH");
+      const ref = doc(collection(db, DERIVATION_COLLECTION)); const period = getPeriods(); const senderName = profileName(session.profile || {}); const notes = String($("derivationNotes")?.value || "").trim().slice(0,240);
+      const payload = {
+        derivationId:ref.id, id:ref.id, senderUid:session.uid, receiverUid:receiver.uid,
+        senderProfileId:session.profileDocumentId || "", receiverProfileId:receiver.documentId,
+        senderName, receiverName:receiver.name,
+        serviceId:String(service.id), serviceCategory:String(service.categoryId || ""), serviceName:String(service.name || "Servicio"),
+        origin:String(service.origin || ""), destination:String(service.destination || ""), fixedPrice:Number(service.price), valor:Number(service.price), monto:Number(service.price),
+        notes, status:"sent_pending_response", estado:"sent_pending_response",
+        sentAt:serverTimestamp(), createdAt:serverTimestamp(), acceptedAt:null, rejectedAt:null, completedAt:null, canceledAt:null,
+        paymentMethod:null, billingServiceId:null, weeklyPeriodIdSent:period.weeklyPeriodId || "", weeklyPeriodIdCompleted:null,
+        senderPointsAwarded:false, receiverPointsAwarded:false, pointsAwardedAt:null,
+        createdByUid:session.uid, updatedAt:serverTimestamp(), schemaVersion:184
+      };
+      await setDoc(ref,payload,{merge:false});
+      const row = normalizeDerivation({ ...payload, sentAt:Date.now(), createdAt:Date.now(), updatedAt:Date.now() },ref.id);
+      state.sent.unshift(row); state.historyLoadedAt = Date.now(); renderHistory();
+      setMessage("derivationFormMessage","Derivación enviada. Aún no genera facturación ni puntos.","ok"); showToast("Derivación enviada");
+      resetComposeForm(); switchTab("sent");
+    } catch (error) {
+      console.warn("DERIVATION_SEND_ERROR",error?.code || error?.message); const code=String(error?.message||error?.code||"");
+      setMessage("derivationFormMessage", code.includes("INVALID_RECEIVER")?"Selecciona un chofer receptor válido.":code.includes("INVALID_SERVICE")||code.includes("PRICE")?"Selecciona un servicio vigente del catálogo oficial.":"No se pudo enviar la derivación.","err");
+    } finally { state.actionBusy.delete("send"); setButtonBusy(button,false,"","ENVIAR DERIVACIÓN"); updateComposeSummary(); }
+  }
+
+  async function queryHistory(field, uid) {
+    const snap = await getDocs(query(collection(db,DERIVATION_COLLECTION),where(field,"==",uid)));
+    return snap.docs.map(item => normalizeDerivation(item.data() || {},item.id)).sort((a,b)=>recordTime(b)-recordTime(a));
+  }
+  async function loadHistory(force = false) {
+    if (state.loadPromise) return state.loadPromise;
+    if (!force && state.loaded && Date.now()-state.historyLoadedAt < 45000) return {sent:state.sent,received:state.received};
+    state.loadPromise = (async()=>{
+      state.loading=true; renderHistoryLoading(); const session=await getSession();
+      const [sent,received]=await Promise.all([queryHistory("senderUid",session.uid),queryHistory("receiverUid",session.uid)]);
+      state.sent=sent; state.received=received; state.pendingCompletion=received.filter(row=>row.status==="accepted_pending_completion"); state.pendingCompletionLoadedAt=Date.now(); state.loaded=true; state.historyLoadedAt=Date.now(); renderHistory(); return {sent,received};
+    })().catch(error=>{ console.warn("DERIVATION_HISTORY_ERROR",error?.code||error?.message); renderHistoryError(); throw error; }).finally(()=>{state.loading=false;state.loadPromise=null;});
+    return state.loadPromise;
+  }
+  function filterMatch(row,filter) {
+    if(filter==="all")return true;if(filter==="pending")return row.status==="sent_pending_response";if(filter==="accepted")return row.status==="accepted_pending_completion";if(filter==="completed")return row.status==="completed";if(filter==="rejected")return row.status==="rejected"||row.status==="canceled";return true;
+  }
+  function statusInfo(status) {
+    return ({sent_pending_response:["Pendiente de respuesta","pending"],accepted_pending_completion:["Aceptada y pendiente","accepted"],rejected:["Rechazada","rejected"],completed:["Finalizada","completed"],canceled:["Cancelada","canceled"]})[status] || ["Pendiente","pending"];
+  }
+  function counterpartProfile(uid,name) { const cached=state.profileCache.get(uid)||state.driverMap.get(uid); return {name:cached?.name||name||"Chofer",avatar:cached?.avatar||"",vehicle:cached?.vehicle||""}; }
+  function historyCard(row,direction) {
+    const otherUid=direction==="sent"?row.receiverUid:row.senderUid; const fallback=direction==="sent"?row.receiverName:row.senderName; const profile=counterpartProfile(otherUid,fallback); const [label,klass]=statusInfo(row.status);
+    const actions=[];
+    if(direction==="sent"&&row.status==="sent_pending_response")actions.push(`<button type="button" class="danger" data-derivation-action="cancel" data-derivation-id="${escapeHtml(row.id)}">CANCELAR</button>`);
+    if(direction==="received"&&row.status==="sent_pending_response")actions.push(`<button type="button" data-derivation-action="reject" data-derivation-id="${escapeHtml(row.id)}">RECHAZAR</button><button type="button" class="primary" data-derivation-action="accept" data-derivation-id="${escapeHtml(row.id)}">ACEPTAR</button>`);
+    if(direction==="received"&&row.status==="accepted_pending_completion")actions.push(`<button type="button" class="primary" data-derivation-action="finalize" data-derivation-id="${escapeHtml(row.id)}">FINALIZAR DERIVACIÓN</button>`);
+    const pendingCopy=row.status==="accepted_pending_completion"&&direction==="received"?`<small>El servicio todavía no fue incorporado a tu facturación.</small>`:"";
+    return `<article class="derivation-history-card" data-derivation-row="${escapeHtml(row.id)}"><div class="derivation-history-head">${avatarMarkup(otherUid,profile.name,profile.avatar)}<span class="derivation-card-copy"><strong>${escapeHtml(profile.name)}</strong><small>${escapeHtml(profile.vehicle||"")}</small></span><span class="derivation-history-state ${klass}">${escapeHtml(label)}</span></div><div class="derivation-history-service"><strong>${escapeHtml(row.serviceName)}</strong><span>${escapeHtml([row.origin,row.destination].filter(Boolean).join(" → "))}</span>${pendingCopy}</div><div class="derivation-history-meta"><span>${escapeHtml(formatDate(row))}</span><strong>${money(row.fixedPrice)}</strong></div>${actions.length?`<div class="derivation-history-actions">${actions.join("")}</div>`:""}</article>`;
+  }
+  function renderHistory() {
+    const sentRows=state.sent.filter(row=>filterMatch(row,state.sentFilter)); const receivedRows=state.received.filter(row=>filterMatch(row,state.receivedFilter));
+    $("derivationSentList").innerHTML=sentRows.length?sentRows.map(row=>historyCard(row,"sent")).join(""):`<div class="derivation-empty">No hay derivaciones enviadas para este filtro.</div>`;
+    $("derivationReceivedList").innerHTML=receivedRows.length?receivedRows.map(row=>historyCard(row,"received")).join(""):`<div class="derivation-empty">No hay derivaciones recibidas para este filtro.</div>`;
+  }
+  function renderHistoryLoading(){ $("derivationSentList").innerHTML=`<div class="derivation-empty">Cargando derivaciones…</div>`; $("derivationReceivedList").innerHTML=`<div class="derivation-empty">Cargando derivaciones…</div>`; }
+  function renderHistoryError(){ $("derivationSentList").innerHTML=`<div class="derivation-empty">No se pudieron cargar las derivaciones.</div>`; $("derivationReceivedList").innerHTML=`<div class="derivation-empty">No se pudieron cargar las derivaciones.</div>`; }
+
+  function switchTab(tab) {
+    state.activeTab=tab;
+    document.querySelectorAll("[data-derivation-tab]").forEach(button=>button.classList.toggle("is-active",button.dataset.derivationTab===tab));
+    document.querySelectorAll("[data-derivation-panel]").forEach(panel=>panel.classList.toggle("is-active",panel.dataset.derivationPanel===tab));
+    if(tab!=="new")loadHistory(false).catch(()=>{});
+    $("derivationScreen")?.scrollTo?.({top:0,behavior:"smooth"});
+  }
+  async function openDerivations(tab="new") {
+    try { await loadDriverDirectory(false); renderServiceOptions(); updateComposeSummary(); } catch(error) { console.warn("DERIVATION_DRIVERS_ERROR",error?.code||error?.message); }
+    const screen=$("derivationScreen"); if(!screen)return; lockPage(true); screen.classList.add("is-open"); screen.setAttribute("aria-hidden","false"); window.ExploraMainNav?.setActive("operaciones");
+    try{localStorage.setItem("explora_sesion_nueva_last_screen","derivaciones");}catch(_){ }
+    switchTab(tab); if(tab!=="new")loadHistory(false).catch(()=>{});
+  }
+  function closeDerivations() { const screen=$("derivationScreen"); if(!screen)return; screen.classList.remove("is-open"); screen.setAttribute("aria-hidden","true"); lockPage(false); window.ExploraMainNav?.setActive("inicio"); try{localStorage.setItem("explora_sesion_nueva_last_screen","dashboard");}catch(_){ } requestAnimationFrame(()=>window.scrollTo(0,state.previousScrollY||0)); }
+
+  async function transitionDerivation(id, action, button) {
+    if (!id || state.actionBusy.has(id)) return; state.actionBusy.add(id); const idle=button?.textContent||""; setButtonBusy(button,true,action==="accept"?"Aceptando…":action==="reject"?"Rechazando…":"Cancelando…",idle);
+    try {
+      const session=await getSession(); const ref=doc(db,DERIVATION_COLLECTION,id); const target=action==="accept"?"accepted_pending_completion":action==="reject"?"rejected":"canceled";
+      await runTransaction(db,async tx=>{ const snap=await tx.get(ref); if(!snap.exists())throw new Error("DERIVATION_NOT_FOUND"); const row=normalizeDerivation(snap.data()||{},snap.id); if(row.status!=="sent_pending_response")throw new Error("INVALID_TRANSITION"); if(action==="cancel"){if(row.senderUid!==session.uid)throw new Error("FORBIDDEN");}else if(row.receiverUid!==session.uid)throw new Error("FORBIDDEN"); const nowField=action==="accept"?"acceptedAt":action==="reject"?"rejectedAt":"canceledAt"; const byField=action==="accept"?"acceptedByUid":action==="reject"?"rejectedByUid":"canceledByUid"; tx.update(ref,{status:target,estado:target,[nowField]:serverTimestamp(),[byField]:session.uid,updatedAt:serverTimestamp()}); });
+      const updateLocal=(rows)=>rows.map(row=>row.id===id?{...row,status:target,estado:target,updatedAt:Date.now(),[action==="accept"?"acceptedAt":action==="reject"?"rejectedAt":"canceledAt"]:Date.now()}:row);
+      state.sent=updateLocal(state.sent); state.received=updateLocal(state.received); state.pendingResponse=state.pendingResponse.filter(row=>row.id!==id); if(action==="accept"){const accepted=state.received.find(row=>row.id===id)||state.pendingResponse.find(row=>row.id===id);if(accepted)state.pendingCompletion=[{...accepted,status:target,acceptedAt:Date.now()},...state.pendingCompletion.filter(row=>row.id!==id)];}
+      renderPendingNotifications(); renderHistory(); showToast(action==="accept"?"Derivación aceptada. Quedó pendiente de finalizar.":action==="reject"?"Derivación rechazada":"Derivación cancelada");
+    } catch(error) { console.warn("DERIVATION_TRANSITION_ERROR",error?.code||error?.message); showToast(action==="accept"?"No se pudo aceptar la derivación.":action==="reject"?"No se pudo rechazar la derivación.":"No se pudo cancelar la derivación."); }
+    finally { state.actionBusy.delete(id); setButtonBusy(button,false,"",idle); }
+  }
+
+  function renderPendingNotifications() {
+    const stack=$("derivationNotificationStack"); const badge=$("derivationGlobalBadge"); const dot=document.querySelector(".new-service-bell-dot"); const rows=state.pendingResponse;
+    if(badge){badge.textContent=String(rows.length);badge.classList.toggle("is-visible",rows.length>0);} if(dot)dot.hidden=rows.length===0;
+    if(!stack)return; stack.hidden=rows.length===0; stack.innerHTML=rows.slice(0,3).map(row=>`<article class="derivation-notification-card"><div class="derivation-notification-head"><span class="derivation-notification-icon"><svg viewBox="0 0 24 24"><path d="M7 7h10M14 4l3 3-3 3"/><path d="M17 17H7M10 14l-3 3 3 3"/></svg></span><span class="derivation-notification-copy"><strong>NUEVA DERIVACIÓN</strong><b>${escapeHtml(row.senderName)} · ${escapeHtml(row.serviceName)}</b><small>${escapeHtml([row.origin,row.destination].filter(Boolean).join(" → "))} · ${money(row.fixedPrice)}${row.notes?` · ${escapeHtml(row.notes)}`:""}</small></span></div><div class="derivation-notification-actions"><button type="button" data-derivation-action="reject" data-derivation-id="${escapeHtml(row.id)}">RECHAZAR</button><button type="button" class="accept" data-derivation-action="accept" data-derivation-id="${escapeHtml(row.id)}">ACEPTAR</button></div></article>`).join("")+(rows.length>3?`<button type="button" class="derivation-notification-more" data-open-derivations="received">Ver ${rows.length-3} derivaciones más</button>`:"");
+  }
+  function startPendingListenerForUid(uid) {
+    if(state.unsubscribePending&&state.pendingListenerUid===uid)return; stopPendingListener(); state.pendingListenerUid=uid; state.pendingFallbackActive=false;
+    const apply=(snapshot)=>{state.pendingResponse=snapshot.docs.map(item=>normalizeDerivation(item.data()||{},item.id)).filter(row=>row.status==="sent_pending_response").sort((a,b)=>recordTime(b)-recordTime(a));renderPendingNotifications();};
+    const startFallback=()=>{if(state.pendingFallbackActive)return;state.pendingFallbackActive=true;state.unsubscribePending=onSnapshot(query(collection(db,DERIVATION_COLLECTION),where("receiverUid","==",uid)),apply,error=>console.warn("DERIVATION_PENDING_LISTENER_FALLBACK_ERROR",error?.code||error?.message));};
+    state.unsubscribePending=onSnapshot(query(collection(db,DERIVATION_COLLECTION),where("receiverUid","==",uid),where("status","==","sent_pending_response")),apply,error=>{console.warn("DERIVATION_PENDING_LISTENER_ERROR",error?.code||error?.message);try{state.unsubscribePending?.();}catch(_){}startFallback();});
+  }
+  function stopPendingListener(){try{state.unsubscribePending?.();}catch(_){}state.unsubscribePending=null;state.pendingListenerUid="";state.pendingFallbackActive=false;}
+
+  async function loadPendingCompletion(force=false) {
+    if(state.pendingCompletionPromise)return state.pendingCompletionPromise;
+    if(!force&&Date.now()-state.pendingCompletionLoadedAt<20000)return state.pendingCompletion;
+    state.pendingCompletionPromise=(async()=>{const session=await getSession();const snap=await getDocs(query(collection(db,DERIVATION_COLLECTION),where("receiverUid","==",session.uid)));state.pendingCompletion=snap.docs.map(item=>normalizeDerivation(item.data()||{},item.id)).filter(row=>row.status==="accepted_pending_completion").sort((a,b)=>recordTime(a)-recordTime(b));state.pendingCompletionLoadedAt=Date.now();return state.pendingCompletion;})().finally(()=>{state.pendingCompletionPromise=null;});
+    return state.pendingCompletionPromise;
+  }
+  function openReminder(rows) { const list=$("derivationReminderList"); list.innerHTML=rows.map(row=>`<article class="derivation-reminder-row"><strong>${escapeHtml(row.serviceName)} · ${money(row.fixedPrice)}</strong><small>Emisor: ${escapeHtml(row.senderName)} · Aceptada ${escapeHtml(formatDate(row))}</small><button type="button" data-derivation-action="finalize" data-derivation-id="${escapeHtml(row.id)}">FINALIZAR DERIVACIÓN</button></article>`).join("");$("derivationReminderBackdrop").classList.add("is-open");$("derivationReminderBackdrop").setAttribute("aria-hidden","false"); }
+  function closeReminder(){$("derivationReminderBackdrop")?.classList.remove("is-open");$("derivationReminderBackdrop")?.setAttribute("aria-hidden","true");}
+  async function guardNewService() {
+    if(normalize(window.ExploraSession?.role)==="admin")return state.originalNewServiceAction?.();
+    try{const pending=await loadPendingCompletion(false);if(pending.length)return openReminder(pending);}catch(error){console.warn("DERIVATION_REMINDER_ERROR",error?.code||error?.message);}return state.originalNewServiceAction?.();
+  }
+
+  function findRow(id){return [...state.pendingCompletion,...state.received,...state.pendingResponse,...state.sent].find(row=>row.id===id)||null;}
+  function openFinalize(id) { const row=findRow(id); if(!row||row.status!=="accepted_pending_completion"){showToast("La derivación ya no está pendiente de finalizar.");return;} state.selectedFinalizeId=id;state.selectedPayment="";document.querySelectorAll("[data-derivation-payment]").forEach(button=>button.classList.remove("is-selected"));const summary=$("derivationFinalizeSummary");summary.innerHTML=`<div><span>Servicio</span><strong>${escapeHtml(row.serviceName)}</strong></div><div><span>Precio</span><strong>${money(row.fixedPrice)}</strong></div><div><span>Emisor</span><strong>${escapeHtml(row.senderName)}</strong></div><div><span>Aceptada</span><strong>${escapeHtml(formatDate(row))}</strong></div>`;setMessage("derivationFinalizeMessage","");$("derivationFinalizeConfirmBtn").disabled=true;$("derivationFinalizeBackdrop").classList.add("is-open");$("derivationFinalizeBackdrop").setAttribute("aria-hidden","false");}
+  function closeFinalize(){state.selectedFinalizeId="";state.selectedPayment="";$("derivationFinalizeBackdrop")?.classList.remove("is-open");$("derivationFinalizeBackdrop")?.setAttribute("aria-hidden","true");}
+
+  async function completeDerivation() {
+    const id=state.selectedFinalizeId,paymentMethod=state.selectedPayment,button=$("derivationFinalizeConfirmBtn");if(!id||!["cash","transfer","card"].includes(paymentMethod)||state.actionBusy.has(`complete:${id}`))return;
+    state.actionBusy.add(`complete:${id}`);setButtonBusy(button,true,"Registrando servicio…","CONFIRMAR SERVICIO FINALIZADO");setMessage("derivationFinalizeMessage","Creando facturación y puntos de forma segura…");
+    try{
+      const session=await getSession();const periods=getPeriods();const periodId=periods.weeklyPeriodId||window.ExploraWeeklyEngine?.getActiveWeeklyPeriod?.().id||"";if(!periodId)throw new Error("PERIOD_UNAVAILABLE");
+      const derivationRef=doc(db,DERIVATION_COLLECTION,id);const serviceId=`derivacion_${id}`;const serviceRef=doc(db,SERVICE_COLLECTION,serviceId);const senderEventRef=doc(db,RANKING_EVENT_COLLECTION,`${id}_sender`);const receiverEventRef=doc(db,RANKING_EVENT_COLLECTION,`${id}_receiver`);const senderInvalidationRef=doc(db,INVALIDATION_COLLECTION,`${periodId}_${id}_sender`);const receiverInvalidationRef=doc(db,INVALIDATION_COLLECTION,`${periodId}_${id}_receiver`);
+      let committedService=null,committedDerivation=null;
+      await runTransaction(db,async tx=>{
+        const [derivationSnap,serviceSnap]=await Promise.all([tx.get(derivationRef),tx.get(serviceRef)]);if(!derivationSnap.exists())throw new Error("DERIVATION_NOT_FOUND");const row=normalizeDerivation(derivationSnap.data()||{},derivationSnap.id);
+        if(row.receiverUid!==session.uid)throw new Error("FORBIDDEN");if(row.status==="completed"||row.billingServiceId||serviceSnap.exists())throw new Error("DERIVATION_ALREADY_COMPLETED");if(row.status!=="accepted_pending_completion")throw new Error("INVALID_TRANSITION");if(!(row.fixedPrice>0))throw new Error("INVALID_PRICE");
+        const now=new Date();const senderPoints=Math.max(0,Number(rankingConfig.derivationSenderPoints||1));const receiverPoints=Math.max(0,Number(rankingConfig.derivationReceiverPoints||1));const receiverProfile=window.ExploraSession?.profile||{};const receiverProfileId=window.ExploraSession?.profileDocumentId||window.ExploraSession?.driverId||session.uid;
+        const servicePayload={id:serviceId,operationId:serviceId,serviceId,viajeId:serviceId,uid:session.uid,choferUid:session.uid,driverUid:session.uid,choferId:receiverProfileId,profileId:receiverProfileId,choferNombre:profileName(receiverProfile),categoria:row.serviceCategory||"derivacion",servicioId:row.serviceId,nombreServicio:row.serviceName,servicioNombre:row.serviceName,origen:row.origin,destino:row.destination,valor:row.fixedPrice,monto:row.fixedPrice,importe:row.fixedPrice,amount:row.fixedPrice,estado:"completado",status:"completed",completado:true,fuente:"derivacion_interna",source:"derivation",derivationId:id,originalSenderUid:row.senderUid,senderUid:row.senderUid,receiverUid:row.receiverUid,paymentMethod,metodoPago:paymentMethod,pago:paymentMethod,weeklyPeriodId:periodId,periodoSemanalId:periodId,periodoId:periodId,periodoMensualId:periods.monthlyPeriodId||"",periodoAnualId:periods.yearlyPeriodId||String(now.getFullYear()),semana:periods.week||periodId,mes:periods.month||now.getMonth()+1,anio:periods.year||now.getFullYear(),fecha:now.toLocaleDateString("es-AR",{timeZone:"America/Argentina/Buenos_Aires"}),hora:now.toLocaleTimeString("es-AR",{timeZone:"America/Argentina/Buenos_Aires",hour:"2-digit",minute:"2-digit"}),completedAt:serverTimestamp(),creadoEn:serverTimestamp(),createdAt:serverTimestamp(),schemaVersion:184};
+        const eventBase={derivationId:id,senderUid:row.senderUid,receiverUid:row.receiverUid,weeklyPeriodId:periodId,reason:"completed_internal_derivation",status:"awarded",awardedAt:serverTimestamp(),billingServiceId:serviceId};
+        tx.set(serviceRef,servicePayload,{merge:false});tx.set(senderEventRef,{...eventBase,participantUid:row.senderUid,participantRole:"sender",points:senderPoints},{merge:false});tx.set(receiverEventRef,{...eventBase,participantUid:row.receiverUid,participantRole:"receiver",points:receiverPoints},{merge:false});
+        tx.set(senderInvalidationRef,{uid:row.senderUid,weeklyPeriodId:periodId,reason:"derivation-completed",derivationId:id,createdAt:serverTimestamp(),processed:false},{merge:true});tx.set(receiverInvalidationRef,{uid:row.receiverUid,weeklyPeriodId:periodId,reason:"derivation-completed",derivationId:id,createdAt:serverTimestamp(),processed:false},{merge:true});
+        const derivationUpdate={status:"completed",estado:"completed",completedAt:serverTimestamp(),completedByUid:session.uid,paymentMethod,billingServiceId:serviceId,weeklyPeriodIdCompleted:periodId,weeklyPeriodId:periodId,periodoSemanalId:periodId,periodoId:periodId,senderPointsAwarded:true,receiverPointsAwarded:true,senderPoints,receiverPoints,pointsAwardedAt:serverTimestamp(),updatedAt:serverTimestamp()};tx.update(derivationRef,derivationUpdate);
+        committedService={...servicePayload,completedAt:Date.now(),creadoEn:Date.now(),createdAt:Date.now()};committedDerivation={...row,...derivationUpdate,completedAt:Date.now(),updatedAt:Date.now()};
+      });
+      const senderPoints=Math.max(0,Number(rankingConfig.derivationSenderPoints||1));const receiverPoints=Math.max(0,Number(rankingConfig.derivationReceiverPoints||1));const engine=window.ExploraWeeklyEngine;
+      await engine?.applyService?.(committedService);
+      await Promise.allSettled([engine?.applyDerivationForUid?.(committedDerivation.senderUid,{...committedDerivation,operationId:`${id}:sender`,participantRole:"sender",derivationPoints:senderPoints}),engine?.applyDerivationForUid?.(committedDerivation.receiverUid,{...committedDerivation,operationId:`${id}:receiver`,participantRole:"receiver",derivationPoints:receiverPoints})]);
+      window.ExploraUpdateHistoricalAccumulated?.("facturacion",committedService.amount,"viajes",committedService.id)?.catch?.(()=>{});engine?.invalidate?.("derivation-completed",{refresh:false});window.ExploraInvalidateWeeklyClosure?.("derivation-completed",{refresh:false});
+      window.dispatchEvent(new CustomEvent("explora:derivation-completed",{detail:{derivationId:id,serviceId,receiverUid:committedDerivation.receiverUid,senderUid:committedDerivation.senderUid,weeklyPeriodId:periodId}}));
+      const replace=(rows)=>rows.map(row=>row.id===id?normalizeDerivation({...row,...committedDerivation},id):row);state.sent=replace(state.sent);state.received=replace(state.received);state.pendingCompletion=state.pendingCompletion.filter(row=>row.id!==id);state.pendingCompletionLoadedAt=Date.now();renderHistory();closeFinalize();closeReminder();setMessage("derivationFinalizeMessage","","");showToast("Derivación finalizada. Facturación y puntos registrados una sola vez.");
+    }catch(error){console.warn("DERIVATION_COMPLETE_ERROR",error?.code||error?.message);const code=String(error?.message||error?.code||"");setMessage("derivationFinalizeMessage",code.includes("ALREADY")?"Esta derivación ya fue finalizada.":"No se pudo registrar el servicio derivado.","err");}
+    finally{state.actionBusy.delete(`complete:${id}`);setButtonBusy(button,false,"","CONFIRMAR SERVICIO FINALIZADO");if(state.selectedFinalizeId)button.disabled=!state.selectedPayment;}
+  }
+
+  async function startForCurrentSession(){const session=await getSession();startPendingListenerForUid(session.uid);await Promise.allSettled([loadPendingCompletion(true),loadDriverDirectory(false)]);return state;}
+  function stopSession(){stopPendingListener();state.sent=[];state.received=[];state.pendingResponse=[];state.pendingCompletion=[];state.drivers=[];state.driverMap.clear();state.profileCache.clear();state.loaded=false;state.loading=false;state.historyLoadedAt=0;state.pendingCompletionLoadedAt=0;state.selectedReceiverUid="";state.selectedServiceId="";state.selectedPayment="";state.selectedFinalizeId="";renderPendingNotifications();closeFinalize();closeReminder();if($("derivationScreen")?.classList.contains("is-open"))closeDerivations();}
+  function openNotifications(){if(state.pendingResponse.length)openDerivations("received");else openDerivations("received");}
+
+  function installNewServiceGuard(){if(state.originalNewServiceAction)return;const original=window.ExploraActions?.["nuevo-servicio"];if(typeof original!=="function")return;state.originalNewServiceAction=original;window.ExploraActions["nuevo-servicio"]=guardNewService;}
+  window.ExploraDerivations={open:openDerivations,close:closeDerivations,openNotifications,startForCurrentSession,stopSession,loadHistory,loadPendingCompletion,getState:()=>state,refresh:async()=>{await Promise.all([loadDriverDirectory(true),loadHistory(true),loadPendingCompletion(true)]);renderPendingNotifications();}};
+  window.ExploraActions=window.ExploraActions||{};window.ExploraActions["derivar-servicio"]=()=>openDerivations("new");
+
+  document.addEventListener("DOMContentLoaded",()=>{
+    installNewServiceGuard();renderServiceOptions();updateComposeSummary();
+    $("derivationBackBtn")?.addEventListener("click",closeDerivations);$("derivationRefreshBtn")?.addEventListener("click",async()=>{const b=$("derivationRefreshBtn");setButtonBusy(b,true,"…","↻");try{await window.ExploraDerivations.refresh();showToast("Derivaciones actualizadas");}catch(_){showToast("No se pudieron actualizar las derivaciones.");}finally{setButtonBusy(b,false,"","↻");}});
+    $("derivationForm")?.addEventListener("submit",sendDerivation);$("derivationDriverSearch")?.addEventListener("input",event=>renderDriverOptions(event.target.value));$("derivationServiceSearch")?.addEventListener("input",event=>renderServiceOptions(event.target.value));
+    document.querySelectorAll("[data-derivation-tab]").forEach(button=>button.addEventListener("click",()=>switchTab(button.dataset.derivationTab)));
+    document.querySelectorAll("[data-derivation-filter-group]").forEach(group=>group.addEventListener("click",event=>{const button=event.target.closest("[data-derivation-filter]");if(!button)return;group.querySelectorAll("[data-derivation-filter]").forEach(item=>item.classList.toggle("is-active",item===button));if(group.dataset.derivationFilterGroup==="sent")state.sentFilter=button.dataset.derivationFilter;else state.receivedFilter=button.dataset.derivationFilter;renderHistory();}));
+    $("derivationReminderLaterBtn")?.addEventListener("click",()=>{closeReminder();state.originalNewServiceAction?.();});$("derivationFinalizeCancelBtn")?.addEventListener("click",closeFinalize);$("derivationFinalizeConfirmBtn")?.addEventListener("click",completeDerivation);
+    document.querySelectorAll("[data-derivation-payment]").forEach(button=>button.addEventListener("click",()=>{state.selectedPayment=button.dataset.derivationPayment;document.querySelectorAll("[data-derivation-payment]").forEach(item=>item.classList.toggle("is-selected",item===button));$("derivationFinalizeConfirmBtn").disabled=false;}));
+    document.addEventListener("click",event=>{
+      const driver=event.target.closest?.("[data-select-derivation-driver]");if(driver){state.selectedReceiverUid=driver.dataset.selectDerivationDriver;renderDriverOptions($("derivationDriverSearch")?.value||"");updateComposeSummary();return;}
+      const service=event.target.closest?.("[data-select-derivation-service]");if(service){state.selectedServiceId=service.dataset.selectDerivationService;renderServiceOptions($("derivationServiceSearch")?.value||"");updateComposeSummary();return;}
+      const open=event.target.closest?.("[data-open-derivations]");if(open){openDerivations(open.dataset.openDerivations||"received");return;}
+      const action=event.target.closest?.("[data-derivation-action]");if(!action)return;const id=action.dataset.derivationId,type=action.dataset.derivationAction;if(type==="finalize")openFinalize(id);else transitionDerivation(id,type,action);
+    });
+    document.addEventListener("error",event=>{const image=event.target;if(image instanceof HTMLImageElement&&image.closest?.(".derivation-avatar"))image.style.display="none";},true);
+    $("derivationReminderBackdrop")?.addEventListener("click",event=>{if(event.target.id==="derivationReminderBackdrop")closeReminder();});$("derivationFinalizeBackdrop")?.addEventListener("click",event=>{if(event.target.id==="derivationFinalizeBackdrop")closeFinalize();});
+    document.addEventListener("keydown",event=>{if(event.key!=="Escape")return;if($("derivationFinalizeBackdrop")?.classList.contains("is-open"))closeFinalize();else if($("derivationReminderBackdrop")?.classList.contains("is-open"))closeReminder();else if($("derivationScreen")?.classList.contains("is-open"))closeDerivations();});
+  });
+  window.addEventListener("explora:session-opened",event=>{if(normalize(event.detail?.role)!=="admin")startForCurrentSession().catch(error=>console.warn("DERIVATION_SESSION_START_ERROR",error?.code||error?.message));});
 </script>
 
 </body>
