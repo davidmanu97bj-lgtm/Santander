@@ -2,12 +2,12 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="explora-version" content="v211-goal-bubbles-premium">
+  <meta name="explora-version" content="v213-monthly-goals-derivations-weekly-benefits">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>EXPLORA — Dashboard v2 (211)</title>
+  <title>EXPLORA — Dashboard v213</title>
 
   <style>
     :root {
@@ -4222,6 +4222,13 @@
     .driver-status-card[data-status="david-pending"] .driver-status-icon{background:rgba(69,224,139,.14)}
     .driver-status-card[data-status="pending"] .driver-status-icon,
     .driver-status-card[data-status="overdue"] .driver-status-icon{background:rgba(255,90,101,.16)}
+    .driver-status-card[data-status="derivation-pending"]{
+      color:#f7cf70;
+      background:radial-gradient(circle at 10% 0%,rgba(255,218,115,.18),transparent 38%),linear-gradient(135deg,rgba(124,89,20,.34),rgba(39,27,8,.84));
+      border-color:rgba(245,190,73,.58);
+      box-shadow:0 0 28px rgba(245,185,66,.13),0 15px 34px rgba(0,0,0,.18);
+    }
+    .driver-status-card[data-status="derivation-pending"] .driver-status-icon{background:rgba(245,185,66,.16)}
 
     @media(max-width:370px){
       .driver-status-card{gap:9px;padding:12px}
@@ -4973,15 +4980,15 @@
   <style id="explora-v184-derivations-css">
     .derivation-notification-stack{display:grid;gap:10px;margin:0 0 18px;min-width:0}
     .derivation-notification-stack[hidden]{display:none}
-    .derivation-notification-card{min-width:0;border:1px solid rgba(183,146,255,.32);border-radius:22px;background:linear-gradient(135deg,rgba(103,65,170,.22),rgba(23,16,35,.88));padding:14px;box-shadow:0 16px 36px rgba(0,0,0,.22)}
+    .derivation-notification-card{min-width:0;border:1px solid rgba(245,190,73,.42);border-radius:22px;background:radial-gradient(circle at 12% 0%,rgba(255,216,112,.16),transparent 36%),linear-gradient(135deg,rgba(116,82,19,.30),rgba(28,20,7,.94));padding:14px;box-shadow:0 0 24px rgba(245,185,66,.10),0 16px 36px rgba(0,0,0,.24)}
     .derivation-notification-head{display:flex;gap:10px;align-items:center;min-width:0}
-    .derivation-notification-icon{width:42px;height:42px;flex:0 0 42px;border-radius:15px;display:grid;place-items:center;background:rgba(183,146,255,.15);color:#cdb7ff}
+    .derivation-notification-icon{width:42px;height:42px;flex:0 0 42px;border-radius:15px;display:grid;place-items:center;background:rgba(245,185,66,.15);color:#f7cf70}
     .derivation-notification-icon svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-    .derivation-notification-copy{min-width:0;display:grid;gap:3px}.derivation-notification-copy strong{font-size:13px;letter-spacing:.07em;color:#d9caff}.derivation-notification-copy b{font-size:15px;overflow-wrap:anywhere}.derivation-notification-copy small{color:rgba(255,255,255,.62);line-height:1.35;overflow-wrap:anywhere}
+    .derivation-notification-copy{min-width:0;display:grid;gap:3px}.derivation-notification-copy strong{font-size:13px;letter-spacing:.07em;color:#f7cf70}.derivation-notification-copy b{font-size:15px;overflow-wrap:anywhere}.derivation-notification-copy small{color:rgba(255,255,255,.68);line-height:1.35;overflow-wrap:anywhere}
     .derivation-notification-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
     .derivation-notification-actions button{min-height:44px;border-radius:14px;border:1px solid rgba(255,255,255,.1);font:inherit;font-weight:900;letter-spacing:.035em;color:#fff;background:rgba(255,255,255,.06)}
     .derivation-notification-actions .accept{background:linear-gradient(180deg,#d4af37,#a87919);color:#070707;border-color:rgba(245,205,92,.5)}
-    .derivation-notification-more{border:0;background:transparent;color:#cdb7ff;font-weight:800;padding:8px 4px 0;text-align:left}
+    .derivation-notification-more{border:0;background:transparent;color:#f7cf70;font-weight:800;padding:8px 4px 0;text-align:left}
 
     .derivation-screen{position:fixed;inset:0;z-index:70;display:none;min-height:100dvh;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:auto;touch-action:pan-y;color:#fff;background:radial-gradient(circle at 18% -8%,rgba(183,146,255,.16),transparent 34%),radial-gradient(circle at 96% 18%,rgba(212,175,55,.08),transparent 30%),linear-gradient(180deg,#050607,#090b0e 54%,#030405);padding:calc(env(safe-area-inset-top) + 14px) 16px calc(var(--explora-bottom-nav-height,78px) + env(safe-area-inset-bottom) + 34px)}
     .derivation-screen.is-open{display:block}.derivation-shell{width:min(100%,520px);margin:0 auto;display:grid;gap:14px}
@@ -5035,53 +5042,63 @@
 </style>
 
   <style id="explora-performance-v210-css">
-    :root{--explora-bottom-nav-height:104px}
+    :root{--explora-bottom-nav-height:112px}
     .performance-dashboard{width:100%;display:grid;gap:10px}
     .performance-dashboard-header{margin-bottom:0}
     .performance-open-pill{min-height:34px;border:1px solid rgba(245,185,66,.42);border-radius:999px;background:rgba(245,185,66,.08);color:#f5c75d;padding:0 13px;font:inherit;font-size:12px;font-weight:900;touch-action:manipulation}
     .performance-dashboard-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);gap:12px}
-    .performance-dashboard-card{min-width:0;min-height:190px;border:1px solid rgba(255,255,255,.11);border-radius:24px;background:linear-gradient(180deg,rgba(17,22,27,.98),rgba(7,10,13,.98));color:#fff;padding:14px;text-align:left;overflow:hidden;box-shadow:0 15px 34px rgba(0,0,0,.28);touch-action:manipulation}
+    .performance-dashboard-card{min-width:0;min-height:204px;border:1px solid rgba(255,255,255,.11);border-radius:24px;background:linear-gradient(180deg,rgba(17,22,27,.98),rgba(7,10,13,.98));color:#fff;padding:14px;text-align:left;overflow:hidden;box-shadow:0 15px 34px rgba(0,0,0,.28);touch-action:manipulation}
     .performance-card-kicker{color:#f3c45d;font-size:11px;font-weight:950;letter-spacing:.11em;text-transform:uppercase;margin-bottom:12px}
-    .performance-podium{min-height:140px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:end;gap:6px}
-    .performance-podium-person{min-width:0;display:grid;justify-items:center;align-content:end;gap:6px;text-align:center}
+    .performance-podium{min-height:154px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:end;gap:6px}
+    .performance-podium-person{position:relative;min-width:0;display:grid;justify-items:center;align-content:end;gap:6px;text-align:center}
     .performance-podium-person.is-first{order:2}.performance-podium-person.is-second{order:1}.performance-podium-person.is-third{order:3}
-    .performance-podium-circle{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;border:2px solid rgba(245,185,66,.66);background:radial-gradient(circle at 30% 22%,rgba(255,255,255,.16),rgba(245,185,66,.12) 45%,rgba(5,8,10,.96));color:#f6cb5d;font-size:17px;font-weight:950;box-shadow:0 8px 20px rgba(0,0,0,.35)}
+    .performance-podium-circle{position:relative;width:54px;height:54px;border-radius:50%;display:grid;place-items:center;border:2px solid rgba(245,185,66,.66);background:radial-gradient(circle at 30% 22%,rgba(255,255,255,.16),rgba(245,185,66,.12) 45%,rgba(5,8,10,.96));color:#f6cb5d;font-size:17px;font-weight:950;box-shadow:0 8px 20px rgba(0,0,0,.35)}
+    .performance-podium-medal{position:absolute;z-index:3;top:-13px;left:50%;transform:translateX(-50%);font-size:21px;line-height:1;filter:drop-shadow(0 4px 7px rgba(0,0,0,.45))}
     .performance-podium-person.is-first .performance-podium-circle{width:68px;height:68px;border-color:#ffd15b;font-size:21px;box-shadow:0 0 24px rgba(245,185,66,.22),0 10px 22px rgba(0,0,0,.4)}
     .performance-podium-person strong{max-width:100%;font-size:12px;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.performance-podium-person small{font-size:10px;color:#7fe2a3;font-weight:900;white-space:nowrap}
     .performance-loading{grid-column:1/-1;align-self:center;text-align:center;color:#aeb4bb;font-size:13px}
-    .performance-derivator-body{min-height:135px;display:grid;align-content:center;justify-items:center;gap:11px;text-align:center}
-    .performance-derivator-avatar{width:68px;height:68px;border-radius:50%;display:grid;place-items:center;overflow:hidden;border:2px solid rgba(183,146,255,.72);background:radial-gradient(circle at 30% 20%,rgba(255,255,255,.15),rgba(183,146,255,.14));color:#cbb5ff;font-size:22px;font-weight:950}.performance-derivator-avatar img{width:100%;height:100%;object-fit:cover}
-    .performance-derivator-copy{min-width:0;display:grid;gap:4px}.performance-derivator-copy strong{font-size:15px;line-height:1.08}.performance-derivator-copy span{font-size:11px;color:#bfc4ca;line-height:1.25}.performance-derivator-copy b{color:#b999ff;font-size:17px}.performance-derivator-money{color:#7fe2a3!important;font-weight:900}
 
-    /* BARRA DE METAS: carrusel independiente + derivador fijo, sin quinta burbuja asomada. */
-    .main-bottom-nav.performance-bottom-nav{position:fixed!important;left:50%!important;right:auto!important;bottom:0!important;transform:translateX(-50%)!important;width:min(100%,520px)!important;min-height:calc(var(--explora-bottom-nav-height) + env(safe-area-inset-bottom))!important;display:flex!important;align-items:center!important;gap:9px!important;padding:8px 10px calc(8px + env(safe-area-inset-bottom))!important;background:linear-gradient(180deg,rgba(6,10,14,.91),rgba(2,5,8,.98))!important;border-top:1px solid rgba(255,255,255,.10)!important;-webkit-backdrop-filter:blur(18px) saturate(125%)!important;backdrop-filter:blur(18px) saturate(125%)!important;box-shadow:0 -12px 34px rgba(0,0,0,.36)!important;overflow:hidden!important;z-index:2200!important;isolation:isolate}
-    .performance-goal-viewport{flex:1 1 auto;min-width:0;max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;scroll-padding-inline:0;scroll-behavior:smooth;scrollbar-width:none;overscroll-behavior-x:contain;overscroll-behavior-y:auto;touch-action:pan-x pan-y;container-type:inline-size}
+    /* DERIVADOR DE LA SEMANA: podio mensual acumulado, visual dorado premium. */
+    .performance-derivator-card{position:relative;isolation:isolate;border-color:rgba(245,185,66,.34);background:radial-gradient(circle at 50% 4%,rgba(255,219,119,.17),transparent 40%),linear-gradient(180deg,rgba(29,25,15,.99),rgba(8,9,10,.99));box-shadow:0 0 28px rgba(245,185,66,.10),0 15px 34px rgba(0,0,0,.30)}
+    .performance-derivator-card::before{content:"";position:absolute;z-index:-1;inset:-28% -20% auto;height:72%;background:radial-gradient(ellipse at center,rgba(245,185,66,.17),transparent 68%);filter:blur(12px);pointer-events:none}
+    .performance-derivator-body{min-height:154px;display:grid;align-content:center;justify-items:center;gap:9px;text-align:center}
+    .performance-derivator-visual{position:relative;width:112px;height:78px;display:flex;align-items:center;justify-content:flex-start}
+    .performance-derivator-avatar{width:72px;height:72px;border-radius:50%;display:grid;place-items:center;overflow:hidden;border:2px solid rgba(245,185,66,.88);background:radial-gradient(circle at 31% 20%,rgba(255,255,255,.15),rgba(86,62,18,.34) 48%,rgba(18,13,5,.98));color:#f7d476;font-size:19px;font-weight:950;box-shadow:0 0 24px rgba(245,185,66,.18),0 9px 22px rgba(0,0,0,.34)}
+    .performance-derivator-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+    .performance-derivator-avatar.is-empty{color:rgba(247,212,118,.72)}
+    .performance-derivator-percent-ring{position:absolute;right:0;bottom:0;width:50px;height:50px;border-radius:50%;display:grid;place-items:center;border:2px solid rgba(255,214,96,.96);background:radial-gradient(circle at 31% 20%,rgba(255,255,255,.17),rgba(245,185,66,.22) 44%,rgba(24,17,5,.99));color:#ffd263;box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 0 20px rgba(245,185,66,.24),0 7px 18px rgba(0,0,0,.34)}
+    .performance-derivator-percent-ring strong{font-size:18px;line-height:1;font-weight:950;letter-spacing:-.03em}
+    .performance-derivator-copy{min-width:0;width:100%;display:grid;gap:4px;text-align:center}
+    .performance-derivator-copy>strong{max-width:100%;font-size:15px;line-height:1.08;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .performance-derivator-copy span{display:block;color:#d1c8b4;font-size:10px;line-height:1.22;overflow-wrap:anywhere}
+    .performance-derivator-copy .performance-derivator-count{color:#f4cf75;font-weight:900}
+    .performance-derivator-copy .performance-derivator-money{color:#7fe2a3;font-size:14px;font-weight:950}
+
+    /* BARRA INFERIOR: únicamente cinco metas visibles, consecutivas y sin burbuja de derivador. */
+    .main-bottom-nav.performance-bottom-nav{position:fixed!important;left:50%!important;right:auto!important;bottom:0!important;transform:translateX(-50%)!important;width:min(100%,520px)!important;min-height:calc(var(--explora-bottom-nav-height) + env(safe-area-inset-bottom))!important;display:block!important;padding:8px 8px calc(8px + env(safe-area-inset-bottom))!important;background:linear-gradient(180deg,rgba(6,10,14,.91),rgba(2,5,8,.98))!important;border-top:1px solid rgba(255,255,255,.10)!important;-webkit-backdrop-filter:blur(18px) saturate(125%)!important;backdrop-filter:blur(18px) saturate(125%)!important;box-shadow:0 -12px 34px rgba(0,0,0,.36)!important;overflow:hidden!important;z-index:2200!important;isolation:isolate}
+    .performance-goal-viewport{width:100%;min-width:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;scroll-padding-inline:0;scroll-behavior:smooth;scrollbar-width:none;overscroll-behavior-x:contain;overscroll-behavior-y:auto;touch-action:pan-x pan-y;container-type:inline-size}
     .performance-goal-viewport::-webkit-scrollbar{display:none}
-    .performance-goal-track{--goal-bubble-width:64px;display:grid;grid-auto-flow:column;grid-auto-columns:var(--goal-bubble-width);gap:8px;width:max-content;min-width:100%;padding:1px 0;margin:0}
-    .performance-goal-bubble{position:relative;width:var(--goal-bubble-width);height:86px;min-width:0;border:1px solid rgba(255,112,120,.38);border-radius:22px;appearance:none;-webkit-appearance:none;background:radial-gradient(circle at 26% 12%,rgba(255,255,255,.07),transparent 32%),linear-gradient(155deg,rgba(73,19,26,.93),rgba(29,8,12,.98));color:#ffd0d2;display:grid;grid-template-rows:auto auto auto minmax(20px,auto);place-items:center;align-content:center;gap:1px;padding:6px 3px 5px;font:inherit;text-align:center;scroll-snap-align:start;scroll-snap-stop:always;touch-action:pan-x pan-y;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 8px 20px rgba(0,0,0,.28)}
+    .performance-goal-track{--goal-bubble-width:88px;display:grid;grid-auto-flow:column;grid-auto-columns:var(--goal-bubble-width);gap:7px;width:max-content;min-width:100%;padding:1px 0;margin:0}
+    .performance-goal-bubble{position:relative;width:var(--goal-bubble-width);height:94px;min-width:0;border:1px solid rgba(255,112,120,.38);border-radius:23px;appearance:none;-webkit-appearance:none;background:radial-gradient(circle at 26% 12%,rgba(255,255,255,.07),transparent 32%),linear-gradient(155deg,rgba(73,19,26,.93),rgba(29,8,12,.98));color:#ffd0d2;display:grid;grid-template-rows:auto auto auto minmax(22px,auto);place-items:center;align-content:center;gap:2px;padding:7px 4px 6px;font:inherit;text-align:center;scroll-snap-align:start;scroll-snap-stop:always;touch-action:pan-x pan-y;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 8px 20px rgba(0,0,0,.28)}
     .performance-goal-bubble::before{content:"";position:absolute;inset:-45% auto -45% -70%;width:44%;transform:rotate(18deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);opacity:0;pointer-events:none}
-    .performance-goal-bubble em{max-width:100%;color:rgba(255,255,255,.62);font-size:7px;font-style:normal;font-weight:950;letter-spacing:.08em;line-height:1;text-transform:uppercase;white-space:nowrap}
-    .performance-goal-bubble>strong{font-size:17px;line-height:1;font-weight:950;letter-spacing:-.025em}
-    .performance-goal-bubble>.goal-amount{max-width:100%;font-size:8px;font-weight:900;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .performance-goal-bubble em{max-width:100%;color:rgba(255,255,255,.65);font-size:7.4px;font-style:normal;font-weight:950;letter-spacing:.07em;line-height:1;text-transform:uppercase;white-space:nowrap}
+    .performance-goal-bubble>strong{font-size:18px;line-height:1;font-weight:950;letter-spacing:-.025em}
+    .performance-goal-bubble>.goal-amount{max-width:100%;font-size:8.2px;font-weight:900;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .performance-goal-bubble>small{max-width:100%;display:grid;gap:1px;place-items:center;line-height:1.05;overflow:hidden}
-    .performance-goal-bubble>small b{max-width:100%;font-size:6.8px;font-weight:950;letter-spacing:.035em;white-space:nowrap}
-    .performance-goal-bubble>small i{max-width:100%;color:rgba(255,224,225,.78);font-size:6.6px;font-style:normal;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .performance-goal-bubble.is-active-initial{border-color:rgba(245,185,66,.50);background:radial-gradient(circle at 26% 12%,rgba(245,185,66,.13),transparent 34%),linear-gradient(155deg,rgba(55,42,17,.94),rgba(24,16,7,.98));color:#f7cb67;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 0 16px rgba(245,185,66,.08),0 8px 20px rgba(0,0,0,.28)}
-    .performance-goal-bubble.is-active-reached{border-color:rgba(85,235,151,.78);background:radial-gradient(circle at 24% 10%,rgba(128,255,181,.20),transparent 34%),linear-gradient(155deg,rgba(18,101,56,.96),rgba(4,39,21,.99));color:#91f3b5;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 18px rgba(62,224,127,.23),0 8px 22px rgba(0,0,0,.32)}
-    .performance-goal-bubble.is-active-reached::after{content:"✓";position:absolute;right:5px;top:4px;width:17px;height:17px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(180deg,#8ff4b7,#54d98b);color:#052314;font-size:10px;font-weight:950;box-shadow:0 3px 9px rgba(0,0,0,.28)}
-    .performance-goal-bubble.is-active-reached>small i,.performance-goal-bubble.is-achieved-history>small i{color:rgba(206,255,224,.82)}
-    .performance-goal-bubble.is-achieved-history{border-color:rgba(73,200,127,.44);background:linear-gradient(155deg,rgba(20,72,44,.90),rgba(5,31,18,.98));color:#78dca0;box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 8px 20px rgba(0,0,0,.28)}
+    .performance-goal-bubble>small b{max-width:100%;font-size:7px;font-weight:950;letter-spacing:.035em;white-space:nowrap}
+    .performance-goal-bubble>small i{max-width:100%;color:rgba(255,224,225,.78);font-size:6.7px;font-style:normal;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .performance-goal-bubble.is-active-initial{border-color:rgba(255,112,120,.48);background:radial-gradient(circle at 26% 12%,rgba(255,255,255,.07),transparent 32%),linear-gradient(155deg,rgba(73,19,26,.93),rgba(29,8,12,.98));color:#ffd0d2;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 8px 20px rgba(0,0,0,.28)}
+    .performance-goal-bubble.is-active-reached{z-index:2;border-color:rgba(255,211,89,.98);background:radial-gradient(circle at 24% 10%,rgba(255,231,150,.28),transparent 35%),linear-gradient(155deg,rgba(133,91,17,.98),rgba(45,28,5,.99));color:#ffe39a;box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 0 32px rgba(245,185,66,.46),0 10px 24px rgba(0,0,0,.36)}
+    .performance-goal-bubble.is-active-reached::after{content:"✓";position:absolute;right:5px;top:4px;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(180deg,#ffe99b,#e3a52c);color:#2a1902;font-size:10px;font-weight:950;box-shadow:0 3px 9px rgba(0,0,0,.30)}
+    .performance-goal-bubble.is-active-reached>small i{color:rgba(255,239,190,.88)}
+    .performance-goal-bubble.is-achieved-history>small i{color:rgba(206,255,224,.82)}
+    .performance-goal-bubble.is-achieved-history{border-color:rgba(73,200,127,.52);background:radial-gradient(circle at 26% 12%,rgba(111,244,164,.12),transparent 34%),linear-gradient(155deg,rgba(20,78,46,.94),rgba(5,31,18,.99));color:#7fe4a7;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 8px 20px rgba(0,0,0,.28)}
     .performance-goal-bubble.is-celebrating{animation:performanceGoalCelebrate 1.1s cubic-bezier(.2,.78,.24,1) both;will-change:transform,box-shadow}
     .performance-goal-bubble.is-celebrating::before{animation:performanceGoalShine 1.05s ease-out both}
     .performance-goal-bubble.is-celebrating::after{animation:performanceGoalCheckIn .55s cubic-bezier(.2,.9,.25,1.3) both}
-    @keyframes performanceGoalCelebrate{0%{transform:scale(.96);box-shadow:0 0 0 rgba(62,224,127,0),0 8px 22px rgba(0,0,0,.32)}38%{transform:scale(1.055);box-shadow:0 0 30px rgba(62,224,127,.44),0 10px 24px rgba(0,0,0,.34)}70%{transform:scale(.99);box-shadow:0 0 17px rgba(62,224,127,.24),0 8px 22px rgba(0,0,0,.32)}100%{transform:scale(1);box-shadow:0 0 18px rgba(62,224,127,.23),0 8px 22px rgba(0,0,0,.32)}}
+    @keyframes performanceGoalCelebrate{0%{transform:scale(.96);box-shadow:0 0 0 rgba(245,185,66,0),0 8px 22px rgba(0,0,0,.32)}38%{transform:scale(1.055);box-shadow:0 0 36px rgba(245,185,66,.55),0 10px 24px rgba(0,0,0,.36)}70%{transform:scale(.99);box-shadow:0 0 21px rgba(245,185,66,.32),0 8px 22px rgba(0,0,0,.32)}100%{transform:scale(1);box-shadow:0 0 32px rgba(245,185,66,.46),0 10px 24px rgba(0,0,0,.36)}}
     @keyframes performanceGoalShine{0%{left:-70%;opacity:0}20%{opacity:.9}75%{left:145%;opacity:.55}100%{left:145%;opacity:0}}
     @keyframes performanceGoalCheckIn{0%{opacity:0;transform:scale(.35) rotate(-18deg)}65%{opacity:1;transform:scale(1.18) rotate(4deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
-
-    .performance-derivator-bubble{position:relative;flex:0 0 80px;width:80px;height:80px;border-radius:50%;border:1px solid rgba(183,146,255,.72);background:radial-gradient(circle at 31% 20%,rgba(255,255,255,.17),rgba(106,65,177,.54) 40%,rgba(20,12,35,.98));color:#e1d4ff;display:grid;place-items:center;align-content:center;gap:1px;padding:5px 4px;font:inherit;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 0 20px rgba(162,106,255,.20),0 9px 22px rgba(0,0,0,.32);touch-action:manipulation;overflow:hidden}
-    .performance-derivator-bubble-icon{width:18px;height:18px;display:grid;place-items:center;color:#d9c6ff;line-height:1}.performance-derivator-bubble-icon svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
-    .performance-derivator-bubble strong{font-size:15px;line-height:1;font-weight:950}.performance-derivator-bubble small{display:block;max-width:68px;font-size:7px;font-weight:900;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .performance-derivator-bubble.is-leading{border-color:rgba(201,172,255,.92);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 25px rgba(162,106,255,.30),0 9px 22px rgba(0,0,0,.32)}
 
     /* PERFIL CHOFER · estado visual de la meta alcanzada. */
     .profile-goal-card{position:relative;isolation:isolate;overflow:hidden;border:1px solid rgba(82,232,146,.52);border-radius:24px;background:radial-gradient(circle at 12% 0%,rgba(106,255,169,.18),transparent 38%),linear-gradient(150deg,rgba(16,87,49,.94),rgba(5,33,20,.99));box-shadow:0 0 22px rgba(61,221,126,.15),0 18px 42px rgba(0,0,0,.34);padding:17px;color:#fff}
@@ -5097,13 +5114,13 @@
     .performance-screen.is-open{display:block}.performance-screen-shell{width:100%;max-width:520px;margin:0 auto;display:grid;gap:14px}.performance-screen-header{display:grid;grid-template-columns:50px minmax(0,1fr) 50px;gap:10px;align-items:center}.performance-screen-back,.performance-screen-refresh{width:48px;height:48px;border:1px solid rgba(255,255,255,.1);border-radius:16px;background:rgba(255,255,255,.035);color:#fff;display:grid;place-items:center;padding:0}.performance-screen-refresh{color:#f3c45d}.performance-screen-back svg,.performance-screen-refresh svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.performance-screen-heading{text-align:center;min-width:0}.performance-screen-heading h1{margin:0;font-size:27px;letter-spacing:.08em}.performance-screen-heading p{margin:4px 0 0;color:#aeb4bb;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .performance-cycle-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.performance-cycle-summary div{min-width:0;border:1px solid rgba(255,255,255,.09);border-radius:18px;background:rgba(255,255,255,.035);padding:13px}.performance-cycle-summary span{display:block;color:#9fa6ae;font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase}.performance-cycle-summary strong{display:block;margin-top:6px;color:#fff;font-size:19px;overflow-wrap:anywhere}.performance-cycle-summary div:last-child strong{color:#7fe2a3}
     .performance-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}.performance-tabs::-webkit-scrollbar{display:none}.performance-tab{flex:1 0 auto;min-height:42px;border:1px solid rgba(255,255,255,.09);border-radius:14px;background:rgba(255,255,255,.035);color:#aeb4bb;padding:0 12px;font:inherit;font-size:10px;font-weight:950;letter-spacing:.04em}.performance-tab.is-active{border-color:rgba(245,185,66,.58);background:rgba(245,185,66,.11);color:#f5c75d}
-    .performance-panel{display:none}.performance-panel.is-active{display:block}.performance-goals-list,.performance-ranking-list,.performance-history-list{display:grid;gap:10px}.performance-goal-row{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:11px;align-items:center;border:1px solid rgba(255,255,255,.09);border-radius:19px;background:rgba(255,255,255,.032);padding:12px}.performance-goal-row.is-reached{border-color:rgba(74,227,133,.35);background:rgba(29,108,59,.12)}.performance-goal-number{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;background:rgba(245,185,66,.09);color:#f5c75d;font-size:18px;font-weight:950}.performance-goal-row.is-reached .performance-goal-number{background:rgba(74,227,133,.15);color:#7fe2a3}.performance-goal-copy{min-width:0}.performance-goal-copy strong{display:block;font-size:16px}.performance-goal-copy span{display:block;margin-top:4px;color:#aeb4bb;font-size:12px}.performance-goal-value{text-align:right}.performance-goal-value b{display:block;color:#f5c75d;font-size:19px}.performance-goal-value small{display:block;margin-top:4px;color:#aeb4bb;font-size:10px}.performance-goal-row.is-reached .performance-goal-value b{color:#7fe2a3}
+    .performance-panel{display:none}.performance-panel.is-active{display:block}.performance-goals-list,.performance-ranking-list,.performance-history-list{display:grid;gap:10px}.performance-goal-row{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:11px;align-items:center;border:1px solid rgba(255,255,255,.09);border-radius:19px;background:rgba(255,255,255,.032);padding:12px}.performance-goal-row.is-reached{border-color:rgba(74,227,133,.35);background:rgba(29,108,59,.12)}.performance-goal-row.is-active{border-color:rgba(245,185,66,.62);background:radial-gradient(circle at 8% 0%,rgba(245,185,66,.14),transparent 38%),rgba(103,72,14,.16);box-shadow:0 0 22px rgba(245,185,66,.10)}.performance-goal-number{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;background:rgba(245,185,66,.09);color:#f5c75d;font-size:18px;font-weight:950}.performance-goal-row.is-reached .performance-goal-number{background:rgba(74,227,133,.15);color:#7fe2a3}.performance-goal-row.is-active .performance-goal-number{background:rgba(245,185,66,.18);color:#f7cf70}.performance-goal-copy{min-width:0}.performance-goal-copy strong{display:block;font-size:16px}.performance-goal-copy span{display:block;margin-top:4px;color:#aeb4bb;font-size:12px}.performance-goal-value{text-align:right}.performance-goal-value b{display:block;color:#f5c75d;font-size:19px}.performance-goal-value small{display:block;margin-top:4px;color:#aeb4bb;font-size:10px}.performance-goal-row.is-reached .performance-goal-value b{color:#7fe2a3}.performance-goal-row.is-active .performance-goal-value b{color:#f7cf70}
     .performance-explanation-card{margin-top:12px;border:1px solid rgba(245,185,66,.18);border-radius:20px;background:rgba(245,185,66,.045);padding:15px}.performance-explanation-card h2{margin:0 0 8px;font-size:18px}.performance-explanation-card p{margin:7px 0 0;color:#c5c9ce;font-size:13px;line-height:1.45}
     .performance-ranking-row{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:11px;align-items:center;border:1px solid rgba(255,255,255,.09);border-radius:18px;background:rgba(255,255,255,.032);padding:12px}.performance-ranking-percent{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(245,185,66,.55);color:#f5c75d;font-weight:950}.performance-ranking-copy{min-width:0}.performance-ranking-copy strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.performance-ranking-copy span{display:block;margin-top:4px;color:#aeb4bb;font-size:11px}.performance-ranking-money{text-align:right;color:#7fe2a3;font-weight:950;white-space:nowrap}.performance-history-empty{border:1px dashed rgba(255,255,255,.12);border-radius:18px;color:#aeb4bb;padding:20px;text-align:center}.performance-history-card{border:1px solid rgba(255,255,255,.09);border-radius:18px;background:rgba(255,255,255,.032);padding:13px;display:grid;gap:7px}.performance-history-card div{display:flex;justify-content:space-between;gap:10px}.performance-history-card span{color:#aeb4bb;font-size:12px}.performance-history-card strong{font-size:12px;text-align:right}.performance-screen-status{min-height:20px;color:#aeb4bb;text-align:center;font-size:12px}.performance-screen-status.is-error{color:#ffabab}
 
     .performance-diagnostic-backdrop{position:fixed;inset:0;z-index:5000;display:none;align-items:flex-end;justify-content:center;padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset-bottom) + 12px);background:rgba(0,0,0,.78);-webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px)}.performance-diagnostic-backdrop.is-open{display:flex}.performance-diagnostic-card{width:min(100%,560px);max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px);overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid rgba(255,105,105,.44);border-radius:23px;background:linear-gradient(180deg,rgba(63,14,20,.98),rgba(20,5,8,.99));box-shadow:0 28px 80px rgba(0,0,0,.64);padding:15px}.performance-diagnostic-head{display:grid;grid-template-columns:minmax(0,1fr) 38px;gap:10px;align-items:start;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:12px}.performance-diagnostic-head strong{display:block;color:#ffb4b4;font-size:15px}.performance-diagnostic-head small{display:block;margin-top:4px;color:rgba(255,255,255,.62);font-size:11px;line-height:1.35}.performance-diagnostic-head button{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#fff;font-size:21px}.performance-diagnostic-text{margin:12px 0;white-space:pre-wrap;overflow-wrap:anywhere;color:#fff;font:600 12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}.performance-diagnostic-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}.performance-diagnostic-copy,.performance-diagnostic-close-action{width:100%;min-height:48px;border-radius:15px;font:inherit;font-weight:950}.performance-diagnostic-copy{border:1px solid rgba(245,185,66,.42);background:rgba(245,185,66,.1);color:#f5c75d}.performance-diagnostic-close-action{border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#fff}
-    @media(max-width:390px){.performance-dashboard-grid{grid-template-columns:1fr}.performance-dashboard-card{min-height:168px}.performance-podium{min-height:118px}.performance-derivator-body{grid-template-columns:60px minmax(0,1fr);justify-items:start;text-align:left;min-height:105px}.performance-derivator-avatar{width:60px;height:60px}.performance-cycle-summary{grid-template-columns:1fr 1fr}.performance-goal-bubble{height:84px;border-radius:20px}.profile-goal-metrics{grid-template-columns:1fr}.performance-diagnostic-actions{grid-template-columns:1fr}}
-    @media(max-width:360px){.main-bottom-nav.performance-bottom-nav{gap:6px!important;padding-left:6px!important;padding-right:6px!important}.performance-derivator-bubble{flex-basis:70px;width:70px;height:70px}.performance-goal-track{gap:6px}.performance-goal-bubble>strong{font-size:15px}.performance-goal-bubble>.goal-amount{font-size:7px}.performance-goal-bubble>small b,.performance-goal-bubble>small i{font-size:6px}}
+    @media(max-width:390px){.performance-dashboard-grid{grid-template-columns:1fr}.performance-dashboard-card{min-height:180px}.performance-podium{min-height:128px}.performance-derivator-body{min-height:132px}.performance-derivator-percent-ring{width:66px;height:66px}.performance-cycle-summary{grid-template-columns:1fr 1fr}.performance-goal-bubble{height:92px;border-radius:21px}.profile-goal-metrics{grid-template-columns:1fr}.performance-diagnostic-actions{grid-template-columns:1fr}}
+    @media(max-width:360px){.main-bottom-nav.performance-bottom-nav{padding-left:5px!important;padding-right:5px!important}.performance-goal-track{gap:5px}.performance-goal-bubble>strong{font-size:16px}.performance-goal-bubble>.goal-amount{font-size:7.2px}.performance-goal-bubble>small b,.performance-goal-bubble>small i{font-size:6.2px}}
     @media(prefers-reduced-motion:reduce){.performance-goal-viewport{scroll-behavior:auto!important}.performance-goal-bubble.is-celebrating,.performance-goal-bubble.is-celebrating::before,.performance-goal-bubble.is-celebrating::after,.profile-goal-card.is-celebrating,.profile-goal-card.is-celebrating .profile-goal-glow,.profile-goal-card.is-celebrating .profile-goal-check{animation:none!important;transform:none!important}}
   </style>
 
@@ -5284,13 +5301,13 @@
 
       <section id="weeklyRankingLive" class="performance-dashboard" aria-label="Metas y derivaciones">
         <header class="section-header-real performance-dashboard-header">
-          <h2>RANKING DE METAS</h2>
+          <h2>RANKING MENSUAL DE METAS</h2>
           <button id="performanceDashboardOpenBtn" class="performance-open-pill" type="button" aria-label="Abrir metas">Ver metas</button>
         </header>
 
         <div class="performance-dashboard-grid">
           <button id="performanceRankingCard" class="performance-dashboard-card performance-ranking-card" type="button" aria-label="Abrir ranking de metas">
-            <div class="performance-card-kicker">RANKING DE METAS</div>
+            <div class="performance-card-kicker">RANKING MENSUAL</div>
             <div id="performancePodium" class="performance-podium" aria-live="polite">
               <div class="performance-loading">Calculando metas…</div>
             </div>
@@ -5299,10 +5316,14 @@
           <button id="performanceDerivatorCard" class="performance-dashboard-card performance-derivator-card" type="button" aria-label="Abrir derivador de la semana">
             <div class="performance-card-kicker">DERIVADOR DE LA SEMANA</div>
             <div id="performanceDerivatorBody" class="performance-derivator-body" aria-live="polite">
-              <div class="performance-derivator-avatar" aria-hidden="true">—</div>
+              <div class="performance-derivator-visual">
+                <span class="performance-derivator-avatar is-empty" aria-hidden="true">—</span>
+                <span class="performance-derivator-percent-ring" aria-label="Beneficio del tres por ciento"><strong>3%</strong></span>
+              </div>
               <div class="performance-derivator-copy">
-                <strong>Sin derivaciones válidas</strong>
-                <span>Envía, acepta y factura para sumar.</span>
+                <strong>Sin ganador</strong>
+                <span class="performance-derivator-count">0 derivaciones</span>
+                <span class="performance-derivator-money">+$0</span>
               </div>
             </div>
           </button>
@@ -5388,11 +5409,6 @@
     <div id="performanceGoalViewport" class="performance-goal-viewport" aria-label="Burbujas de metas">
       <div id="performanceGoalTrack" class="performance-goal-track"></div>
     </div>
-    <button id="performanceDerivatorBubble" type="button" class="performance-derivator-bubble" aria-label="Derivador de la semana">
-      <span class="performance-derivator-bubble-icon">↗</span>
-      <strong>+3%</strong>
-      <small>Derivador</small>
-    </button>
   </nav>
 
 
@@ -5528,7 +5544,9 @@
           <div class="closure-simple-row"><span>ALIAS</span><strong id="weeklyClosureAlias">$0</strong></div>
           <div class="closure-simple-row is-negative"><span>PRÉSTAMO OPERATIVO</span><strong id="weeklyClosureLoans">$0</strong></div>
           <div id="weeklyClosureDebts" class="closure-debt-list"></div>
-          <div class="closure-simple-row is-positive"><span>BENEFICIO POR METAS</span><strong id="weeklyClosurePerformanceReward">$0</strong></div>
+          <div class="closure-simple-row"><span>PORCENTAJE META</span><strong id="weeklyClosureGoalPercent">0%</strong></div>
+          <div class="closure-simple-row"><span>PORCENTAJE DERIVACIÓN</span><strong id="weeklyClosureDerivationPercent">0%</strong></div>
+          <div class="closure-simple-row is-positive"><span>BENEFICIO METAS + DERIVACIONES</span><strong id="weeklyClosurePerformanceReward">$0</strong></div>
           <div class="closure-simple-row"><span>FACTURACIÓN TOTAL</span><strong id="weeklyClosureBilling">$0</strong></div>
           <div class="closure-simple-row"><span>50 % CHOFER</span><strong id="weeklyClosureDriverShare">$0</strong></div>
           <div class="closure-simple-row"><span>50 % DAVID</span><strong id="weeklyClosureDavidShare">$0</strong></div>
@@ -5902,37 +5920,34 @@
 
 
 
-  <section id="derivationScreen" class="derivation-screen" aria-label="Derivar cobro" aria-hidden="true">
+  <section id="derivationScreen" class="derivation-screen" aria-label="Derivar servicio" aria-hidden="true">
     <div class="derivation-shell derivation-shell--simple">
       <header class="derivation-header">
         <button id="derivationBackBtn" class="derivation-back" type="button" aria-label="Volver"><svg viewBox="0 0 24 24"><path d="M15 5 8 12l7 7"/></svg></button>
-        <div class="derivation-heading"><h1>DERIVAR COBRO</h1><p>Envía un cobro a otro chofer de EXPLORA.</p></div>
+        <div class="derivation-heading"><h1>DERIVAR SERVICIO</h1><p>Envía un servicio a otro chofer de EXPLORA.</p></div>
         <button id="derivationRefreshBtn" class="derivation-refresh" type="button" aria-label="Actualizar choferes"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.2 5.5"/><path d="M20 4v7h-7"/></svg></button>
       </header>
       <main class="derivation-simple-main">
         <form id="derivationForm" class="derivation-simple-form" novalidate>
           <section class="derivation-section-card">
-            <h2>1. SELECCIONAR CHOFER</h2>
+            <h2>1. CHOFER RECEPTOR</h2>
             <div id="derivationDriverGrid" class="derivation-driver-grid"></div>
           </section>
           <section class="derivation-section-card derivation-fields-card">
             <label for="derivationDescription">2. DESCRIPCIÓN
               <input id="derivationDescription" type="text" maxlength="120" placeholder="Ej.: Cataratas" autocomplete="off" enterkeyhint="next">
             </label>
-            <label for="derivationAmount">3. VALOR
+            <label for="derivationAmount">3. MONTO
               <input id="derivationAmount" type="text" inputmode="numeric" placeholder="$ 0" autocomplete="off" enterkeyhint="done">
-            </label>
-            <label for="derivationNotes">4. OBSERVACIÓN OPCIONAL
-              <textarea id="derivationNotes" maxlength="240" placeholder="Información útil para el chofer receptor" autocomplete="off" enterkeyhint="done"></textarea>
             </label>
           </section>
           <section class="derivation-section-card derivation-compact-summary">
             <div class="derivation-summary-row"><span>Chofer</span><strong id="derivationSummaryReceiver">Sin seleccionar</strong></div>
             <div class="derivation-summary-row"><span>Descripción</span><strong id="derivationSummaryService">Sin completar</strong></div>
-            <div class="derivation-summary-row"><span>Valor</span><strong id="derivationSummaryPrice" class="price">$0</strong></div>
+            <div class="derivation-summary-row"><span>Monto</span><strong id="derivationSummaryPrice" class="price">$0</strong></div>
           </section>
           <div id="derivationFormMessage" class="derivation-message" aria-live="polite"></div>
-          <button id="derivationSendBtn" class="derivation-primary derivation-primary--wide" type="submit" disabled>ENVIAR DERIVACIÓN</button>
+          <button id="derivationSendBtn" class="derivation-primary derivation-primary--wide" type="submit" disabled>ENVIAR</button>
         </form>
       </main>
     </div>
@@ -5979,8 +5994,8 @@
 
       <section class="performance-cycle-summary" aria-live="polite">
         <div><span>Facturación actual</span><strong id="performanceCurrentBilling">$0</strong></div>
-        <div><span>Meta activa</span><strong id="performanceCurrentGoal">$400.000</strong></div>
-        <div><span>Falta</span><strong id="performanceMissingAmount">$400.000</strong></div>
+        <div><span>Meta activa</span><strong id="performanceCurrentGoal">$600.000</strong></div>
+        <div><span>Falta</span><strong id="performanceMissingAmount">$600.000</strong></div>
         <div><span>Porcentaje obtenido</span><strong id="performanceRewardPercent">0%</strong></div>
       </section>
 
@@ -5996,7 +6011,7 @@
         <article class="performance-explanation-card">
           <h2>Cómo funcionan las metas</h2>
           <p>Las metas se calculan únicamente con facturación bruta registrada. No descuentan gastos, combustible, deudas ni préstamos.</p>
-          <p>El ciclo dura cuatro cierres semanales consecutivos. Al finalizar el cuarto cierre se aplica el porcentaje de la meta alcanzada. Si el chofer debe rendir dinero, el beneficio reduce ese importe.</p>
+          <p>El ciclo mensual dura cuatro cierres semanales consecutivos. El porcentaje alcanzado se aplica y se paga en cada cierre semanal sobre la facturación bruta de esa semana.</p>
         </article>
       </section>
 
@@ -6008,7 +6023,7 @@
         <article class="performance-explanation-card">
           <h2>Derivaciones válidas</h2>
           <p>Solo cuenta cuando la derivación fue enviada, el receptor la aceptó y finalmente facturó el servicio. Cada operación válida suma una unidad únicamente al emisor.</p>
-          <p>El líder al cierre del sábado 00:01 obtiene un beneficio independiente de +3%.</p>
+          <p>El ranking se acumula durante el ciclo mensual. En cada cierre semanal, el líder vigente obtiene un beneficio adicional de +3% sobre su facturación bruta semanal.</p>
         </article>
         <div id="performanceDerivationsList" class="performance-ranking-list"></div>
       </section>
@@ -6024,7 +6039,7 @@
   <div id="performanceDiagnosticBackdrop" class="performance-diagnostic-backdrop" aria-hidden="true">
     <section class="performance-diagnostic-card" role="dialog" aria-modal="true" aria-labelledby="performanceDiagnosticTitle">
       <header class="performance-diagnostic-head">
-        <div><strong id="performanceDiagnosticTitle">EXPLORA · ERROR GOAL_BUBBLES</strong><small>El diagnóstico permanecerá visible hasta cerrarlo manualmente.</small></div>
+        <div><strong id="performanceDiagnosticTitle">EXPLORA · ERROR METAS Y DERIVACIONES</strong><small>El diagnóstico permanecerá visible hasta cerrarlo manualmente.</small></div>
         <button id="performanceDiagnosticCloseBtn" type="button" aria-label="Cerrar diagnóstico">×</button>
       </header>
       <pre id="performanceDiagnosticText" class="performance-diagnostic-text"></pre>
@@ -6543,9 +6558,6 @@
         if (goal) {
           window.ExploraPerformanceEngine?.open?.("goals", Number(goal.dataset.performanceGoal || 1));
           return;
-        }
-        if (event.target.closest("#performanceDerivatorBubble")) {
-          window.ExploraPerformanceEngine?.open?.("derivations");
         }
       });
 
@@ -7822,12 +7834,12 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     function applyPerformanceRewardToSettlement(financial = {}, driverUid = "", weeklyPeriodId = "") {
       const incentive = window.ExploraPerformanceEngine?.getSettlementIncentive?.(driverUid, weeklyPeriodId) || { percent:0, goalPercent:0, derivationPercent:0 };
       const percent = Math.max(0, Number(incentive.percent || 0));
-      if (!(percent > 0) || financial.payerRole !== "driver" || !(Number(financial.settlementToAdmin || 0) > 0)) {
-        return { ...financial, performanceRewardPercent:percent, performanceGoalPercent:Number(incentive.goalPercent || 0), performanceDerivationPercent:Number(incentive.derivationPercent || 0), performanceRewardAmount:0 };
-      }
-      const originalSettlement = Math.max(0, Number(financial.settlementToAdmin || 0));
-      const reward = Math.min(originalSettlement, Math.round(originalSettlement * percent / 100));
-      const adjusted = Math.max(0, originalSettlement - reward);
+      const grossBilling = Math.max(0, Number(financial.grossBilling || 0));
+      const reward = percent > 0 && grossBilling > 0 ? Math.round(grossBilling * percent / 100) : 0;
+      if (!(reward > 0)) return { ...financial, performanceRewardPercent:percent, performanceGoalPercent:Number(incentive.goalPercent || 0), performanceDerivationPercent:Number(incentive.derivationPercent || 0), performanceRewardAmount:0 };
+      const adjustedNet = Math.round(Number(financial.netSettlementToDriver || 0) + reward);
+      const balanced = Math.abs(adjustedNet) <= 1;
+      const netSettlementToDriver = balanced ? 0 : adjustedNet;
       return {
         ...financial,
         performanceRewardPercent:percent,
@@ -7835,13 +7847,14 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         performanceDerivationPercent:Number(incentive.derivationPercent || 0),
         performanceRewardAmount:reward,
         driverFinalEntitlement:Number(financial.driverFinalEntitlement || 0) + reward,
-        adminFinalEntitlement:Math.max(0, Number(financial.adminFinalEntitlement || 0) - reward),
-        netSettlementToDriver:adjusted > 0 ? -adjusted : 0,
-        settlementToAdmin:adjusted,
-        settlementAmount:adjusted,
-        balanced:adjusted === 0,
-        payerRole:adjusted === 0 ? null : "driver",
-        payeeRole:adjusted === 0 ? null : "admin"
+        adminFinalEntitlement:Number(financial.adminFinalEntitlement || 0) - reward,
+        netSettlementToDriver,
+        settlementToDriver:netSettlementToDriver > 0 ? netSettlementToDriver : 0,
+        settlementToAdmin:netSettlementToDriver < 0 ? Math.abs(netSettlementToDriver) : 0,
+        settlementAmount:balanced ? 0 : Math.abs(netSettlementToDriver),
+        balanced,
+        payerRole:balanced ? null : netSettlementToDriver > 0 ? "admin" : "driver",
+        payeeRole:balanced ? null : netSettlementToDriver > 0 ? "driver" : "admin"
       };
     }
 
@@ -7902,6 +7915,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       const netSettlementToDriver = Math.abs(rawNetSettlementToDriver) <= 1 ? 0 : Math.round(rawNetSettlementToDriver);
       const balanced = netSettlementToDriver === 0;
       return {
+        grossBilling,
         cashCollectedByDriver, transferCollectedByAdmin, cardCollectedByAdmin, aliasCollectedByAdmin, qrCollectedByAdmin,
         totalCollectedByAdmin, driverPaidSharedExpenses, adminPaidSharedExpenses,
         operationalLoans: validLoans, operationalLoanTotal, operationalLoanDriverShare, operationalLoanAdminShare,
@@ -8235,6 +8249,8 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       const totalExpenses = expenseRows.reduce((sum, expense) => sum + expense.amount, 0);
       const currentDerivations = performanceResult.derivations.filter(derivation => identities.has(String(derivation._origin || "").toLowerCase()));
       const financialBase = calculateWeeklyFinancialSettlement({ services:currentServices, expenses:expenseRows, operationalLoans, directDebtInstallments, performanceRewardAmount:0 });
+      try { await window.ExploraPerformanceEngine?.prepareSettlementIncentive?.(uid, period.id); }
+      catch (error) { window.ExploraPerformanceEngine?.showDiagnostic?.("WEEKLY_BENEFIT", "WEEKLY_BENEFIT_PREPARE_FAILED", error, { weeklyPeriodId:period.id, weeklyBilling:grossBilling, functionName:"buildDriverWeeklySnapshot" }); }
       const financial = applyPerformanceRewardToSettlement(financialBase, uid, period.id);
       const operationLedger = buildWeeklyOperationLedger(currentServices, expenseRows, operationalLoans, directDebtInstallments);
       return {
@@ -11205,6 +11221,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
 
     function statusIconMarkup(kind) {
       if (["ok","balanced","paid","review","david-pending"].includes(kind)) return '<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>';
+      if (kind === "derivation-pending") return '<svg viewBox="0 0 24 24"><path d="M7 7h10"/><path d="m14 4 3 3-3 3"/><path d="M17 17H7"/><path d="m10 14-3 3 3 3"/></svg>';
       if (["pending","overdue"].includes(kind)) return '<svg viewBox="0 0 24 24"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.6 2.7 17a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 3.6a2 2 0 0 0-3.4 0Z"/></svg>';
       return '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 7v5l3 2"/></svg>';
     }
@@ -11226,9 +11243,176 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       }
     }
 
+    const DASHBOARD_NOTICE_VERSION = 2;
+    const dashboardNoticeMemory = new Map();
+    let dashboardNoticeSeenTimer = 0;
+    let dashboardNoticeStorageFailed = false;
+    let lastDashboardWeeklyStatusResult = null;
+    let dashboardDerivationPendingRows = [];
+
+    function dashboardNoticeUid() {
+      return auth.currentUser?.uid || exploraSession.authUser?.uid || "anonymous";
+    }
+
+    function dashboardNoticeStorageKey(uid = dashboardNoticeUid()) {
+      return `explora.dashboard.notice.v${DASHBOARD_NOTICE_VERSION}.${uid}`;
+    }
+
+    function reportDashboardNoticeError(stage, code, error, context = {}) {
+      const payload = { stage, code, error, context:{ ...context, functionName:context.functionName || "dashboardNotice", noticeId:window.ExploraDashboardNoticeState?.lastDashboardNoticeId || "—", noticeType:window.ExploraDashboardNoticeState?.dashboardNoticeType || "—", noticeSeen:Boolean(window.ExploraDashboardNoticeState?.lastDashboardNoticeSeenAt) } };
+      if (typeof window.ExploraPerformanceEngine?.showDiagnostic === "function") {
+        window.ExploraPerformanceEngine.showDiagnostic(payload.stage, payload.code, payload.error, payload.context);
+      } else {
+        window.__exploraPendingGoalDiagnostic = payload;
+      }
+    }
+
+    function readDashboardNoticeSnapshot() {
+      const key = dashboardNoticeStorageKey();
+      if (dashboardNoticeMemory.has(key)) return dashboardNoticeMemory.get(key);
+      if (dashboardNoticeStorageFailed) return null;
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || Number(parsed.dashboardNoticeVersion) !== DASHBOARD_NOTICE_VERSION) return null;
+        dashboardNoticeMemory.set(key, parsed);
+        window.ExploraDashboardNoticeState = parsed;
+        return parsed;
+      } catch (error) {
+        dashboardNoticeStorageFailed = true;
+        reportDashboardNoticeError("READ_DASHBOARD_NOTICE", "DASHBOARD_NOTICE_READ_FAILED", error, { functionName:"readDashboardNoticeSnapshot" });
+        return null;
+      }
+    }
+
+    function writeDashboardNoticeSnapshot(snapshot) {
+      const key = dashboardNoticeStorageKey();
+      dashboardNoticeMemory.set(key, snapshot);
+      window.ExploraDashboardNoticeState = snapshot;
+      if (dashboardNoticeStorageFailed) return snapshot;
+      try {
+        localStorage.setItem(key, JSON.stringify(snapshot));
+      } catch (error) {
+        dashboardNoticeStorageFailed = true;
+        reportDashboardNoticeError("RENDER_DASHBOARD_NOTICE", "DASHBOARD_NOTICE_WRITE_FAILED", error, { functionName:"writeDashboardNoticeSnapshot", noticeId:snapshot.lastDashboardNoticeId, noticeType:snapshot.dashboardNoticeType, noticeSeen:Boolean(snapshot.lastDashboardNoticeSeenAt) });
+      }
+      return snapshot;
+    }
+
+    function buildDashboardNoticeId(result, rawStatus) {
+      const direct = result.lastDashboardNoticeId || result.dashboardNoticeId || result.noticeId;
+      if (direct) return String(direct);
+      const stableStatus = [CLOSURE_STATUS.NO_CLOSURE, CLOSURE_STATUS.DRIVER_UP_TO_DATE].includes(rawStatus);
+      const eventId = stableStatus
+        ? "stable"
+        : (result.receiptId || result.paymentId || result.closureId || result.weeklyPeriodId || "general");
+      const receiptStatus = String(result.receiptStatus || result.paymentStatus || "");
+      const amount = Math.round(Number(result.amount || 0));
+      return `${eventId}|${rawStatus}|${receiptStatus}|${amount}`;
+    }
+
+    function markDashboardNoticeAsSeen(noticeId) {
+      try {
+        const snapshot = readDashboardNoticeSnapshot();
+        if (!snapshot || snapshot.lastDashboardNoticeId !== noticeId || snapshot.lastDashboardNoticeSeenAt) return;
+        const updated = { ...snapshot, lastDashboardNoticeSeenAt:new Date().toISOString() };
+        writeDashboardNoticeSnapshot(updated);
+        const card = $("driverStatusCard");
+        if (card) card.dataset.noticeSeen = "true";
+      } catch (error) {
+        reportDashboardNoticeError("MARK_NOTICE_AS_SEEN", "DASHBOARD_NOTICE_MARK_SEEN_FAILED", error, { functionName:"markDashboardNoticeAsSeen", noticeId });
+      }
+    }
+
+    function scheduleDashboardNoticeSeen(noticeId) {
+      clearTimeout(dashboardNoticeSeenTimer);
+      dashboardNoticeSeenTimer = setTimeout(() => {
+        if (document.visibilityState === "visible") markDashboardNoticeAsSeen(noticeId);
+      }, 900);
+    }
+
+    function applyDashboardNoticeSnapshot(snapshot, interactionResult = {}) {
+      try {
+        const card = $("driverStatusCard");
+        if (!card || !snapshot) return;
+        card.dataset.status = snapshot.visual;
+        card.dataset.closureStatus = snapshot.dashboardNoticeType;
+        card.dataset.layout = snapshot.layout;
+        card.dataset.noticeId = snapshot.lastDashboardNoticeId;
+        card.dataset.noticeType = snapshot.dashboardNoticeType;
+        card.dataset.noticeSeen = snapshot.lastDashboardNoticeSeenAt ? "true" : "false";
+        $("driverStatusIcon").innerHTML = statusIconMarkup(snapshot.visual);
+        $("driverStatusActionIcon").innerHTML = statusIconMarkup(snapshot.visual === "ok" ? "ok" : "loading");
+        $("driverStatusTitle").textContent = snapshot.title;
+        $("driverStatusMessage").textContent = snapshot.message;
+        $("driverStatusDetail").textContent = snapshot.detail;
+        $("driverStatusActionTitle").textContent = snapshot.actionTitle;
+        $("driverStatusActionMessage").textContent = snapshot.actionMessage;
+        card.setAttribute("aria-label", snapshot.aria);
+        configureWeeklyStatusInteraction(interactionResult?.status ? interactionResult : (snapshot.interaction || {}));
+        window.ExploraDashboardNoticeState = snapshot;
+        if (!snapshot.lastDashboardNoticeSeenAt) scheduleDashboardNoticeSeen(snapshot.lastDashboardNoticeId);
+      } catch (error) {
+        reportDashboardNoticeError("RENDER_DASHBOARD_NOTICE", "DASHBOARD_NOTICE_RENDER_FAILED", error, { functionName:"applyDashboardNoticeSnapshot", noticeId:snapshot?.lastDashboardNoticeId, noticeType:snapshot?.dashboardNoticeType, noticeSeen:Boolean(snapshot?.lastDashboardNoticeSeenAt) });
+      }
+    }
+
+    function applyDerivationPendingDashboardNotice(rows = dashboardDerivationPendingRows) {
+      const card = $("driverStatusCard");
+      if (!card || !rows.length) return;
+      const first = rows[0] || {};
+      const count = rows.length;
+      const noticeId = `derivation-pending|${rows.map(row => row.id || row.derivationId || "").sort().join(",")}`;
+      card.dataset.status = "derivation-pending";
+      card.dataset.closureStatus = "DERIVATION_PENDING";
+      card.dataset.layout = "detail";
+      card.dataset.noticeId = noticeId;
+      card.dataset.noticeType = "DERIVATION_PENDING";
+      card.dataset.noticeSeen = "false";
+      $("driverStatusIcon").innerHTML = statusIconMarkup("derivation-pending");
+      $("driverStatusActionIcon").innerHTML = statusIconMarkup("derivation-pending");
+      $("driverStatusTitle").textContent = count === 1 ? "DERIVACIÓN PENDIENTE" : `${count} DERIVACIONES PENDIENTES`;
+      $("driverStatusMessage").textContent = count === 1 ? `${first.senderName || "Chofer"} · ${first.description || first.descripcion || "Servicio"}` : "Tienes solicitudes que requieren respuesta.";
+      $("driverStatusDetail").textContent = count === 1 ? `Monto: ${formatClosureMoney(first.amount || first.monto || first.fixedPrice || 0)} · Acepta o rechaza.` : "Acepta o rechaza cada derivación para volver al estado al día.";
+      $("driverStatusActionTitle").textContent = "";
+      $("driverStatusActionMessage").textContent = "";
+      card.setAttribute("aria-label", `${count} derivación${count === 1 ? "" : "es"} pendiente${count === 1 ? "" : "s"}. Abrir derivaciones.`);
+      card.disabled = false;
+      card.setAttribute("aria-disabled", "false");
+      card.tabIndex = 0;
+      card.dataset.action = "derivar-servicio";
+      card.setAttribute("role", "button");
+      window.ExploraDashboardNoticeState = {lastDashboardNoticeId:noticeId,lastDashboardNoticeSeenAt:null,dashboardNoticeVersion:DASHBOARD_NOTICE_VERSION,dashboardNoticeType:"DERIVATION_PENDING",visual:"derivation-pending"};
+    }
+
+    function setDashboardDerivationPending(rows = []) {
+      dashboardDerivationPendingRows = Array.isArray(rows) ? rows.filter(Boolean) : [];
+      if (dashboardDerivationPendingRows.length) applyDerivationPendingDashboardNotice(dashboardDerivationPendingRows);
+      else clearDashboardDerivationPending();
+    }
+
+    function clearDashboardDerivationPending() {
+      if (!dashboardDerivationPendingRows.length && $("driverStatusCard")?.dataset.noticeType !== "DERIVATION_PENDING") return;
+      dashboardDerivationPendingRows = [];
+      if (lastDashboardWeeklyStatusResult) renderDriverStatusCard(lastDashboardWeeklyStatusResult);
+      else {
+        const frozen = readDashboardNoticeSnapshot();
+        if (frozen) applyDashboardNoticeSnapshot(frozen, frozen.interaction || {});
+      }
+    }
+
+    window.ExploraDashboardNoticeController = {
+      setDerivationPending:setDashboardDerivationPending,
+      clearDerivationPending:clearDashboardDerivationPending,
+      getPending:() => [...dashboardDerivationPendingRows]
+    };
+
     function renderDriverStatusCard(result = {}) {
       const card = $("driverStatusCard");
       if (!card) return;
+      lastDashboardWeeklyStatusResult = result;
+      if (dashboardDerivationPendingRows.length) { applyDerivationPendingDashboardNotice(dashboardDerivationPendingRows); return; }
       const activeSnapshot = result.weeklySnapshot || window.ExploraWeeklyEngine?.getSnapshot?.() || {};
       const activeDebts = Array.isArray(activeSnapshot.directDebtInstallments) ? activeSnapshot.directDebtInstallments : [];
       if ([CLOSURE_STATUS.NO_CLOSURE,CLOSURE_STATUS.DRIVER_UP_TO_DATE].includes(result.status) && activeDebts.length) {
@@ -11237,6 +11421,13 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         closureState.closureId = result.closureId;
       }
       const rawStatus = result.status || CLOSURE_STATUS.CLOSURE_LOADING;
+      const frozenNotice = readDashboardNoticeSnapshot();
+
+      if (rawStatus === CLOSURE_STATUS.CLOSURE_LOADING && frozenNotice) {
+        applyDashboardNoticeSnapshot(frozenNotice, result);
+        return;
+      }
+
       let visual = "loading";
       let layout = "detail";
       let title = "COMPROBANDO CIERRE";
@@ -11300,25 +11491,52 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         detail = "Toca para ver el cierre y el comprobante.";
         aria = "Pago de David registrado. Abrir detalle.";
       } else if (rawStatus === CLOSURE_STATUS.CLOSURE_ERROR) {
+        if (frozenNotice) {
+          applyDashboardNoticeSnapshot(frozenNotice, result);
+          reportDashboardNoticeError("READ_DASHBOARD_NOTICE", "DASHBOARD_NOTICE_SOURCE_FAILED", result.error || new Error("No se pudo actualizar el cierre"), { functionName:"renderDriverStatusCard", noticeId:frozenNotice.lastDashboardNoticeId, noticeType:frozenNotice.dashboardNoticeType, noticeSeen:Boolean(frozenNotice.lastDashboardNoticeSeenAt), firestorePath:"cierres_semanales" });
+          return;
+        }
         visual = "error";
         title = "NO SE PUDO ACTUALIZAR EL CIERRE";
         message = "Se mantiene la última información disponible.";
         detail = "Toca Actualizar para reintentar.";
         aria = "No se pudo actualizar el cierre semanal.";
+        reportDashboardNoticeError("READ_DASHBOARD_NOTICE", "DASHBOARD_NOTICE_SOURCE_FAILED", result.error || new Error("No se pudo actualizar el cierre"), { functionName:"renderDriverStatusCard", noticeType:rawStatus, firestorePath:"cierres_semanales" });
       }
 
-      card.dataset.status = visual;
-      card.dataset.closureStatus = rawStatus;
-      card.dataset.layout = layout;
-      $("driverStatusIcon").innerHTML = statusIconMarkup(visual);
-      $("driverStatusActionIcon").innerHTML = statusIconMarkup(visual === "ok" ? "ok" : "loading");
-      $("driverStatusTitle").textContent = title;
-      $("driverStatusMessage").textContent = message;
-      $("driverStatusDetail").textContent = detail;
-      $("driverStatusActionTitle").textContent = actionTitle;
-      $("driverStatusActionMessage").textContent = actionMessage;
-      card.setAttribute("aria-label", aria);
-      configureWeeklyStatusInteraction(result);
+      if (rawStatus === CLOSURE_STATUS.CLOSURE_LOADING) {
+        card.dataset.status = visual;
+        card.dataset.closureStatus = rawStatus;
+        card.dataset.layout = layout;
+        $("driverStatusIcon").innerHTML = statusIconMarkup(visual);
+        $("driverStatusActionIcon").innerHTML = statusIconMarkup("loading");
+        $("driverStatusTitle").textContent = title;
+        $("driverStatusMessage").textContent = message;
+        $("driverStatusDetail").textContent = detail;
+        $("driverStatusActionTitle").textContent = actionTitle;
+        $("driverStatusActionMessage").textContent = actionMessage;
+        card.setAttribute("aria-label", aria);
+        configureWeeklyStatusInteraction(result);
+        return;
+      }
+
+      const noticeId = buildDashboardNoticeId(result, rawStatus);
+      const interaction = { status:rawStatus, clickable:Boolean(result.clickable), closureId:result.closureId || "", weeklyPeriodId:result.weeklyPeriodId || "", amount:Number(result.amount||0) };
+      if (frozenNotice && frozenNotice.lastDashboardNoticeId === noticeId) {
+        applyDashboardNoticeSnapshot({ ...frozenNotice, interaction }, result);
+        return;
+      }
+
+      const snapshot = {
+        lastDashboardNoticeId:noticeId,
+        lastDashboardNoticeSeenAt:null,
+        dashboardNoticeVersion:DASHBOARD_NOTICE_VERSION,
+        dashboardNoticeType:rawStatus,
+        visual,layout,title,message,detail,actionTitle,actionMessage,aria,interaction,
+        createdAt:new Date().toISOString()
+      };
+      writeDashboardNoticeSnapshot(snapshot);
+      applyDashboardNoticeSnapshot(snapshot, result);
     }
 
     function normalizeClosureText(value) { return String(value || "").trim().toLowerCase(); }
@@ -12158,6 +12376,8 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       setClosureDetail("weeklyClosureCards", formatClosureMoney(snapshot.cardCollectedByAdmin || 0));
       setClosureDetail("weeklyClosureAlias", formatClosureMoney(snapshot.aliasCollectedByAdmin || 0));
       setClosureDetail("weeklyClosureLoans", snapshot.operationalLoanDriverShare > 0 ? `− ${formatClosureMoney(snapshot.operationalLoanDriverShare)}` : "$0");
+      setClosureDetail("weeklyClosureGoalPercent", `${Number(snapshot.performanceGoalPercent || 0)}%`);
+      setClosureDetail("weeklyClosureDerivationPercent", `${Number(snapshot.performanceDerivationPercent || 0)}%`);
       setClosureDetail("weeklyClosurePerformanceReward", snapshot.performanceRewardAmount > 0 ? `+ ${formatClosureMoney(snapshot.performanceRewardAmount)}` : "$0");
       setClosureDetail("weeklyClosureBilling", formatClosureMoney(snapshot.grossBilling || 0));
       setClosureDetail("weeklyClosureDriverShare", formatClosureMoney(snapshot.driverBaseShare ?? (Number(snapshot.grossBilling || 0) * .5)));
@@ -16343,6 +16563,7 @@ const getName=profile=>String(profile?.nombre||profile?.nombreCompleto||profile?
 const getVehicle=profile=>String(profile?.vehicleDisplay||profile?.vehiculoNombre||profile?.vehiculo||"Vehículo no asignado");
 function setMessage(text="",type=""){const element=$("derivationFormMessage");if(element){element.textContent=text;element.className=`derivation-message${type?` ${type}`:""}`;}}
 async function ensureSession(){const user=auth?.currentUser;if(!user?.uid)throw new Error("AUTH_REQUIRED");return user;}
+function reportDerivationError(stage,code,error,context={}){const payload={stage,code,error,context:{...context,functionName:context.functionName||"ExploraDerivations",derivationState:context.derivationState||context.estado||"—",firestorePath:context.firestorePath||"derivaciones"}};if(typeof window.ExploraPerformanceEngine?.showDiagnostic==="function")window.ExploraPerformanceEngine.showDiagnostic(stage,code,error,payload.context);else window.__exploraPendingGoalDiagnostic=payload;}
 
 async function loadDrivers(force=false){
   if(state.drivers.length&&!force)return state.drivers;
@@ -16381,16 +16602,26 @@ async function sendDerivation(event){
     if(!(amount>0))throw new Error("AMOUNT_REQUIRED");
     derivationSaveInProgress=true;button.disabled=true;button.textContent="ENVIANDO DERIVACIÓN…";button.setAttribute("aria-busy","true");
     const id=stableId(),sender=window.ExploraSession?.profile||{},receiver=state.driverMap.get(receiverUid)||{};
-    await setDoc(doc(db,"derivaciones",id),{derivationId:id,senderUid:uid(),receiverUid,senderName:getName(sender),receiverName:getName(receiver),description,amount,fixedPrice:amount,notes,status:"sent_pending_response",sentAt:serverTimestamp(),acceptedAt:null,rejectedAt:null,completedAt:null,paymentMethod:null,billingRecordId:null,weeklyPeriodIdSent:currentPeriod(),weeklyPeriodIdCompleted:null,senderUnitsAwarded:false,receiverUnitsAwarded:false,createdByUid:uid(),updatedAt:serverTimestamp()},{merge:false});
+    await setDoc(doc(db,"derivaciones",id),{derivationId:id,senderUid:uid(),emisorUid:uid(),receiverUid,receptorUid,senderName:getName(sender),receiverName:getName(receiver),description,descripcion:description,amount,monto:amount,fixedPrice:amount,notes,status:"sent_pending_response",estado:"PENDIENTE",sentAt:serverTimestamp(),acceptedAt:null,rejectedAt:null,completedAt:null,paymentMethod:null,billingRecordId:null,weeklyPeriodIdSent:currentPeriod(),weeklyPeriodIdCompleted:null,senderUnitsAwarded:false,receiverUnitsAwarded:false,createdByUid:uid(),updatedAt:serverTimestamp()},{merge:false});
     window.showExploraSuccess?.({title:"¡EXITOSO!",message:"La derivación fue enviada correctamente.",onAccept:()=>{resetForm();close();window.ExploraMainNav?.setActive?.("inicio");window.scrollTo({top:0,behavior:"smooth"});}});
-  }catch(error){const code=String(error?.message||error?.code||"");setMessage(code.includes("RECEIVER")?"Selecciona un chofer válido.":code.includes("DESCRIPTION")?"Ingresa una descripción.":code.includes("AMOUNT")?"Ingresa un valor válido.":code.includes("AUTH")?"No se pudo verificar tu sesión.":"No se pudo enviar la derivación.","err");}
-  finally{derivationSaveInProgress=false;if(button){button.disabled=false;button.textContent="ENVIAR DERIVACIÓN";button.removeAttribute("aria-busy");}updateCompose();window.unlockPageScroll?.("derivation-saving");}
+  }catch(error){const code=String(error?.message||error?.code||"");reportDerivationError("DERIVATION_CREATE","DERIVATION_CREATE_FAILED",error,{functionName:"sendDerivation",derivationState:"PENDIENTE",receiverUid:state.selectedReceiverUid});setMessage(code.includes("RECEIVER")?"Selecciona un chofer válido.":code.includes("DESCRIPTION")?"Ingresa una descripción.":code.includes("AMOUNT")?"Ingresa un valor válido.":code.includes("AUTH")?"No se pudo verificar tu sesión.":"No se pudo enviar la derivación.","err");}
+  finally{derivationSaveInProgress=false;if(button){button.disabled=false;button.textContent="ENVIAR";button.removeAttribute("aria-busy");}updateCompose();window.unlockPageScroll?.("derivation-saving");}
 }
 
-function renderPendingNotifications(){const box=$("derivationNotificationStack"),badge=$("derivationGlobalBadge");if(!box)return;box.hidden=!state.pendingResponse.length;box.innerHTML=state.pendingResponse.map(row=>`<article class="derivation-notification"><div><strong>NUEVA DERIVACIÓN</strong><span>${escapeHtml(row.senderName||"Chofer")} · ${escapeHtml(row.description||"Cobro")}</span><small>${money(row.amount||row.fixedPrice)}</small></div><div><button data-derivation-action="accept" data-derivation-id="${escapeHtml(row.id)}">ACEPTAR</button><button data-derivation-action="reject" data-derivation-id="${escapeHtml(row.id)}">RECHAZAR</button></div></article>`).join("");if(badge){badge.textContent=String(state.pendingResponse.length);badge.hidden=!state.pendingResponse.length;}}
-function startPendingListener(){try{state.unsubscribe?.();}catch(_){}if(!uid())return;state.unsubscribe=onSnapshot(query(collection(db,"derivaciones"),where("receiverUid","==",uid()),where("status","==","sent_pending_response")),snapshot=>{state.pendingResponse=snapshot.docs.map(item=>({id:item.id,...item.data()}));renderPendingNotifications();},error=>console.warn("DERIVATION_PENDING_LISTENER",error?.code||error?.message));}
+function renderPendingNotifications(){
+  const box=$("derivationNotificationStack"),badge=$("derivationGlobalBadge");if(!box)return;
+  box.hidden=!state.pendingResponse.length;
+  box.innerHTML=state.pendingResponse.map(row=>`<article class="derivation-notification-card"><div class="derivation-notification-head"><span class="derivation-notification-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 7h10"/><path d="m14 4 3 3-3 3"/><path d="M17 17H7"/><path d="m10 14-3 3 3 3"/></svg></span><span class="derivation-notification-copy"><strong>DERIVACIÓN PENDIENTE</strong><b>${escapeHtml(row.senderName||"Chofer")} · ${escapeHtml(row.description||row.descripcion||"Servicio")}</b><small>${money(row.amount||row.monto||row.fixedPrice)}</small></span></div><div class="derivation-notification-actions"><button class="accept" data-derivation-action="accept" data-derivation-id="${escapeHtml(row.id)}">ACEPTAR</button><button data-derivation-action="reject" data-derivation-id="${escapeHtml(row.id)}">RECHAZAR</button></div></article>`).join("");
+  if(badge){badge.textContent=String(state.pendingResponse.length);badge.hidden=!state.pendingResponse.length;badge.classList.toggle("is-visible",Boolean(state.pendingResponse.length));}
+  if(state.pendingResponse.length)window.ExploraDashboardNoticeController?.setDerivationPending?.(state.pendingResponse);else window.ExploraDashboardNoticeController?.clearDerivationPending?.();
+}
+function startPendingListener(){
+  try{state.unsubscribe?.();}catch(_){}
+  if(!uid())return;
+  state.unsubscribe=onSnapshot(query(collection(db,"derivaciones"),where("receiverUid","==",uid()),where("status","==","sent_pending_response")),snapshot=>{state.pendingResponse=snapshot.docs.map(item=>({id:item.id,...item.data()}));renderPendingNotifications();},error=>{reportDerivationError("READ_DERIVATION_RANKING","DERIVATION_PENDING_LISTENER_FAILED",error,{functionName:"startPendingListener",derivationState:"PENDIENTE"});});
+}
 async function loadPendingCompletion(){const user=await ensureSession();const snapshot=await getDocs(query(collection(db,"derivaciones"),where("receiverUid","==",user.uid),where("status","==","accepted_pending_completion")));state.pendingCompletion=snapshot.docs.map(item=>({id:item.id,...item.data()}));return state.pendingCompletion;}
-async function transition(id,action,button){if(state.busy.has(id))return;state.busy.add(id);const idle=action==="accept"?"ACEPTAR":action==="reject"?"RECHAZAR":"CANCELAR";button.disabled=true;button.textContent=action==="accept"?"ACEPTANDO…":action==="reject"?"RECHAZANDO…":"CANCELANDO…";try{const reference=doc(db,"derivaciones",id),snapshot=await getDoc(reference);if(!snapshot.exists())throw new Error("NOT_FOUND");const row=snapshot.data(),me=uid();if(action==="accept"||action==="reject"){if(row.receiverUid!==me||row.status!=="sent_pending_response")throw new Error("TRANSITION_DENIED");await updateDoc(reference,{status:action==="accept"?"accepted_pending_completion":"rejected",[action==="accept"?"acceptedAt":"rejectedAt"]:serverTimestamp(),[action==="accept"?"acceptedByUid":"rejectedByUid"]:me,updatedAt:serverTimestamp()});}else{if(row.senderUid!==me||row.status!=="sent_pending_response")throw new Error("TRANSITION_DENIED");await updateDoc(reference,{status:"canceled",canceledAt:serverTimestamp(),canceledByUid:me,updatedAt:serverTimestamp()});}await loadPendingCompletion().catch(()=>{});}catch(error){console.warn("DERIVATION_TRANSITION",error);window.showExploraSuccess?.({title:"No se pudo completar",message:action==="accept"?"No se pudo aceptar la derivación.":action==="reject"?"No se pudo rechazar la derivación.":"No se pudo cancelar la derivación."});}finally{state.busy.delete(id);button.disabled=false;button.textContent=idle;}}
+async function transition(id,action,button){if(state.busy.has(id))return;state.busy.add(id);const idle=action==="accept"?"ACEPTAR":action==="reject"?"RECHAZAR":"CANCELAR";button.disabled=true;button.textContent=action==="accept"?"ACEPTANDO…":action==="reject"?"RECHAZANDO…":"CANCELANDO…";try{const reference=doc(db,"derivaciones",id),snapshot=await getDoc(reference);if(!snapshot.exists())throw new Error("NOT_FOUND");const row=snapshot.data(),me=uid();if(action==="accept"||action==="reject"){if(row.receiverUid!==me||row.status!=="sent_pending_response")throw new Error("TRANSITION_DENIED");await updateDoc(reference,{status:action==="accept"?"accepted_pending_completion":"rejected",estado:action==="accept"?"ACEPTADA":"RECHAZADA",[action==="accept"?"acceptedAt":"rejectedAt"]:serverTimestamp(),[action==="accept"?"acceptedByUid":"rejectedByUid"]:me,updatedAt:serverTimestamp()});}else{if(row.senderUid!==me||row.status!=="sent_pending_response")throw new Error("TRANSITION_DENIED");await updateDoc(reference,{status:"canceled",estado:"CANCELADA",canceledAt:serverTimestamp(),canceledByUid:me,updatedAt:serverTimestamp()});}state.pendingResponse=state.pendingResponse.filter(item=>item.id!==id);renderPendingNotifications();await loadPendingCompletion().catch(error=>reportDerivationError("DERIVATION_TRANSITION","DERIVATION_PENDING_COMPLETION_READ_FAILED",error,{functionName:"loadPendingCompletion",derivationState:action==="accept"?"ACEPTADA":"RECHAZADA"}));}catch(error){reportDerivationError("DERIVATION_TRANSITION","DERIVATION_TRANSITION_FAILED",error,{functionName:"transition",derivationState:action.toUpperCase(),derivationId:id});window.showExploraSuccess?.({title:"No se pudo completar",message:action==="accept"?"No se pudo aceptar la derivación.":action==="reject"?"No se pudo rechazar la derivación.":"No se pudo cancelar la derivación."});}finally{state.busy.delete(id);button.disabled=false;button.textContent=idle;}}
 
 function openFinalize(id){const row=state.pendingCompletion.find(item=>item.id===id);if(!row)return;state.selectedFinalizeId=id;state.selectedPayment="";$("derivationFinalizeSummary").innerHTML=`<strong>${escapeHtml(row.description||"Cobro derivado")}</strong><span>${money(row.amount||row.fixedPrice)}</span><small>Emisor: ${escapeHtml(row.senderName||"Chofer")}</small>`;document.querySelectorAll("[data-derivation-payment]").forEach(button=>button.classList.remove("is-selected"));$("derivationFinalizeConfirmBtn").disabled=true;$("derivationFinalizeBackdrop").classList.add("is-open");$("derivationFinalizeBackdrop").setAttribute("aria-hidden","false");window.lockPageScroll?.("derivation-finalize");}
 function closeFinalize(){$("derivationFinalizeBackdrop")?.classList.remove("is-open");$("derivationFinalizeBackdrop")?.setAttribute("aria-hidden","true");window.unlockPageScroll?.("derivation-finalize");state.selectedFinalizeId="";state.selectedPayment="";}
@@ -16412,7 +16643,7 @@ async function complete(button){
       if(!(amount>0))throw new Error("AMOUNT_INVALID");
       const billing={billingId,operationId:billingId,driverUid:me.uid,uid:me.uid,amount,monto:amount,finalPrice:amount,paymentMethod:method,metodoPago:method,financialCategory:method,paymentProvider:"derivation",paymentStatus:"completed",status:"completed",estado:"completado",source:"derivation",derivationId:id,originalSenderUid:row.senderUid,weeklyPeriodId:period,periodoSemanalId:period,createdAt:serverTimestamp(),completedAt:serverTimestamp(),updatedAt:serverTimestamp()};
       if(!billingSnapshot.exists())transaction.set(billingReference,billing);
-      transaction.update(reference,{status:"completed",completedAt:serverTimestamp(),completedByUid:me.uid,paymentMethod:method,billingRecordId:billingId,weeklyPeriodIdCompleted:period,performanceQualified:true,performanceAwardedToUid:row.senderUid,performanceUnits:1,performanceQualifiedAt:serverTimestamp(),updatedAt:serverTimestamp()});
+      transaction.update(reference,{status:"completed",estado:"FACTURADA",completedAt:serverTimestamp(),completedByUid:me.uid,paymentMethod:method,billingRecordId:billingId,weeklyPeriodIdCompleted:period,performanceQualified:true,performanceAwardedToUid:row.senderUid,performanceUnits:1,performanceQualifiedAt:serverTimestamp(),senderUnitsAwarded:true,receiverUnitsAwarded:false,updatedAt:serverTimestamp()});
       committed={row:{...row,id,status:"completed",weeklyPeriodIdCompleted:period,performanceUnits:1},billing};
     });
     if(committed){
@@ -16428,7 +16659,7 @@ async function complete(button){
     closeFinalize();await loadPendingCompletion();
     window.showExploraSuccess?.("Cobro derivado registrado correctamente.");
   }catch(error){
-    console.warn("DERIVATION_COMPLETE",error);
+    reportDerivationError("DERIVATION_COMPLETE","DERIVATION_COMPLETE_FAILED",error,{functionName:"complete",derivationState:"FACTURADA",derivationId:id,weeklyPeriodId:currentPeriod()});
     const message=$("derivationFinalizeMessage");if(message)message.textContent="No se pudo registrar el cobro derivado.";
   }finally{
     state.busy.delete(`complete:${id}`);button.disabled=false;button.textContent="CONFIRMAR COBRO FINALIZADO";
@@ -16439,7 +16670,7 @@ function showReminder(){const list=$("derivationReminderList");list.innerHTML=st
 function closeReminder(){$("derivationReminderBackdrop")?.classList.remove("is-open");$("derivationReminderBackdrop")?.setAttribute("aria-hidden","true");window.unlockPageScroll?.("derivation-reminder");}
 async function billingGuard(){await loadPendingCompletion().catch(()=>{});if(state.pendingCompletion.length){showReminder();return;}state.originalBillingAction?.();}
 function installGuard(){const original=window.ExploraActions?.["nuevo-servicio"];if(typeof original==="function"&&original!==billingGuard&&!state.originalBillingAction){state.originalBillingAction=original;window.ExploraActions["nuevo-servicio"]=billingGuard;}}
-function stop(){try{state.unsubscribe?.();}catch(_){}state.unsubscribe=null;state.pendingResponse=[];state.pendingCompletion=[];state.drivers=[];state.driverMap.clear();state.profileCache.clear();resetForm();close();closeFinalize();closeReminder();}
+function stop(){try{state.unsubscribe?.();}catch(_){}state.unsubscribe=null;state.pendingResponse=[];state.pendingCompletion=[];state.drivers=[];state.driverMap.clear();state.profileCache.clear();window.ExploraDashboardNoticeController?.clearDerivationPending?.();resetForm();close();closeFinalize();closeReminder();}
 
 window.ExploraActions=window.ExploraActions||{};window.ExploraActions["derivar-servicio"]=open;
 window.ExploraDerivations={open,close,startForCurrentSession:async()=>{await loadDrivers().catch(()=>{});startPendingListener();await loadPendingCompletion().catch(()=>{});installGuard();},stopSession:stop,refresh:async()=>{await loadDrivers(true);renderDrivers();},getState:()=>state};
@@ -16461,12 +16692,12 @@ document.addEventListener("DOMContentLoaded",()=>{
   document.querySelectorAll("[data-derivation-payment]").forEach(button=>button.addEventListener("click",()=>{state.selectedPayment=button.dataset.derivationPayment;document.querySelectorAll("[data-derivation-payment]").forEach(item=>item.classList.toggle("is-selected",item===button));$("derivationFinalizeConfirmBtn").disabled=false;}));
   $("derivationReminderLaterBtn")?.addEventListener("click",()=>{closeReminder();state.originalBillingAction?.();});
 });
-window.addEventListener("explora:session-opened",event=>{if(normalize(event.detail?.role)!=="admin")window.ExploraDerivations.startForCurrentSession().catch(error=>console.warn("DERIVATION_START",error?.code||error?.message));});
+window.addEventListener("explora:session-opened",event=>{if(normalize(event.detail?.role)!=="admin")window.ExploraDerivations.startForCurrentSession().catch(error=>reportDerivationError("INIT","DERIVATION_START_FAILED",error,{functionName:"startForCurrentSession"}));});
 window.addEventListener("explora:auth-cleared",stop);
 </script>
 
 
-<script type="module" id="exploraPerformanceEngineV210">
+<script type="module" id="exploraPerformanceEngineV213">
 import { getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import { getFirestore, collection, getDocs, query, where, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
@@ -16480,18 +16711,18 @@ const WEEK_MS=7*24*60*60*1000;
 const CYCLE_MS=4*WEEK_MS;
 const EPOCH_KEY_MS=Date.UTC(2026,0,3);
 const GOALS=Object.freeze([
-  {id:1,amount:400000,percent:1},
-  {id:2,amount:800000,percent:2},
-  {id:3,amount:1200000,percent:3},
-  {id:4,amount:1600000,percent:4},
-  {id:5,amount:2000000,percent:5},
-  {id:6,amount:2400000,percent:6},
-  {id:7,amount:2800000,percent:7},
-  {id:8,amount:3200000,percent:8},
-  {id:9,amount:3600000,percent:9},
-  {id:10,amount:4000000,percent:10}
+  {id:1,amount:600000,percent:1},
+  {id:2,amount:1200000,percent:2},
+  {id:3,amount:1800000,percent:3},
+  {id:4,amount:2400000,percent:4},
+  {id:5,amount:3000000,percent:5},
+  {id:6,amount:3600000,percent:6},
+  {id:7,amount:4200000,percent:7},
+  {id:8,amount:4800000,percent:8},
+  {id:9,amount:5400000,percent:9},
+  {id:10,amount:6000000,percent:10}
 ]);
-const MAX_BILLING=4000000;
+const MAX_BILLING=6000000;
 const DERIVATION_PERCENT=3;
 const INVALID_STATES=["cancel","rechaz","elimin","borrador","test","prueba"];
 const COMPLETE_STATES=["completed","complet","finaliz","factur","cerrad","realiz"];
@@ -16501,7 +16732,7 @@ const state={
   rows:[],current:null,derivations:[],currentDerivationLeader:null,derivationLeader:null,derivationPeriodId:"",history:[],
   incentiveByPeriod:new Map(),cycleAwards:new Map(),refreshPromise:null,lastRefresh:0,error:null,
   liveDerivationOverlay:new Map(),goalView:null,goalScrollTimer:0,goalScrollReturning:false,
-  goalCarouselBound:false,goalResizeObserver:null,dashboardAnimationPending:false,profileAnimationPending:false,lastActiveGoalId:0
+  goalCarouselBound:false,goalResizeObserver:null,goalWindowStartLeft:0,dashboardAnimationPending:false,profileAnimationPending:false,lastActiveGoalId:0
 };
 
 const money=value=>new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(Math.round(Number(value||0)));
@@ -16544,57 +16775,61 @@ function profileName(profile,id){return String(profile?.nombreCompleto||profile?
 function profileAvatar(profile){return String(profile?.avatarUrl||profile?.fotoPerfil||profile?.photoURL||profile?.avatar||profile?.foto||"").trim();}
 function role(){const raw=window.ExploraSession?.role||window.ExploraAuthSession?.role||"";return normalize(raw||(document.body.classList.contains("explora-shared-admin")?"admin":"chofer"));}
 
-const GOAL_DIAGNOSTIC_STAGES=new Set(["INIT_GOALS","READ_BILLING","CALCULATE_GOALS","ORDER_GOALS","RENDER_GOALS","SCROLL_GOALS","PROFILE_GOAL_RENDER","ANIMATION_TRIGGER"]);
+const GOAL_DIAGNOSTIC_STAGES=new Set(["INIT","READ_BILLING","CALCULATE_GOALS","ORDER_GOAL_WINDOW","RENDER_GOAL_BUBBLES","READ_DERIVATION_RANKING","RENDER_DERIVATION_CARD","READ_DASHBOARD_NOTICE","RENDER_DASHBOARD_NOTICE","MARK_NOTICE_AS_SEEN","ANIMATION_TRIGGER","WEEKLY_BENEFIT","CYCLE_CLOSE","DERIVATION_CREATE","DERIVATION_TRANSITION","DERIVATION_COMPLETE"]);
 function prefersReducedMotion(){return Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);}
 function normalizeGoalDiagnosticStage(stage=""){
   const raw=String(stage||"").trim().toUpperCase();
   if(GOAL_DIAGNOSTIC_STAGES.has(raw))return raw;
-  if(raw.includes("PROFILE"))return "PROFILE_GOAL_RENDER";
-  if(raw.includes("SCROLL")||raw.includes("CAROUSEL"))return "SCROLL_GOALS";
+  if(raw.includes("NOTICE")&&raw.includes("SEEN"))return "MARK_NOTICE_AS_SEEN";
+  if(raw.includes("NOTICE")&&raw.includes("RENDER"))return "RENDER_DASHBOARD_NOTICE";
+  if(raw.includes("NOTICE"))return "READ_DASHBOARD_NOTICE";
+  if(raw.includes("DERIVATION")&&raw.includes("RENDER"))return "RENDER_DERIVATION_CARD";
+  if(raw.includes("DERIVATION"))return "READ_DERIVATION_RANKING";
   if(raw.includes("ANIMATION")||raw.includes("CELEBR"))return "ANIMATION_TRIGGER";
-  if(raw.includes("RENDER"))return "RENDER_GOALS";
-  if(raw.includes("ORDER"))return "ORDER_GOALS";
-  if(raw.includes("CALCULATE")||raw.includes("CYCLE")||raw.includes("WRITE"))return "CALCULATE_GOALS";
-  if(raw.includes("BILLING")||raw.includes("HISTORY")||raw.includes("DERIVATION")||raw.includes("READ"))return "READ_BILLING";
-  return "INIT_GOALS";
+  if(raw.includes("ORDER")||raw.includes("WINDOW"))return "ORDER_GOAL_WINDOW";
+  if(raw.includes("RENDER")||raw.includes("PROFILE"))return "RENDER_GOAL_BUBBLES";
+  if(raw.includes("CALCULATE")||raw.includes("CYCLE")||raw.includes("WRITE")||raw.includes("SUMMARY"))return "CALCULATE_GOALS";
+  if(raw.includes("BILLING")||raw.includes("HISTORY")||raw.includes("READ"))return "READ_BILLING";
+  return "INIT";
 }
-function getVisibleGoalBubbles(driverBillingAmount){
+function getGoalBubbleWindow(driverBillingAmount){
   const billing=Math.max(0,Number(driverBillingAmount||0)||0);
   const highestAchievedGoal=GOALS.filter(goal=>billing>=goal.amount).at(-1)||null;
-  const nextGoals=GOALS.filter(goal=>billing<goal.amount);
-  let visibleGoals=[];
-  if(!highestAchievedGoal){
-    visibleGoals=GOALS.slice(0,4);
-  }else if(highestAchievedGoal.id===GOALS.length){
-    visibleGoals=[highestAchievedGoal,...GOALS.slice(-4,-1)];
-  }else{
-    visibleGoals=[highestAchievedGoal,...nextGoals.slice(0,3)];
-    if(visibleGoals.length<4){
-      const previous=GOALS.filter(goal=>goal.id<highestAchievedGoal.id&&!visibleGoals.some(item=>item.id===goal.id));
-      visibleGoals.push(...previous.slice(-(4-visibleGoals.length)).reverse());
-    }
-  }
-  const uniqueVisible=[];
-  visibleGoals.forEach(goal=>{if(goal&&!uniqueVisible.some(item=>item.id===goal.id))uniqueVisible.push(goal);});
-  const allGoals=[...uniqueVisible,...GOALS.filter(goal=>!uniqueVisible.some(item=>item.id===goal.id))];
-  const nextGoal=nextGoals[0]||null;
+  const activeGoal=highestAchievedGoal||GOALS[0]||null;
+  const nextGoal=GOALS.find(goal=>billing<goal.amount)||null;
+  const visibleCount=5;
+  const activeIndex=Math.max(0,GOALS.findIndex(goal=>goal.id===activeGoal?.id));
+  const windowStartIndex=Math.min(activeIndex,Math.max(0,GOALS.length-visibleCount));
+  const visibleGoals=GOALS.slice(windowStartIndex,windowStartIndex+visibleCount);
+  const remainingAmount=nextGoal?Math.max(0,nextGoal.amount-billing):0;
   return{
+    allGoals:[...GOALS],
+    activeGoal,
     highestAchievedGoal,
-    nextGoals:[...nextGoals],
-    visibleGoals:uniqueVisible.slice(0,4),
-    allGoals,
+    visibleGoals,
+    nextGoal,
+    nextGoals:nextGoal?GOALS.filter(goal=>goal.id>=nextGoal.id):[],
+    remainingAmount,
+    activePercent:highestAchievedGoal?.percent||0,
     activeGoalPercent:highestAchievedGoal?.percent||0,
-    activeGoalAmount:highestAchievedGoal?.amount||GOALS[0]?.amount||0,
+    activeGoalAmount:activeGoal?.amount||0,
     nextGoalAmount:nextGoal?.amount||0,
-    remainingAmount:nextGoal?Math.max(0,nextGoal.amount-billing):0,
-    driverBillingAmount:billing
+    driverBillingAmount:billing,
+    windowStartIndex,
+    visibleCount
   };
 }
+function getVisibleGoalBubbles(driverBillingAmount){return getGoalBubbleWindow(driverBillingAmount);}
 function safeGoalView(billing){
-  try{return getVisibleGoalBubbles(billing);}catch(_){return{highestAchievedGoal:null,nextGoals:[],visibleGoals:GOALS.slice(0,4),allGoals:[...GOALS],activeGoalPercent:0,activeGoalAmount:0,nextGoalAmount:GOALS[0]?.amount||0,remainingAmount:GOALS[0]?.amount||0,driverBillingAmount:Math.max(0,Number(billing||0)||0)};}
+  try{return getGoalBubbleWindow(billing);}catch(_){return{allGoals:[...GOALS],activeGoal:GOALS[0]||null,highestAchievedGoal:null,visibleGoals:GOALS.slice(0,5),nextGoal:GOALS[0]||null,nextGoals:[...GOALS],remainingAmount:GOALS[0]?.amount||0,activePercent:0,activeGoalPercent:0,activeGoalAmount:GOALS[0]?.amount||0,nextGoalAmount:GOALS[0]?.amount||0,driverBillingAmount:Math.max(0,Number(billing||0)||0),windowStartIndex:0,visibleCount:5};}
 }
 function goalLabel(goal){return goal?`Meta ${goal.id} · ${money(goal.amount)}`:"—";}
-function derivatorDiagnosticLabel(){const leader=state.derivationLeader;return leader?`${leader.name||"Sin nombre"} · ${leader.count||0} derivaciones · +${DERIVATION_PERCENT}%`:"Sin ganador";}
+function derivatorDiagnosticLabel(){
+  const leader=state.currentDerivationLeader;
+  if(!leader)return `Sin ganador · 0 derivaciones · +${DERIVATION_PERCENT}%`;
+  const related=state.rows.find(row=>row.uid===leader.uid),billing=Number(related?.grossBilling||0),benefit=Math.round(billing*DERIVATION_PERCENT/100);
+  return `${leader.name||"Sin nombre"} · ${leader.count||0} derivaciones · ${money(billing)} · +${money(benefit)}`;
+}
 function inferFunctionName(error,context,stage){
   if(context?.functionName)return String(context.functionName);
   const first=String(error?.stack||"").split("\n").find(line=>line.includes(" at "))||"";
@@ -16606,29 +16841,49 @@ function diagnostic(stage,code,error,context={}){
   const cycle=state.cycle||{};
   const current=state.current||{};
   const view=context.goalView||state.goalView||safeGoalView(context.billing??current.grossBilling??0);
-  const message=String(error?.message||context.message||code||"Error sin mensaje");
+  const notice=window.ExploraDashboardNoticeState||{};
+  const leader=state.currentDerivationLeader;
+  const periodId=context.weeklyPeriodId||activeWeeklyPeriod().id||"—";
+  const incentive=context.incentive||getSettlementIncentive(auth?.currentUser?.uid||state.uid||"",periodId);
+  const jsMessage=String(error?.message||context.message||code||"Error sin mensaje");
+  const firebaseCode=String(context.firebaseCode||error?.code||"—");
+  const firebaseMessage=String(context.firebaseMessage||((error?.code||context.firestorePath||context.firestore)?jsMessage:"—"));
   const stack=String(error?.stack||"—");
+  const goalWindow=(view.visibleGoals||[]).map(goal=>`Meta ${goal.id}`).join(", ")||"—";
+  const ranking=(state.rows||[]).slice(0,3).map(row=>`${row.position||"—"}. ${row.name||row.uid}: ${row.rewardPercent||0}%`).join(" | ")||"—";
+  const derivationState=context.derivationState||context.estadoDerivacion||"—";
+  const weeklyBilling=Math.max(0,Number(context.weeklyBilling??context.billingWeekly??0));
+  const calculatedBenefit=Math.max(0,Number(context.benefit??(weeklyBilling*Number(incentive.percent||0)/100)??0));
   const payload=[
-    "EXPLORA - ERROR GOAL_BUBBLES",
-    "MÓDULO: GOAL_BUBBLES",
+    "EXPLORA - ERROR PERFORMANCE_MONTHLY_AND_DERIVATIONS",
+    "MÓDULO: PERFORMANCE_MONTHLY_AND_DERIVATIONS",
     `ETAPA: ${normalizedStage}`,
-    `CÓDIGO INTERNO: ${code||"GOAL_BUBBLES_ERROR"}`,
-    `MENSAJE REAL JAVASCRIPT: ${message}`,
+    `CÓDIGO INTERNO: ${code||"PERFORMANCE_MONTHLY_AND_DERIVATIONS_ERROR"}`,
+    `MENSAJE REAL FIREBASE: ${firebaseCode}${firebaseMessage!=="—"?` · ${firebaseMessage}`:""}`,
+    `MENSAJE REAL JAVASCRIPT: ${jsMessage}`,
     `STACK: ${stack}`,
     `FUNCIÓN: ${inferFunctionName(error,context,stage)}`,
     `UID: ${auth?.currentUser?.uid||"—"}`,
     `ROL: ${state.role||role()||"—"}`,
-    `SEMANA ACTIVA: ${context.weeklyPeriodId||activeWeeklyPeriod().id||"—"}`,
+    `SEMANA ACTIVA: ${periodId}`,
     `CICLO ACTIVO: ${context.cycleId||cycle.id||"—"}`,
     `FACTURACIÓN BRUTA: ${money(context.billing??current.grossBilling??0)}`,
-    `META ACTIVA: ${context.activeGoal||goalLabel(view.highestAchievedGoal||view.visibleGoals?.[0]||null)}`,
-    `PORCENTAJE ACTIVO: ${context.percent??view.activeGoalPercent??0}%`,
-    `META SIGUIENTE: ${context.nextGoal||goalLabel(view.nextGoals?.[0]||null)}`,
-    `MONTO FALTANTE: ${money(context.remaining??view.remainingAmount??0)}`,
-    `DERIVADOR: ${context.derivator||derivatorDiagnosticLabel()}`,
+    `META ACTIVA: ${context.activeGoal||goalLabel(view.highestAchievedGoal||view.activeGoal||null)}`,
+    `PORCENTAJE META: ${context.goalPercent??incentive.goalPercent??view.activePercent??0}%`,
+    `PORCENTAJE DERIVACIÓN: ${context.derivationPercent??incentive.derivationPercent??0}%`,
+    `BENEFICIO CALCULADO: ${money(calculatedBenefit)}`,
+    `VENTANA DE METAS: ${context.goalWindow||goalWindow}`,
+    `RANKING: ${context.ranking||ranking}`,
+    `DERIVADOR ACTUAL: ${context.derivator||derivatorDiagnosticLabel()}`,
+    `DERIVACIONES: ${context.derivations??leader?.count??0}`,
+    `ESTADO DERIVACIÓN: ${derivationState}`,
+    `NOTICE ID: ${context.noticeId||notice.lastDashboardNoticeId||"—"}`,
+    `NOTICE TYPE: ${context.noticeType||notice.dashboardNoticeType||"—"}`,
+    `NOTICE SEEN: ${context.noticeSeen??Boolean(notice.lastDashboardNoticeSeenAt)}`,
+    `RUTA FIRESTORE: ${context.firestorePath||context.firestore||"—"}`,
     `TIMESTAMP: ${new Date().toISOString()}`
   ].join("\n");
-  state.error={stage:normalizedStage,code,message,payload};
+  state.error={stage:normalizedStage,code,message:jsMessage,payload};
   const backdrop=$("performanceDiagnosticBackdrop"),text=$("performanceDiagnosticText");
   if(text)text.textContent=payload;
   backdrop?.classList.add("is-open");backdrop?.setAttribute("aria-hidden","false");
@@ -16651,21 +16906,30 @@ function runGoalStage(stage,code,functionName,callback,context={}){
   try{return callback();}catch(error){diagnostic(stage,code,error,{...context,functionName});return null;}
 }
 function cancelGoalReturn(){if(state.goalScrollTimer){clearTimeout(state.goalScrollTimer);state.goalScrollTimer=0;}}
+function goalWindowStartLeft(view=state.goalView){
+  const track=$("performanceGoalTrack");if(!track||!view)return 0;
+  const computed=getComputedStyle(track),gap=Math.max(0,parseFloat(computed.columnGap||computed.gap||"7")||7);
+  const bubbleWidth=Math.max(1,parseFloat(computed.getPropertyValue("--goal-bubble-width"))||track.querySelector(".performance-goal-bubble")?.getBoundingClientRect?.().width||1);
+  return Math.max(0,Number(view.windowStartIndex||0)*(bubbleWidth+gap));
+}
 function measureGoalCarousel(){
-  return runGoalStage("SCROLL_GOALS","GOAL_CAROUSEL_MEASURE_FAILED","measureGoalCarousel",()=>{
+  return runGoalStage("ORDER_GOAL_WINDOW","GOAL_CAROUSEL_MEASURE_FAILED","measureGoalCarousel",()=>{
     const viewport=$("performanceGoalViewport"),track=$("performanceGoalTrack");if(!viewport||!track)return;
     const width=viewport.clientWidth;if(!(width>0))return;
-    const computed=getComputedStyle(track),gap=Math.max(0,parseFloat(computed.columnGap||computed.gap||"8")||8);
-    const bubbleWidth=Math.max(1,(width-gap*3)/4);
+    const computed=getComputedStyle(track),gap=Math.max(0,parseFloat(computed.columnGap||computed.gap||"7")||7);
+    const bubbleWidth=Math.max(1,(width-gap*4)/5);
     track.style.setProperty("--goal-bubble-width",`${bubbleWidth.toFixed(3)}px`);
+    state.goalWindowStartLeft=goalWindowStartLeft(state.goalView);
   });
 }
-function returnGoalCarouselToStart(){
-  return runGoalStage("SCROLL_GOALS","GOAL_CAROUSEL_RETURN_FAILED","returnGoalCarouselToStart",()=>{
-    const viewport=$("performanceGoalViewport");if(!viewport||viewport.scrollLeft<1)return;
+function returnGoalCarouselToStart({immediate=false}={}){
+  return runGoalStage("ORDER_GOAL_WINDOW","GOAL_CAROUSEL_RETURN_FAILED","returnGoalCarouselToStart",()=>{
+    const viewport=$("performanceGoalViewport");if(!viewport)return;
+    const target=Math.max(0,state.goalWindowStartLeft||goalWindowStartLeft(state.goalView));
+    if(Math.abs(viewport.scrollLeft-target)<1)return;
     state.goalScrollReturning=true;
-    viewport.scrollTo({left:0,top:0,behavior:prefersReducedMotion()?"auto":"smooth"});
-    setTimeout(()=>{state.goalScrollReturning=false;},prefersReducedMotion()?30:520);
+    viewport.scrollTo({left:target,top:0,behavior:immediate||prefersReducedMotion()?"auto":"smooth"});
+    setTimeout(()=>{state.goalScrollReturning=false;},immediate||prefersReducedMotion()?30:520);
   });
 }
 function scheduleGoalReturn(){
@@ -16674,7 +16938,7 @@ function scheduleGoalReturn(){
   state.goalScrollTimer=setTimeout(()=>{state.goalScrollTimer=0;returnGoalCarouselToStart();},900);
 }
 function bindGoalCarousel(){
-  return runGoalStage("SCROLL_GOALS","GOAL_CAROUSEL_BIND_FAILED","bindGoalCarousel",()=>{
+  return runGoalStage("ORDER_GOAL_WINDOW","GOAL_CAROUSEL_BIND_FAILED","bindGoalCarousel",()=>{
     const viewport=$("performanceGoalViewport");if(!viewport)return;
     measureGoalCarousel();
     if(viewport.dataset.goalCarouselBound==="true")return;
@@ -16682,7 +16946,7 @@ function bindGoalCarousel(){
     ["touchstart","pointerdown","mousedown"].forEach(name=>viewport.addEventListener(name,cancelGoalReturn,{passive:true}));
     ["touchend","touchcancel","pointerup","pointercancel","mouseup","mouseleave"].forEach(name=>viewport.addEventListener(name,scheduleGoalReturn,{passive:true}));
     viewport.addEventListener("scroll",()=>{if(!state.goalScrollReturning)scheduleGoalReturn();},{passive:true});
-    if("ResizeObserver" in window){state.goalResizeObserver=new ResizeObserver(()=>measureGoalCarousel());state.goalResizeObserver.observe(viewport);}else window.addEventListener("resize",measureGoalCarousel,{passive:true});
+    if("ResizeObserver" in window){state.goalResizeObserver=new ResizeObserver(()=>{measureGoalCarousel();returnGoalCarouselToStart({immediate:true});});state.goalResizeObserver.observe(viewport);}else window.addEventListener("resize",()=>{measureGoalCarousel();returnGoalCarouselToStart({immediate:true});},{passive:true});
   });
 }
 function celebrateElement(element,reason=""){
@@ -16731,31 +16995,48 @@ async function loadProfiles(){
   snapshot.forEach(item=>{const profile={id:item.id,...(item.data()||{})};const normalizedRole=normalize(profile.role||profile.rol);if(normalizedRole.includes("admin")||normalizedRole==="owner"||normalizedRole==="superadmin")return;profiles.push(profile);aliasesForProfile(profile,item.id).forEach(alias=>aliasMap.set(alias,profile));});
   return {profiles,aliasMap};
 }
-async function loadCycleRows(cycle,profilesData){
-  const results=await Promise.all(cycle.periods.map(period=>queryByPeriod("billing_records",period.id,["weeklyPeriodId","periodoSemanalId","periodoId"]).catch(error=>{diagnostic("BILLING_READ","FIRESTORE_BILLING_READ_FAILED",error,{weeklyPeriodId:period.id,cycleId:cycle.id,firestore:"Lectura rechazada"});return[];})));
+async function loadCycleRows(cycle,profilesData,throughPeriodId=""){
+  const through=periodFromId(throughPeriodId)||cycle.periods[cycle.periods.length-1];
+  const periods=cycle.periods.filter(period=>!through||period.startKeyMs<=through.startKeyMs);
+  const results=await Promise.all(periods.map(period=>queryByPeriod("billing_records",period.id,["weeklyPeriodId","periodoSemanalId","periodoId"]).then(rows=>({period,rows})).catch(error=>{diagnostic("READ_BILLING","FIRESTORE_BILLING_READ_FAILED",error,{weeklyPeriodId:period.id,cycleId:cycle.id,firestorePath:`billing_records (${period.id})`});return{period,rows:[]};})));
   const aggs=new Map(),dedup=new Set();
-  profilesData.profiles.forEach(profile=>{const uid=String(profile.uid||profile.authUid||profile.id);aggs.set(uid,{uid,profileId:profile.id,name:profileName(profile,profile.id),avatar:profileAvatar(profile),grossBilling:0,serviceCount:0,aliases:new Set(aliasesForProfile(profile,profile.id))});});
-  results.flat().forEach(record=>{
+  profilesData.profiles.forEach(profile=>{const uid=String(profile.uid||profile.authUid||profile.id);aggs.set(uid,{uid,profileId:profile.id,name:profileName(profile,profile.id),avatar:profileAvatar(profile),grossBilling:0,serviceCount:0,aliases:new Set(aliasesForProfile(profile,profile.id)),periodBilling:{}});});
+  results.forEach(({period,rows})=>rows.forEach(record=>{
     if(!validBilling(record))return;
     const raw=normalize(recordUid(record));const profile=profilesData.aliasMap.get(raw);const uid=String(profile?.uid||profile?.authUid||profile?.id||recordUid(record)).trim();if(!uid)return;
     const op=operationId(record,record.id);const key=`${uid}|${op}`;if(dedup.has(key))return;dedup.add(key);
-    if(!aggs.has(uid))aggs.set(uid,{uid,profileId:profile?.id||uid,name:profileName(profile,uid),avatar:profileAvatar(profile),grossBilling:0,serviceCount:0,aliases:new Set([raw,normalize(uid)])});
-    const row=aggs.get(uid);row.grossBilling+=amountOf(record);row.serviceCount+=1;
+    if(!aggs.has(uid))aggs.set(uid,{uid,profileId:profile?.id||uid,name:profileName(profile,uid),avatar:profileAvatar(profile),grossBilling:0,serviceCount:0,aliases:new Set([raw,normalize(uid)]),periodBilling:{}});
+    const row=aggs.get(uid),amount=amountOf(record);row.grossBilling+=amount;row.serviceCount+=1;row.periodBilling[period.id]=(row.periodBilling[period.id]||0)+amount;
+  }));
+  const rows=[...aggs.values()].map(row=>{
+    let cumulative=0,accruedGoalBenefit=0;
+    periods.forEach(period=>{const weekly=Math.max(0,Number(row.periodBilling[period.id]||0));cumulative+=weekly;accruedGoalBenefit+=Math.round(weekly*goalPercent(cumulative)/100);});
+    const reached=goalForBilling(row.grossBilling),next=nextGoalForBilling(row.grossBilling),rewardPercent=reached?.percent||0;
+    return{...row,reachedGoal:reached,nextGoal:next,rewardPercent,missing:next?Math.max(0,next.amount-row.grossBilling):0,equivalent:Math.round(accruedGoalBenefit),accruedGoalBenefit:Math.round(accruedGoalBenefit),progress:Math.min(100,row.grossBilling/MAX_BILLING*100)};
   });
-  const rows=[...aggs.values()].map(row=>{const reached=goalForBilling(row.grossBilling),next=nextGoalForBilling(row.grossBilling),rewardPercent=reached?.percent||0;return{...row,reachedGoal:reached,nextGoal:next,rewardPercent,missing:next?Math.max(0,next.amount-row.grossBilling):0,equivalent:Math.round(row.grossBilling*rewardPercent/100),progress:Math.min(100,row.grossBilling/MAX_BILLING*100)};});
   rows.sort((a,b)=>b.rewardPercent-a.rewardPercent||b.grossBilling-a.grossBilling||b.serviceCount-a.serviceCount||a.name.localeCompare(b.name,"es"));rows.forEach((row,index)=>row.position=index+1);return rows;
 }
-async function loadDerivations(period,profilesData){
-  const rows=await queryByPeriod("derivaciones",period.id,["weeklyPeriodIdCompleted","weeklyPeriodId","periodoSemanalId","periodoId"]).catch(error=>{diagnostic("DERIVATION_READ","FIRESTORE_DERIVATION_READ_FAILED",error,{weeklyPeriodId:period.id,firestore:"Lectura rechazada"});return[];});
-  const counts=new Map(),dedup=new Set();
+async function loadDerivations(cycleOrPeriod,profilesData,throughPeriodId=""){
+  const periods=Array.isArray(cycleOrPeriod?.periods)
+    ? cycleOrPeriod.periods.filter(period=>{const through=periodFromId(throughPeriodId)||cycleOrPeriod.periods[cycleOrPeriod.periods.length-1];return !through||period.startKeyMs<=through.startKeyMs;})
+    : [cycleOrPeriod].filter(Boolean);
+  const resultSets=await Promise.all(periods.map(period=>queryByPeriod("derivaciones",period.id,["weeklyPeriodIdCompleted","weeklyPeriodId","periodoSemanalId","periodoId"]).catch(error=>{diagnostic("READ_DERIVATION_RANKING","FIRESTORE_DERIVATION_READ_FAILED",error,{weeklyPeriodId:period.id,cycleId:Array.isArray(cycleOrPeriod?.periods)?cycleOrPeriod.id:"—",firestorePath:`derivaciones (${period.id})`});return[];})));
+  const rows=resultSets.flat(),counts=new Map(),dedup=new Set();
   rows.forEach(item=>{
     if(!completedDerivation(item))return;
     const raw=normalize(senderUid(item));if(!raw)return;const profile=profilesData.aliasMap.get(raw);const uid=String(profile?.uid||profile?.authUid||profile?.id||senderUid(item)).trim();if(!uid)return;
     const key=operationId(item,item.id);if(!key||dedup.has(key))return;dedup.add(key);
-    if(!counts.has(uid))counts.set(uid,{uid,name:profileName(profile,uid),avatar:profileAvatar(profile),count:0});counts.get(uid).count+=1;
+    if(!counts.has(uid))counts.set(uid,{uid,name:profileName(profile,uid),avatar:profileAvatar(profile),count:0});counts.get(uid).count+=Math.max(1,Number(item.performanceUnits||item.derivationUnits||1));
   });
   state.liveDerivationOverlay.forEach((ids,uid)=>{ids.forEach(id=>{if(dedup.has(id))return;dedup.add(id);if(!counts.has(uid)){const profile=profilesData.aliasMap.get(normalize(uid));counts.set(uid,{uid,name:profileName(profile,uid),avatar:profileAvatar(profile),count:0});}counts.get(uid).count+=1;});});
   const result=[...counts.values()].sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name,"es"));result.forEach((row,index)=>row.position=index+1);return result;
+}
+function cachePeriodIncentive(period,rows,derivations){
+  if(!period?.id)return null;
+  const goalPercentByUid=new Map();rows.forEach(row=>goalPercentByUid.set(normalize(row.uid),Number(row.rewardPercent||0)));
+  const leader=derivations[0]||null;
+  const snapshot={weeklyPeriodId:period.id,cycleId:cycleForPeriod(period).id,goalPercentByUid,derivationWinnerUid:leader?.uid||"",derivationWinnerName:leader?.name||"",derivationPercent:leader?DERIVATION_PERCENT:0,derivationCount:leader?.count||0,createdAt:Date.now()};
+  state.incentiveByPeriod.set(period.id,snapshot);return snapshot;
 }
 async function loadHistory(uid){
   if(!uid)return[];
@@ -16768,57 +17049,52 @@ function isAdmin(){return ["admin","administrador","owner","superadmin"].include
 async function persistClosedPerformance(previous,profilesData){
   if(!previous)return null;
   const previousCycle=cycleForPeriod(previous);
-  const derivations=await loadDerivations(previous,profilesData);
+  const [rows,derivations]=await Promise.all([loadCycleRows(previousCycle,profilesData,previous.id),loadDerivations(previousCycle,profilesData,previous.id)]);
+  cachePeriodIncentive(previous,rows,derivations);
   let winner=derivations[0]||null;
-  if(winner){
-    const related=state.rows.find(row=>row.uid===winner.uid);
-    winner={...winner,weeklyPeriodId:previous.id,rewardAmount:Math.round(Number(related?.grossBilling||0)*DERIVATION_PERCENT/100)};
-  }
-  state.incentiveByPeriod.set(previous.id,{derivationWinnerUid:winner?.uid||"",derivationPercent:winner?DERIVATION_PERCENT:0,derivationCount:winner?.count||0,rewardAmount:winner?.rewardAmount||0});
+  if(winner){const related=rows.find(row=>normalize(row.uid)===normalize(winner.uid));const weeklyBilling=Math.max(0,Number(related?.periodBilling?.[previous.id]||0));winner={...winner,weeklyPeriodId:previous.id,rewardAmount:Math.round(weeklyBilling*DERIVATION_PERCENT/100)};}
   if(isAdmin()){
-    try{await setDoc(doc(db,"performance_derivation_winners",previous.id),{weeklyPeriodId:previous.id,winnerUid:winner?.uid||"",winnerName:winner?.name||"",winnerAvatar:winner?.avatar||"",derivationCount:winner?.count||0,percent:winner?DERIVATION_PERCENT:0,rewardAmount:winner?.rewardAmount||0,closedAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});}
-    catch(error){diagnostic("DERIVATION_WINNER_WRITE","FIRESTORE_DERIVATION_WINNER_WRITE_FAILED",error,{weeklyPeriodId:previous.id,derivation:winner?.count||0,firestore:"Escritura rechazada"});}
+    try{await setDoc(doc(db,"performance_derivation_winners",previous.id),{weeklyPeriodId:previous.id,cycleId:previousCycle.id,rankingScope:"cycle_to_date",winnerUid:winner?.uid||"",winnerName:winner?.name||"",winnerAvatar:winner?.avatar||"",derivationCount:winner?.count||0,percent:winner?DERIVATION_PERCENT:0,rewardAmount:winner?.rewardAmount||0,closedAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});}
+    catch(error){diagnostic("READ_DERIVATION_RANKING","FIRESTORE_DERIVATION_WINNER_WRITE_FAILED",error,{weeklyPeriodId:previous.id,cycleId:previousCycle.id,derivations:winner?.count||0,firestorePath:`performance_derivation_winners/${previous.id}`});}
   }
   if(previousCycle.weekInCycle!==4||!previousCycle.closed)return winner;
-  const rows=await loadCycleRows(previousCycle,profilesData);
-  rows.forEach(row=>state.cycleAwards.set(`${previousCycle.id}|${row.uid}`,{goalPercent:row.rewardPercent,grossBilling:row.grossBilling,goalId:row.reachedGoal?.id||0}));
-  if(winner){
-    const related=rows.find(row=>row.uid===winner.uid);
-    if(related)winner={...winner,rewardAmount:Math.round(Number(related.grossBilling||0)*DERIVATION_PERCENT/100)};
-  }
+  rows.forEach(row=>state.cycleAwards.set(`${previousCycle.id}|${row.uid}`,{goalPercent:row.rewardPercent,grossBilling:row.grossBilling,goalId:row.reachedGoal?.id||0,goalBenefit:row.equivalent}));
+  const finalWinner=derivations[0]||null;
+  const goalRanking=rows.slice(0,10).map(row=>({position:row.position,driverUid:row.uid,driverName:row.name,grossBilling:row.grossBilling,goalId:row.reachedGoal?.id||0,goalPercent:row.rewardPercent,goalBenefit:row.equivalent}));
+  const derivationRanking=derivations.slice(0,10).map(row=>({position:row.position,driverUid:row.uid,driverName:row.name,derivationCount:row.count}));
   if(isAdmin()){
     try{
-      await setDoc(doc(db,"performance_cycles",previousCycle.id),{cycleId:previousCycle.id,startPeriodId:previousCycle.startPeriodId,endPeriodId:previousCycle.endPeriodId,status:"closed",closedAt:serverTimestamp(),driverCount:rows.length,updatedAt:serverTimestamp()},{merge:true});
-      await Promise.all(rows.map(row=>setDoc(doc(db,"performance_awards",`${previousCycle.id}_${row.uid}`),{cycleId:previousCycle.id,startPeriodId:previousCycle.startPeriodId,endPeriodId:previousCycle.endPeriodId,driverUid:row.uid,driverName:row.name,grossBilling:row.grossBilling,goalId:row.reachedGoal?.id||0,goalPercent:row.rewardPercent,equivalentAmount:row.equivalent,status:"closed",createdAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true})));
-    }catch(error){diagnostic("CYCLE_CLOSE_WRITE","FIRESTORE_CYCLE_WRITE_FAILED",error,{cycleId:previousCycle.id,ranking:rows.length,firestore:"Escritura rechazada"});}
+      await setDoc(doc(db,"performance_cycles",previousCycle.id),{cycleId:previousCycle.id,startPeriodId:previousCycle.startPeriodId,endPeriodId:previousCycle.endPeriodId,status:"closed",goalCeiling:MAX_BILLING,goalCount:GOALS.length,derivationPercent:DERIVATION_PERCENT,driverCount:rows.length,goalRanking,derivationRanking,derivationWinnerUid:finalWinner?.uid||"",derivationWinnerName:finalWinner?.name||"",derivationWinnerAvatar:finalWinner?.avatar||"",derivationWinnerCount:finalWinner?.count||0,closedAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});
+      await Promise.all(rows.map(row=>{const isDerivationWinner=Boolean(finalWinner&&normalize(finalWinner.uid)===normalize(row.uid));const derivationEquivalent=isDerivationWinner?Math.round(Number(row.grossBilling||0)*DERIVATION_PERCENT/100):0;return setDoc(doc(db,"performance_awards",`${previousCycle.id}_${row.uid}`),{cycleId:previousCycle.id,startPeriodId:previousCycle.startPeriodId,endPeriodId:previousCycle.endPeriodId,driverUid:row.uid,driverName:row.name,grossBilling:row.grossBilling,goalId:row.reachedGoal?.id||0,goalPercent:row.rewardPercent,derivationPercent:isDerivationWinner?DERIVATION_PERCENT:0,totalPercent:row.rewardPercent+(isDerivationWinner?DERIVATION_PERCENT:0),equivalentAmount:row.equivalent,derivationEquivalentAmount:derivationEquivalent,totalEquivalentAmount:row.equivalent+derivationEquivalent,derivationCount:derivations.find(item=>normalize(item.uid)===normalize(row.uid))?.count||0,status:"closed",createdAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});}));
+    }catch(error){diagnostic("CYCLE_CLOSE","FIRESTORE_CYCLE_WRITE_FAILED",error,{cycleId:previousCycle.id,ranking:goalRanking.map(row=>`${row.position}.${row.driverName}`).join(" | "),derivations:finalWinner?.count||0,firestorePath:`performance_cycles/${previousCycle.id}`});}
   }
-  return winner;
+  return finalWinner?{...finalWinner,weeklyPeriodId:previous.id,rewardAmount:Math.round(Math.max(0,Number(rows.find(row=>normalize(row.uid)===normalize(finalWinner.uid))?.periodBilling?.[previous.id]||0))*DERIVATION_PERCENT/100)}:null;
 }
 function currentRowForUid(rows,uid){const key=normalize(uid);return rows.find(row=>normalize(row.uid)===key||row.aliases?.has?.(key))||null;}
 
-function renderBubbles({animate=false,reason="RENDER_GOALS"}={}){
+function renderBubbles({animate=false,reason="RENDER_GOAL_BUBBLES"}={}){
   const track=$("performanceGoalTrack"),viewport=$("performanceGoalViewport"),current=state.current||{grossBilling:0};
   if(!track||!viewport)return null;
-  const view=runGoalStage("ORDER_GOALS","GOAL_ORDER_FAILED","getVisibleGoalBubbles",()=>getVisibleGoalBubbles(current.grossBilling),{billing:current.grossBilling});
+  const view=runGoalStage("ORDER_GOAL_WINDOW","GOAL_WINDOW_ORDER_FAILED","getGoalBubbleWindow",()=>getGoalBubbleWindow(current.grossBilling),{billing:current.grossBilling});
   if(!view)return null;
   state.goalView=view;
-  const markup=runGoalStage("RENDER_GOALS","GOAL_BUBBLES_RENDER_FAILED","renderBubbles",()=>view.allGoals.map((goal,index)=>{
+  const markup=runGoalStage("RENDER_GOAL_BUBBLES","GOAL_BUBBLES_RENDER_FAILED","renderBubbles",()=>view.allGoals.map((goal,index)=>{
     const reached=view.driverBillingAmount>=goal.amount;
     const activeReached=Boolean(view.highestAchievedGoal&&view.highestAchievedGoal.id===goal.id);
     const activeInitial=!view.highestAchievedGoal&&goal.id===1;
     const historicalReached=reached&&!activeReached;
     const remaining=Math.max(0,goal.amount-view.driverBillingAmount);
     const classes=["performance-goal-bubble",activeReached?"is-active-reached":"",activeInitial?"is-active-initial":"",historicalReached?"is-achieved-history":""].filter(Boolean).join(" ");
-    const stateLabel=reached?"ALCANZADA":"PENDIENTE";
+    const stateLabel=activeReached?"ACTIVA":reached?"ALCANZADA":"PENDIENTE";
     const detail=reached?`Facturado ${money(view.driverBillingAmount)}`:`Falta ${money(remaining)}`;
-    const aria=`Meta ${goal.id}, más ${goal.percent} por ciento, objetivo ${money(goal.amount)}, ${reached?"alcanzada":`pendiente, faltan ${money(remaining)}`}`;
+    const aria=`Meta ${goal.id}, más ${goal.percent} por ciento, objetivo ${money(goal.amount)}, ${activeReached?"activa y alcanzada":reached?"alcanzada":`pendiente, faltan ${money(remaining)}`}`;
     return `<button type="button" class="${classes}" data-performance-goal="${goal.id}" data-goal-state="${reached?"achieved":"pending"}" aria-label="${escapeHtml(aria)}" aria-posinset="${index+1}" aria-setsize="${view.allGoals.length}"><em>META ${goal.id}</em><strong>+${goal.percent}%</strong><span class="goal-amount">${money(goal.amount)}</span><small><b>${stateLabel}</b><i>${detail}</i></small></button>`;
   }).join(""),{billing:current.grossBilling,goalView:view});
   if(markup===null)return view;
   track.innerHTML=markup;
   requestAnimationFrame(()=>{
     measureGoalCarousel();
-    viewport.scrollLeft=0;
+    returnGoalCarouselToStart({immediate:true});
     bindGoalCarousel();
     if(animate&&view.highestAchievedGoal)animateDashboardGoal(reason);
   });
@@ -16827,19 +17103,23 @@ function renderBubbles({animate=false,reason="RENDER_GOALS"}={}){
 function renderPodium(){
   const podium=$("performancePodium");if(!podium)return;const top=state.rows.slice(0,3);
   if(!top.length){podium.innerHTML='<div class="performance-loading">Todavía no hay facturación en el ciclo.</div>';return;}
-  const classes=["is-first","is-second","is-third"];
-  podium.innerHTML=top.map((row,index)=>`<div class="performance-podium-person ${classes[index]}"><div class="performance-podium-circle">${row.rewardPercent}%</div><strong>${escapeHtml(row.name)}</strong><small>+${money(row.equivalent)}</small></div>`).join("");
+  const classes=["is-first","is-second","is-third"],medals=["🥇","🥈","🥉"];
+  podium.innerHTML=top.map((row,index)=>`<div class="performance-podium-person ${classes[index]}"><div class="performance-podium-circle"><span class="performance-podium-medal" aria-label="Puesto ${index+1}">${medals[index]}</span>${row.rewardPercent}%</div><strong>${escapeHtml(row.name)}</strong><small>+${money(row.equivalent)}</small></div>`).join("");
 }
 function renderDerivator(){
-  const container=$("performanceDerivatorBody"),bubble=$("performanceDerivatorBubble");if(!container||!bubble)return;const leader=state.derivationLeader;
-  const icon='<span class="performance-derivator-bubble-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0Z"></path><path d="M8 6H5v2a4 4 0 0 0 4 4"></path><path d="M16 6h3v2a4 4 0 0 1-4 4"></path><path d="M12 13v4"></path><path d="M8 21h8"></path><path d="M9 17h6v4H9z"></path></svg></span>';
-  if(!leader){
-    container.innerHTML='<div class="performance-derivator-avatar">—</div><div class="performance-derivator-copy"><strong>Sin ganador cerrado</strong><span>El resultado se define cada sábado a las 00:01.</span></div>';
-    bubble.classList.remove("is-leading");bubble.innerHTML=`${icon}<strong>+${DERIVATION_PERCENT}%</strong><small>Sin ganador</small>`;bubble.setAttribute("aria-label",`Derivador de la semana, más ${DERIVATION_PERCENT} por ciento, sin ganador`);return;
-  }
-  const equivalent=Math.max(0,Number(leader.rewardAmount||0)),avatar=leader.avatar?`<img src="${escapeHtml(leader.avatar)}" alt="">`:escapeHtml(leader.name.slice(0,1).toUpperCase());
-  container.innerHTML=`<div class="performance-derivator-avatar">${avatar}</div><div class="performance-derivator-copy"><strong>${escapeHtml(leader.name)}</strong><span>${leader.count} ${leader.count===1?"derivación":"derivaciones"} · ${escapeHtml(leader.weeklyPeriodId||state.derivationPeriodId||"")}</span><b>+${DERIVATION_PERCENT}%</b><span class="performance-derivator-money">+${money(equivalent)}</span></div>`;
-  bubble.classList.add("is-leading");bubble.innerHTML=`${icon}<strong>+${DERIVATION_PERCENT}%</strong><small>${escapeHtml(leader.name||"Ganador")}</small>`;bubble.setAttribute("aria-label",`Derivador de la semana, ${leader.name||"ganador"}, más ${DERIVATION_PERCENT} por ciento`);
+  return runGoalStage("RENDER_DERIVATION_CARD","DERIVATION_CARD_RENDER_FAILED","renderDerivator",()=>{
+    const container=$("performanceDerivatorBody");if(!container)return;
+    const leader=state.currentDerivationLeader;
+    if(!leader){
+      container.innerHTML=`<div class="performance-derivator-visual"><span class="performance-derivator-avatar is-empty" aria-hidden="true">—</span><span class="performance-derivator-percent-ring" aria-label="Beneficio del tres por ciento"><strong>${DERIVATION_PERCENT}%</strong></span></div><div class="performance-derivator-copy"><strong>Sin ganador</strong><span class="performance-derivator-count">0 derivaciones</span><span class="performance-derivator-money">+${money(0)}</span></div>`;
+      return;
+    }
+    const related=state.rows.find(row=>normalize(row.uid)===normalize(leader.uid));
+    const activePeriodId=activeWeeklyPeriod().id;
+    const equivalent=Math.round(Math.max(0,Number(related?.periodBilling?.[activePeriodId]||0))*DERIVATION_PERCENT/100);
+    const avatar=String(leader.avatar||related?.avatar||"").trim(),initials=String(leader.name||"Chofer").split(/\s+/).filter(Boolean).slice(0,2).map(part=>part[0]).join("").toUpperCase()||"CH";
+    container.innerHTML=`<div class="performance-derivator-visual"><span class="performance-derivator-avatar">${avatar?`<img src="${escapeHtml(avatar)}" alt="Foto de ${escapeHtml(leader.name||"chofer")}">`:escapeHtml(initials)}</span><span class="performance-derivator-percent-ring" aria-label="Beneficio del tres por ciento"><strong>${DERIVATION_PERCENT}%</strong></span></div><div class="performance-derivator-copy"><strong>${escapeHtml(leader.name||"Chofer")}</strong><span class="performance-derivator-count">${leader.count} ${leader.count===1?"derivación válida":"derivaciones válidas"}</span><span class="performance-derivator-money">+${money(equivalent)}</span></div>`;
+  },{derivator:derivatorDiagnosticLabel(),derivations:state.currentDerivationLeader?.count||0,firestorePath:"derivaciones"});
 }
 function renderSummary(){
   const current=state.current||{grossBilling:0,rewardPercent:0,missing:GOALS[0].amount,nextGoal:GOALS[0]};
@@ -16854,7 +17134,8 @@ function renderSummary(){
 }
 function renderGoals(){
   const list=$("performanceGoalsList"),current=state.current||{grossBilling:0};if(!list)return;
-  list.innerHTML=GOALS.map(goal=>{const reached=current.grossBilling>=goal.amount,missing=Math.max(0,goal.amount-current.grossBilling);return `<article class="performance-goal-row${reached?" is-reached":""}" data-goal-row="${goal.id}"><div class="performance-goal-number">${reached?"✓":goal.id}</div><div class="performance-goal-copy"><strong>Meta ${goal.id} · ${money(goal.amount)}</strong><span>${reached?"Meta alcanzada":`Faltan ${money(missing)}`}</span></div><div class="performance-goal-value"><b>+${goal.percent}%</b><small>${reached?"OBTENIDO":"PENDIENTE"}</small></div></article>`;}).join("");
+  const activeId=goalForBilling(current.grossBilling)?.id||0;
+  list.innerHTML=GOALS.map(goal=>{const reached=current.grossBilling>=goal.amount,active=activeId===goal.id,missing=Math.max(0,goal.amount-current.grossBilling);return `<article class="performance-goal-row${reached?" is-reached":""}${active?" is-active":""}" data-goal-row="${goal.id}"><div class="performance-goal-number">${active?"★":reached?"✓":goal.id}</div><div class="performance-goal-copy"><strong>Meta ${goal.id} · ${money(goal.amount)}</strong><span>${active?"Meta activa":reached?"Meta alcanzada":`Faltan ${money(missing)}`}</span></div><div class="performance-goal-value"><b>+${goal.percent}%</b><small>${active?"ACTIVA":reached?"ALCANZADA":"PENDIENTE"}</small></div></article>`;}).join("");
 }
 function renderRanking(){
   const list=$("performanceRankingList");if(!list)return;
@@ -16872,13 +17153,13 @@ function renderAll(){
   const animateDashboard=Boolean(state.dashboardAnimationPending);
   renderBubbles({animate:animateDashboard,reason:state.lastActiveGoalId?"ACTIVE_GOAL_CHANGED":"DASHBOARD_ENTER"});
   state.dashboardAnimationPending=false;
-  runGoalStage("RENDER_GOALS","GOAL_PODIUM_RENDER_FAILED","renderPodium",renderPodium);
-  runGoalStage("RENDER_GOALS","GOAL_DERIVATOR_RENDER_FAILED","renderDerivator",renderDerivator);
+  runGoalStage("RENDER_GOAL_BUBBLES","GOAL_PODIUM_RENDER_FAILED","renderPodium",renderPodium);
+  renderDerivator();
   runGoalStage("CALCULATE_GOALS","GOAL_SUMMARY_RENDER_FAILED","renderSummary",renderSummary,{billing:state.current?.grossBilling||0});
-  runGoalStage("RENDER_GOALS","GOAL_LIST_RENDER_FAILED","renderGoals",renderGoals);
-  runGoalStage("RENDER_GOALS","GOAL_RANKING_RENDER_FAILED","renderRanking",renderRanking);
-  runGoalStage("RENDER_GOALS","GOAL_DERIVATIONS_RENDER_FAILED","renderDerivationsList",renderDerivationsList);
-  runGoalStage("RENDER_GOALS","GOAL_HISTORY_RENDER_FAILED","renderHistory",renderHistory);
+  runGoalStage("RENDER_GOAL_BUBBLES","GOAL_LIST_RENDER_FAILED","renderGoals",renderGoals);
+  runGoalStage("RENDER_GOAL_BUBBLES","GOAL_RANKING_RENDER_FAILED","renderRanking",renderRanking);
+  runGoalStage("RENDER_DERIVATION_CARD","GOAL_DERIVATIONS_RENDER_FAILED","renderDerivationsList",renderDerivationsList);
+  runGoalStage("RENDER_GOAL_BUBBLES","GOAL_HISTORY_RENDER_FAILED","renderHistory",renderHistory);
   const profileOpen=$("profileScreen")?.classList.contains("is-open");
   renderProfileGoal({animate:Boolean(state.profileAnimationPending&&profileOpen),reason:"ACTIVE_GOAL_CHANGED"});
   if(profileOpen)state.profileAnimationPending=false;
@@ -16891,16 +17172,14 @@ async function refresh({force=false}={}){
     if(!db||!auth)throw new Error("FIREBASE_NOT_INITIALIZED");
     const user=auth.currentUser;if(!user)throw new Error("AUTH_USER_MISSING");
     const wasLoaded=state.loaded,previousGoalId=state.current?.reachedGoal?.id||0;
-    state.loading=true;state.uid=user.uid;state.role=role();const status=$("performanceScreenStatus");if(status)status.textContent="Calculando metas…";
+    state.loading=true;state.uid=user.uid;state.role=role();const status=$("performanceScreenStatus");if(status)status.textContent="Calculando metas mensuales…";
     const currentPeriod=activeWeeklyPeriod(),cycle=cycleForPeriod(currentPeriod);state.cycle=cycle;
     const profilesData=await loadProfiles();
-    const [rows,derivations]=await Promise.all([loadCycleRows(cycle,profilesData),loadDerivations(currentPeriod,profilesData)]);
+    const [rows,derivations]=await Promise.all([loadCycleRows(cycle,profilesData,currentPeriod.id),loadDerivations(cycle,profilesData,currentPeriod.id)]);
+    cachePeriodIncentive(currentPeriod,rows,derivations);
     state.rows=rows;state.current=currentRowForUid(rows,user.uid)||{uid:user.uid,name:user.displayName||"Usuario",avatar:user.photoURL||"",grossBilling:0,serviceCount:0,rewardPercent:0,reachedGoal:null,nextGoal:GOALS[0],missing:GOALS[0].amount,equivalent:0,progress:0};
     const newGoalId=state.current?.reachedGoal?.id||0;
-    if(newGoalId>0&&(!wasLoaded||newGoalId!==previousGoalId)){
-      state.dashboardAnimationPending=true;
-      if($("profileScreen")?.classList.contains("is-open"))state.profileAnimationPending=true;
-    }
+    if(newGoalId>0&&(!wasLoaded||newGoalId!==previousGoalId)){state.dashboardAnimationPending=true;if($("profileScreen")?.classList.contains("is-open"))state.profileAnimationPending=true;}
     state.lastActiveGoalId=newGoalId;
     state.derivations=derivations;state.currentDerivationLeader=derivations[0]||null;state.liveDerivationOverlay.clear();
     const prev=previousPeriod(currentPeriod),closedWinner=await persistClosedPerformance(prev,profilesData);state.derivationLeader=closedWinner||null;state.derivationPeriodId=prev?.id||"";
@@ -16908,24 +17187,38 @@ async function refresh({force=false}={}){
     window.dispatchEvent(new CustomEvent("explora:performance-updated",{detail:getState()}));
     if(typeof window.ExploraWeeklyEngine?.invalidate==="function")window.ExploraWeeklyEngine.invalidate("performance-updated",{refresh:false});
     return getState();
-  })().catch(error=>{state.loading=false;diagnostic("INIT_GOALS","GOAL_ENGINE_REFRESH_FAILED",error,{cycleId:state.cycle?.id,weeklyPeriodId:activeWeeklyPeriod().id,functionName:"refresh"});const status=$("performanceScreenStatus");if(status){status.textContent="No se pudieron actualizar las metas. Revisa el diagnóstico visible.";status.classList.add("is-error");}throw error;}).finally(()=>{state.refreshPromise=null;});
+  })().catch(error=>{state.loading=false;diagnostic("INIT","GOAL_ENGINE_REFRESH_FAILED",error,{cycleId:state.cycle?.id,weeklyPeriodId:activeWeeklyPeriod().id,functionName:"refresh"});const status=$("performanceScreenStatus");if(status){status.textContent="No se pudieron actualizar las metas. Revisa el diagnóstico visible.";status.classList.add("is-error");}throw error;}).finally(()=>{state.refreshPromise=null;});
   return state.refreshPromise;
 }
 function setTab(tab){state.tab=tab;document.querySelectorAll(".performance-tab").forEach(button=>button.classList.toggle("is-active",button.dataset.performanceTab===tab));document.querySelectorAll("[data-performance-panel]").forEach(panel=>panel.classList.toggle("is-active",panel.dataset.performancePanel===tab));}
 function open(tab="goals",goalId=0){const screen=$("performanceScreen");if(!screen)return;state.open=true;state.highlightGoal=goalId;screen.classList.add("is-open");screen.setAttribute("aria-hidden","false");window.lockPageScroll?.("performance-screen");setTab(tab);refresh().catch(()=>{});if(goalId)requestAnimationFrame(()=>setTimeout(()=>document.querySelector(`[data-goal-row="${goalId}"]`)?.scrollIntoView?.({behavior:prefersReducedMotion()?"auto":"smooth",block:"center"}),80));}
 function close(){const screen=$("performanceScreen");screen?.classList.remove("is-open");screen?.setAttribute("aria-hidden","true");state.open=false;window.unlockPageScroll?.("performance-screen");}
 function getSettlementIncentive(uid,weeklyPeriodId){
-  const period=periodFromId(weeklyPeriodId);if(!period)return{percent:0,goalPercent:0,derivationPercent:0};const cycle=cycleForPeriod(period);let goal=0,derivation=0;
-  if(cycle.weekInCycle===4){const award=state.cycleAwards.get(`${cycle.id}|${uid}`);goal=Number(award?.goalPercent||0);if(!goal&&state.cycle?.id===cycle.id){const row=state.rows.find(item=>item.uid===uid);goal=Number(row?.rewardPercent||0);}}
-  const periodData=state.incentiveByPeriod.get(weeklyPeriodId);if(periodData?.derivationWinnerUid===uid)derivation=DERIVATION_PERCENT;
-  return{percent:goal+derivation,goalPercent:goal,derivationPercent:derivation};
+  const periodData=state.incentiveByPeriod.get(String(weeklyPeriodId||""));
+  const key=normalize(uid);
+  let goal=Number(periodData?.goalPercentByUid?.get?.(key)||0);
+  let derivation=periodData&&normalize(periodData.derivationWinnerUid)===key?DERIVATION_PERCENT:0;
+  if(!periodData&&state.cycle?.id===cycleForPeriod(periodFromId(weeklyPeriodId)||activeWeeklyPeriod()).id){const row=state.rows.find(item=>normalize(item.uid)===key||item.aliases?.has?.(key));goal=Number(row?.rewardPercent||0);if(normalize(state.currentDerivationLeader?.uid)===key)derivation=DERIVATION_PERCENT;}
+  return{percent:goal+derivation,goalPercent:goal,derivationPercent:derivation,cycleId:periodData?.cycleId||"",derivationWinnerUid:periodData?.derivationWinnerUid||""};
+}
+async function prepareSettlementIncentive(uid,weeklyPeriodId){
+  const period=periodFromId(weeklyPeriodId);if(!period)return{percent:0,goalPercent:0,derivationPercent:0};
+  const cached=state.incentiveByPeriod.get(period.id);if(cached?.goalPercentByUid?.has?.(normalize(uid)))return getSettlementIncentive(uid,period.id);
+  try{
+    const profilesData=await loadProfiles(),cycle=cycleForPeriod(period);
+    const [rows,derivations]=await Promise.all([loadCycleRows(cycle,profilesData,period.id),loadDerivations(cycle,profilesData,period.id)]);
+    cachePeriodIncentive(period,rows,derivations);
+    return getSettlementIncentive(uid,period.id);
+  }catch(error){diagnostic("WEEKLY_BENEFIT","SETTLEMENT_INCENTIVE_PREPARE_FAILED",error,{weeklyPeriodId:period.id,cycleId:cycleForPeriod(period).id,functionName:"prepareSettlementIncentive"});throw error;}
 }
 function recordCompletedDerivation(uid,row){const key=String(uid||"").trim(),id=operationId(row,row?.id||String(Date.now()));if(!key||!id)return;if(!state.liveDerivationOverlay.has(key))state.liveDerivationOverlay.set(key,new Set());state.liveDerivationOverlay.get(key).add(id);refresh({force:true}).catch(()=>{});}
 function getState(){return{loaded:state.loaded,loading:state.loading,uid:state.uid,role:state.role,cycle:state.cycle,rows:state.rows,current:state.current,goalView:state.goalView,derivations:state.derivations,currentDerivationLeader:state.currentDerivationLeader,derivationLeader:state.derivationLeader,derivationPeriodId:state.derivationPeriodId,history:state.history};}
-async function calculateForPeriod(period){const profiles=await loadProfiles();const cycle=cycleForPeriod(period?.id?period:activeWeeklyPeriod());return{cycle,rows:await loadCycleRows(cycle,profiles)};}
+async function calculateForPeriod(period){const target=period?.id?period:activeWeeklyPeriod(),profiles=await loadProfiles(),cycle=cycleForPeriod(target);const [rows,derivations]=await Promise.all([loadCycleRows(cycle,profiles,target.id),loadDerivations(cycle,profiles,target.id)]);cachePeriodIncentive(target,rows,derivations);return{cycle,rows,derivations};}
 
+window.getGoalBubbleWindow=getGoalBubbleWindow;
 window.getVisibleGoalBubbles=getVisibleGoalBubbles;
-window.ExploraPerformanceEngine={GOALS,refresh,open,close,getState,getVisibleGoalBubbles,renderProfileGoal,animateDashboardGoal,getSettlementIncentive,recordCompletedDerivation,calculateForPeriod,showDiagnostic:diagnostic,closeDiagnostic};
+window.ExploraPerformanceEngine={GOALS,refresh,open,close,getState,getGoalBubbleWindow,getVisibleGoalBubbles,renderProfileGoal,animateDashboardGoal,getSettlementIncentive,prepareSettlementIncentive,recordCompletedDerivation,calculateForPeriod,showDiagnostic:diagnostic,closeDiagnostic};
+if(window.__exploraPendingGoalDiagnostic){const pending=window.__exploraPendingGoalDiagnostic;delete window.__exploraPendingGoalDiagnostic;setTimeout(()=>diagnostic(pending.stage,pending.code,pending.error,pending.context||{}),0);}
 $("performanceDashboardOpenBtn")?.addEventListener("click",()=>open("goals"));
 $("performanceRankingCard")?.addEventListener("click",()=>open("ranking"));
 $("performanceDerivatorCard")?.addEventListener("click",()=>open("derivations"));
@@ -16943,7 +17236,7 @@ window.addEventListener("explora:main-nav-active",event=>{
 window.addEventListener("explora:session-opened",()=>{state.dashboardAnimationPending=true;refresh({force:true}).catch(()=>{});});
 window.addEventListener("explora:auth-cleared",()=>{
   cancelGoalReturn();try{state.goalResizeObserver?.disconnect?.();}catch(_){}state.goalResizeObserver=null;
-  state.loaded=false;state.rows=[];state.current=null;state.goalView=null;state.derivations=[];state.currentDerivationLeader=null;state.derivationLeader=null;state.derivationPeriodId="";state.lastActiveGoalId=0;state.dashboardAnimationPending=false;state.profileAnimationPending=false;
+  state.loaded=false;state.rows=[];state.current=null;state.goalView=null;state.derivations=[];state.currentDerivationLeader=null;state.derivationLeader=null;state.derivationPeriodId="";state.lastActiveGoalId=0;state.goalWindowStartLeft=0;state.dashboardAnimationPending=false;state.profileAnimationPending=false;
   const profileCard=$("profileGoalCard");if(profileCard)profileCard.hidden=true;
   renderAll();close();
 });
