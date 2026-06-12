@@ -2,12 +2,12 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="explora-version" content="v226-total-operational-reset-branding-success">
+  <meta name="explora-version" content="v227-vehicle-management-base">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>EXPLORA — Dashboard v226</title>
+  <title>EXPLORA — Dashboard v227</title>
 
   <style>
     :root{
@@ -765,6 +765,17 @@
       font-size: 15px;
       word-break: break-word;
     }
+
+    .profile-meta-box small {
+      display: block;
+      margin-top: 5px;
+      color: #aeb5bd;
+      font-size: 12px;
+      line-height: 1.3;
+      overflow-wrap: anywhere;
+    }
+
+    .profile-meta-box small[hidden] { display: none !important; }
 
     .profile-save{width:100%;min-height:var(--ex-button-height);border:0;border-radius:var(--ex-control-radius);background:linear-gradient(180deg,var(--ex-gold-strong),#d99b25);color:#111;font-size:15px;font-weight:950;cursor:pointer;box-shadow:0 12px 26px rgba(212,175,55,.16)}
 
@@ -4447,7 +4458,9 @@
     .admin-ui-diagnostic-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:0 14px 14px}.admin-ui-diagnostic-actions button{min-height:45px;border:1px solid rgba(255,255,255,.14);border-radius:13px;background:rgba(255,255,255,.055);color:#fff;font-weight:900}.admin-ui-diagnostic-actions button:first-child{border-color:rgba(245,185,66,.38);background:rgba(245,185,66,.10);color:#f5c75d}
     @media(max-width:360px){.admin-action-button{font-size:8px;padding-inline:7px}.admin-action-button svg{width:20px;height:20px}}
 
-    .admin-action-button--simulation{grid-column:1/-1;min-height:52px;border-color:rgba(183,146,255,.30);background:linear-gradient(145deg,rgba(43,31,72,.98),rgba(14,11,24,.99));font-size:10px}
+    .admin-action-button--vehicle{border-color:rgba(98,223,145,.26);background:linear-gradient(145deg,rgba(20,55,39,.96),rgba(8,18,13,.99))}
+    .admin-action-button--vehicle svg{stroke:#72e3a0}
+    .admin-action-button--simulation{grid-column:auto;min-height:52px;border-color:rgba(183,146,255,.30);background:linear-gradient(145deg,rgba(43,31,72,.98),rgba(14,11,24,.99));font-size:10px}
     .admin-action-button--simulation svg{stroke:#c8b2ff}
     body.explora-shared-admin #mainBottomNav{min-height:calc(184px + env(safe-area-inset-bottom))}
     body.explora-shared-admin .dashboard-shell-real{padding-bottom:calc(205px + env(safe-area-inset-bottom))}
@@ -4615,6 +4628,13 @@
     .admin-modal-panel{max-width:680px;background:linear-gradient(180deg,#0c1115,#06090c)}
     .admin-modal-header{background:rgba(255,255,255,.025)}
     .admin-create-form fieldset{background:rgba(255,255,255,.025)}
+    #vehiclePlateInput{text-transform:uppercase;letter-spacing:.075em}
+    .vehicle-form-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .vehicle-form-actions button{min-height:var(--ex-button-height);border-radius:var(--ex-control-radius);font:inherit;font-size:14px;font-weight:950;cursor:pointer}
+    .vehicle-form-cancel{border:1px solid var(--ex-border);background:rgba(255,255,255,.045);color:#fff}
+    .vehicle-form-save{border:0;background:linear-gradient(180deg,var(--ex-gold-strong),#d99b25);color:#111;box-shadow:0 12px 26px rgba(212,175,55,.16)}
+    .vehicle-form-actions button:disabled{opacity:.58;cursor:progress}
+    .vehicle-form-note{margin:0;color:var(--ex-muted);font-size:12px;line-height:1.45}
 
     @media(max-width:390px){
       .admin-shared-shell{width:min(100%,560px);min-height:100dvh;margin:0 auto;padding:calc(env(safe-area-inset-top) + 16px) 16px calc(var(--explora-bottom-nav-height,78px) + env(safe-area-inset-bottom) + 30px)}
@@ -4983,7 +5003,7 @@
         <fieldset>
           <legend>Datos operativos</legend>
           <div class="admin-role-fixed"><strong>Rol asignado</strong><span>Chofer — acceso únicamente a la aplicación operativa</span></div>
-          <label>Vehículo asignado
+          <label>Asignar vehículo
             <select id="newDriverVehicle">
               <option value="">Sin vehículo asignado</option>
             </select>
@@ -5001,6 +5021,44 @@
       </form>
     </div>
   </section>
+
+  <section id="adminCreateVehicleModal" class="admin-modal" aria-hidden="true" aria-label="Crear vehículo">
+    <div class="admin-modal-panel" role="dialog" aria-modal="true" aria-labelledby="adminCreateVehicleTitle">
+      <header class="admin-modal-header">
+        <button id="adminCreateVehicleCloseBtn" type="button" aria-label="Cerrar">‹</button>
+        <div>
+          <h2 id="adminCreateVehicleTitle">Crear vehículo</h2>
+          <p>Alta independiente del chofer en Firestore.</p>
+        </div>
+      </header>
+
+      <form id="adminCreateVehicleForm" class="admin-create-form" novalidate>
+        <fieldset>
+          <legend>Datos del vehículo</legend>
+          <label for="vehiclePlateInput">Patente
+            <input id="vehiclePlateInput" name="plate" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="12" placeholder="AF123BC" required />
+          </label>
+          <label for="vehicleModelInput">Modelo
+            <input id="vehicleModelInput" name="model" autocomplete="off" maxlength="80" placeholder="Fiat Cronos" required />
+          </label>
+          <p class="vehicle-form-note">El vehículo continuará existiendo aunque cambie de chofer o quede sin asignación.</p>
+        </fieldset>
+        <div id="vehicleFormMessage" class="admin-create-msg" role="status" aria-live="assertive"></div>
+        <div class="vehicle-form-actions">
+          <button id="vehicleFormCancelBtn" class="vehicle-form-cancel" type="button">CANCELAR</button>
+          <button id="vehicleFormSaveBtn" class="vehicle-form-save" type="submit">GUARDAR</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <div id="vehicleDiagnosticBackdrop" class="admin-ui-diagnostic-backdrop" aria-hidden="true">
+    <section class="admin-ui-diagnostic-card" role="alertdialog" aria-modal="true" aria-labelledby="vehicleDiagnosticTitle">
+      <header><div><strong id="vehicleDiagnosticTitle">EXPLORA · VEHICLE_MANAGEMENT</strong><small>El panel permanece visible hasta cierre manual.</small></div><button id="vehicleDiagnosticClose" type="button" aria-label="Cerrar diagnóstico">×</button></header>
+      <pre id="vehicleDiagnosticText">—</pre>
+      <div class="admin-ui-diagnostic-actions"><button id="vehicleDiagnosticCopy" type="button">COPIAR ERROR</button><button id="vehicleDiagnosticCloseBottom" type="button">CERRAR</button></div>
+    </section>
+  </div>
 
   <main class="driver-dashboard" id="app" aria-label="Dashboard EXPLORA">
     <section class="dashboard-shell-real">
@@ -5192,6 +5250,9 @@
       <button type="button" class="admin-action-button" data-action="admin-choferes" aria-label="Gestionar choferes">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20c.5-4 2.6-6 6-6s5.5 2 6 6"/><path d="M18 8v6M15 11h6"/></svg><span>CHOFERES</span>
       </button>
+      <button type="button" class="admin-action-button admin-action-button--vehicle" data-action="admin-create-vehicle" aria-label="Crear vehículo">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14 6.5 8h11L20 14"/><path d="M3 14h18v5H3z"/><circle cx="7" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/><path d="M8 8l1.5-3h5L16 8"/></svg><span>CREAR VEHÍCULO</span>
+      </button>
       <button type="button" class="admin-action-button admin-action-button--simulation" data-action="admin-simulate-drivers" aria-label="Simular choferes">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v10H4z"/><path d="M8 11h.01M16 11h.01"/><path d="M9 15h6"/><path d="M12 3v4"/></svg><span>SIMULAR CHOFERES</span>
       </button>
@@ -5310,6 +5371,7 @@
             <div id="profileVehicleBox" class="profile-meta-box">
               <span>Vehículo asignado</span>
               <b id="profileVehicleText">—</b>
+              <small id="profileVehiclePlateText" hidden></small>
             </div>
           </div>
 
@@ -6694,8 +6756,8 @@
 
 
   <script type="module">
-    import { initializeApp, getApps, getApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, getDocs, query, where, limit, serverTimestamp, runTransaction, writeBatch, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
     import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
     import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js";
@@ -6759,6 +6821,8 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       closeAdminReceiptViewer?.();
       clearAdminSharedData?.();
       closeAdminCreateDriverModal?.();
+      closeAdminCreateVehicleModal?.();
+      closeVehicleDiagnostic?.();
       clearDriverVisuals?.();
     }
 
@@ -7065,20 +7129,27 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
 
     async function loadDriverVehicle(profile = {}, driverId = "") {
       const possibleIds = [
-        profile.vehiculoId, profile.autoId, profile.vehiculoAsignado, profile.vehiculo, profile.patente, profile.matricula
+        profile.assignedVehicleId, profile.vehicleId, profile.vehiculoId, profile.autoId,
+        profile.vehiculoAsignado, profile.vehiculo, profile.patente, profile.matricula
       ].map(v => String(v || "").trim()).filter(Boolean);
 
-      for (const id of possibleIds) {
+      for (const id of [...new Set(possibleIds)]) {
         const snap = await getDoc(doc(db,"vehiculos",id)).catch(() => null);
         if (snap && snap.exists()) return { id: snap.id, ...snap.data() };
       }
 
-      const fields = ["choferId","conductorId","driverId","asignadoA","chofer","uidChofer"];
+      const identities = [...new Set([
+        auth.currentUser?.uid, profile.uid, profile.authUid, profile.firebaseUid,
+        driverId, profile.usuario, profile.username, getProfileName(profile, auth.currentUser)
+      ].map(value => String(value || "").trim()).filter(Boolean))];
+      const fields = ["currentDriverUid","currentDriverName","choferId","conductorId","driverId","asignadoA","chofer","uidChofer"];
       for (const field of fields) {
-        const qv = await getDocs(query(collection(db,"vehiculos"), where(field,"==",driverId))).catch(() => null);
-        if (qv && !qv.empty) {
-          const snap = qv.docs[0];
-          return { id: snap.id, ...snap.data() };
+        for (const identity of identities) {
+          const qv = await getDocs(query(collection(db,"vehiculos"), where(field,"==",identity), limit(1))).catch(() => null);
+          if (qv && !qv.empty) {
+            const snap = qv.docs[0];
+            return { id: snap.id, ...snap.data() };
+          }
         }
       }
 
@@ -7089,28 +7160,32 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       const source = vehicle && typeof vehicle === "object" ? vehicle : {};
       const driverName = String(getProfileName(profile, exploraSession.authUser) || "").trim().toLowerCase();
       const username = String(profile.usuario || profile.username || exploraSession.driverId || "").trim().toLowerCase();
-      const clean = (value) => String(value || "").trim();
+      const clean = (value) => String(value || "").trim().replace(/\s+/g, " ");
       const isDriverIdentity = (value) => {
         const normalized = clean(value).toLowerCase();
         return Boolean(normalized && (normalized === driverName || normalized === username));
       };
 
       let brand = clean(source.marca || source.brand || profile.marcaVehiculo || profile.vehiculoMarca || profile.autoMarca);
-      let model = clean(source.modelo || source.model || source.marcaModelo || source.tipoVehiculo || source.tipo || profile.modeloVehiculo || profile.vehiculoModelo || profile.autoModelo || profile.marcaModelo);
-      let plate = clean(source.patente || source.matricula || source.dominio || source.plate || profile.patenteVehiculo || profile.vehiculoPatente || profile.autoPatente || profile.patente || profile.matricula);
+      let model = clean(source.model || source.modelo || source.marcaModelo || source.nombre || source.tipoVehiculo || source.tipo || profile.assignedVehicleModel || profile.modeloVehiculo || profile.vehiculoModelo || profile.autoModelo || profile.marcaModelo);
+      let plate = clean(source.plate || source.plateNormalized || source.patente || source.matricula || source.dominio || profile.assignedVehiclePlate || profile.patenteVehiculo || profile.vehiculoPatente || profile.autoPatente || profile.patente || profile.matricula).toUpperCase();
 
       if (isDriverIdentity(brand)) brand = "";
       if (isDriverIdentity(model)) model = "";
       if (isDriverIdentity(plate)) plate = "";
 
-      const modelName = [brand, model].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
-      const assigned = Boolean(modelName || plate);
+      const modelName = model && brand && model.toLowerCase().startsWith(brand.toLowerCase())
+        ? model
+        : [brand, model].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
+      const assigned = Boolean(modelName || plate || profile.assignedVehicleId || source.vehicleId || source.id);
       return {
         assigned,
         brand,
         model,
+        modelName: modelName || (assigned ? "Vehículo asignado" : ""),
         plate,
-        displayName: assigned ? [modelName, plate].filter(Boolean).join(" · ") : "Vehículo no asignado"
+        vehicleId: String(source.vehicleId || source.id || profile.assignedVehicleId || profile.vehicleId || "").trim(),
+        displayName: assigned ? [modelName || "Vehículo asignado", plate].filter(Boolean).join(" · ") : "Vehículo no asignado"
       };
     }
 
@@ -7172,6 +7247,27 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       return assignedVehicle;
     }
 
+    function renderProfileVehicleAssignment(profile = exploraSession.profile || {}, vehicle = exploraSession.vehicle) {
+      try {
+        const assignedVehicle = resolveAssignedVehicle(profile, vehicle);
+        const modelElement = $("profileVehicleText");
+        const plateElement = $("profileVehiclePlateText");
+        if (modelElement) modelElement.textContent = assignedVehicle.assigned ? assignedVehicle.modelName : "Vehículo no asignado";
+        if (plateElement) {
+          plateElement.textContent = assignedVehicle.plate ? `Patente: ${assignedVehicle.plate}` : "";
+          plateElement.hidden = !assignedVehicle.plate;
+        }
+        return assignedVehicle;
+      } catch (error) {
+        window.ExploraVehicleManagement?.reportProfileRenderFailure?.(error, { driverUid: auth.currentUser?.uid || "" });
+        const modelElement = $("profileVehicleText");
+        const plateElement = $("profileVehiclePlateText");
+        if (modelElement) modelElement.textContent = "Vehículo no asignado";
+        if (plateElement) plateElement.hidden = true;
+        return { assigned:false, modelName:"", plate:"", displayName:"Vehículo no asignado" };
+      }
+    }
+
     function applyDriverDataToUI() {
       const profile = exploraSession.profile || {};
       const user = exploraSession.authUser;
@@ -7195,7 +7291,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       if (profilePhone) profilePhone.value = phone;
       if (profileEmail) profileEmail.value = email;
       if (profileDriverId) profileDriverId.textContent = exploraSession.driverId || "—";
-      if (profileVehicle) profileVehicle.textContent = assignedVehicle.displayName;
+      if (profileVehicle) renderProfileVehicleAssignment(profile, vehicle);
     }
 
     function clearDriverVisuals() {
@@ -9219,8 +9315,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
           exploraSession.vehicleId = vehicle?.id || "";
           exploraAccessState.vehicle = vehicle;
           renderDriverHeader(profile, vehicle);
-          const profileVehicle = $("profileVehicleText");
-          if (profileVehicle) profileVehicle.textContent = resolveAssignedVehicle(profile, vehicle).displayName;
+          renderProfileVehicleAssignment(profile, vehicle);
         } catch (vehicleError) {
           console.warn("[EXPLORA legacy] VEHICLE_LOAD_FAILED", vehicleError?.code || vehicleError?.message);
         }
@@ -9401,10 +9496,10 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
 
     function adminVehicleLabel(vehicle = {}) {
       const brand = vehicle.marca || vehicle.brand || "";
-      const model = vehicle.modelo || vehicle.marcaModelo || vehicle.nombre || vehicle.tipo || "Vehículo";
-      const plate = vehicle.patente || vehicle.matricula || vehicle.dominio || "";
+      const model = vehicle.model || vehicle.modelo || vehicle.marcaModelo || vehicle.nombre || vehicle.tipo || "Vehículo";
+      const plate = vehicle.plate || vehicle.plateNormalized || vehicle.patente || vehicle.matricula || vehicle.dominio || "";
       const label = [brand, model].filter(Boolean).join(" ").trim() || "Vehículo";
-      return plate ? `${label} · ${plate}` : label;
+      return plate ? `${label} · ${String(plate).toUpperCase()}` : label;
     }
 
     function adminDriverRole(data = {}) {
@@ -9428,11 +9523,343 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     }
 
     async function loadAdminVehicles() {
-      const snap = await getDocs(collection(db, "vehiculos"));
-      const vehicles = [];
-      snap.forEach((docSnap) => vehicles.push({ id: docSnap.id, ...docSnap.data() }));
-      return vehicles;
+      try {
+        const snap = await getDocs(collection(db, "vehiculos"));
+        const vehicles = [];
+        snap.forEach((docSnap) => vehicles.push({ id: docSnap.id, ...docSnap.data() }));
+        return vehicles.sort((a,b) => String(a.plate || a.plateNormalized || a.patente || a.id).localeCompare(String(b.plate || b.plateNormalized || b.patente || b.id), "es"));
+      } catch (error) {
+        showVehicleDiagnostic("READ_VEHICLES", "VEHICLE_READ_FAILED", error, { functionName:"loadAdminVehicles", firestorePath:"vehiculos", queryUsed:"getDocs(collection(vehiculos))" });
+        throw error;
+      }
     }
+
+    const vehicleDiagnosticSeen = new Set();
+
+    function normalizeVehiclePlate(value) {
+      return String(value || "").toUpperCase().trim().replace(/\s+/g, "").replace(/[^A-Z0-9-]/g, "");
+    }
+
+    function normalizeVehicleModel(value) {
+      return String(value || "").trim().replace(/\s+/g, " ");
+    }
+
+    function vehicleInternalError(stage, code, message, cause = null, context = {}) {
+      const error = new Error(message || code);
+      error.code = code;
+      error.internalCode = code;
+      error.vehicleStage = stage;
+      error.vehicleContext = context;
+      if (cause) {
+        error.cause = cause;
+        error.firebaseCode = String(cause.code || "");
+        error.firebaseMessage = String(cause.message || cause || "");
+        error.stack = cause.stack || error.stack;
+      }
+      return error;
+    }
+
+    function vehicleFormMessage(message = "", type = "") {
+      const element = $("vehicleFormMessage");
+      if (!element) return;
+      element.textContent = message;
+      element.className = `admin-create-msg${type ? ` ${type}` : ""}`;
+    }
+
+    function vehicleAdminSession() {
+      const user = auth.currentUser;
+      const role = legacyProfileRole(exploraSession.profile || {});
+      return { user, uid:user?.uid || "", role, isAdmin:Boolean(user?.uid && EXPLORA_ADMIN_UIDS.has(user.uid) && role === "admin") };
+    }
+
+    function showVehicleDiagnostic(stage, code, error, context = {}) {
+      const session = vehicleAdminSession();
+      const vehicleId = String(context.vehicleId || context.plateNormalized || context.plate || "—");
+      const signature = ["VEHICLE_MANAGEMENT", stage || "—", code || "—", vehicleId].join("|");
+      if (vehicleDiagnosticSeen.has(signature)) return;
+      vehicleDiagnosticSeen.add(signature);
+      const firebaseError = error?.cause || error;
+      const payload = [
+        "MÓDULO: VEHICLE_MANAGEMENT",
+        `ETAPA: ${stage || "—"}`,
+        `CÓDIGO INTERNO: ${code || error?.internalCode || error?.code || "—"}`,
+        `MENSAJE REAL FIREBASE: ${firebaseError?.code ? `${firebaseError.code} · ` : ""}${firebaseError?.message || "—"}`,
+        `MENSAJE REAL JAVASCRIPT: ${error?.message || String(error || "—")}`,
+        `STACK: ${error?.stack || "—"}`,
+        `FUNCIÓN: ${context.functionName || "—"}`,
+        `UID AUTH: ${session.uid || "—"}`,
+        `ROL: ${session.role || "—"}`,
+        `DRIVER UID: ${context.driverUid || "—"}`,
+        `DRIVER NAME: ${context.driverName || "—"}`,
+        `VEHICLE ID: ${vehicleId}`,
+        `PATENTE: ${context.plate || "—"}`,
+        `MODELO: ${context.model || "—"}`,
+        `RUTA FIRESTORE: ${context.firestorePath || "vehiculos"}`,
+        `QUERY USADA: ${context.queryUsed || "—"}`,
+        `TIMESTAMP: ${new Date().toISOString()}`
+      ].join("\n");
+      const panel = $("vehicleDiagnosticBackdrop");
+      const output = $("vehicleDiagnosticText");
+      if (output) output.textContent = payload;
+      panel?.classList.add("is-open");
+      panel?.setAttribute("aria-hidden", "false");
+      window.lockPageScroll?.("vehicle-diagnostic");
+    }
+
+    function closeVehicleDiagnostic() {
+      const panel = $("vehicleDiagnosticBackdrop");
+      panel?.classList.remove("is-open");
+      panel?.setAttribute("aria-hidden", "true");
+      window.unlockPageScroll?.("vehicle-diagnostic");
+    }
+
+    async function copyVehicleDiagnostic() {
+      const value = $("vehicleDiagnosticText")?.textContent || "";
+      try { await navigator.clipboard.writeText(value); }
+      catch (_) {
+        const area = document.createElement("textarea");
+        area.value = value;
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand("copy");
+        area.remove();
+      }
+    }
+
+    function assertVehicleAdmin(stage = "ADMIN_ONLY_CHECK") {
+      const session = vehicleAdminSession();
+      if (!session.isAdmin) {
+        const error = vehicleInternalError(stage, "VEHICLE_ADMIN_ONLY", "Sólo Administrador puede gestionar vehículos.");
+        showVehicleDiagnostic(stage, "VEHICLE_ADMIN_ONLY", error, { functionName:"assertVehicleAdmin", firestorePath:"vehiculos" });
+        throw error;
+      }
+      return session;
+    }
+
+    function vehicleAssignmentState(data = {}) {
+      const currentDriverUid = String(data.currentDriverUid || data.choferId || data.conductorId || data.driverId || data.asignadoA || data.uidChofer || data.chofer || "").trim();
+      return { currentDriverUid, assigned:Boolean(data.isAssigned === true || currentDriverUid) };
+    }
+
+    function vehicleSelectLabel(vehicle = {}) {
+      const plate = normalizeVehiclePlate(vehicle.plate || vehicle.plateNormalized || vehicle.patente || vehicle.matricula || vehicle.dominio || vehicle.id);
+      const model = normalizeVehicleModel(vehicle.model || vehicle.modelo || vehicle.marcaModelo || vehicle.nombre || vehicle.tipo || "Vehículo");
+      return `${plate || vehicle.id} — ${model}`;
+    }
+
+    async function validateVehicleAvailability(vehicleId, { driverUid = "", driverDocumentId = "", driverName = "" } = {}) {
+      if (!vehicleId) return null;
+      assertVehicleAdmin("ADMIN_ONLY_CHECK");
+      try {
+        const snap = await getDoc(doc(db, "vehiculos", vehicleId));
+        if (!snap.exists()) throw vehicleInternalError("READ_VEHICLES", "VEHICLE_READ_FAILED", "El vehículo seleccionado no existe.", null, { vehicleId });
+        const data = snap.data() || {};
+        const assignment = vehicleAssignmentState(data);
+        const allowed = new Set([driverUid, driverDocumentId, driverName].map(value => String(value || "").trim().toLowerCase()).filter(Boolean));
+        if (assignment.assigned && !allowed.has(assignment.currentDriverUid.toLowerCase())) {
+          throw vehicleInternalError("ASSIGN_VEHICLE_TO_DRIVER", "VEHICLE_ASSIGNMENT_FAILED", "Ese vehículo ya está asignado a otro chofer.", null, { vehicleId });
+        }
+        return { id:snap.id, ...data };
+      } catch (error) {
+        const internal = error?.internalCode ? error : vehicleInternalError("READ_VEHICLES", "VEHICLE_READ_FAILED", "No se pudo verificar el vehículo seleccionado.", error, { vehicleId });
+        showVehicleDiagnostic(internal.vehicleStage || "READ_VEHICLES", internal.internalCode || "VEHICLE_READ_FAILED", internal, { functionName:"validateVehicleAvailability", vehicleId, driverUid, driverName, firestorePath:`vehiculos/${vehicleId}`, queryUsed:"getDoc" });
+        throw internal;
+      }
+    }
+
+    async function assignVehicleToDriver({ driverDocumentId, driverUid, driverName, vehicleId = "", driverPatch = {} } = {}) {
+      const session = assertVehicleAdmin("ADMIN_ONLY_CHECK");
+      let assignmentStage = "ASSIGN_VEHICLE_TO_DRIVER";
+      const cleanDriverDocumentId = String(driverDocumentId || "").trim();
+      const cleanDriverUid = String(driverUid || "").trim();
+      const cleanDriverName = normalizeVehicleModel(driverName);
+      const cleanVehicleId = String(vehicleId || "").trim();
+      if (!cleanDriverDocumentId) throw vehicleInternalError("UPDATE_DRIVER_VEHICLE", "DRIVER_VEHICLE_UPDATE_FAILED", "Falta el documento del chofer.");
+
+      try {
+        await runTransaction(db, async transaction => {
+          const driverRef = doc(db, "choferes", cleanDriverDocumentId);
+          const driverSnap = await transaction.get(driverRef);
+          const currentDriver = driverSnap.exists() ? (driverSnap.data() || {}) : {};
+          const previousVehicleId = String(currentDriver.assignedVehicleId || currentDriver.vehicleId || currentDriver.vehiculoId || currentDriver.vehiculo || currentDriver.autoId || "").trim();
+          const previousRef = previousVehicleId && previousVehicleId !== cleanVehicleId ? doc(db, "vehiculos", previousVehicleId) : null;
+          const nextRef = cleanVehicleId ? doc(db, "vehiculos", cleanVehicleId) : null;
+          const previousSnap = previousRef ? await transaction.get(previousRef) : null;
+          const nextSnap = nextRef ? await transaction.get(nextRef) : null;
+
+          let nextVehicle = null;
+          if (nextRef) {
+            if (!nextSnap?.exists()) throw vehicleInternalError("ASSIGN_VEHICLE_TO_DRIVER", "VEHICLE_READ_FAILED", "El vehículo seleccionado no existe.", null, { vehicleId:cleanVehicleId });
+            nextVehicle = nextSnap.data() || {};
+            const assignment = vehicleAssignmentState(nextVehicle);
+            const permitted = new Set([cleanDriverUid, cleanDriverDocumentId, cleanDriverName].map(value => String(value || "").trim().toLowerCase()).filter(Boolean));
+            if (assignment.assigned && !permitted.has(assignment.currentDriverUid.toLowerCase())) {
+              throw vehicleInternalError("ASSIGN_VEHICLE_TO_DRIVER", "VEHICLE_ASSIGNMENT_FAILED", "Ese vehículo ya está asignado a otro chofer.", null, { vehicleId:cleanVehicleId });
+            }
+          }
+
+          if (previousRef && previousSnap?.exists()) {
+            assignmentStage = "RELEASE_PREVIOUS_VEHICLE";
+            const previousData = previousSnap.data() || {};
+            const previousAssignment = vehicleAssignmentState(previousData);
+            const identities = new Set([cleanDriverUid, cleanDriverDocumentId, cleanDriverName].map(value => String(value || "").trim().toLowerCase()).filter(Boolean));
+            if (!previousAssignment.currentDriverUid || identities.has(previousAssignment.currentDriverUid.toLowerCase())) {
+              transaction.set(previousRef, {
+                currentDriverUid:null,
+                currentDriverName:null,
+                isAssigned:false,
+                chofer:null,
+                choferId:null,
+                conductorId:null,
+                driverId:null,
+                asignadoA:null,
+                uidChofer:null,
+                updatedAt:serverTimestamp(),
+                updatedByUid:session.uid
+              }, { merge:true });
+            }
+          }
+
+          const plate = nextVehicle ? normalizeVehiclePlate(nextVehicle.plate || nextVehicle.plateNormalized || nextVehicle.patente || cleanVehicleId) : "";
+          const model = nextVehicle ? normalizeVehicleModel(nextVehicle.model || nextVehicle.modelo || nextVehicle.marcaModelo || nextVehicle.nombre || "") : "";
+          const assignmentPatch = cleanVehicleId ? {
+            assignedVehicleId:cleanVehicleId,
+            assignedVehiclePlate:plate,
+            assignedVehicleModel:model,
+            vehicleId:cleanVehicleId,
+            vehiculoId:cleanVehicleId,
+            vehiculo:cleanVehicleId,
+            modeloVehiculo:model,
+            patenteVehiculo:plate
+          } : {
+            assignedVehicleId:null,
+            assignedVehiclePlate:null,
+            assignedVehicleModel:null,
+            vehicleId:null,
+            vehiculoId:null,
+            vehiculo:"",
+            modeloVehiculo:null,
+            patenteVehiculo:null
+          };
+
+          assignmentStage = "UPDATE_DRIVER_VEHICLE";
+          transaction.set(driverRef, {
+            ...driverPatch,
+            ...assignmentPatch,
+            updatedAt:serverTimestamp(),
+            actualizado:serverTimestamp()
+          }, { merge:true });
+
+          if (nextRef) {
+            assignmentStage = "UPDATE_VEHICLE_ASSIGNMENT";
+            transaction.set(nextRef, {
+              vehicleId:cleanVehicleId,
+              currentDriverUid:cleanDriverUid || cleanDriverDocumentId,
+              currentDriverName:cleanDriverName,
+              isAssigned:true,
+              chofer:cleanDriverDocumentId,
+              choferId:cleanDriverUid || cleanDriverDocumentId,
+              driverId:cleanDriverUid || cleanDriverDocumentId,
+              updatedAt:serverTimestamp(),
+              updatedByUid:session.uid,
+              status:"active"
+            }, { merge:true });
+          }
+        });
+        return true;
+      } catch (error) {
+        const fallbackCode = assignmentStage === "RELEASE_PREVIOUS_VEHICLE" ? "VEHICLE_RELEASE_FAILED" : assignmentStage === "UPDATE_DRIVER_VEHICLE" ? "DRIVER_VEHICLE_UPDATE_FAILED" : "VEHICLE_ASSIGNMENT_FAILED";
+        const internal = error?.internalCode ? error : vehicleInternalError(assignmentStage, fallbackCode, "No se pudo actualizar la asignación del vehículo.", error, { vehicleId:cleanVehicleId });
+        showVehicleDiagnostic(internal.vehicleStage || assignmentStage, internal.internalCode || fallbackCode, internal, {
+          functionName:"assignVehicleToDriver", driverUid:cleanDriverUid, driverName:cleanDriverName, vehicleId:cleanVehicleId,
+          firestorePath:`choferes/${cleanDriverDocumentId} + vehiculos/${cleanVehicleId || "anterior"}`, queryUsed:"runTransaction"
+        });
+        throw internal;
+      }
+    }
+
+    async function createVehicleRecord(event) {
+      event?.preventDefault?.();
+      const button = $("vehicleFormSaveBtn");
+      const plate = normalizeVehiclePlate($("vehiclePlateInput")?.value || "");
+      const model = normalizeVehicleModel($("vehicleModelInput")?.value || "");
+      const vehicleId = plate;
+      let stage = "VALIDATE_VEHICLE_FORM";
+      try {
+        const session = assertVehicleAdmin("ADMIN_ONLY_CHECK");
+        if (!plate) throw vehicleInternalError(stage, "VEHICLE_PLATE_REQUIRED", "La patente es obligatoria.");
+        if (!model) throw vehicleInternalError(stage, "VEHICLE_MODEL_REQUIRED", "El modelo es obligatorio.");
+        if (button) { button.disabled = true; button.textContent = "GUARDANDO…"; }
+        vehicleFormMessage("Verificando patente…");
+        stage = "CHECK_DUPLICATE_PLATE";
+        const ref = doc(db, "vehiculos", vehicleId);
+        const existing = await getDoc(ref);
+        if (existing.exists()) throw vehicleInternalError(stage, "VEHICLE_DUPLICATE_PLATE", "Ya existe un vehículo con esa patente.");
+        stage = "SAVE_VEHICLE";
+        await setDoc(ref, {
+          vehicleId,
+          plate,
+          plateNormalized:plate,
+          model,
+          currentDriverUid:null,
+          currentDriverName:null,
+          isAssigned:false,
+          createdAt:serverTimestamp(),
+          createdByUid:session.uid,
+          updatedAt:serverTimestamp(),
+          updatedByUid:session.uid,
+          status:"active",
+          schemaVersion:1
+        }, { merge:false });
+        vehicleFormMessage("Vehículo creado correctamente.", "ok");
+        if ($("vehiclePlateInput")) $("vehiclePlateInput").value = "";
+        if ($("vehicleModelInput")) $("vehicleModelInput").value = "";
+        await refreshAdminDashboard();
+        window.showExploraSuccess?.({ title:"VEHÍCULO CREADO", message:`${plate} — ${model}` });
+      } catch (error) {
+        const code = error?.internalCode || error?.code || "VEHICLE_SAVE_FAILED";
+        const internal = error?.internalCode ? error : vehicleInternalError(stage, "VEHICLE_SAVE_FAILED", "No se pudo guardar el vehículo.", error, { vehicleId });
+        vehicleFormMessage(internal.message || "No se pudo guardar el vehículo.", "err");
+        showVehicleDiagnostic(stage, code, internal, { functionName:"createVehicleRecord", vehicleId, plate, model, firestorePath:`vehiculos/${vehicleId || "—"}`, queryUsed:stage === "CHECK_DUPLICATE_PLATE" ? "getDoc" : "setDoc" });
+      } finally {
+        if (button) { button.disabled = false; button.textContent = "GUARDAR"; }
+      }
+    }
+
+    function openAdminCreateVehicleModal() {
+      try { assertVehicleAdmin("OPEN_CREATE_VEHICLE"); }
+      catch (_) { return; }
+      const modal = $("adminCreateVehicleModal");
+      modal?.classList.add("is-open");
+      modal?.setAttribute("aria-hidden", "false");
+      vehicleFormMessage("");
+      window.lockPageScroll?.("admin-create-vehicle");
+      requestAnimationFrame(() => $("vehiclePlateInput")?.focus({ preventScroll:true }));
+    }
+
+    function closeAdminCreateVehicleModal() {
+      const modal = $("adminCreateVehicleModal");
+      modal?.classList.remove("is-open");
+      modal?.setAttribute("aria-hidden", "true");
+      vehicleFormMessage("");
+      window.unlockPageScroll?.("admin-create-vehicle");
+    }
+
+    function reportProfileVehicleRenderFailure(error, context = {}) {
+      showVehicleDiagnostic("RENDER_DRIVER_PROFILE_VEHICLE", "PROFILE_VEHICLE_RENDER_FAILED", error, { ...context, functionName:"renderProfileVehicleAssignment", firestorePath:`choferes/${context.driverUid || "—"}` });
+    }
+
+    window.ExploraVehicleManagement = {
+      openCreateVehicle:openAdminCreateVehicleModal,
+      closeCreateVehicle:closeAdminCreateVehicleModal,
+      createVehicle:createVehicleRecord,
+      loadVehicles:loadAdminVehicles,
+      validateVehicleAvailability,
+      assignVehicleToDriver,
+      releaseVehicleFromDriver:(payload = {}) => assignVehicleToDriver({ ...payload, vehicleId:"" }),
+      reportProfileRenderFailure:reportProfileVehicleRenderFailure,
+      diagnostic:showVehicleDiagnostic
+    };
 
     async function loadAdminDrivers() {
       const snap = await getDocs(collection(db, "choferes"));
@@ -9450,11 +9877,11 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     }
 
     function adminResolveVehicle(driver, vehiclesMap) {
-      const vehicleId = String(driver.vehiculoId || driver.vehiculo || driver.autoId || driver.vehiculoAsignado || "").trim();
+      const vehicleId = String(driver.assignedVehicleId || driver.vehicleId || driver.vehiculoId || driver.vehiculo || driver.autoId || driver.vehiculoAsignado || "").trim();
       const vehicle = vehiclesMap.get(vehicleId) || null;
       if (vehicle) return { id: vehicleId, data: vehicle, displayName: adminVehicleLabel(vehicle) };
-      const model = driver.modeloVehiculo || driver.vehiculoModelo || driver.auto || "";
-      const plate = driver.patente || driver.matricula || driver.dominio || "";
+      const model = driver.assignedVehicleModel || driver.modeloVehiculo || driver.vehiculoModelo || driver.auto || "";
+      const plate = driver.assignedVehiclePlate || driver.patenteVehiculo || driver.patente || driver.matricula || driver.dominio || "";
       return { id: vehicleId, data: null, displayName: model || plate ? `${model || "Vehículo"}${plate ? ` · ${plate}` : ""}` : "Vehículo no asignado" };
     }
 
@@ -9568,16 +9995,16 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       if (!select) return;
       const current = select.value;
       select.innerHTML = `<option value="">Sin vehículo asignado</option>`;
-      vehicles.forEach(vehicle => {
-        const occupiedBy = vehicle.choferId || vehicle.conductorId || vehicle.driverId || vehicle.asignadoA || vehicle.uidChofer || vehicle.chofer || "";
-        const option = document.createElement("option");
-        option.value = vehicle.id;
-        option.textContent = adminVehicleLabel(vehicle) + (occupiedBy ? " · ocupado" : " · disponible");
-        option.dataset.occupiedBy = occupiedBy;
-        if (occupiedBy) option.disabled = true;
-        select.appendChild(option);
-      });
-      if (current) select.value = current;
+      vehicles
+        .filter(vehicle => String(vehicle.status || "active").toLowerCase() === "active")
+        .filter(vehicle => !vehicleAssignmentState(vehicle).assigned)
+        .forEach(vehicle => {
+          const option = document.createElement("option");
+          option.value = vehicle.id;
+          option.textContent = vehicleSelectLabel(vehicle);
+          select.appendChild(option);
+        });
+      if (current && [...select.options].some(option => option.value === current)) select.value = current;
     }
 
     function dashboardOperationCards() { return Array.from(document.querySelectorAll(".operations-grid-real .operation-card-real")); }
@@ -10467,7 +10894,9 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       modal.setAttribute("aria-hidden", "false");
       window.lockPageScroll?.("admin-create-driver");
       adminMsg("");
-      refreshAdminDashboard();
+      refreshAdminDashboard().catch(error => {
+        showVehicleDiagnostic("LOAD_VEHICLE_SELECT", "VEHICLE_READ_FAILED", error, { functionName:"openAdminCreateDriverModal", firestorePath:"vehiculos", queryUsed:"getDocs" });
+      });
     }
 
     function closeAdminCreateDriverModal() {
@@ -10493,6 +10922,33 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       return await new Promise((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("No se pudo procesar el avatar.")), "image/jpeg", .84));
     }
 
+    async function createOrReuseDriverAuthUser(username, password) {
+      const email = `${username}@explora.local`;
+      const request = async (operation) => {
+        const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:${operation}?key=${encodeURIComponent(EXPLORA_FIREBASE_CONFIG.apiKey)}`, {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          body:JSON.stringify({ email, password, returnSecureToken:true })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          const error = new Error(payload?.error?.message || `AUTH_${operation.toUpperCase()}_FAILED`);
+          error.code = payload?.error?.message || `AUTH_${operation.toUpperCase()}_FAILED`;
+          error.firebasePayload = payload;
+          throw error;
+        }
+        return payload;
+      };
+      try {
+        const created = await request("signUp");
+        return { uid:created.localId || "", email, state:"nuevo" };
+      } catch (error) {
+        if (!String(error.code || error.message || "").includes("EMAIL_EXISTS")) throw error;
+        const reused = await request("signInWithPassword");
+        return { uid:reused.localId || "", email, state:"existente_reutilizado" };
+      }
+    }
+
     async function submitCreateDriver(event) {
       event.preventDefault();
 
@@ -10502,6 +10958,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       const pass = String($("newDriverPassword")?.value || "").trim();
       const confirmPass = String($("newDriverPasswordConfirm")?.value || "").trim();
       const phone = String($("newDriverPhone")?.value || "").trim();
+      const contactEmail = String($("newDriverEmail")?.value || "").trim().toLowerCase();
       const vehicleId = String($("newDriverVehicle")?.value || "").trim();
       const active = Boolean($("newDriverActive")?.checked);
       const avatarFile = $("newDriverAvatar")?.files?.[0] || null;
@@ -10516,95 +10973,61 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         return adminMsg("El avatar debe ser JPG/PNG y pesar máximo 5 MB.", "err");
       }
 
-      let secondaryApp = null;
-
       if (btn) {
         btn.disabled = true;
         btn.textContent = "Creando chofer…";
         btn.setAttribute("aria-busy", "true");
       }
-      adminMsg("Verificando usuario…");
+      adminMsg("Verificando usuario y vehículo…");
 
       try {
-        let vehiculo = null;
-        if (vehicleId) {
-          const vehSnap = await getDoc(doc(db, "vehiculos", vehicleId));
-          if (!vehSnap.exists()) return adminMsg("El vehículo seleccionado no existe.", "err");
-          vehiculo = vehSnap.data() || {};
-          const ocupado = vehiculo.chofer || vehiculo.choferId || vehiculo.conductorId || vehiculo.driverId || vehiculo.asignadoA || vehiculo.uidChofer || "";
-          if (ocupado && ocupado !== usuario) return adminMsg("Ese vehículo ya está asignado a otro chofer.", "err");
-        }
-
-        let usuarioAuthEstado = "nuevo";
-        let createdAuthUser = null;
-        secondaryApp = initializeApp(EXPLORA_FIREBASE_CONFIG, "crearUsuario_" + Date.now());
-        const secondaryAuth = getAuth(secondaryApp);
-
-        try {
-          const createdCredential = await createUserWithEmailAndPassword(secondaryAuth, `${usuario}@explora.local`, pass);
-          createdAuthUser = createdCredential.user;
-          usuarioAuthEstado = "nuevo";
-        } catch (authError) {
-          const code = String(authError.code || "");
-          if (code.includes("email-already-in-use")) {
-            const reusedCredential = await signInWithEmailAndPassword(secondaryAuth, `${usuario}@explora.local`, pass);
-            createdAuthUser = reusedCredential.user;
-            usuarioAuthEstado = "existente_reutilizado";
-          } else {
-            throw authError;
-          }
-        }
-        await signOut(secondaryAuth).catch(() => {});
-
-        if (vehicleId) {
-          await setDoc(doc(db, "vehiculos", vehicleId), {
-            chofer: usuario,
-            activo: true,
-            actualizado: serverTimestamp(),
-            reasignadoPor: exploraSession.driverId || "admin"
-          }, { merge: true });
-        }
+        if (vehicleId) await validateVehicleAvailability(vehicleId, { driverDocumentId:usuario, driverName:nombre });
+        const authResult = await createOrReuseDriverAuthUser(usuario, pass);
+        if (!authResult.uid) throw new Error("AUTH_UID_MISSING");
 
         const payload = {
           nombre,
-          uid: createdAuthUser?.uid || "",
-          authUid: createdAuthUser?.uid || "",
-          rol: "chofer",
-          role: "driver",
-          vehiculo: vehicleId || "",
-          telefono: phone || "",
-          estado: "disponible",
-          activo: active,
+          uid:authResult.uid,
+          authUid:authResult.uid,
+          rol:"chofer",
+          role:"driver",
+          telefono:phone || "",
+          contactEmail:contactEmail || "",
+          estado:"disponible",
+          activo:active,
           usuario,
-          email: `${usuario}@explora.local`,
-          creadoPor: exploraSession.driverId || "admin",
-          fechaAlta: new Date().toLocaleDateString("es-AR"),
-          createdAt: serverTimestamp(),
-          ultimaActividad: "sin registro",
-          actualizado: serverTimestamp()
+          email:authResult.email,
+          creadoPor:exploraSession.driverId || auth.currentUser?.uid || "admin",
+          fechaAlta:new Date().toLocaleDateString("es-AR"),
+          createdAt:serverTimestamp(),
+          ultimaActividad:"sin registro"
         };
 
-        await setDoc(doc(db, "choferes", usuario), payload, { merge: true });
-        if (createdAuthUser?.uid) {
-          await setDoc(doc(db, "login_aliases", usuario), {
-            authEmail: `${usuario}@explora.local`,
-            uid: createdAuthUser.uid,
-            activo: active,
-            rol: "chofer",
-            profileId: usuario
-          }, { merge:true }).catch(() => {});
-        }
+        await assignVehicleToDriver({
+          driverDocumentId:usuario,
+          driverUid:authResult.uid,
+          driverName:nombre,
+          vehicleId,
+          driverPatch:payload
+        });
+
+        await setDoc(doc(db, "login_aliases", usuario), {
+          authEmail:authResult.email,
+          uid:authResult.uid,
+          activo:active,
+          rol:"chofer",
+          profileId:usuario
+        }, { merge:true }).catch(() => {});
 
         if (avatarFile) {
           const blob = await createSquareBlobFromFile(avatarFile);
           const fileRef = storageRef(storage, `avatars/${usuario}/profile.jpg`);
-          await uploadBytes(fileRef, blob, { contentType: "image/jpeg", customMetadata: { owner: usuario } });
+          await uploadBytes(fileRef, blob, { contentType:"image/jpeg", customMetadata:{ owner:usuario } });
           const avatarUrl = await getDownloadURL(fileRef);
-          await setDoc(doc(db, "choferes", usuario), { avatarUrl, fotoPerfil: avatarUrl, actualizado: serverTimestamp() }, { merge: true });
+          await setDoc(doc(db, "choferes", usuario), { avatarUrl, fotoPerfil:avatarUrl, actualizado:serverTimestamp(), updatedAt:serverTimestamp() }, { merge:true });
         }
 
-        adminMsg(usuarioAuthEstado === "nuevo" ? "Chofer creado correctamente." : "Usuario existente reutilizado y perfil actualizado.", "ok");
-
+        adminMsg(authResult.state === "nuevo" ? "Chofer creado correctamente." : "Usuario existente reutilizado y perfil actualizado.", "ok");
         ["newDriverUsername","newDriverEmail","newDriverPassword","newDriverPasswordConfirm","newDriverName","newDriverPhone","newDriverNotes","newDriverVehicle","newDriverAvatar"].forEach((id) => {
           const el = $(id);
           if (el) el.value = "";
@@ -10613,14 +11036,14 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         invalidateAdminWeeklyData("driver-created");
         await refreshAdminDashboard();
       } catch (error) {
-        let texto = error && error.message ? error.message : String(error);
-        const code = String(error && error.code || "");
-        if (code.includes("operation-not-allowed")) texto = "Firebase Authentication no permite Email/Password. Activá Email/Password en Firebase Console.";
-        if (code.includes("weak-password")) texto = "La contraseña es muy débil. Usá mínimo 6 caracteres.";
-        if (code.includes("email-already-in-use")) texto = "Ese usuario ya existe. Ingresá su contraseña actual para reutilizarlo.";
+        let texto = error?.message || String(error);
+        const code = String(error?.code || error?.internalCode || "");
+        if (code.includes("OPERATION_NOT_ALLOWED")) texto = "Firebase Authentication no permite Email/Password. Activá Email/Password en Firebase Console.";
+        if (code.includes("WEAK_PASSWORD")) texto = "La contraseña es muy débil. Usá mínimo 6 caracteres.";
+        if (code.includes("INVALID_PASSWORD") || code.includes("INVALID_LOGIN_CREDENTIALS")) texto = "Ese usuario ya existe y la contraseña ingresada no coincide.";
+        if (code.includes("VEHICLE_ASSIGNMENT_FAILED")) texto = "No se pudo asignar el vehículo. Puede estar ocupado por otro chofer.";
         adminMsg("No se pudo crear el chofer: " + texto, "err");
       } finally {
-        if (secondaryApp) await deleteApp(secondaryApp).catch(() => {});
         if (btn) {
           btn.disabled = false;
           btn.textContent = "Crear chofer";
@@ -10993,6 +11416,8 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         window.ExploraWeeklyEngine?.stop?.({ reset: true });
         weeklyProfileCache.clear();
         closeAdminCreateDriverModal();
+        closeAdminCreateVehicleModal();
+        closeVehicleDiagnostic();
         closeAdminSharedModule?.();
         closeAdminReceiptViewer?.();
         clearAdminSharedData?.();
@@ -11024,6 +11449,13 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     $("exploraRoleLogout")?.addEventListener("click", logoutExplora);
     $("adminCreateCloseBtn")?.addEventListener("click", closeAdminCreateDriverModal);
     $("adminCreateDriverForm")?.addEventListener("submit", submitCreateDriver);
+    $("adminCreateVehicleCloseBtn")?.addEventListener("click", closeAdminCreateVehicleModal);
+    $("vehicleFormCancelBtn")?.addEventListener("click", closeAdminCreateVehicleModal);
+    $("adminCreateVehicleForm")?.addEventListener("submit", createVehicleRecord);
+    $("vehicleDiagnosticClose")?.addEventListener("click", closeVehicleDiagnostic);
+    $("vehicleDiagnosticCloseBottom")?.addEventListener("click", closeVehicleDiagnostic);
+    $("vehicleDiagnosticCopy")?.addEventListener("click", copyVehicleDiagnostic);
+    $("vehicleDiagnosticBackdrop")?.addEventListener("click", event => { if (event.target?.id === "vehicleDiagnosticBackdrop") closeVehicleDiagnostic(); });
     $("newDriverPasswordToggle")?.addEventListener("click", () => {
       const passwordInput = $("newDriverPassword");
       const confirmInput = $("newDriverPasswordConfirm");
@@ -11083,6 +11515,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     window.ExploraActions["admin-config-percentages"] = () => openAdminSharedModule("percentages");
     window.ExploraActions["admin-choferes"] = openAdminCreateDriverModal;
     window.ExploraActions["admin-agregar-chofer"] = openAdminCreateDriverModal;
+    window.ExploraActions["admin-create-vehicle"] = openAdminCreateVehicleModal;
     window.ExploraActions["admin-deuda"] = () => window.ExploraAdminTools?.openDebt?.();
     window.ExploraActions["admin-prestamo"] = () => openAdminSharedModule("loan");
     window.ExploraActions["admin-mi-auto"] = () => openAdminSharedModule("car");
@@ -16599,7 +17032,7 @@ const OPERATIONAL_COLLECTIONS=Object.freeze([
   {name:"billing_records",stage:"DELETE_COLLECTION"},{name:"gastos",stage:"DELETE_COLLECTION"},{name:"facturacion_semanal",stage:"DELETE_COLLECTION"},{name:"gastos_semanales",stage:"DELETE_COLLECTION"},
   {name:"derivaciones",stage:"DELETE_DERIVATIONS"},{name:"derivaciones_pendientes",stage:"DELETE_DERIVATIONS"},{name:"historial_derivaciones",stage:"DELETE_DERIVATIONS"},
   {name:"cierres_semanales",stage:"DELETE_CLOSURES"},{name:"cierres_mensuales",stage:"DELETE_CLOSURES"},{name:"pagos_semanales",stage:"DELETE_CLOSURES"},{name:"acumulados_semanales",stage:"DELETE_CLOSURES"},
-  {name:"prestamos_operativos",stage:"DELETE_LOANS"},{name:"deudas_choferes",stage:"DELETE_DEBTS"},{name:"vehiculos",stage:"DELETE_VEHICLE_DATA"},
+  {name:"prestamos_operativos",stage:"DELETE_LOANS"},{name:"deudas_choferes",stage:"DELETE_DEBTS"},
   {name:"payment_operations",stage:"DELETE_COLLECTION"},{name:"receipt_index",stage:"DELETE_COLLECTION"},
   {name:"performance_awards",stage:"DELETE_RANKINGS"},{name:"performance_cycles",stage:"DELETE_RANKINGS"},{name:"performance_derivation_winners",stage:"DELETE_RANKINGS"},
   {name:"performance_public",stage:"DELETE_RANKINGS"},{name:"derivation_ranking_public",stage:"DELETE_RANKINGS"},{name:"ranking_metas_public",stage:"DELETE_RANKINGS"},{name:"ranking_derivaciones_public",stage:"DELETE_RANKINGS"},
@@ -16611,7 +17044,7 @@ const OPERATIONAL_COLLECTIONS=Object.freeze([
   {name:"novedades",stage:"DELETE_COLLECTION"},{name:"novedades_temporales",stage:"DELETE_COLLECTION"},{name:"notificaciones",stage:"DELETE_COLLECTION"},{name:"notificaciones_temporales",stage:"DELETE_COLLECTION"},{name:"estados_temporales",stage:"DELETE_COLLECTION"},
   {name:"cache_rankings",stage:"CLEAR_CACHE"},{name:"cache_metas",stage:"CLEAR_CACHE"},{name:"cache_dashboard",stage:"CLEAR_CACHE"},{name:"cache_derivaciones",stage:"CLEAR_CACHE"},{name:"cache_novedades",stage:"CLEAR_CACHE"},{name:"cache_performance",stage:"CLEAR_CACHE"}
 ]);
-const DRIVER_RESET_FIELDS=Object.freeze(["vehiculoId","autoId","vehiculoAsignado","vehiculo","vehicleId","assignedVehicleId","vehicleDisplay","vehiculoNombre","marcaVehiculo","vehiculoMarca","autoMarca","modeloVehiculo","vehiculoModelo","autoModelo","patenteVehiculo","vehiculoPatente","autoPatente","patente","matricula","deuda","deudaActual","deudaTotal","saldoDeuda","prestamo","prestamoActual","prestamoActivo","loanBalance","facturacionSemanal","gastosSemanales","rankingSemanal","rankingMensual","performanceMensual","performanceSemanal","cierreSemanal","cierreMensual","simulacionActiva","simulationActive","simulationConfigId"]);
+const DRIVER_RESET_FIELDS=Object.freeze(["deuda","deudaActual","deudaTotal","saldoDeuda","prestamo","prestamoActual","prestamoActivo","loanBalance","facturacionSemanal","gastosSemanales","rankingSemanal","rankingMensual","performanceMensual","performanceSemanal","cierreSemanal","cierreMensual","simulacionActiva","simulationActive","simulationConfigId"]);
 function resetError(stage,code,message,cause=null,detail={}){const error=new Error(message||code);error.code=code;error.internalCode=code;error.resetStage=stage;error.resetDetail=detail;if(cause){error.cause=cause;error.firebaseCode=String(cause.code||"");error.firebaseMessage=String(cause.message||cause||"");error.stack=cause.stack||error.stack;}return error;}
 function ensureResetDeadline(deadline,stage="APP_RESET"){if(performance.now()>deadline)throw resetError(stage,"APP_RESET_TIMEOUT","El reinicio operativo superó el tiempo máximo permitido.",null,{timeoutMs:APP_RESET_TIMEOUT_MS});}
 function launchConfirmationMarkup(){return`<p>Se eliminarán todos los datos operativos de EXPLORA.</p><div class="launch-confirm-list"><strong>NO se eliminarán:</strong><br>Usuarios.<br>Roles.<br>Configuración.<br>Firebase.<br>Admin.</div><p><strong>Esta acción no puede deshacerse.</strong></p>`;}
@@ -16667,7 +17100,7 @@ async function loadDrivers(force=false){
     state.driverMap=new Map(state.drivers.map(profile=>[String(profile.uid||profile.authUid||profile.id),profile]));return state.drivers;
   }catch(error){reportDerivationError("INIT","DRIVER_LIST_READ_FAILED",error,{functionName:"loadDrivers",firestorePath:"choferes"});throw error;}
 }
-function renderDrivers(){const box=$("derivationDriverGrid");if(!box)return;box.innerHTML=state.drivers.map(profile=>{const id=String(profile.uid||profile.authUid||profile.id),selected=id===state.selectedReceiverUid,avatar=getAvatar(profile);return`<button type="button" class="derivation-driver-card${selected?" is-selected":""}" data-select-derivation-driver="${escapeHtml(id)}"><span class="derivation-avatar">${avatar?`<img src="${escapeHtml(avatar)}" alt="">`:escapeHtml(getName(profile).slice(0,2).toUpperCase())}</span><span class="derivation-card-copy"><strong>${escapeHtml(getName(profile))}</strong><small>${escapeHtml(getVehicle(profile))}</small></span><i>${selected?"✓":""}</i></button>`;}).join("")||'<p class="derivation-empty">No hay choferes disponibles.</p>';}
+function renderDrivers(){const box=$("derivationDriverGrid");if(!box)return;box.innerHTML=state.drivers.map(profile=>{const id=String(profile.uid||profile.authUid||profile.id),selected=id===state.selectedReceiverUid,avatar=getAvatar(profile);return`<button type="button" class="derivation-driver-card${selected?" is-selected":""}" data-select-derivation-driver="${escapeHtml(id)}"><span class="derivation-avatar">${avatar?`<img src="${escapeHtml(avatar)}" alt="">`:escapeHtml(getName(profile).slice(0,2).toUpperCase())}</span><span class="derivation-card-copy"><strong>${escapeHtml(getName(profile))}</strong><small>Chofer EXPLORA</small></span><i>${selected?"✓":""}</i></button>`;}).join("")||'<p class="derivation-empty">No hay choferes disponibles.</p>';}
 function updateCompose(){const concept=String($("derivationDescription")?.value||"").trim(),amount=parseCurrencyInput($("derivationAmount")?.value),receiver=state.driverMap.get(state.selectedReceiverUid);$("derivationSummaryReceiver")&&($("derivationSummaryReceiver").textContent=receiver?getName(receiver):"Sin seleccionar");$("derivationSummaryService")&&($("derivationSummaryService").textContent=concept||"Sin completar");$("derivationSummaryPrice")&&($("derivationSummaryPrice").textContent=money(amount));const button=$("derivationSendBtn");if(button)button.disabled=derivationSaveInProgress||!(state.selectedReceiverUid&&concept&&amount>0&&state.selectedReceiverUid!==uid());}
 function resetForm(){state.selectedReceiverUid="";$("derivationDescription")&&($("derivationDescription").value="");$("derivationAmount")&&($("derivationAmount").value="");setMessage("");renderDrivers();updateCompose();}
 async function sendDerivation(event){
