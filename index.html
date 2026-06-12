@@ -2,12 +2,12 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="explora-version" content="v227-vehicle-management-base">
+  <meta name="explora-version" content="v229-bottom-nav-webview-scroll-fix">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>EXPLORA — Dashboard v227</title>
+  <title>EXPLORA — Dashboard v226</title>
 
   <style>
     :root{
@@ -4798,11 +4798,88 @@
     .performance-derivator-copy .performance-derivator-money{color:#7fe2a3;font-size:14px;font-weight:950}
 
     /* BARRA INFERIOR · ventana RTL de cinco estados: antes, actual y después. */
-    .main-bottom-nav.performance-bottom-nav{position:fixed!important;left:50%!important;right:auto!important;bottom:0!important;transform:translateX(-50%)!important;width:min(100%,520px)!important;min-height:calc(var(--explora-bottom-nav-height) + env(safe-area-inset-bottom))!important;display:block!important;padding:8px 8px calc(8px + env(safe-area-inset-bottom))!important;background:linear-gradient(180deg,rgba(6,10,14,.91),rgba(2,5,8,.98))!important;border-top:1px solid rgba(255,255,255,.10)!important;-webkit-backdrop-filter:blur(18px) saturate(125%)!important;backdrop-filter:blur(18px) saturate(125%)!important;box-shadow:0 -12px 34px rgba(0,0,0,.36)!important;overflow:hidden!important;z-index:2200!important;isolation:isolate}
-    .performance-goal-viewport{width:100%;min-width:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;scroll-padding-inline:0;scroll-behavior:smooth;scrollbar-width:none;overscroll-behavior-x:contain;overscroll-behavior-y:auto;touch-action:pan-x pan-y;container-type:inline-size;direction:ltr}
+    .main-bottom-nav.performance-bottom-nav{
+      position:fixed!important;
+      left:0!important;
+      right:0!important;
+      bottom:0!important;
+      width:min(100%,520px)!important;
+      min-height:calc(var(--explora-bottom-nav-height) + env(safe-area-inset-bottom))!important;
+      margin-left:auto!important;
+      margin-right:auto!important;
+      display:block!important;
+      padding:8px 8px calc(8px + env(safe-area-inset-bottom))!important;
+      background-color:rgba(7,10,18,.88)!important;
+      background-image:linear-gradient(180deg,rgba(18,24,32,.78),rgba(7,10,18,.92))!important;
+      border-top:1px solid rgba(255,255,255,.06)!important;
+      -webkit-backdrop-filter:blur(14px) saturate(116%)!important;
+      backdrop-filter:blur(14px) saturate(116%)!important;
+      box-shadow:0 -12px 34px rgba(0,0,0,.28)!important;
+      overflow:visible!important;
+      z-index:2200!important;
+      isolation:auto!important;
+      contain:none!important;
+      transform:none!important;
+      -webkit-transform:none!important;
+      will-change:auto!important;
+      opacity:1!important;
+      backface-visibility:visible!important;
+      -webkit-backface-visibility:visible!important;
+      mix-blend-mode:normal!important;
+    }
+    .main-bottom-nav.performance-bottom-nav::before,
+    .main-bottom-nav.performance-bottom-nav::after{
+      content:none!important;
+      display:none!important;
+    }
+    .performance-goal-viewport{
+      position:relative;
+      z-index:1;
+      width:100%;
+      min-width:0;
+      overflow-x:auto;
+      overflow-y:hidden;
+      -webkit-overflow-scrolling:auto;
+      scroll-snap-type:x mandatory;
+      scroll-padding-inline:0;
+      scroll-behavior:smooth;
+      scrollbar-width:none;
+      overscroll-behavior-x:contain;
+      overscroll-behavior-y:auto;
+      touch-action:pan-x pan-y;
+      container-type:inline-size;
+      direction:ltr;
+      background:transparent;
+      transform:none;
+      -webkit-transform:none;
+      will-change:auto;
+      isolation:auto;
+    }
     .performance-goal-viewport::-webkit-scrollbar{display:none}
-    .performance-goal-track{--goal-bubble-width:calc((100cqw - 28px) / 5);display:grid;grid-auto-flow:column;grid-auto-columns:var(--goal-bubble-width);gap:7px;width:max-content;min-width:100%;padding:1px 0;margin:0;direction:ltr}
-    .performance-goal-bubble,.goal-bubble{--tier-rgb:174,146,92;position:relative;width:var(--goal-bubble-width);height:94px;min-width:var(--goal-bubble-width);max-width:var(--goal-bubble-width);border:1px solid rgba(var(--tier-rgb),.30);border-radius:22px;appearance:none;-webkit-appearance:none;background:radial-gradient(circle at 24% 10%,rgba(var(--tier-rgb),.10),transparent 38%),linear-gradient(155deg,rgba(19,23,28,.96),rgba(6,9,12,.99));color:#f4f5f6;display:grid;grid-template-rows:10px 20px 16px 28px;place-items:center;align-content:center;gap:2px;padding:7px 4px 6px;font:inherit;text-align:center;scroll-snap-align:start;scroll-snap-stop:always;touch-action:pan-x pan-y;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 7px 18px rgba(0,0,0,.24);direction:ltr;isolation:isolate}
+    .performance-goal-track{--goal-bubble-width:calc((100cqw - 28px) / 5);display:grid;grid-auto-flow:column;grid-auto-columns:var(--goal-bubble-width);gap:7px;width:max-content;min-width:100%;padding:1px 0;margin:0;direction:ltr;background:transparent;transform:none;-webkit-transform:none;will-change:auto;isolation:auto}
+    .performance-goal-bubble,.goal-bubble{--tier-rgb:174,146,92;position:relative;width:var(--goal-bubble-width);height:94px;min-width:var(--goal-bubble-width);max-width:var(--goal-bubble-width);border:1px solid rgba(var(--tier-rgb),.30);border-radius:22px;appearance:none;-webkit-appearance:none;background:radial-gradient(circle at 24% 10%,rgba(var(--tier-rgb),.10),transparent 38%),linear-gradient(155deg,rgba(19,23,28,.96),rgba(6,9,12,.99));color:#f4f5f6;display:grid;grid-template-rows:10px 20px 16px 28px;place-items:center;align-content:center;gap:2px;padding:7px 4px 6px;font:inherit;text-align:center;scroll-snap-align:start;scroll-snap-stop:always;touch-action:pan-x pan-y;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 7px 18px rgba(0,0,0,.24);direction:ltr;isolation:auto;backface-visibility:visible;-webkit-backface-visibility:visible}
+    @supports (-webkit-touch-callout:none){
+      .main-bottom-nav.performance-bottom-nav{
+        background-color:rgba(7,10,18,.88)!important;
+        background-image:linear-gradient(180deg,rgba(16,22,30,.82),rgba(7,10,18,.94))!important;
+        border-top-color:rgba(255,255,255,.06)!important;
+        -webkit-backdrop-filter:blur(12px) saturate(112%)!important;
+        backdrop-filter:blur(12px) saturate(112%)!important;
+      }
+      html.explora-ios-webview .main-bottom-nav.performance-bottom-nav{
+        background-color:rgba(7,10,18,.92)!important;
+        background-image:linear-gradient(180deg,rgba(18,24,32,.93),rgba(7,10,18,.97))!important;
+        -webkit-backdrop-filter:none!important;
+        backdrop-filter:none!important;
+        box-shadow:0 -10px 30px rgba(0,0,0,.24)!important;
+      }
+    }
+    @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+      .main-bottom-nav.performance-bottom-nav{
+        background-color:rgba(7,10,18,.94)!important;
+        background-image:linear-gradient(180deg,rgba(17,23,31,.94),rgba(7,10,18,.98))!important;
+      }
+    }
     .performance-goal-bubble em,.goal-bubble em{position:relative;z-index:2;max-width:100%;color:rgba(255,255,255,.76);font-size:8px;font-style:normal;font-weight:950;letter-spacing:.065em;line-height:1;text-transform:uppercase;white-space:nowrap}
     .performance-goal-bubble>strong,.goal-bubble>strong{position:relative;z-index:2;font-size:18px;line-height:1;font-weight:950;letter-spacing:-.025em}
     .performance-goal-bubble>.goal-amount,.goal-bubble>.goal-amount{position:relative;z-index:2;max-width:100%;font-size:8.2px;font-weight:900;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -4815,7 +4892,7 @@
     .goal-bubble--gold{--tier-rgb:255,207,82}
 
     .goal-bubble--locked{border-color:rgba(var(--tier-rgb),.28);background:radial-gradient(circle at 24% 10%,rgba(var(--tier-rgb),.08),transparent 39%),linear-gradient(155deg,rgba(21,25,30,.94),rgba(7,10,13,.99));color:rgba(245,247,249,.74);box-shadow:inset 0 1px 0 rgba(255,255,255,.035),0 7px 18px rgba(0,0,0,.25)}
-    .goal-bubble-lock-layer{position:absolute;inset:0;z-index:4;border-radius:inherit;pointer-events:none;background:linear-gradient(155deg,rgba(7,10,14,.34),rgba(1,4,7,.48));-webkit-backdrop-filter:blur(1.8px) saturate(82%);backdrop-filter:blur(1.8px) saturate(82%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.035)}
+    .goal-bubble-lock-layer{position:absolute;inset:0;z-index:4;border-radius:inherit;pointer-events:none;background:linear-gradient(155deg,rgba(11,15,20,.52),rgba(4,7,11,.66));-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.035);transform:none;-webkit-transform:none;will-change:auto}
     .goal-bubble-lock-icon{position:absolute;right:7px;top:7px;width:17px;height:14px;border:1.6px solid rgba(235,239,244,.84);border-radius:4px;background:rgba(6,9,12,.66);box-shadow:0 3px 8px rgba(0,0,0,.28)}
     .goal-bubble-lock-icon::before{content:"";position:absolute;left:3px;right:3px;top:-8px;height:9px;border:1.6px solid rgba(235,239,244,.84);border-bottom:0;border-radius:8px 8px 0 0}
     .goal-bubble-lock-icon::after{content:"";position:absolute;left:50%;top:4px;width:2px;height:5px;border-radius:2px;background:rgba(235,239,244,.84);transform:translateX(-50%)}
@@ -4824,10 +4901,10 @@
     .goal-bubble--unlocked{border-color:rgba(var(--tier-rgb),.38);background:radial-gradient(circle at 24% 10%,rgba(var(--tier-rgb),.14),transparent 39%),linear-gradient(155deg,rgba(24,29,34,.96),rgba(7,11,14,.99));color:#eef2f4;box-shadow:inset 0 1px 0 rgba(255,255,255,.055),0 7px 18px rgba(0,0,0,.25)}
     .goal-bubble--unlocked::after{content:"✓";position:absolute;right:6px;top:5px;z-index:3;width:17px;height:17px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(112,232,161,.48);background:rgba(37,118,73,.30);color:#9ce8bb;font-size:9px;font-weight:950}
 
-    .goal-bubble--active{z-index:5;border-color:rgba(245,197,78,.88);background:radial-gradient(circle at 20% 10%,rgba(95,230,147,.17),transparent 37%),radial-gradient(circle at 85% 88%,rgba(245,185,66,.16),transparent 42%),linear-gradient(155deg,rgba(22,49,35,.98),rgba(15,24,17,.99));color:#fff5cf;box-shadow:inset 0 1px 0 rgba(255,255,255,.11),0 0 18px rgba(67,221,126,.18),0 0 24px rgba(245,185,66,.18),0 9px 22px rgba(0,0,0,.32);animation:goalActiveBreath 3.2s ease-in-out infinite;will-change:box-shadow,border-color,transform}
+    .goal-bubble--active{z-index:5;border-color:rgba(245,197,78,.88);background:radial-gradient(circle at 20% 10%,rgba(95,230,147,.17),transparent 37%),radial-gradient(circle at 85% 88%,rgba(245,185,66,.16),transparent 42%),linear-gradient(155deg,rgba(22,49,35,.98),rgba(15,24,17,.99));color:#fff5cf;box-shadow:inset 0 1px 0 rgba(255,255,255,.11),0 0 18px rgba(67,221,126,.18),0 0 24px rgba(245,185,66,.18),0 9px 22px rgba(0,0,0,.32);animation:goalActiveBreath 3.2s ease-in-out infinite;will-change:auto;transform:none;-webkit-transform:none}
     .goal-bubble--active::before{content:"";position:absolute;inset:0;z-index:1;border-radius:inherit;pointer-events:none;background:linear-gradient(120deg,transparent 12%,rgba(255,255,255,.08) 35%,transparent 57%);opacity:.72}
     .goal-bubble--active>small b{color:#9ce8bb}
-    @keyframes goalActiveBreath{0%,100%{transform:scale(1);border-color:rgba(245,197,78,.72);box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 0 15px rgba(67,221,126,.14),0 0 20px rgba(245,185,66,.14),0 9px 22px rgba(0,0,0,.30)}50%{transform:scale(1.012);border-color:rgba(105,235,158,.82);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 0 24px rgba(67,221,126,.27),0 0 31px rgba(245,185,66,.25),0 10px 24px rgba(0,0,0,.34)}}
+    @keyframes goalActiveBreath{0%,100%{border-color:rgba(245,197,78,.72);box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 0 15px rgba(67,221,126,.14),0 0 20px rgba(245,185,66,.14),0 9px 22px rgba(0,0,0,.30)}50%{border-color:rgba(105,235,158,.82);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 0 24px rgba(67,221,126,.27),0 0 31px rgba(245,185,66,.25),0 10px 24px rgba(0,0,0,.34)}}
 
     .goal-bubble--zero{--tier-rgb:151,172,186}
     .goal-bubble--decorative{--tier-rgb:132,108,177;border-style:dashed;background:radial-gradient(circle at 24% 10%,rgba(183,146,255,.13),transparent 40%),linear-gradient(155deg,rgba(25,21,34,.96),rgba(9,8,14,.99));color:#dbcaff}
@@ -4836,7 +4913,7 @@
     .goal-bubble--decorative>small i{white-space:normal;line-height:1.08;text-wrap:balance}
 
     .performance-goal-bubble.is-celebrating,.goal-bubble.is-celebrating{animation:performanceGoalCelebrate .95s cubic-bezier(.2,.78,.24,1) both}
-    @keyframes performanceGoalCelebrate{0%{transform:scale(.985)}42%{transform:scale(1.025);box-shadow:0 0 26px rgba(61,221,126,.26),0 9px 21px rgba(0,0,0,.28)}100%{transform:scale(1)}}
+    @keyframes performanceGoalCelebrate{0%{opacity:.94;box-shadow:0 0 18px rgba(61,221,126,.16),0 9px 21px rgba(0,0,0,.28)}42%{opacity:1;box-shadow:0 0 26px rgba(61,221,126,.26),0 9px 21px rgba(0,0,0,.28)}100%{opacity:1}}
 
     @media(max-width:390px){.performance-dashboard-grid{grid-template-columns:1fr}.performance-dashboard-card{min-width:0;min-height:198px;border:1px solid var(--ex-border);border-radius:var(--ex-card-radius);background:var(--ex-panel);color:#fff;padding:14px;text-align:left;overflow:hidden;box-shadow:var(--ex-shadow);touch-action:manipulation}.performance-podium{min-height:128px}.performance-derivator-body{min-height:132px}.performance-derivator-percent-ring{width:66px;height:66px}.performance-cycle-summary{grid-template-columns:1fr 1fr}.profile-goal-metrics{grid-template-columns:1fr}.performance-diagnostic-actions{grid-template-columns:1fr}}
     @media(max-width:360px){.main-bottom-nav.performance-bottom-nav{padding-left:5px!important;padding-right:5px!important}.performance-goal-track{--goal-bubble-width:calc((100cqw - 28px) / 5)}.performance-goal-bubble>strong,.goal-bubble>strong{font-size:16px}.performance-goal-bubble>.goal-amount,.goal-bubble>.goal-amount{font-size:7.2px}.performance-goal-bubble>small b,.performance-goal-bubble>small i,.goal-bubble>small b,.goal-bubble>small i{font-size:6.2px}}
@@ -9669,7 +9746,6 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
 
     async function assignVehicleToDriver({ driverDocumentId, driverUid, driverName, vehicleId = "", driverPatch = {} } = {}) {
       const session = assertVehicleAdmin("ADMIN_ONLY_CHECK");
-      let assignmentStage = "ASSIGN_VEHICLE_TO_DRIVER";
       const cleanDriverDocumentId = String(driverDocumentId || "").trim();
       const cleanDriverUid = String(driverUid || "").trim();
       const cleanDriverName = normalizeVehicleModel(driverName);
@@ -9699,7 +9775,6 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
           }
 
           if (previousRef && previousSnap?.exists()) {
-            assignmentStage = "RELEASE_PREVIOUS_VEHICLE";
             const previousData = previousSnap.data() || {};
             const previousAssignment = vehicleAssignmentState(previousData);
             const identities = new Set([cleanDriverUid, cleanDriverDocumentId, cleanDriverName].map(value => String(value || "").trim().toLowerCase()).filter(Boolean));
@@ -9742,7 +9817,6 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
             patenteVehiculo:null
           };
 
-          assignmentStage = "UPDATE_DRIVER_VEHICLE";
           transaction.set(driverRef, {
             ...driverPatch,
             ...assignmentPatch,
@@ -9751,7 +9825,6 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
           }, { merge:true });
 
           if (nextRef) {
-            assignmentStage = "UPDATE_VEHICLE_ASSIGNMENT";
             transaction.set(nextRef, {
               vehicleId:cleanVehicleId,
               currentDriverUid:cleanDriverUid || cleanDriverDocumentId,
@@ -9768,9 +9841,8 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         });
         return true;
       } catch (error) {
-        const fallbackCode = assignmentStage === "RELEASE_PREVIOUS_VEHICLE" ? "VEHICLE_RELEASE_FAILED" : assignmentStage === "UPDATE_DRIVER_VEHICLE" ? "DRIVER_VEHICLE_UPDATE_FAILED" : "VEHICLE_ASSIGNMENT_FAILED";
-        const internal = error?.internalCode ? error : vehicleInternalError(assignmentStage, fallbackCode, "No se pudo actualizar la asignación del vehículo.", error, { vehicleId:cleanVehicleId });
-        showVehicleDiagnostic(internal.vehicleStage || assignmentStage, internal.internalCode || fallbackCode, internal, {
+        const internal = error?.internalCode ? error : vehicleInternalError("UPDATE_VEHICLE_ASSIGNMENT", cleanVehicleId ? "VEHICLE_ASSIGNMENT_FAILED" : "VEHICLE_RELEASE_FAILED", "No se pudo actualizar la asignación del vehículo.", error, { vehicleId:cleanVehicleId });
+        showVehicleDiagnostic(internal.vehicleStage || "UPDATE_VEHICLE_ASSIGNMENT", internal.internalCode || "VEHICLE_ASSIGNMENT_FAILED", internal, {
           functionName:"assignVehicleToDriver", driverUid:cleanDriverUid, driverName:cleanDriverName, vehicleId:cleanVehicleId,
           firestorePath:`choferes/${cleanDriverDocumentId} + vehiculos/${cleanVehicleId || "anterior"}`, queryUsed:"runTransaction"
         });
@@ -17315,7 +17387,7 @@ function profileName(profile,id){return String(profile?.nombreCompleto||profile?
 function profileAvatar(profile){return String(profile?.avatarUrl||profile?.fotoPerfil||profile?.photoURL||profile?.avatar||profile?.foto||"").trim();}
 function role(){const raw=window.ExploraSession?.role||window.ExploraAuthSession?.role||"";return normalize(raw||(document.body.classList.contains("explora-shared-admin")?"admin":"chofer"));}
 
-const GOAL_DIAGNOSTIC_STAGES=new Set(["INIT","OPEN_DERIVATION_MENU","VALIDATE_DERIVATION_FORM","CREATE_DERIVATION","SEND_DERIVATION_NOTICE","READ_INCOMING_DERIVATIONS","ACCEPT_DERIVATION","REJECT_DERIVATION","OPEN_RECEIVER_PENDING_CARD","VALIDATE_RECEIVER_INVOICE","CONFIRM_DERIVATION_INVOICE","CALCULATE_COLLABORATION","UPDATE_DERIVATION_RANKING","UPDATE_ADMIN_WEEKLY_BILLING","INTEGRATE_WEEKLY_CLOSURE","READ_RANKING","RENDER_RANKING","RENDER_DASHBOARD_CARD","CYCLE_CLOSE","ROLLBACK","READ_BILLING","CALCULATE_GOALS","ORDER_GOAL_WINDOW","RENDER_GOAL_BUBBLES","ANIMATION_TRIGGER","WEEKLY_BENEFIT","APP_RESET","CALCULATE_GOAL_WINDOW","RENDER_GOAL_CAROUSEL","APPLY_LOCK_LAYER","APPLY_ACTIVE_GLOW","UPDATE_RANKING_LABELS","SCROLL_DIRECTION_INIT","BUILD_GOAL_WINDOW","REMOVE_FAKE_GOALS","SCROLL_HORIZONTAL","SCROLL_TO_PRESENT","VERTICAL_SCROLL_RESET","CLICK_RESET","TOUCH_HANDLER","CSS_OVERFLOW_CHECK"]);
+const GOAL_DIAGNOSTIC_STAGES=new Set(["INIT","OPEN_DERIVATION_MENU","VALIDATE_DERIVATION_FORM","CREATE_DERIVATION","SEND_DERIVATION_NOTICE","READ_INCOMING_DERIVATIONS","ACCEPT_DERIVATION","REJECT_DERIVATION","OPEN_RECEIVER_PENDING_CARD","VALIDATE_RECEIVER_INVOICE","CONFIRM_DERIVATION_INVOICE","CALCULATE_COLLABORATION","UPDATE_DERIVATION_RANKING","UPDATE_ADMIN_WEEKLY_BILLING","INTEGRATE_WEEKLY_CLOSURE","READ_RANKING","RENDER_RANKING","RENDER_DASHBOARD_CARD","CYCLE_CLOSE","ROLLBACK","READ_BILLING","CALCULATE_GOALS","ORDER_GOAL_WINDOW","RENDER_GOAL_BUBBLES","ANIMATION_TRIGGER","WEEKLY_BENEFIT","APP_RESET","CALCULATE_GOAL_WINDOW","RENDER_GOAL_CAROUSEL","APPLY_LOCK_LAYER","APPLY_ACTIVE_GLOW","UPDATE_RANKING_LABELS","SCROLL_DIRECTION_INIT","SCROLL_RENDER","BUILD_GOAL_WINDOW","REMOVE_FAKE_GOALS","SCROLL_HORIZONTAL","SCROLL_TO_PRESENT","VERTICAL_SCROLL_RESET","CLICK_RESET","TOUCH_HANDLER","CSS_OVERFLOW_CHECK"]);
 function prefersReducedMotion(){return Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);}
 function goalTier(goalOrId){const id=Number(goalOrId?.id??goalOrId??0);return id<=5?"bronze":id<=8?"silver":"gold";}
 function goalTierLabel(goalOrId){return({bronze:"BRONCE",silver:"PLATA",gold:"ORO"})[goalTier(goalOrId)]||"BRONCE";}
@@ -17452,7 +17524,7 @@ function diagnostic(stage,code,error,context={}){
   const unlockedGoalLabels=(view.unlockedGoals||[]).map(id=>id===0?"Meta 0":`Meta ${id}`).join(", ")||"—";
   const carouselStages=new Set(["CALCULATE_GOAL_WINDOW","RENDER_GOAL_CAROUSEL","APPLY_LOCK_LAYER","APPLY_ACTIVE_GLOW","UPDATE_RANKING_LABELS","SCROLL_DIRECTION_INIT","BUILD_GOAL_WINDOW","REMOVE_FAKE_GOALS","RENDER_GOAL_BUBBLES","SCROLL_HORIZONTAL","SCROLL_TO_PRESENT","VERTICAL_SCROLL_RESET","CLICK_RESET","TOUCH_HANDLER","CSS_OVERFLOW_CHECK"]);
   const isReset=APP_RESET_DIAGNOSTIC_STAGES.has(normalizedStage)||String(code||"").startsWith("APP_RESET_");
-  const diagnosticModule=isReset?"APP_RESET":carouselStages.has(normalizedStage)?"GOAL_BUBBLES_SCROLL":"PERFORMANCE_MONTHLY_AND_DERIVATIONS";
+  const diagnosticModule=isReset?"APP_RESET":normalizedStage==="SCROLL_RENDER"?"BOTTOM_NAV":carouselStages.has(normalizedStage)?"GOAL_BUBBLES_SCROLL":"PERFORMANCE_MONTHLY_AND_DERIVATIONS";
   const normalizedCode=String(code||"").toUpperCase();
   const eventType=String(context.eventType||(normalizedCode==="APP_RESET_COMPLETED"?"SUCCESS":normalizedCode==="APP_RESET_PARTIAL"?"WARNING":"ERROR")).toUpperCase();
   const safeEventType=["SUCCESS","WARNING","ERROR"].includes(eventType)?eventType:"ERROR";
@@ -17505,6 +17577,9 @@ function diagnostic(stage,code,error,context={}){
     `TIEMPO DE EJECUCIÓN: ${context.executionMs!=null?`${context.executionMs} ms`:"—"}`,
     `FALLOS / ADVERTENCIAS: ${context.failures||"—"}`,
     `RESULTADO: ${context.result||code||"—"}`,
+    `SCROLL POSITION: ${context.scrollPosition??context.scrollY??"—"}`,
+    `SAFE AREA: ${context.safeArea||"—"}`,
+    `DEVICE: ${context.device||navigator.userAgent||"—"}`,
     `TIMESTAMP: ${new Date().toISOString()}`
   ].join("\n");
   const signature=[diagnosticModule,normalizedStage,String(code||""),String(context.firestorePath||context.firestore||"—")].join("|");
@@ -18165,6 +18240,139 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
   "use strict";
   document.addEventListener("input",event=>{
     if(event.target?.id==="adminLoanAmount")event.target.value=window.formatCurrencyInput?.(event.target.value)||event.target.value;
+  });
+})();
+</script>
+
+
+<script id="exploraBottomNavScrollRenderV229">
+(()=>{
+  "use strict";
+  const MODULE="BOTTOM_NAV",STAGE="SCROLL_RENDER",CODE="BOTTOM_NAV_REPAINT_FAILED";
+  const $=id=>document.getElementById(id);
+  let timer=0,reported=false,hasRealScroll=false,lastScrollY=Math.round(window.scrollY||0),failureCount=0;
+
+  const ua=navigator.userAgent||"";
+  const isIOS=/iP(?:hone|ad|od)/i.test(ua);
+  const isEmbeddedWebView=isIOS&&(!/Safari\//i.test(ua)||location.protocol==="file:");
+  if(isEmbeddedWebView)document.documentElement.classList.add("explora-ios-webview");
+
+  const safeArea=()=>{
+    const probe=document.createElement("div");
+    probe.style.cssText="position:fixed;left:-9999px;bottom:0;padding-bottom:env(safe-area-inset-bottom);visibility:hidden;pointer-events:none";
+    document.body.appendChild(probe);
+    const value=getComputedStyle(probe).paddingBottom||"0px";
+    probe.remove();
+    return value;
+  };
+
+  function diagnostic(error,detail={}){
+    if(reported)return;
+    reported=true;
+    const context={
+      eventType:"ERROR",
+      functionName:"validateBottomNavScrollRender",
+      scrollPosition:Math.round(window.scrollY||document.documentElement.scrollTop||0),
+      safeArea:safeArea(),
+      device:ua||"—",
+      result:CODE,
+      firestorePath:"DOM#mainBottomNav",
+      query:"getBoundingClientRect + getComputedStyle",
+      ...detail
+    };
+    if(typeof window.ExploraPerformanceEngine?.showDiagnostic==="function"){
+      window.ExploraPerformanceEngine.showDiagnostic(STAGE,CODE,error,context);
+      return;
+    }
+    const payload=[
+      "EXPLORA - ERROR BOTTOM_NAV",`MÓDULO: ${MODULE}`,`ETAPA: ${STAGE}`,`CÓDIGO: ${CODE}`,
+      `MENSAJE REAL: ${error?.message||String(error||CODE)}`,`STACK: ${error?.stack||"—"}`,
+      "FUNCIÓN: validateBottomNavScrollRender",`SCROLL POSITION: ${context.scrollPosition}`,
+      `SAFE AREA: ${context.safeArea}`,`DEVICE: ${context.device}`,`TIMESTAMP: ${new Date().toISOString()}`
+    ].join("\n");
+    const backdrop=$("performanceDiagnosticBackdrop"),text=$("performanceDiagnosticText"),title=$("performanceDiagnosticTitle");
+    if(text)text.textContent=payload;
+    if(title)title.textContent="EXPLORA · DIAGNÓSTICO";
+    backdrop?.classList.add("is-open");
+    backdrop?.setAttribute("aria-hidden","false");
+  }
+
+  function identityTransform(value){
+    if(!value||value==="none")return true;
+    try{
+      const matrix=new DOMMatrixReadOnly(value);
+      return Math.abs(matrix.a-1)<.002&&Math.abs(matrix.b)<.002&&Math.abs(matrix.c)<.002&&Math.abs(matrix.d-1)<.002&&Math.abs(matrix.e)<1&&Math.abs(matrix.f)<1;
+    }catch(_){return false;}
+  }
+
+  function inspect(){
+    const nav=$("mainBottomNav");
+    if(!nav||!nav.isConnected||!document.body.classList.contains("explora-authenticated"))return null;
+    if(document.visibilityState!=="visible")return null;
+    const rect=nav.getBoundingClientRect();
+    const style=getComputedStyle(nav);
+    const vv=window.visualViewport;
+    const layoutBottom=window.innerHeight||document.documentElement.clientHeight||0;
+    const visualBottom=vv?vv.height+vv.offsetTop:layoutBottom;
+    const bottomDistance=Math.min(Math.abs(rect.bottom-layoutBottom),Math.abs(rect.bottom-visualBottom));
+    const viewportDelta=Math.abs(layoutBottom-visualBottom);
+    const tolerance=Math.max(24,Math.min(96,viewportDelta+18));
+    const visible=style.display!=="none"&&style.visibility!=="hidden"&&Number.parseFloat(style.opacity||"1")>.05;
+    const anchored=bottomDistance<=tolerance;
+    const sized=rect.width>=Math.min(260,window.innerWidth*.70)&&rect.height>=68;
+    const fixed=style.position==="fixed";
+    const stableTransform=identityTransform(style.transform);
+    return {ok:visible&&anchored&&sized&&fixed&&stableTransform,visible,anchored,sized,fixed,stableTransform,rect,style,layoutBottom,visualBottom,bottomDistance,tolerance};
+  }
+
+  function validate(){
+    timer=0;
+    if(!hasRealScroll)return;
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      try{
+        const result=inspect();
+        if(!result)return;
+        if(result.ok){failureCount=0;return;}
+        failureCount+=1;
+        if(failureCount<3)return;
+        throw Object.assign(new Error("La navegación inferior perdió su anclaje o composición visual durante el scroll."),{
+          code:CODE,
+          details:{
+            rectBottom:Math.round(result.rect.bottom),
+            rectHeight:Math.round(result.rect.height),
+            rectWidth:Math.round(result.rect.width),
+            layoutBottom:Math.round(result.layoutBottom),
+            visualBottom:Math.round(result.visualBottom),
+            bottomDistance:Math.round(result.bottomDistance),
+            tolerance:Math.round(result.tolerance),
+            position:result.style.position,
+            transform:result.style.transform
+          }
+        });
+      }catch(error){
+        diagnostic(error,{validationDetails:error?.details||null,failureCount});
+      }
+    }));
+  }
+
+  function scheduleFromScroll(){
+    const currentY=Math.round(window.scrollY||document.documentElement.scrollTop||0);
+    if(Math.abs(currentY-lastScrollY)>=2)hasRealScroll=true;
+    lastScrollY=currentY;
+    clearTimeout(timer);
+    timer=setTimeout(validate,260);
+  }
+
+  window.addEventListener("scroll",scheduleFromScroll,{passive:true});
+  window.visualViewport?.addEventListener("resize",()=>{if(hasRealScroll)scheduleFromScroll();},{passive:true});
+  window.visualViewport?.addEventListener("scroll",()=>{if(hasRealScroll)scheduleFromScroll();},{passive:true});
+  window.addEventListener("orientationchange",()=>{failureCount=0;hasRealScroll=false;lastScrollY=Math.round(window.scrollY||0);},{passive:true});
+  document.addEventListener("visibilitychange",()=>{
+    if(document.visibilityState==="visible"){
+      failureCount=0;
+      hasRealScroll=false;
+      lastScrollY=Math.round(window.scrollY||0);
+    }
   });
 })();
 </script>
