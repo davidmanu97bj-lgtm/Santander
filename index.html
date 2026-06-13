@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>EXPLORA — Dashboard v251</title>
+  <title>EXPLORA — Dashboard v251 · Tiempo real</title>
 
   <style>
     :root{
@@ -4630,9 +4630,6 @@
     .derivation-finalize-head h2{margin:0;color:#fff;font-family:inherit;font-size:clamp(19px,5.2vw,24px);font-weight:900;line-height:1.08;letter-spacing:.035em}
     .derivation-finalize-head p{margin:5px 0 0;color:var(--ex-muted);font-family:inherit;font-size:12px;line-height:1.35}.derivation-reminder-list{display:grid;gap:9px}.derivation-reminder-row{display:grid;gap:7px;padding:12px;border:1px solid rgba(183,146,255,.18);border-radius:17px;background:rgba(183,146,255,.06)}.derivation-reminder-row strong{font-size:14px}.derivation-reminder-row small{color:rgba(255,255,255,.57)}.derivation-reminder-row button{min-height:42px;border:0;border-radius:13px;background:#d4af37;color:#070707;font-weight:950}.derivation-modal-footer{display:grid;grid-template-columns:1fr;gap:8px;margin-top:13px}.derivation-modal-footer button{min-height:46px;border:1px solid rgba(255,255,255,.09);border-radius:14px;background:rgba(255,255,255,.05);color:#fff;font:inherit;font-weight:900}.derivation-modal-footer .primary{background:linear-gradient(180deg,#efd36a,#b98a20);color:#070707;border:0}
     .derivation-payment-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:12px 0}.derivation-payment-option{min-width:0;height:50px;min-height:50px;border:1px solid var(--ex-border);border-radius:var(--ex-control-radius);background:rgba(255,255,255,.035);color:#e9ebee;font:inherit;font-size:12px;font-weight:900;letter-spacing:.02em}.derivation-payment-option.is-selected{border-color:rgba(245,185,66,.58);background:linear-gradient(180deg,rgba(245,185,66,.15),rgba(245,185,66,.07));color:#f4cd6b;box-shadow:0 0 0 2px rgba(245,185,66,.06),0 8px 18px rgba(0,0,0,.20)}
-    .derivation-payment-option:disabled{opacity:.48;cursor:not-allowed;box-shadow:none!important;transform:none!important}
-    #derivationFinalizeConfirmBtn:disabled,#derivationFinalizeConfirmBtn[aria-disabled="true"]{opacity:.42;cursor:not-allowed;box-shadow:none!important;transform:none!important;animation:none!important}
-
     .derivation-finalize-summary{display:grid;gap:0;padding:0;border:1px solid var(--ex-border);border-radius:17px;background:rgba(255,255,255,.025);overflow:hidden}.derivation-finalize-summary div{display:grid;grid-template-columns:minmax(94px,.72fr) minmax(0,1.28fr);align-items:center;gap:12px;min-height:42px;padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.06)}.derivation-finalize-summary div:last-child{border-bottom:0}.derivation-finalize-summary span{color:rgba(255,255,255,.48);font-size:10px;font-weight:850;letter-spacing:.055em;text-transform:uppercase}.derivation-finalize-summary strong{text-align:right;color:#fff;font-size:13px;overflow-wrap:anywhere}
     body.explora-shared-admin .derivation-notification-stack{display:none}
     @media(max-width:390px){.derivation-screen{position:fixed;inset:0;z-index:70;display:none;min-height:100dvh;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:auto;touch-action:pan-y;color:#fff;background:var(--ex-screen-bg);padding:max(16px,env(safe-area-inset-top)) 16px calc(var(--explora-bottom-nav-height,78px) + 30px + env(safe-area-inset-bottom))}.derivation-tabs{gap:4px}.derivation-tab{font-size:10px}.derivation-payment-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:12px 0}.derivation-history-head{grid-template-columns:40px minmax(0,1fr)}.derivation-history-state{grid-column:2;justify-self:start}.derivation-notification-actions{grid-template-columns:1fr 1fr}.derivation-finalize-modal{width:min(100%,450px);padding:16px;border:1px solid rgba(183,146,255,.24);border-radius:var(--ex-card-radius);background:radial-gradient(circle at 8% 0%,rgba(183,146,255,.10),transparent 34%),radial-gradient(circle at 90% 0%,rgba(245,185,66,.06),transparent 36%),var(--ex-panel);color:#fff;box-shadow:0 30px 80px rgba(0,0,0,.64),inset 0 1px 0 rgba(255,255,255,.04)}.derivation-finalize-head{display:grid;grid-template-columns:50px minmax(0,1fr);gap:12px;align-items:center;margin-bottom:13px}.derivation-finalize-icon{width:46px;height:46px}.derivation-finalize-summary div{grid-template-columns:88px minmax(0,1fr);padding:8px 10px}}
@@ -5187,7 +5184,7 @@
   </style>
 
 
-  <style id="explora-v251-weekly-live-sync-css">
+  <style id="explora-v250-weekly-loan-badges-css">
     /* Semana única: burbujas limpias, dos líneas y ningún monto auxiliar. */
     .performance-goal-track{--goal-bubble-width:calc((100cqw - 28px)/5);gap:7px}
     .performance-goal-bubble,.goal-bubble{
@@ -5244,6 +5241,20 @@
     .closure-administrative-status span{color:rgba(255,255,255,.7);font-size:12px;line-height:1.35}
     .closure-administrative-status[data-state="completed"]{border-color:rgba(92,226,142,.3);background:rgba(26,126,70,.13)}
     .closure-administrative-status[data-state="completed"] strong{color:#8ef0b1}
+  </style>
+
+
+  <style id="explora-dashboard-realtime-css">
+    .dashboard-realtime-status{align-self:flex-start;display:inline-flex;align-items:center;gap:7px;min-height:27px;margin-top:-8px;padding:5px 10px;border:1px solid rgba(255,255,255,.09);border-radius:999px;background:rgba(10,15,19,.76);color:rgba(255,255,255,.67);font-size:10px;font-weight:850;letter-spacing:.025em;line-height:1;transition:opacity .18s ease,border-color .18s ease,color .18s ease;pointer-events:none}
+    .dashboard-realtime-status::before{content:"";width:7px;height:7px;border-radius:50%;background:#8b949e;box-shadow:0 0 0 3px rgba(139,148,158,.09)}
+    .dashboard-realtime-status[data-state="syncing"]{color:#f4cc73;border-color:rgba(245,185,66,.20)}
+    .dashboard-realtime-status[data-state="syncing"]::before{background:#f3c45d;animation:exploraRealtimePulse 1s ease-in-out infinite}
+    .dashboard-realtime-status[data-state="updated"]{color:#8feeb0;border-color:rgba(98,223,145,.20)}
+    .dashboard-realtime-status[data-state="updated"]::before{background:#62df91}
+    .dashboard-realtime-status[data-state="offline"],.dashboard-realtime-status[data-state="error"]{color:#ffbf8e;border-color:rgba(255,145,84,.24)}
+    .dashboard-realtime-status[data-state="offline"]::before,.dashboard-realtime-status[data-state="error"]::before{background:#ff985f}
+    @keyframes exploraRealtimePulse{0%,100%{opacity:.45}50%{opacity:1}}
+    @media(prefers-reduced-motion:reduce){.dashboard-realtime-status[data-state="syncing"]::before{animation:none}}
   </style>
 
 </head>
@@ -6294,7 +6305,7 @@
         <button type="button" class="derivation-payment-option" data-derivation-payment="other">OTRO</button>
       </div>
       <div id="derivationFinalizeMessage" class="derivation-message" aria-live="polite"></div>
-      <div class="derivation-modal-footer derivation-modal-footer--three"><button id="derivationFinalizeRejectBtn" class="danger" type="button">RECHAZAR DEFINITIVAMENTE</button><button id="derivationFinalizeCancelBtn" type="button">CANCELAR</button><button id="derivationFinalizeConfirmBtn" class="primary" type="button" disabled aria-disabled="true">CONFIRMAR DERIVACIÓN</button></div>
+      <div class="derivation-modal-footer derivation-modal-footer--three"><button id="derivationFinalizeRejectBtn" class="danger" type="button">RECHAZAR DEFINITIVAMENTE</button><button id="derivationFinalizeCancelBtn" type="button">CANCELAR</button><button id="derivationFinalizeConfirmBtn" class="primary" type="button" disabled>CONFIRMAR CARGA</button></div>
     </section>
   </div>
 
@@ -6316,7 +6327,7 @@
 
       <section class="performance-cycle-summary" aria-live="polite">
         <div><span>Dinero facturado</span><strong id="performanceCurrentBilling">$0</strong></div>
-        <div><span>Meta activa</span><strong id="performanceCurrentGoal">Meta 1</strong></div>
+        <div><span>Meta activa</span><strong id="performanceCurrentGoal">Meta 0</strong></div>
         <div><span>Te faltan</span><strong id="performanceMissingAmount">$600.000</strong></div>
         <div><span>Meta alcanzada</span><strong id="performanceRewardPercent">0%</strong></div>
       </section>
@@ -6359,8 +6370,8 @@
           <h2>CÓMO FUNCIONAN LAS DERIVACIONES</h2>
           <p>El ranking se ordena por el dinero derivado que ya fue aceptado y facturado.</p>
           <p>El emisor suma el monto final del servicio. El receptor no suma dinero derivado.</p>
-          <p>El monto verde muestra el bono del 10%.</p>
-          <div class="performance-rule-example"><strong>EJEMPLO</strong><span>Si Marcelo lleva $300.000 derivados, su bono es +$30.000.</span></div>
+          <p>El monto verde muestra el bono proyectado del 10%.</p>
+          <div class="performance-rule-example"><strong>EJEMPLO</strong><span>Si Marcelo lleva $300.000 derivados, su bono proyectado es +$30.000.</span></div>
           <p>El cierre y el ranking semanal se renuevan cada sábado a las 00:05.</p>
         </article>
         <div class="ranking-derived-heading"><span>RANKING DE DERIVACIONES</span><small>Ordenado por dinero derivado facturado</small></div>
@@ -6382,7 +6393,7 @@
       <div class="goal-benefit-grid">
         <div class="goal-benefit-row"><span>Chofer</span><strong id="goalBenefitDriver">—</strong></div>
         <div class="goal-benefit-row"><span>Facturación</span><strong id="goalBenefitBilling">$0</strong></div>
-        <div class="goal-benefit-row"><span>Meta alcanzada</span><strong id="goalBenefitGoal">Sin meta alcanzada</strong></div>
+        <div class="goal-benefit-row"><span>Meta alcanzada</span><strong id="goalBenefitGoal">Meta 0</strong></div>
         <div class="goal-benefit-row"><span>META ALCANZADA</span><strong id="goalBenefitPercent">0%</strong></div>
         <div class="goal-benefit-row"><span>Cálculo</span><strong id="goalBenefitCalculation">$0 × 0% = $0</strong></div>
         <div class="goal-benefit-row is-total"><span>Beneficio estimado</span><strong id="goalBenefitAmount">+$0</strong></div>
@@ -6498,60 +6509,53 @@
   (()=>{
     "use strict";
     if(window.ExploraOperationalClock)return;
-    const TZ="America/Argentina/Buenos_Aires",WEEK_MS=604800000,TEST_KEY="explora_admin_test_now_v251",GUARD_PREFIX="explora_operational_period_guard_v251_";
-    let lastPeriodId="";
-    const role=()=>String(window.ExploraSession?.role||window.ExploraAuthSession?.role||"").trim().toLowerCase();
+    const TZ="America/Argentina/Buenos_Aires",WEEK_MS=604800000,DAY_MS=86400000,TEST_KEY="explora_test_now_v251",GUARD_PREFIX="explora_operational_period_guard_v251";
+    let lastEmitted="",timer=0;
+    const text=value=>String(value??"").trim();
+    const session=()=>window.ExploraSession||window.ExploraAuthSession||{};
+    const authUid=()=>text(window.ExploraFirebase?.auth?.currentUser?.uid||session().authUser?.uid||session().uid||"");
+    const role=()=>text(session().role||(document.body.classList.contains("explora-shared-admin")?"admin":"chofer")).toLowerCase();
     const isAdmin=()=>role().includes("admin");
-    const uid=()=>String(window.ExploraFirebase?.auth?.currentUser?.uid||window.ExploraSession?.authUser?.uid||window.ExploraSession?.uid||"anonymous").trim();
-    const parseDate=value=>{const date=value instanceof Date?new Date(value.getTime()):new Date(value);return Number.isFinite(date.getTime())?date:null;};
-    function readTestNow(){
-      if(!isAdmin())return null;
-      try{return parseDate(sessionStorage.getItem(TEST_KEY)||"");}catch(_){return null;}
-    }
+    function parts(date){return new Intl.DateTimeFormat("en-CA",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).formatToParts(date).reduce((a,p)=>{if(p.type!=="literal")a[p.type]=Number(p.value);return a;},{});}
+    function dateId(ms){const d=new Date(ms);return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,"0")}-${String(d.getUTCDate()).padStart(2,"0")}`;}
+    function parseId(id){const m=text(id).match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?Date.UTC(+m[1],+m[2]-1,+m[3]):NaN;}
+    function readTestNow(){if(!isAdmin())return null;try{const raw=localStorage.getItem(TEST_KEY);if(!raw)return null;const ms=Date.parse(raw);return Number.isFinite(ms)?new Date(ms):null;}catch(_){return null;}}
     function getNow(){return readTestNow()||new Date();}
-    function parts(date=getNow()){
-      try{return new Intl.DateTimeFormat("en-CA",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).formatToParts(date).reduce((acc,item)=>{if(item.type!=="literal")acc[item.type]=Number(item.value);return acc;},{});}catch(_){return{year:date.getFullYear(),month:date.getMonth()+1,day:date.getDate(),hour:date.getHours(),minute:date.getMinutes(),second:date.getSeconds()};}
-    }
-    const dateId=ms=>{const date=new Date(ms);return `${date.getUTCFullYear()}-${String(date.getUTCMonth()+1).padStart(2,"0")}-${String(date.getUTCDate()).padStart(2,"0")}`;};
-    const parsePeriodId=id=>{const match=String(id||"").match(/^(\d{4})-(\d{2})-(\d{2})$/);return match?Date.UTC(Number(match[1]),Number(match[2])-1,Number(match[3])):NaN;};
-    function periodFromDate(referenceDate=getNow()){
-      const p=parts(referenceDate),dayKey=Date.UTC(p.year,p.month-1,p.day),dow=new Date(dayKey).getUTCDay();
-      let back=(dow-6+7)%7;if(dow===6&&p.hour===0&&p.minute<5)back=7;
-      const startKeyMs=dayKey-back*86400000,startMs=startKeyMs+10800000+300000,endMs=startMs+WEEK_MS-1,id=dateId(startKeyMs);
-      return{id,weeklyPeriodId:id,startKeyMs,startMs,endMs,startAt:new Date(startMs),endAt:new Date(endMs),timezone:TZ};
-    }
-    function periodFromId(id){const startKeyMs=parsePeriodId(id);if(!Number.isFinite(startKeyMs))return null;const startMs=startKeyMs+10800000+300000,endMs=startMs+WEEK_MS-1;return{id:dateId(startKeyMs),weeklyPeriodId:dateId(startKeyMs),startKeyMs,startMs,endMs,startAt:new Date(startMs),endAt:new Date(endMs),timezone:TZ};}
-    function guardKey(){return `${GUARD_PREFIX}${uid()}`;}
-    function getGuardedActivePeriod(referenceDate=getNow(),{allowRollback=false}={}){
-      let current=periodFromDate(referenceDate);
-      if(allowRollback||isAdmin()&&readTestNow())return current;
+    function periodFromKey(startKeyMs){const startMs=startKeyMs+3*60*60*1000+5*60*1000,endMs=startKeyMs+3*60*60*1000+WEEK_MS-1,id=dateId(startKeyMs);return{id,weeklyPeriodId:id,startKeyMs,startMs,endMs,startAt:new Date(startMs),endAt:new Date(endMs),timezone:TZ};}
+    function rawPeriod(date=getNow()){const p=parts(date),dayKey=Date.UTC(p.year,p.month-1,p.day),dow=new Date(dayKey).getUTCDay();let back=(dow-6+7)%7;if(dow===6&&p.hour===0&&p.minute<5)back=7;return periodFromKey(dayKey-back*DAY_MS);}
+    function guardKey(){const uid=authUid();return uid?`${GUARD_PREFIX}:${uid}`:"";}
+    function guardedPeriod(date=getNow()){
+      const raw=rawPeriod(date),key=guardKey();if(!key)return raw;
       try{
-        const stored=localStorage.getItem(guardKey());
-        const storedMs=parsePeriodId(stored),currentMs=parsePeriodId(current.id);
-        if(Number.isFinite(storedMs)&&storedMs>currentMs)current=periodFromId(stored)||current;
-        else if(!stored||currentMs>storedMs)localStorage.setItem(guardKey(),current.id);
+        const stored=text(localStorage.getItem(key)),storedMs=parseId(stored),rawMs=parseId(raw.id);
+        if(Number.isFinite(storedMs)&&storedMs>rawMs)return periodFromKey(storedMs);
+        if(!Number.isFinite(storedMs)||rawMs>storedMs)localStorage.setItem(key,raw.id);
       }catch(_){}
-      return current;
+      return raw;
     }
-    function setTestNow(value){if(!isAdmin())throw Object.assign(new Error("ADMIN_REQUIRED"),{code:"ADMIN_REQUIRED"});const date=parseDate(value);if(!date)throw Object.assign(new Error("INVALID_TEST_DATE"),{code:"INVALID_TEST_DATE"});sessionStorage.setItem(TEST_KEY,date.toISOString());emitIfChanged(true);return getGuardedActivePeriod(date,{allowRollback:true});}
-    function clearTestNow(){if(!isAdmin())throw Object.assign(new Error("ADMIN_REQUIRED"),{code:"ADMIN_REQUIRED"});try{sessionStorage.removeItem(TEST_KEY);}catch(_){}emitIfChanged(true);return getGuardedActivePeriod();}
-    function resetPeriodGuard(){if(!isAdmin())throw Object.assign(new Error("ADMIN_REQUIRED"),{code:"ADMIN_REQUIRED"});try{localStorage.removeItem(guardKey());}catch(_){}lastPeriodId="";return getGuardedActivePeriod();}
-    function emitIfChanged(force=false){const next=getGuardedActivePeriod();if(!force&&next.id===lastPeriodId)return next;const previous=lastPeriodId;lastPeriodId=next.id;if(previous&&previous!==next.id)window.dispatchEvent(new CustomEvent("explora:operational-period-changed",{detail:{previousWeeklyPeriodId:previous,weeklyPeriodId:next.id,source:readTestNow()?"admin-test-clock":"device-clock"}}));return next;}
-    const api=Object.freeze({timezone:TZ,getNow,getParts:parts,getPeriodFromDate:periodFromDate,getPeriodFromId:periodFromId,getActiveWeeklyPeriod:getGuardedActivePeriod,setTestNow,clearTestNow,resetPeriodGuard,isTestMode:()=>Boolean(readTestNow()),getTestNow:()=>readTestNow()?.toISOString()||null});
-    window.ExploraOperationalClock=api;window.getExploraOperationalNow=getNow;window.getExploraActiveWeeklyPeriod=getGuardedActivePeriod;
-    lastPeriodId=getGuardedActivePeriod().id;
-    const timer=setInterval(()=>{if(document.visibilityState!=="hidden")emitIfChanged(false);},30000);
+    function emitIfChanged(force=false){const p=guardedPeriod();if(!force&&p.id===lastEmitted)return p;const previous=lastEmitted;lastEmitted=p.id;if(previous&&previous!==p.id)window.dispatchEvent(new CustomEvent("explora:operational-period-changed",{detail:{previousWeeklyPeriodId:previous,weeklyPeriodId:p.id,source:readTestNow()?"admin-test-clock":"device-clock"}}));return p;}
+    function setTestNow(value){if(!isAdmin())throw new Error("ADMIN_REQUIRED");const date=value instanceof Date?value:new Date(value);if(!Number.isFinite(date.getTime()))throw new Error("INVALID_TEST_DATE");localStorage.setItem(TEST_KEY,date.toISOString());emitIfChanged(true);return getNow();}
+    function clearTestNow(){if(!isAdmin())throw new Error("ADMIN_REQUIRED");localStorage.removeItem(TEST_KEY);emitIfChanged(true);return getNow();}
+    function resetPeriodGuard(){if(!isAdmin())throw new Error("ADMIN_REQUIRED");const key=guardKey();if(key)localStorage.removeItem(key);lastEmitted="";return emitIfChanged(true);}
+    window.ExploraOperationalClock=Object.freeze({getNow,getActiveWeeklyPeriod:guardedPeriod,getRawWeeklyPeriod:rawPeriod,emitIfChanged,setTestNow,clearTestNow,resetPeriodGuard,isTestMode:()=>Boolean(readTestNow()),timezone:TZ});
+    window.getExploraOperationalNow=getNow;
+    window.getExploraActiveWeeklyPeriod=guardedPeriod;
+    window.ExploraPeriods=Object.assign(window.ExploraPeriods||{},{getActivePeriods(){const p=guardedPeriod();return{weeklyPeriodId:p.id,cycleId:`week_${p.id}`,weekStartMs:p.startMs,weekEndMs:p.endMs};}});
     document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")emitIfChanged(false);});
+    window.addEventListener("pageshow",()=>emitIfChanged(false));
+    window.addEventListener("explora:session-opened",()=>emitIfChanged(true));
+    window.addEventListener("explora:auth-cleared",()=>{lastEmitted="";});
+    timer=window.setInterval(()=>{if(document.visibilityState!=="hidden")emitIfChanged(false);},30000);
     window.addEventListener("beforeunload",()=>clearInterval(timer),{once:true});
   })();
   </script>
 
-  <script id="exploraFastCacheV251">
+  <script id="exploraFastCacheV224">
 (()=>{
   "use strict";
   if(window.ExploraFastCache)return;
-  const VERSION=251;
-  const PREFIX="explora_fast_cache_v251";
+  const VERSION=224;
+  const PREFIX="explora_fast_cache_v224";
   const TTL=Object.freeze({
     dashboard_weekly_billing:300000,
     dashboard_weekly_expenses:300000,
@@ -6576,9 +6580,14 @@
     const operational=window.ExploraOperationalClock?.getActiveWeeklyPeriod?.()||{};
     const external=window.ExploraPeriods?.getActivePeriods?.()||{};
     const weeklyExternal=window.ExploraWeeklyEngine?.getActiveWeeklyPeriod?.()||{};
+    if(operational.id)return{weeklyPeriodId:operational.id,cycleId:`week_${operational.id}`};
     const performanceCycle=window.ExploraPerformanceEngine?.getState?.().cycle||{};
-    const weeklyPeriodId=operational.id||operational.weeklyPeriodId||external.weeklyPeriodId||weeklyExternal.id||"";
-    return{weeklyPeriodId,cycleId:weeklyPeriodId?`week_${weeklyPeriodId}`:(external.cycleId||performanceCycle.id||"")};
+    if(external.weeklyPeriodId||weeklyExternal.id){return{weeklyPeriodId:external.weeklyPeriodId||weeklyExternal.id||"",cycleId:external.cycleId||performanceCycle.id||""};}
+    const p=argentinaParts(),dayKey=Date.UTC(p.year,p.month-1,p.day),dow=new Date(dayKey).getUTCDay();
+    let back=(dow-6+7)%7;if(dow===6&&p.hour===0&&p.minute<5)back=7;
+    const start=dayKey-back*86400000,d=new Date(start),weeklyPeriodId=`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,"0")}-${String(d.getUTCDate()).padStart(2,"0")}`;
+    const cycleId=`week_${weeklyPeriodId}`;
+    return{weeklyPeriodId,cycleId};
   }
   function context(overrides={}){
     const periods=derivePeriods();
@@ -6602,9 +6611,7 @@
   }
   function get(moduleName,ctx={},options={}){
     const entry=readEntry(moduleName,ctx);if(!entry){stats.misses++;return null;}
-    const now=Date.now(),savedAt=Number(entry.savedAt||0),futureTimestamp=savedAt>now+300000;
-    if(futureTimestamp){invalidate(moduleName,ctx);stats.misses++;stats.discarded++;return null;}
-    const ttl=Number(options.ttl??entry.ttl??TTL[moduleName]??300000),age=Math.max(0,now-savedAt),expired=age>ttl;
+    const ttl=Number(options.ttl??entry.ttl??TTL[moduleName]??300000),age=Math.max(0,Date.now()-Number(entry.savedAt||0)),expired=age>ttl;
     if(expired&&!options.allowStale){stats.misses++;return null;}
     stats.hits++;if(expired)stats.staleHits++;
     return{data:clone(entry.data),savedAt:entry.savedAt,ttl,age,expired,source:memory.has(storageKey(moduleName,ctx))?"memory":"localStorage",context:entry.context||context(ctx)};
@@ -6723,10 +6730,10 @@
     const billing=get("dashboard_weekly_billing",c,{allowStale:true}),expenses=get("dashboard_weekly_expenses",c,{allowStale:true}),data=billing?.data||expenses?.data;
     if(data)return renderWeeklySnapshot(data);return false;
   }
-  function prefetchForSession(detail={}){const c=context(detail);hydrateDashboard(c);queueMicrotask(()=>refreshExpired({force:false}).catch(()=>{}));}
-  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){hydrateDashboard();refreshExpired().catch(()=>{});}});
+  function prefetchForSession(detail={}){const c=context(detail);hydrateDashboard(c);if(window.ExploraDashboardRealtimeCoordinator){window.ExploraDashboardRealtimeCoordinator.ensure?.("fast-cache-session");return;}queueMicrotask(()=>refreshExpired({force:false}).catch(()=>{}));}
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState!=="visible")return;if(window.ExploraDashboardRealtimeCoordinator){window.ExploraDashboardRealtimeCoordinator.ensure?.("fast-cache-foreground");return;}hydrateDashboard();refreshExpired().catch(()=>{});});
   window.addEventListener("explora:session-opened",event=>prefetchForSession(event.detail||{}));
-  window.addEventListener("explora:weekly-summary",event=>{const snapshot=event.detail||{};if(snapshot.loading||!snapshot.uid||!snapshot.weeklyPeriodId)return;const c={uid:snapshot.uid,role:"chofer",weeklyPeriodId:snapshot.weeklyPeriodId};set("dashboard_weekly_billing",snapshot,c);set("dashboard_weekly_expenses",snapshot,c);renderWeeklySnapshot(snapshot);});
+  window.addEventListener("explora:weekly-summary",event=>{const snapshot=event.detail||{};if(snapshot.loading||!snapshot.uid||!snapshot.weeklyPeriodId)return;const c={uid:snapshot.uid,role:"chofer",weeklyPeriodId:snapshot.weeklyPeriodId};set("dashboard_weekly_billing",snapshot,c);set("dashboard_weekly_expenses",snapshot,c);if(window.ExploraDashboardRealtimeCoordinator?.isCoordinating?.())return;renderWeeklySnapshot(snapshot);});
   window.addEventListener("explora:auth-cleared",()=>{locks.clear();requestIds.clear();});
   document.addEventListener("DOMContentLoaded",()=>{hydrateDashboard();ensureScheduler();});
   window.ExploraFastCache=Object.freeze({VERSION,TTL,context,key:storageKey,get,set,invalidate,clearOperational,isFresh,run,registerRefresher,refreshExpired,hydrateDashboard,renderWeeklySnapshot,renderAdminOverview,prefetchForSession,getStats:()=>({...stats,locks:locks.size,refreshers:refreshers.size})});
@@ -7067,7 +7074,7 @@
         });
       }
       function renderQrStatus(data={}){const status=String(data.status||"pending").toLowerCase();$("billingQrStatus").dataset.state=status;if(status==="approved"||status==="processed"){state.approved=true;state.pending=false;stopOperationListener();$("billingQrStatusTitle").textContent="Pago acreditado";$("billingQrStatusMessage").textContent="Mercado Pago confirmó el cobro.";$("billingPrimaryBtn").textContent="PAGO ACREDITADO";$("billingPrimaryBtn").disabled=true;window.invalidateWeeklyFinancialEngine?.("qr-approved");window.showExploraSuccess?.("Pago acreditado.",()=>{closeForm({cancelRemote:false}).then(closeScreen);});return;}if(status==="expired"){state.pending=false;stopOperationListener();$("billingQrStatusTitle").textContent="QR vencido";$("billingQrStatusMessage").textContent="Genera uno nuevo.";setMessage("El código QR venció. Genera uno nuevo.","error");$("billingAmountInput").disabled=false;updatePrimary();return;}if(["rejected","canceled","error"].includes(status)){state.pending=false;stopOperationListener();$("billingQrStatusTitle").textContent=status==="rejected"?"Pago rechazado":"Cobro cancelado";$("billingQrStatusMessage").textContent="No se registró facturación.";setMessage(status==="rejected"?"El pago fue rechazado.":"El cobro fue cancelado.","error");$("billingAmountInput").disabled=false;updatePrimary();return;}state.pending=true;$("billingQrStatusTitle").textContent="Esperando pago…";$("billingQrStatusMessage").textContent=`Monto: ${money(state.amount)}`;updatePrimary();}
-      async function generateQr(){state.operationId=createOperationId();setBusy(true,"GENERANDO QR…");try{const period=window.ExploraPeriods?.getActivePeriods?.()||{};const weeklyPeriodId=window.ExploraOperationalClock?.getActiveWeeklyPeriod?.().id||window.ExploraWeeklyEngine?.getActiveWeeklyPeriod?.().id||period.weeklyPeriodId||"";const result=await window.ExploraPayments?.createDynamicQr?.({driverUid:window.ExploraFirebase?.auth?.currentUser?.uid,amount:state.amount,operationId:state.operationId,weeklyPeriodId});if(!result?.qrImageUrl&&!result?.qrImageDataUrl&&!result?.qrData)throw new Error("MERCADO_PAGO_NOT_CONFIGURED");$("billingQrImage").src=result.qrImageUrl||result.qrImageDataUrl||result.qrData;$("billingQrPanel").hidden=false;state.pending=true;state.unsubscribe=window.ExploraPayments.subscribeOperation(state.operationId,renderQrStatus,error=>setMessage(mapError(error),"error"));renderQrStatus({status:result.status||"pending"});}catch(error){console.warn("BILLING_QR",error);state.pending=false;setMessage(mapError(error),"error");}finally{setBusy(false);}}
+      async function generateQr(){state.operationId=createOperationId();setBusy(true,"GENERANDO QR…");try{const period=window.ExploraPeriods?.getActivePeriods?.()||{};const weeklyPeriodId=period.weeklyPeriodId||window.ExploraWeeklyEngine?.getActiveWeeklyPeriod?.().id||"";const result=await window.ExploraPayments?.createDynamicQr?.({driverUid:window.ExploraFirebase?.auth?.currentUser?.uid,amount:state.amount,operationId:state.operationId,weeklyPeriodId});if(!result?.qrImageUrl&&!result?.qrImageDataUrl&&!result?.qrData)throw new Error("MERCADO_PAGO_NOT_CONFIGURED");$("billingQrImage").src=result.qrImageUrl||result.qrImageDataUrl||result.qrData;$("billingQrPanel").hidden=false;state.pending=true;state.unsubscribe=window.ExploraPayments.subscribeOperation(state.operationId,renderQrStatus,error=>setMessage(mapError(error),"error"));renderQrStatus({status:result.status||"pending"});}catch(error){console.warn("BILLING_QR",error);state.pending=false;setMessage(mapError(error),"error");}finally{setBusy(false);}}
       async function submitAliasPayment(event){
         event.preventDefault();
         if(aliasSaveInProgress||state.pending||state.approved)return;
@@ -7245,7 +7252,7 @@
   function normalizedState(row){return String(row.state||row.status||row.estado||"registrado").toLowerCase();}
   function filtersRows(rows=state.rows){const q=state.search.toLowerCase();return rows.filter(row=>{
     const status=normalizedState(row);
-    if(state.filter==="semana"){const active=window.ExploraWeeklyEngine?.getActiveWeeklyPeriod?.().id||"";if(String(row.weeklyPeriodId||"")!==String(active))return false;}else if(state.filter==="mes"){const current=new Intl.DateTimeFormat("en-CA",{timeZone:"America/Argentina/Buenos_Aires",year:"numeric",month:"2-digit"}).format(window.ExploraOperationalClock?.getNow?.()||new Date()).slice(0,7);if(String(row.monthKey||"")!==current)return false;}else if(state.filter!=="todos"&&!status.includes(state.filter))return false;
+    if(state.filter==="semana"){const active=window.ExploraWeeklyEngine?.getActiveWeeklyPeriod?.().id||"";if(String(row.weeklyPeriodId||"")!==String(active))return false;}else if(state.filter==="mes"){const current=new Intl.DateTimeFormat("en-CA",{timeZone:"America/Argentina/Buenos_Aires",year:"numeric",month:"2-digit"}).format(new Date()).slice(0,7);if(String(row.monthKey||"")!==current)return false;}else if(state.filter!=="todos"&&!status.includes(state.filter))return false;
     if(state.driver&&String(row.driverUid||row.driverName)!==state.driver)return false;
     if(state.month&&String(row.monthKey||"")!==state.month)return false;
     if(state.week&&String(row.weeklyPeriodId||"")!==state.week)return false;
@@ -8052,7 +8059,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       return new Date(Date.UTC(year, month - 1, day, hour + 3, minute, second, 0));
     }
 
-    function getWeeklyPeriodFromDate(date = window.ExploraOperationalClock?.getNow?.() || new Date()) {
+    function getWeeklyPeriodFromDate(date = new Date()) {
       const p = getArgentinaParts(date);
       const localMidnightUTC = new Date(Date.UTC(p.year, p.month - 1, p.day, 0, 0, 0));
       const dow = localMidnightUTC.getUTCDay();
@@ -8062,7 +8069,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       startLocal.setUTCDate(startLocal.getUTCDate() - diff);
       const startUTC = argentinaLocalDateToUTC(startLocal.getUTCFullYear(), startLocal.getUTCMonth()+1, startLocal.getUTCDate(), 0, 5, 0);
       const weekMidnightUTC = argentinaLocalDateToUTC(startLocal.getUTCFullYear(), startLocal.getUTCMonth()+1, startLocal.getUTCDate(), 0, 0, 0);
-      const endUTC = new Date(startUTC.getTime() + 7 * 24 * 60 * 60 * 1000 - 1);
+      const endUTC = new Date(weekMidnightUTC.getTime() + 7 * 24 * 60 * 60 * 1000 - 1);
       return {
         id: formatDateIdFromUTCDate(startLocal),
         startMs: startUTC.getTime(),
@@ -8073,10 +8080,15 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     }
 
     function getActiveWeeklyPeriod(referenceDate = null) {
-      const central=!referenceDate&&window.ExploraOperationalClock?.getActiveWeeklyPeriod?.();
-      if(central)return {...central,weeklyPeriodId:central.id,startAt:new Date(central.startMs),endAt:new Date(central.endMs),timezone:"America/Argentina/Buenos_Aires"};
-      const period = getWeeklyPeriodFromDate(referenceDate || window.ExploraOperationalClock?.getNow?.() || new Date());
-      return {...period,weeklyPeriodId:period.id,startAt:new Date(period.startMs),endAt:new Date(period.endMs),timezone:"America/Argentina/Buenos_Aires"};
+      if(!referenceDate){const central=window.ExploraOperationalClock?.getActiveWeeklyPeriod?.();if(central)return{...central,weeklyPeriodId:central.id,startAt:new Date(central.startMs),endAt:new Date(central.endMs),timezone:"America/Argentina/Buenos_Aires"};}
+      const period = getWeeklyPeriodFromDate(referenceDate||window.ExploraOperationalClock?.getNow?.()||new Date());
+      return {
+        ...period,
+        weeklyPeriodId: period.id,
+        startAt: new Date(period.startMs),
+        endAt: new Date(period.endMs),
+        timezone: "America/Argentina/Buenos_Aires"
+      };
     }
 
     function getPreviousWeeklyPeriod(active = getActiveWeeklyPeriod()) {
@@ -8492,8 +8504,8 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
 
     const WEEKLY_SNAPSHOT_COLLECTION = "acumulados_semanales";
     const OPERATIONAL_LOAN_COLLECTION = "prestamos_operativos";
-    const WEEKLY_ENGINE_SCHEMA_VERSION = 251;
-    const WEEKLY_CACHE_PREFIX = "explora_weekly_v251_";
+    const WEEKLY_ENGINE_SCHEMA_VERSION = 250;
+    const WEEKLY_CACHE_PREFIX = "explora_weekly_v250_";
 
     function normalizePaymentMethod(data = {}) {
       const financialCategory = normalizeStatus(data.financialCategory || data.categoriaFinanciera || "");
@@ -8775,7 +8787,6 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         const raw=fast?.data?null:sessionStorage.getItem(getWeeklySessionCacheKey(uid, period.id));
         const data=fast?.data||(raw?JSON.parse(raw):null);
         if (!data || data.uid !== uid || data.weeklyPeriodId !== period.id) return null;
-        const cacheTimestamp=Number(data.cachedAt||fast?.savedAt||0);if(cacheTimestamp>Date.now()+300000){try{sessionStorage.removeItem(getWeeklySessionCacheKey(uid,period.id));}catch(_){}return null;}
         return {
           ...data,
           startAt: new Date(period.startMs), endAt: new Date(period.endMs), timezone: "America/Argentina/Buenos_Aires",
@@ -8969,7 +8980,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       loading:true, loaded:false, error:null, sourceErrors:{},
       raw:{ viajes:[], derivaciones:[], gastos:[], prestamos:[] },
       subscribers:new Set(), waiters:[], loadPromise:null, loadedAt:null,
-      dirty:true, dirtyReason:"initial", loadSequence:0, refreshTimer:0, reconcilePromise:null, reconcileKey:"", loadPromiseKey:""
+      dirty:true, dirtyReason:"initial", loadSequence:0, refreshTimer:0, reconcilePromise:null
     };
 
     function buildSnapshotCacheKey(uid, periodId) {
@@ -9487,21 +9498,15 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     }
 
     async function rebuildWeeklyEngineFromSources(uid, period, reason = "rebuild") {
-      const requestKey=buildSnapshotCacheKey(uid,period.id);
-      if (weeklyState.reconcilePromise && weeklyState.reconcileKey===requestKey) return weeklyState.reconcilePromise;
-      weeklyState.reconcileKey=requestKey;
-      const localSequence=weeklyState.loadSequence;
+      if (weeklyState.reconcilePromise) return weeklyState.reconcilePromise;
       weeklyState.reconcilePromise = (async () => {
         const sources = await loadWeeklySources(period, { allowLegacyScan: reason === "manual-refresh" });
         const snapshot = await buildDriverWeeklySnapshot(uid, period, sources);
-        const currentUid=String(auth.currentUser?.uid||"");
-        const currentPeriodId=getActiveWeeklyPeriod().id;
-        if(localSequence!==weeklyState.loadSequence||currentUid!==String(uid)||currentPeriodId!==String(period.id))return snapshot;
         applySnapshotToWeeklyState(snapshot, sources);
         notifyWeeklyState();
         persistMaterializedWeeklySnapshot(snapshot).catch(error => console.warn("[EXPLORA snapshot] persist", error?.code || error?.message));
         return snapshot;
-      })().finally(() => { if(weeklyState.reconcileKey===requestKey){weeklyState.reconcilePromise = null;weeklyState.reconcileKey="";} });
+      })().finally(() => { weeklyState.reconcilePromise = null; });
       return weeklyState.reconcilePromise;
     }
 
@@ -9535,7 +9540,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       try {
         if (!force) {
           const materialized = await loadOwnMaterializedSnapshot(user.uid, period);
-          if (materialized && sequence===weeklyState.loadSequence && String(auth.currentUser?.uid||"")===String(user.uid) && getActiveWeeklyPeriod().id===period.id) {
+          if (materialized && sequence===weeklyState.loadSequence) {
             applySnapshotToWeeklyState(materialized); notifyWeeklyState();
             // Solo los snapshots realmente antiguos se reconstruyen; v181 no fuerza lecturas en cada login.
             if (Number(materialized.schemaVersion || 0) < WEEKLY_ENGINE_SCHEMA_VERSION) {
@@ -9545,7 +9550,6 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
           }
         }
         const snapshot = await rebuildWeeklyEngineFromSources(user.uid, period, force ? "manual-refresh" : reason);
-        if(sequence!==weeklyState.loadSequence||String(auth.currentUser?.uid||"")!==String(user.uid)||getActiveWeeklyPeriod().id!==period.id)return weeklyStatePublicSnapshot();
         return snapshot;
       } catch (error) {
         if (sequence !== weeklyState.loadSequence) return weeklyStatePublicSnapshot();
@@ -9556,12 +9560,8 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     }
 
     async function loadWeeklyEngine(options = {}) {
-      const currentUid=String(auth.currentUser?.uid||"");
-      const requestKey=buildSnapshotCacheKey(currentUid,getActiveWeeklyPeriod().id);
-      if (weeklyState.loadPromise && weeklyState.loadPromiseKey===requestKey) return weeklyState.loadPromise;
-      if(weeklyState.loadPromise && weeklyState.loadPromiseKey!==requestKey)weeklyState.loadSequence+=1;
-      weeklyState.loadPromiseKey=requestKey;
-      weeklyState.loadPromise = performWeeklyEngineLoad(options).finally(()=>{if(weeklyState.loadPromiseKey===requestKey){weeklyState.loadPromise=null;weeklyState.loadPromiseKey="";}});
+      if (weeklyState.loadPromise) return weeklyState.loadPromise;
+      weeklyState.loadPromise = performWeeklyEngineLoad(options).finally(()=>{ weeklyState.loadPromise=null; });
       return weeklyState.loadPromise;
     }
     async function loadWeeklyFinancialEngineOnce(options = {}) { return loadWeeklyEngine(options); }
@@ -9579,7 +9579,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       }
     }
     function stopWeeklyEngine({reset=true}={}) {
-      clearTimeout(weeklyState.refreshTimer); weeklyState.loadSequence+=1; weeklyState.loadPromise=null; weeklyState.loadPromiseKey=""; weeklyState.reconcilePromise=null; weeklyState.reconcileKey="";
+      clearTimeout(weeklyState.refreshTimer); weeklyState.loadSequence+=1; weeklyState.loadPromise=null; weeklyState.reconcilePromise=null;
       if(!reset) return;
       Object.assign(weeklyState,{
         uid:null,weeklyPeriodId:null,period:null,snapshot:null,services:[],currentServices:[],serviceCount:0,grossBilling:0,
@@ -14784,7 +14784,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         if (!uploaded?.receiptUrl || !/^https?:\/\//i.test(String(uploaded.receiptUrl))) throw createClosureReceiptError(currentStage,"CLOSURE_RECEIPT_URL_FAILED","No se obtuvo una URL válida del comprobante.");
 
         const resultLabel = summary.resultText || (summary.balanced ? "Cuenta equilibrada · $0" : `Debés pagarle a David ${formatClosureMoney(summary.amount||0)}`);
-        const closureYear = Number(weeklyPeriodId.slice(0,4)) || (window.ExploraOperationalClock?.getNow?.()||new Date()).getFullYear();
+        const closureYear = Number(weeklyPeriodId.slice(0,4)) || new Date().getFullYear();
         const commonReceipt = {
           closureId, weeklyPeriodId, cycleId, driverUid, driverName, uploadedByUid:driverUid, uploadedByRole:"driver",
           receiptUrl:uploaded.receiptUrl, receiptPath:uploaded.receiptPath, receiptMimeType:uploaded.receiptMimeType, receiptFileName:uploaded.receiptFileName, receiptSize:uploaded.receiptSize,
@@ -15924,7 +15924,7 @@ window.parseBillingAmount = window.parseBillingAmount || parseCurrencyInput;
 
 function activePeriods() {
   const weekly = window.ExploraWeeklyEngine?.getActiveWeeklyPeriod?.() || {};
-  const now = window.ExploraOperationalClock?.getNow?.() || new Date();
+  const now = new Date();
   const parts = new Intl.DateTimeFormat("en-CA", { timeZone:AR_TZ, year:"numeric", month:"2-digit", day:"2-digit" }).formatToParts(now).reduce((acc, part) => {
     if (part.type !== "literal") acc[part.type] = part.value;
     return acc;
@@ -16472,12 +16472,11 @@ window.ExploraCompressReceiptImage = async file => {
 async function rollbackReceipt(receipt) {
   if (receipt?.receiptPath) await deleteUploadedFile(receipt.receiptPath).catch(() => {});
 }
-function refreshAfter(reason, category, options = {}) {
+function refreshAfter(reason, category) {
   window.invalidateWeeklyFinancialEngine?.(reason);
   window.ExploraInvalidateWeeklyClosure?.(reason, { refresh:false });
   window.invalidateReceiptCache?.(category);
   window.ExploraReceipts?.refresh?.(category);
-  if(options.sync!==false)window.refreshDashboardFromOperationalSnapshot?.({force:true,reason,mutation:true}).catch?.(()=>{});
 }
 
 function makeAliasBillingError(code, message, cause = null) {
@@ -16576,7 +16575,7 @@ window.ExploraRegisterBillingRecord = async function(input = {}) {
       try { input.onProcessed?.(aliasProcessed); } catch (_) {}
     }
 
-    const now = window.ExploraOperationalClock?.getNow?.() || new Date();
+    const now = new Date();
     const payload = {
       billingId:operationId, id:operationId, operationId, driverUid:session.uid, uid:session.uid, choferUid:session.uid,
       choferId:session.profileDocumentId, profileDocumentId:session.profileDocumentId, driverName:getDriverName(session), amount, monto:amount, valor:amount, finalPrice:amount,
@@ -16614,7 +16613,7 @@ window.ExploraRegisterBillingRecord = async function(input = {}) {
       } else {
         await Promise.resolve(window.ExploraWeeklyEngine?.applyBilling?.(payload));
       }
-      refreshAfter("billing-created", paymentMethod === "transfer" ? "alias" : "alias", {sync:false});
+      refreshAfter("billing-created", paymentMethod === "transfer" ? "alias" : "alias");
     }
     return { id:operationId, ...payload };
   } catch (error) {
@@ -18614,7 +18613,7 @@ const escapeHtml=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;"
 function parseCurrencyInput(value){const amount=Number(String(value||"").replace(/\$/g,"").replace(/\s/g,"").replace(/\./g,"").replace(/,/g,".").replace(/[^\d.-]/g,""));return Number.isFinite(amount)&&amount>0?Math.round(amount):0;}
 function formatCurrencyInput(value){const digits=String(value||"").replace(/\D/g,"").replace(/^0+/,"");return digits?Number(digits).toLocaleString("es-AR"):"";}
 const uid=()=>auth?.currentUser?.uid||"";
-const currentPeriod=()=>window.ExploraOperationalClock?.getActiveWeeklyPeriod?.().id||window.ExploraWeeklyEngine?.getActiveWeeklyPeriod?.().id||window.ExploraPeriods?.getActivePeriods?.().weeklyPeriodId||"";
+const currentPeriod=()=>window.ExploraPeriods?.getActivePeriods?.().weeklyPeriodId||window.ExploraWeeklyEngine?.getActiveWeeklyPeriod?.().id||"";
 const stableId=()=>`drv_${uid().slice(0,10)}_${Date.now()}_${globalThis.crypto?.randomUUID?.().slice(0,8)||Math.random().toString(36).slice(2,10)}`.replace(/[^a-zA-Z0-9_-]/g,"").slice(0,100);
 const getAvatar=profile=>window.resolveProfileAvatar?.(profile)||profile?.avatarUrl||profile?.fotoPerfil||profile?.photoURL||profile?.avatar||profile?.foto||"";
 const getName=profile=>String(profile?.nombre||profile?.nombreCompleto||profile?.displayName||profile?.usuario||"Chofer").trim();
@@ -18662,20 +18661,20 @@ function pendingCard(row){const sender=row.emisorName||row.senderName||"Chofer",
 function renderPendingCompletion(){const section=$("derivationReceiverPendingSection"),list=$("derivationReceiverPendingList");if(section)section.hidden=!state.pendingCompletion.length;if(list)list.innerHTML=state.pendingCompletion.map(pendingCard).join("")||'<div class="derivation-empty">No hay derivaciones pendientes.</div>';syncPendingDerivationButton();}
 function startPendingListener(){try{state.unsubscribe?.();}catch(_){}if(!uid())return;const q=query(collection(db,"derivaciones"),where("receptorUid","==",uid()));state.unsubscribe=onSnapshot(q,snapshot=>{const rows=snapshot.docs.map(item=>({id:item.id,...item.data()}));state.pendingResponse=rows.filter(row=>canonicalStatus(row)===STATUS.PENDING);state.pendingCompletion=rows.filter(row=>[STATUS.ACCEPTED,STATUS.PENDING_INVOICE].includes(canonicalStatus(row)));renderPendingNotifications();renderPendingCompletion();},error=>reportDerivationError("READ_INCOMING_DERIVATIONS","DERIVATION_LISTENER_FAILED",error,{functionName:"startPendingListener",receptorUid:uid(),firestorePath:"derivaciones"}));}
 async function loadPendingCompletion(){await ensureSession();const snapshot=await getDocs(query(collection(db,"derivaciones"),where("receptorUid","==",uid())));const rows=snapshot.docs.map(item=>({id:item.id,...item.data()}));state.pendingCompletion=rows.filter(row=>[STATUS.ACCEPTED,STATUS.PENDING_INVOICE].includes(canonicalStatus(row)));renderPendingCompletion();return state.pendingCompletion;}
-async function transition(id,action,button){if(state.busy.has(id))return;state.busy.add(id);const accept=action==="accept",stage=accept?"ACCEPT_DERIVATION":"REJECT_DERIVATION",idle=accept?"ACEPTAR":"RECHAZAR";button.disabled=true;button.textContent=accept?"ACEPTANDO…":"RECHAZANDO…";try{const me=await ensureSession(),reference=doc(db,"derivaciones",id);await runTransaction(db,async tx=>{const snapshot=await tx.get(reference);if(!snapshot.exists())throw Object.assign(new Error("La derivación ya no existe."),{code:"DERIVATION_NOT_FOUND"});const row=snapshot.data();if(String(row.receptorUid||row.receiverUid)!==me.uid||canonicalStatus(row)!==STATUS.PENDING)throw Object.assign(new Error("La derivación cambió de estado."),{code:"TRANSITION_DENIED"});tx.update(reference,accept?{status:STATUS.PENDING_INVOICE,estado:STATUS.ACCEPTED,acceptedAt:serverTimestamp(),acceptedByUid:me.uid,updatedAt:serverTimestamp()}:{status:STATUS.REJECTED,estado:STATUS.REJECTED,rejectedAt:serverTimestamp(),rejectedByUid:me.uid,updatedAt:serverTimestamp()});});window.dispatchEvent(new CustomEvent(accept?"explora:derivacion-aceptada":"explora:derivacion-rechazada",{detail:{derivationId:id,receptorUid:me.uid,status:accept?STATUS.ACCEPTED:STATUS.REJECTED,weeklyPeriodId:currentPeriod()}}));window.ExploraUnifiedSnapshot?.invalidate?.(accept?"derivation-accepted":"derivation-rejected");await loadPendingCompletion();window.showExploraSuccess?.({title:accept?"DERIVACIÓN ACEPTADA":"DERIVACIÓN RECHAZADA",message:accept?"Quedó pendiente de carga en el menú Derivaciones.":"La derivación se cerró sin beneficios."});}catch(error){reportDerivationError(stage,"DERIVATION_TRANSITION_FAILED",error,{functionName:"transition",derivationId:id,status:accept?STATUS.ACCEPTED:STATUS.REJECTED,receptorUid:uid()});}finally{state.busy.delete(id);button.disabled=false;button.textContent=idle;}}
-function openFinalize(id){const row=state.pendingCompletion.find(item=>item.id===id);if(!row)return;state.selectedFinalizeId=id;state.selectedPayment="";const suggested=Math.round(Number(row.suggestedAmount||row.amount||row.monto||0));$("derivationFinalizeSummary").innerHTML=`<div><span>Concepto</span><strong>${escapeHtml(row.concept||row.description||"Servicio")}</strong></div><div><span>Monto sugerido</span><strong>${money(suggested)}</strong></div><div><span>Emisor</span><strong>${escapeHtml(row.emisorName||row.senderName||"Chofer")}</strong></div>`;$("derivationFinalAmount").value=formatCurrencyInput(suggested);document.querySelectorAll("[data-derivation-payment]").forEach(item=>{item.classList.remove("is-selected");item.disabled=false;item.setAttribute("aria-pressed","false");});const confirm=$("derivationFinalizeConfirmBtn");if(confirm){confirm.disabled=true;confirm.setAttribute("aria-disabled","true");confirm.textContent="CONFIRMAR DERIVACIÓN";}const message=$("derivationFinalizeMessage");if(message)message.textContent="Selecciona un medio de pago para continuar.";$("derivationFinalizeBackdrop").classList.add("is-open");$("derivationFinalizeBackdrop").setAttribute("aria-hidden","false");window.lockPageScroll?.("derivation-finalize");}
+async function transition(id,action,button){if(state.busy.has(id))return;state.busy.add(id);const accept=action==="accept",stage=accept?"ACCEPT_DERIVATION":"REJECT_DERIVATION",idle=accept?"ACEPTAR":"RECHAZAR";button.disabled=true;button.textContent=accept?"ACEPTANDO…":"RECHAZANDO…";try{const me=await ensureSession(),reference=doc(db,"derivaciones",id);await runTransaction(db,async tx=>{const snapshot=await tx.get(reference);if(!snapshot.exists())throw Object.assign(new Error("La derivación ya no existe."),{code:"DERIVATION_NOT_FOUND"});const row=snapshot.data();if(String(row.receptorUid||row.receiverUid)!==me.uid||canonicalStatus(row)!==STATUS.PENDING)throw Object.assign(new Error("La derivación cambió de estado."),{code:"TRANSITION_DENIED"});tx.update(reference,accept?{status:STATUS.PENDING_INVOICE,estado:STATUS.ACCEPTED,acceptedAt:serverTimestamp(),acceptedByUid:me.uid,updatedAt:serverTimestamp()}:{status:STATUS.REJECTED,estado:STATUS.REJECTED,rejectedAt:serverTimestamp(),rejectedByUid:me.uid,updatedAt:serverTimestamp()});});window.ExploraUnifiedSnapshot?.invalidate?.(accept?"derivation-accepted":"derivation-rejected");await loadPendingCompletion();window.showExploraSuccess?.({title:accept?"DERIVACIÓN ACEPTADA":"DERIVACIÓN RECHAZADA",message:accept?"Quedó pendiente de carga en el menú Derivaciones.":"La derivación se cerró sin beneficios."});}catch(error){reportDerivationError(stage,"DERIVATION_TRANSITION_FAILED",error,{functionName:"transition",derivationId:id,status:accept?STATUS.ACCEPTED:STATUS.REJECTED,receptorUid:uid()});}finally{state.busy.delete(id);button.disabled=false;button.textContent=idle;}}
+function openFinalize(id){const row=state.pendingCompletion.find(item=>item.id===id);if(!row)return;state.selectedFinalizeId=id;state.selectedPayment="";const suggested=Math.round(Number(row.suggestedAmount||row.amount||row.monto||0));$("derivationFinalizeSummary").innerHTML=`<div><span>Concepto</span><strong>${escapeHtml(row.concept||row.description||"Servicio")}</strong></div><div><span>Monto sugerido</span><strong>${money(suggested)}</strong></div><div><span>Emisor</span><strong>${escapeHtml(row.emisorName||row.senderName||"Chofer")}</strong></div>`;$("derivationFinalAmount").value=formatCurrencyInput(suggested);document.querySelectorAll("[data-derivation-payment]").forEach(item=>item.classList.remove("is-selected"));$("derivationFinalizeConfirmBtn").disabled=true;$("derivationFinalizeMessage").textContent="";$("derivationFinalizeBackdrop").classList.add("is-open");$("derivationFinalizeBackdrop").setAttribute("aria-hidden","false");window.lockPageScroll?.("derivation-finalize");}
 function closeFinalize(){$("derivationFinalizeBackdrop")?.classList.remove("is-open");$("derivationFinalizeBackdrop")?.setAttribute("aria-hidden","true");window.unlockPageScroll?.("derivation-finalize");state.selectedFinalizeId="";state.selectedPayment="";}
-function updateFinalizeButton(){const amount=parseCurrencyInput($("derivationFinalAmount")?.value),button=$("derivationFinalizeConfirmBtn"),message=$("derivationFinalizeMessage"),validMethod=["cash","transfer","card","other"].includes(state.selectedPayment),available=Boolean(state.selectedFinalizeId&&!state.busy.has(`complete:${state.selectedFinalizeId}`)),enabled=amount>0&&validMethod&&available;if(button){button.disabled=!enabled;button.setAttribute("aria-disabled",enabled?"false":"true");}if(message&&!state.busy.has(`complete:${state.selectedFinalizeId}`))message.textContent=validMethod?(amount>0?"":"Ingresa un monto válido."):"Selecciona un medio de pago para continuar.";}
+function updateFinalizeButton(){const amount=parseCurrencyInput($("derivationFinalAmount")?.value),button=$("derivationFinalizeConfirmBtn");if(button)button.disabled=!(amount>0&&["cash","transfer","card","other"].includes(state.selectedPayment));}
 async function rejectDefinitively(id,button){if(!id||state.busy.has(`reject:${id}`))return;state.busy.add(`reject:${id}`);if(button){button.disabled=true;button.textContent="CERRANDO…";}try{const me=await ensureSession(),reference=doc(db,"derivaciones",id);await runTransaction(db,async tx=>{const snap=await tx.get(reference);if(!snap.exists())throw Object.assign(new Error("La derivación ya no existe."),{code:"DERIVATION_NOT_FOUND"});const row=snap.data();if(String(row.receptorUid||row.receiverUid)!==me.uid||![STATUS.ACCEPTED,STATUS.PENDING_INVOICE].includes(canonicalStatus(row)))throw Object.assign(new Error("No se puede cerrar esta derivación."),{code:"FINAL_REJECT_DENIED"});tx.update(reference,{status:STATUS.CLOSED_REJECTED,estado:STATUS.CLOSED_REJECTED,closedRejectedAt:serverTimestamp(),closedRejectedByUid:me.uid,collaborationAmount:0,derivedAmountForEmitter:0,updatedAt:serverTimestamp()});});closeFinalize();await loadPendingCompletion();window.showExploraSuccess?.({title:"DERIVACIÓN CERRADA",message:"Se cerró sin dinero derivado, colaboración para bono, bono ni facturación."});}catch(error){reportDerivationError("REJECT_DERIVATION","FINAL_REJECTION_FAILED",error,{functionName:"rejectDefinitively",derivationId:id,status:STATUS.CLOSED_REJECTED,receptorUid:uid()});}finally{state.busy.delete(`reject:${id}`);if(button){button.disabled=false;button.textContent="RECHAZAR DEFINITIVAMENTE";}}}
 async function complete(button){
   const id=state.selectedFinalizeId,method=state.selectedPayment,finalAmount=parseCurrencyInput($("derivationFinalAmount")?.value);
   if(!id||state.busy.has(`complete:${id}`))return;
   let runtime={functionName:"complete",derivationId:id,status:STATUS.INVOICED,receptorUid:uid(),weeklyPeriodId:currentPeriod(),finalAmount,paymentMethod:method,firestoreConfirmed:false};
-  state.busy.add(`complete:${id}`);button.disabled=true;button.setAttribute("aria-disabled","true");button.textContent="CONFIRMANDO…";document.querySelectorAll("[data-derivation-payment]").forEach(item=>item.disabled=true);let committed=null;
+  state.busy.add(`complete:${id}`);button.disabled=true;button.textContent="CONFIRMANDO…";let committed=null;
   try{
     const me=await ensureSession();
     if(!(finalAmount>0))throw Object.assign(new Error("El monto real debe ser mayor a cero."),{code:"FINAL_AMOUNT_REQUIRED"});
-    if(!method||!["cash","transfer","card","other"].includes(method)||!document.querySelector(`[data-derivation-payment="${method}"]`)?.classList.contains("is-selected"))throw Object.assign(new Error("Selecciona un medio de pago antes de confirmar la derivación."),{code:"PAYMENT_METHOD_REQUIRED"});
+    if(!["cash","transfer","card","other"].includes(method))throw Object.assign(new Error("Selecciona una forma de pago."),{code:"PAYMENT_METHOD_REQUIRED"});
     const period=currentPeriod(),cycleId=cycleIdForPeriod(period),billingId=`derivation_${id}`,collaborationAmount=Math.round(finalAmount*COLLABORATION_RATE);
     runtime={...runtime,cycleId,collaborationAmount,derivedAmount:finalAmount,firestorePath:`derivaciones/${id}`};
     await runTransaction(db,async tx=>{
@@ -18697,16 +18696,14 @@ async function complete(button){
       const emitterUid=String(committed.row.emisorUid||committed.row.senderUid);
       const integrations=[
         ["UPDATE_DERIVATION_RANKING",()=>window.ExploraWeeklyEngine?.applyDerivationMoneyForUid?.(emitterUid,{...committed.row,participantRole:"emitter"})],
-        ["INTEGRATE_WEEKLY_CLOSURE",()=>window.ExploraWeeklyEngine?.applyDerivationMoneyForUid?.(me.uid,{...committed.row,participantRole:"receiver"})]
+        ["INTEGRATE_WEEKLY_CLOSURE",()=>window.ExploraWeeklyEngine?.applyDerivationMoneyForUid?.(me.uid,{...committed.row,participantRole:"receiver"})],
+        ["UPDATE_DERIVATION_RANKING",()=>window.ExploraPerformanceEngine?.refresh?.({force:true,reason:"derivation-invoiced"})]
       ];
       for(const [stage,operation] of integrations){
         try{await operation();}
         catch(error){reportDerivationError(stage,"DERIVATION_POST_COMMIT_SYNC_FAILED",error,{...runtime,emisorUid:emitterUid,receptorUid:me.uid,firestoreConfirmed:true});}
       }
-      window.ExploraPerformanceEngine?.recordCompletedDerivation?.(emitterUid,committed.row);
-      window.dispatchEvent(new CustomEvent("explora:derivacion-facturada",{detail:committed.row}));
       window.dispatchEvent(new CustomEvent("explora:derivacion-completada",{detail:committed.row}));
-      if(committed.billing)window.dispatchEvent(new CustomEvent("explora:cobro-registrado",{detail:committed.billing}));
       window.invalidateWeeklyFinancialEngine?.("derivation-invoiced");
       window.ExploraInvalidateWeeklyClosure?.("derivation-invoiced",{refresh:false});
       window.ExploraAdminShared?.invalidate?.("derivation-invoiced");
@@ -18717,8 +18714,8 @@ async function complete(button){
   }catch(error){
     const stage=String(error?.code||"").includes("REQUIRED")?"VALIDATE_RECEIVER_INVOICE":"CONFIRM_DERIVATION_INVOICE";
     reportDerivationError(stage,"DERIVATION_INVOICE_FAILED",error,runtime);
-    const message=$("derivationFinalizeMessage");if(message)message.textContent=error?.code==="PAYMENT_METHOD_REQUIRED"?"Selecciona un medio de pago antes de confirmar la derivación.":error?.code==="FINAL_AMOUNT_REQUIRED"?"Ingresa un monto válido.":"No pudimos confirmar la derivación. Intenta nuevamente.";
-  }finally{state.busy.delete(`complete:${id}`);document.querySelectorAll("[data-derivation-payment]").forEach(item=>item.disabled=false);button.textContent="CONFIRMAR DERIVACIÓN";updateFinalizeButton();}
+    const message=$("derivationFinalizeMessage");if(message)message.textContent=error?.message||"No se pudo confirmar la derivación.";
+  }finally{state.busy.delete(`complete:${id}`);button.disabled=false;button.textContent="CONFIRMAR CARGA";updateFinalizeButton();}
 }
 function open(){try{state.opened=true;state.previousScrollY=window.scrollY||0;$("derivationScreen")?.classList.add("is-open");$("derivationScreen")?.setAttribute("aria-hidden","false");window.lockPageScroll?.("derivation-screen");window.ExploraMainNav?.setActive?.("inicio");loadDrivers().then(()=>{renderDrivers();updateCompose();setTimeout(()=>window.ExploraUIRankingGoalsDerivationsRepair?.audit?.("derivar-servicio"),120);}).catch(()=>{});loadPendingCompletion().catch(()=>{});}catch(error){reportDerivationError("OPEN_DERIVATION_MENU","DERIVATION_MENU_OPEN_FAILED",error,{functionName:"open"});}}
 function close(){state.opened=false;$("derivationScreen")?.classList.remove("is-open");$("derivationScreen")?.setAttribute("aria-hidden","true");window.unlockPageScroll?.("derivation-screen");window.ExploraMainNav?.setActive?.("inicio");requestAnimationFrame(()=>window.scrollTo(0,state.previousScrollY||0));}
@@ -18729,7 +18726,7 @@ function installGuard(){const original=window.ExploraActions?.["nuevo-servicio"]
 function stop(){try{state.unsubscribe?.();}catch(_){}state.unsubscribe=null;state.pendingResponse=[];state.pendingCompletion=[];state.drivers=[];state.driverMap.clear();window.ExploraDashboardNoticeController?.clearDerivationPending?.();resetForm();renderPendingNotifications();renderPendingCompletion();close();closeFinalize();closeReminder();}
 window.ExploraActions=window.ExploraActions||{};window.ExploraActions["derivar-servicio"]=open;
 window.ExploraDerivations={open,close,startForCurrentSession:async()=>{await loadDrivers().catch(()=>{});renderDrivers();startPendingListener();await loadPendingCompletion().catch(()=>{});installGuard();},stopSession:stop,refresh:async()=>{await loadDrivers(true);renderDrivers();await loadPendingCompletion();},getState:()=>state};
-document.addEventListener("DOMContentLoaded",()=>{installGuard();renderDrivers();updateCompose();renderPendingCompletion();$("derivationBackBtn")?.addEventListener("click",close);$("derivationCancelBtn")?.addEventListener("click",close);$("derivationRefreshBtn")?.addEventListener("click",()=>window.ExploraDerivations.refresh().catch(error=>reportDerivationError("READ_INCOMING_DERIVATIONS","DERIVATION_REFRESH_FAILED",error,{functionName:"refresh"})));$("derivationForm")?.addEventListener("submit",sendDerivation);$("derivationDescription")?.addEventListener("input",updateCompose);$("derivationAmount")?.addEventListener("input",event=>{event.target.value=formatCurrencyInput(event.target.value);updateCompose();});$("derivationFinalAmount")?.addEventListener("input",event=>{event.target.value=formatCurrencyInput(event.target.value);updateFinalizeButton();});document.addEventListener("click",event=>{const driver=event.target.closest?.("[data-select-derivation-driver]");if(driver){state.selectedReceiverUid=driver.dataset.selectDerivationDriver;renderDrivers();updateCompose();return;}const action=event.target.closest?.("[data-derivation-action]");if(action){transition(action.dataset.derivationId,action.dataset.derivationAction,action);return;}const reminder=event.target.closest?.("[data-reminder-finalize]");if(reminder){closeReminder();openFinalize(reminder.dataset.reminderFinalize);return;}const reject=event.target.closest?.("[data-derivation-final-reject]");if(reject){rejectDefinitively(reject.dataset.derivationFinalReject,reject);}});$("derivationFinalizeCancelBtn")?.addEventListener("click",closeFinalize);$("derivationFinalizeRejectBtn")?.addEventListener("click",event=>rejectDefinitively(state.selectedFinalizeId,event.currentTarget));$("derivationFinalizeConfirmBtn")?.addEventListener("click",event=>complete(event.currentTarget));document.querySelectorAll("[data-derivation-payment]").forEach(paymentButton=>paymentButton.addEventListener("click",()=>{if(paymentButton.disabled)return;const method=String(paymentButton.dataset.derivationPayment||"");state.selectedPayment=["cash","transfer","card","other"].includes(method)?method:"";document.querySelectorAll("[data-derivation-payment]").forEach(item=>{const selected=item===paymentButton&&Boolean(state.selectedPayment);item.classList.toggle("is-selected",selected);item.setAttribute("aria-pressed",selected?"true":"false");});updateFinalizeButton();}));$("derivationReminderLaterBtn")?.addEventListener("click",()=>{closeReminder();state.originalBillingAction?.();});});
+document.addEventListener("DOMContentLoaded",()=>{installGuard();renderDrivers();updateCompose();renderPendingCompletion();$("derivationBackBtn")?.addEventListener("click",close);$("derivationCancelBtn")?.addEventListener("click",close);$("derivationRefreshBtn")?.addEventListener("click",()=>window.ExploraDerivations.refresh().catch(error=>reportDerivationError("READ_INCOMING_DERIVATIONS","DERIVATION_REFRESH_FAILED",error,{functionName:"refresh"})));$("derivationForm")?.addEventListener("submit",sendDerivation);$("derivationDescription")?.addEventListener("input",updateCompose);$("derivationAmount")?.addEventListener("input",event=>{event.target.value=formatCurrencyInput(event.target.value);updateCompose();});$("derivationFinalAmount")?.addEventListener("input",event=>{event.target.value=formatCurrencyInput(event.target.value);updateFinalizeButton();});document.addEventListener("click",event=>{const driver=event.target.closest?.("[data-select-derivation-driver]");if(driver){state.selectedReceiverUid=driver.dataset.selectDerivationDriver;renderDrivers();updateCompose();return;}const action=event.target.closest?.("[data-derivation-action]");if(action){transition(action.dataset.derivationId,action.dataset.derivationAction,action);return;}const reminder=event.target.closest?.("[data-reminder-finalize]");if(reminder){closeReminder();openFinalize(reminder.dataset.reminderFinalize);return;}const reject=event.target.closest?.("[data-derivation-final-reject]");if(reject){rejectDefinitively(reject.dataset.derivationFinalReject,reject);}});$("derivationFinalizeCancelBtn")?.addEventListener("click",closeFinalize);$("derivationFinalizeRejectBtn")?.addEventListener("click",event=>rejectDefinitively(state.selectedFinalizeId,event.currentTarget));$("derivationFinalizeConfirmBtn")?.addEventListener("click",event=>complete(event.currentTarget));document.querySelectorAll("[data-derivation-payment]").forEach(paymentButton=>paymentButton.addEventListener("click",()=>{state.selectedPayment=paymentButton.dataset.derivationPayment;document.querySelectorAll("[data-derivation-payment]").forEach(item=>item.classList.toggle("is-selected",item===paymentButton));updateFinalizeButton();}));$("derivationReminderLaterBtn")?.addEventListener("click",()=>{closeReminder();state.originalBillingAction?.();});});
 window.addEventListener("explora:session-opened",event=>{if(!normalize(event.detail?.role).includes("admin"))window.ExploraDerivations.startForCurrentSession().catch(error=>reportDerivationError("INIT","DERIVATION_START_FAILED",error,{functionName:"startForCurrentSession"}));});
 window.addEventListener("explora:auth-cleared",stop);
 </script>
@@ -18764,7 +18761,7 @@ const MAX_BILLING=2000000;
 const DERIVATION_PERCENT=10;
 const INVALID_STATES=["cancel","rechaz","elimin","borrador","test","prueba"];
 const COMPLETE_STATES=["completed","complet","finaliz","factur","cerrad","realiz"];
-const RANKING_CACHE_SCHEMA=251;
+const RANKING_CACHE_SCHEMA=250;
 
 const state={
   loading:false,loaded:false,open:false,tab:"goals",highlightGoal:0,uid:"",role:"",cycle:null,
@@ -18816,8 +18813,10 @@ function parsePeriodKey(id){const match=String(id||"").match(/^(\d{4})-(\d{2})-(
 function activeWeeklyPeriod(date=null){
   if(!date){const central=window.ExploraOperationalClock?.getActiveWeeklyPeriod?.();if(central)return{id:central.id,startKeyMs:central.startKeyMs,startMs:central.startMs,endMs:central.endMs};}
   const reference=date||window.ExploraOperationalClock?.getNow?.()||new Date(),p=argentinaParts(reference),dayKey=Date.UTC(p.year,p.month-1,p.day),dow=new Date(dayKey).getUTCDay();
-  const back=(dow-6+7)%7;let safeBack=back;if(dow===6&&p.hour===0&&p.minute<5)safeBack=7;
-  const startKey=dayKey-safeBack*24*60*60*1000;return{id:keyFromDateKeyMs(startKey),startKeyMs:startKey,startMs:startKey+3*60*60*1000+5*60*1000,endMs:startKey+3*60*60*1000+WEEK_MS-1};
+  const back=(dow-6+7)%7;
+  let safeBack=back;if(dow===6&&p.hour===0&&p.minute<5)safeBack=7;
+  const startKey=dayKey-safeBack*24*60*60*1000;
+  return {id:keyFromDateKeyMs(startKey),startKeyMs:startKey,startMs:startKey+3*60*60*1000+5*60*1000,endMs:startKey+3*60*60*1000+WEEK_MS-1};
 }
 function periodFromId(id){
   const key=parsePeriodKey(id);
@@ -18884,7 +18883,7 @@ async function loadOperationalResetMarker(){
     return marker;
   }catch(error){diagnostic("APP_RESET","APP_RESET_MARKER_READ_FAILED",error,{functionName:"loadOperationalResetMarker",firestorePath:"app_operational_state/current",query:"getDoc",silent:true});return state.operationalResetAtMs;}
 }
-function isFinalCycleClosurePeriod(period){if(!period?.id)return false;const cycle=cycleForPeriod(period),now=window.ExploraOperationalClock?.getNow?.().getTime?.()||Date.now();return period.id===cycle.endPeriodId&&now>Number(period.endMs||0);}
+function isFinalCycleClosurePeriod(period){if(!period?.id)return false;const cycle=cycleForPeriod(period);return period.id===cycle.endPeriodId&&Date.now()>Number(period.endMs||0);}
 function diagnosticSignature(stage,code,path){return ["WEEKLY_GOALS_DERIVATIONS",String(stage||""),String(code||""),String(path||"")].join("|");}
 function firstDiagnosticThisSession(signature){try{const key=`explora_diag_${signature}`;if(state.diagnosticKeys.has(signature)||sessionStorage.getItem(key)==="1")return false;state.diagnosticKeys.add(signature);sessionStorage.setItem(key,"1");return true;}catch(_){if(state.diagnosticKeys.has(signature))return false;state.diagnosticKeys.add(signature);return true;}}
 
@@ -18920,48 +18919,46 @@ function normalizeGoalDiagnosticStage(stage=""){
 }
 function getGoalCarouselWindow(driverBillingAmount){
   const billing=Math.max(0,Number(driverBillingAmount||0)||0);
-  const zeroGoal=Object.freeze({key:"goal-none",id:0,amount:0,percent:0,zero:true});
-  const realGoals=[...GOALS];
+  const zeroGoal=Object.freeze({key:"goal-0",id:0,amount:0,percent:0,zero:true});
+  const realGoals=[zeroGoal,...GOALS];
   const highestAchievedGoal=GOALS.filter(goal=>billing>=Number(goal.amount||0)).at(-1)||null;
   const activeGoal=highestAchievedGoal||zeroGoal;
-  const activeDisplayGoal=highestAchievedGoal||GOALS[0]||null;
-  const activeGoalId=Number(activeDisplayGoal?.id||1);
-  const achievedGoalId=Number(highestAchievedGoal?.id||0);
-  const previousGoal=highestAchievedGoal?(GOALS.find(goal=>Number(goal.id)===achievedGoalId-1)||null):null;
-  const nextGoal=highestAchievedGoal?GOALS.find(goal=>Number(goal.id)>achievedGoalId)||null:GOALS[0]||null;
-  const nextGoals=highestAchievedGoal?GOALS.filter(goal=>Number(goal.id)>achievedGoalId):[...GOALS];
+  const activeGoalId=Math.max(0,Math.min(10,Number(activeGoal.id||0)));
+  const previousGoal=activeGoalId===0?null:(realGoals.find(goal=>Number(goal.id)===activeGoalId-1)||zeroGoal);
+  const nextGoal=GOALS.find(goal=>Number(goal.id)>activeGoalId)||null;
+  const nextGoals=GOALS.filter(goal=>Number(goal.id)>activeGoalId);
 
-  // Ventana única, ascendente y estable. Meta 0 es sólo un centinela interno y nunca se renderiza.
-  const minGoalId=Number(GOALS[0]?.id||1),maxWindowStart=Math.max(minGoalId,Number(GOALS.at(-1)?.id||minGoalId)-4);
-  const windowStartId=Math.max(minGoalId,Math.min(maxWindowStart,activeGoalId-2));
+  // Ventana única, ascendente y estable: Meta 0..4, Meta 1..5, ..., Meta 6..10.
+  const windowStartId=Math.max(0,Math.min(6,activeGoalId-2));
   const visibleGoals=realGoals.filter(goal=>Number(goal.id)>=windowStartId&&Number(goal.id)<=windowStartId+4);
   const renderGoals=[...realGoals];
-  const lockedGoals=GOALS.filter(goal=>Number(goal.id)>achievedGoalId).map(goal=>goal.id);
-  const unlockedGoals=GOALS.filter(goal=>Number(goal.id)<achievedGoalId).map(goal=>goal.id);
+  const lockedGoals=GOALS.filter(goal=>Number(goal.id)>activeGoalId).map(goal=>goal.id);
+  const unlockedGoals=realGoals.filter(goal=>Number(goal.id)<activeGoalId||Number(goal.id)===0).map(goal=>goal.id);
   const activeIndex=visibleGoals.findIndex(goal=>Number(goal.id)===activeGoalId);
   const remainingAmount=nextGoal?Math.max(0,Number(nextGoal.amount||0)-billing):0;
   const ascending=visibleGoals.every((goal,index,array)=>index===0||Number(array[index-1].id)<Number(goal.id));
   if(!ascending||activeIndex<0){
-    diagnostic("ORDER_GOAL_WINDOW",!ascending?"GOAL_WINDOW_ORDER_INVALID":"GOAL_ACTIVE_INDEX_INVALID",new Error(!ascending?"La ventana visible de metas no está ordenada de forma ascendente.":"La meta activa no existe dentro de la ventana visible."),{moduleName:"GOAL_BUBBLES",functionName:"getGoalCarouselWindow",billing,activeGoal:highestAchievedGoal?`Meta ${activeGoalId}`:`Próxima Meta ${activeGoalId}`,activeIndex,goalWindow:visibleGoals.map(goal=>`Meta ${goal.id}`).join(", "),lockedGoals:lockedGoals.join(", "),unlockedGoals:unlockedGoals.join(", ")});
+    diagnostic("ORDER_GOAL_WINDOW",!ascending?"GOAL_WINDOW_ORDER_INVALID":"GOAL_ACTIVE_INDEX_INVALID",new Error(!ascending?"La ventana visible de metas no está ordenada de forma ascendente.":"La meta activa no existe dentro de la ventana visible."),{moduleName:"GOAL_BUBBLES",functionName:"getGoalCarouselWindow",billing,activeGoal:`Meta ${activeGoalId}`,activeIndex,goalWindow:visibleGoals.map(goal=>`Meta ${goal.id}`).join(", "),lockedGoals:lockedGoals.join(", "),unlockedGoals:unlockedGoals.join(", ")});
   }
 
   return{
-    decorativeBefore:null,zeroGoal,activeGoal,activeDisplayGoal,previousGoal,highestAchievedGoal,nextGoal,nextGoals,
+    decorativeBefore:null,zeroGoal,activeGoal,previousGoal,highestAchievedGoal,nextGoal,nextGoals,
     visibleGoals,renderGoals,allGoals:realGoals,lockedGoals,unlockedGoals,
     activeIndex:Math.max(0,activeIndex),activePercent:Number(activeGoal.percent||0),activeGoalPercent:Number(activeGoal.percent||0),
     activeAmount:Number(activeGoal.amount||0),activeGoalAmount:Number(activeGoal.amount||0),nextGoalAmount:Number(nextGoal?.amount||0),
-    remainingAmount,driverBillingAmount:billing,windowStartIndex:windowStartId,visibleCount:Math.min(5,realGoals.length),direction:"ascending-ltr",fakeCardsDetected:0
+    remainingAmount,driverBillingAmount:billing,windowStartIndex:windowStartId,visibleCount:5,direction:"ascending-ltr",fakeCardsDetected:0
   };
 }
 function getGoalBubbleWindow(driverBillingAmount){return getGoalCarouselWindow(driverBillingAmount);}
 function getVisibleGoalBubbles(driverBillingAmount){return getGoalCarouselWindow(driverBillingAmount);}
 function safeGoalView(billing){
   try{return getGoalCarouselWindow(billing);}catch(error){
-    const zeroGoal=Object.freeze({key:"goal-none",id:0,amount:0,percent:0,zero:true}),renderGoals=[...GOALS],firstGoal=GOALS[0]||null;
-    return{decorativeBefore:null,zeroGoal,activeGoal:zeroGoal,activeDisplayGoal:firstGoal,previousGoal:null,highestAchievedGoal:null,nextGoal:firstGoal,nextGoals:[...GOALS],visibleGoals:renderGoals.slice(0,5),renderGoals,allGoals:renderGoals,lockedGoals:GOALS.map(goal=>goal.id),unlockedGoals:[],activeIndex:0,activePercent:0,activeGoalPercent:0,activeAmount:0,activeGoalAmount:0,nextGoalAmount:firstGoal?.amount||0,remainingAmount:Math.max(0,Number(firstGoal?.amount||0)-Math.max(0,Number(billing||0)||0)),driverBillingAmount:Math.max(0,Number(billing||0)||0),windowStartIndex:Number(firstGoal?.id||1),visibleCount:Math.min(5,renderGoals.length),direction:"ascending-ltr",fakeCardsDetected:0};
+    const zeroGoal=Object.freeze({key:"goal-0",id:0,amount:0,percent:0,zero:true});
+    const renderGoals=[zeroGoal,...GOALS];
+    return{decorativeBefore:null,zeroGoal,activeGoal:zeroGoal,previousGoal:null,highestAchievedGoal:null,nextGoal:GOALS[0]||null,nextGoals:[...GOALS],visibleGoals:renderGoals.slice(0,5),renderGoals,allGoals:renderGoals,lockedGoals:GOALS.map(goal=>goal.id),unlockedGoals:[0],activeIndex:0,activePercent:0,activeGoalPercent:0,activeAmount:0,activeGoalAmount:0,nextGoalAmount:GOALS[0]?.amount||0,remainingAmount:GOALS[0]?.amount||0,driverBillingAmount:Math.max(0,Number(billing||0)||0),windowStartIndex:0,visibleCount:5,direction:"ascending-ltr",fakeCardsDetected:0};
   }
 }
-function goalDisplayName(goal){if(goal?.decorative)return String(goal.label||"METAS");if(goal?.zero)return "Sin meta alcanzada";return goal?.id!=null?`Meta ${goal.id}`:"—";}
+function goalDisplayName(goal){if(goal?.decorative)return String(goal.label||"METAS");if(goal?.zero)return "Meta 0";return goal?.id!=null?`Meta ${goal.id}`:"—";}
 function goalLabel(goal){return goal?`Meta ${goal.id} · ${money(goal.amount)}`:"—";}
 function derivatorDiagnosticLabel(){const leader=state.currentDerivationLeader;if(!leader)return `Sin líder · ${money(0)} derivados · bono ${money(0)}`;const projected=Math.round(Number(leader.derivedAmount||0)*DERIVATION_PERCENT/100);return `${leader.name||"Sin nombre"} · ${money(leader.derivedAmount||0)} derivados · bono ${money(projected)}`;}
 function inferFunctionName(error,context,stage){
@@ -18985,7 +18982,7 @@ function diagnostic(stage,code,error,context={}){
   const stack=String(error?.stack||"—");
   const goalWindow=(view.visibleGoals||[]).map(goal=>goalDisplayName(goal)).join(", ")||"—";
   const lockedGoalLabels=(view.lockedGoals||[]).map(id=>`Meta ${id}`).join(", ")||"—";
-  const unlockedGoalLabels=(view.unlockedGoals||[]).map(id=>`Meta ${id}`).join(", ")||"Ninguna";
+  const unlockedGoalLabels=(view.unlockedGoals||[]).map(id=>id===0?"Meta 0":`Meta ${id}`).join(", ")||"—";
   const carouselStages=new Set(["CALCULATE_GOAL_WINDOW","RENDER_GOAL_CAROUSEL","APPLY_LOCK_LAYER","APPLY_ACTIVE_GLOW","UPDATE_RANKING_LABELS","SCROLL_DIRECTION_INIT","BUILD_GOAL_WINDOW","REMOVE_FAKE_GOALS","RENDER_GOAL_BUBBLES","SCROLL_HORIZONTAL","SCROLL_TO_PRESENT","VERTICAL_SCROLL_RESET","CLICK_RESET","TOUCH_HANDLER","CSS_OVERFLOW_CHECK"]);
   const isReset=APP_RESET_DIAGNOSTIC_STAGES.has(normalizedStage)||String(code||"").startsWith("APP_RESET_");
   const diagnosticModule=String(context.moduleName||"").trim()||(isReset?"APP_RESET":BILLING_RANKING_RESTORE_STAGES.has(normalizedStage)?"BILLING_RANKING_RESTORE":FINANCE_GOALS_TEXT_REPAIR_STAGES.has(normalizedStage)?"FINANCE_GOALS_TEXT_REPAIR":UI_REPAIR_STAGES.has(normalizedStage)?"UI_RANKING_GOALS_DERIVATIONS_REPAIR":BILLING_GOAL_PERCENT_STAGES.has(normalizedStage)?"BILLING_RANKING_GOAL_PERCENT_REPAIR":SIMULATION_RANKING_STAGES.has(normalizedStage)?"SIMULATION_RANKING_REPAIR":RANKING_REPAIR_STAGES.has(normalizedStage)?"RANKING_AND_DERIVATIONS_REPAIR":normalizedStage==="SCROLL_RENDER"?"BOTTOM_NAV":carouselStages.has(normalizedStage)?"GOAL_BUBBLES_SCROLL":"WEEKLY_GOALS_DERIVATIONS");
@@ -19205,8 +19202,8 @@ function readPersistentRankingCache(cycle=state.cycle,period=activeWeeklyPeriod(
   const key=performanceRankingCacheKey(cycle,period);
   try{
     const raw=localStorage.getItem(key);if(!raw)return null;
-    const payload=JSON.parse(raw),createdAt=Number(payload.createdAt||0),futureTimestamp=createdAt>Date.now()+300000,age=Math.max(0,Date.now()-createdAt);
-    if(futureTimestamp||Number(payload.schemaVersion)!==RANKING_CACHE_SCHEMA||String(payload.cycleId||"")!==String(cycle?.id||cycle?.cycleId||"")||String(payload.weeklyPeriodId||"")!==String(period?.id||period?.weeklyPeriodId||"")||!Array.isArray(payload.rows)){
+    const payload=JSON.parse(raw),age=Math.max(0,Date.now()-Number(payload.createdAt||0));
+    if(Number(payload.schemaVersion)!==RANKING_CACHE_SCHEMA||String(payload.cycleId||"")!==String(cycle?.id||cycle?.cycleId||"")||String(payload.weeklyPeriodId||"")!==String(period?.id||period?.weeklyPeriodId||"")||!Array.isArray(payload.rows)){
       localStorage.removeItem(key);
       diagnostic("VALIDATE_RANKING_CACHE","RANKING_CACHE_SCHEMA_INVALID",new Error("El cache persistente del ranking no coincide con el esquema o período actual."),{moduleName:"BILLING_RANKING_RESTORE",eventType:"WARNING",functionName:"readPersistentRankingCache",cycleId:cycle?.id,weeklyPeriodId:period?.id,cacheHit:true,cacheMiss:false,cacheAge:age,ttl:600000,rankingLength:Array.isArray(payload.rows)?payload.rows.length:0,firestorePath:`localStorage/${key}`,query:"JSON.parse + schema/cycle/week validation"});
       return null;
@@ -19606,12 +19603,6 @@ function mergeDerivationRankingSources(...sources){
   rows.documentsValid=sources.reduce((sum,source)=>sum+Number(source?.documentsValid||0),0);
   return rows;
 }
-function mergeLiveDerivationOverlay(rows=[]){
-  const map=new Map((Array.isArray(rows)?rows:[]).map(row=>[normalize(row.uid),{...row}]));
-  state.liveDerivationOverlay.forEach((overlay,key)=>{const normalized=normalize(key||overlay?.uid);if(!normalized)return;const current=map.get(normalized);if(!current||Number(current.derivedAmount||0)<Number(overlay.derivedAmount||0))map.set(normalized,{...(current||{}),...overlay,uid:overlay.uid||current?.uid||key});});
-  const result=[...map.values()].filter(row=>Number(row.derivedAmount||0)>0).sort((a,b)=>Number(b.derivedAmount||0)-Number(a.derivedAmount||0)||Number(b.count||0)-Number(a.count||0)||String(a.name||"").localeCompare(String(b.name||""),"es"));result.forEach((row,index)=>row.position=index+1);return result;
-}
-
 async function loadDerivations(cycleOrPeriod,profilesData,throughPeriodId="",options={}){
   const cycle=Array.isArray(cycleOrPeriod?.periods)?cycleOrPeriod:cycleForPeriod(cycleOrPeriod),period=periodFromId(throughPeriodId)||activeWeeklyPeriod(),ctx=fastContext(cycle,period),cachedEntry=readValidatedPerformanceCache("derivation_ranking",ctx,{allowStale:true}),cachedRows=cachedEntry?.data?.rows?.map(row=>({...row}))||null,preferOperational=options.preferOperational===true;
   let publicRows=null,publicError=null,operationalRows=null,operationalError=null,ownRows=null;
@@ -19628,7 +19619,7 @@ async function loadDerivations(cycleOrPeriod,profilesData,throughPeriodId="",opt
       }
     }
   }
-  const merged=mergeLiveDerivationOverlay(mergeDerivationRankingSources(publicRows||[],cachedRows||[],ownRows||[],operationalRows||[]));
+  const merged=mergeDerivationRankingSources(publicRows||[],cachedRows||[],ownRows||[],operationalRows||[]);
   if(derivationRowsHaveData(merged))return merged;
   if(Array.isArray(operationalRows))return operationalRows;
   if(Array.isArray(publicRows))return publicRows;
@@ -19736,15 +19727,23 @@ function renderBubbles({animate=false,reason="RENDER_GOAL_CAROUSEL"}={}){
   const view=runGoalStage("BUILD_GOAL_WINDOW","GOAL_WINDOW_CALC_FAILED","getGoalCarouselWindow",()=>getGoalCarouselWindow(current.grossBilling),{billing:current.grossBilling});
   if(!view)return null;
   state.goalView=view;
-  const billing=Math.max(0,Number(current.grossBilling||0)),highest=GOALS.filter(goal=>billing>=Number(goal.amount||0)).at(-1)||null,next=highest?GOALS.find(goal=>Number(goal.id)>Number(highest.id)):GOALS[0]||null,activeGoal=highest||GOALS[0]||null,activeId=Number(activeGoal?.id||1),cleanGoals=[...GOALS];
+  const activeId=Number(view.activeGoal?.id||0),renderGoals=Array.isArray(view.renderGoals)?view.renderGoals:[];
+  const fakeCards=renderGoals.filter(goal=>goal?.decorative&&!goal?.welcome);
+  if(fakeCards.length){
+    diagnostic("REMOVE_FAKE_GOALS","FAKE_GOAL_CARDS_DETECTED",new Error("Se detectaron tarjetas de metas no permitidas."),{functionName:"renderBubbles",fakeCardsDetected:fakeCards.map(goal=>goal.label||goal.key).join(", ")});
+  }
+  const cleanGoals=renderGoals.filter(goal=>!goal?.decorative);
   const markup=runGoalStage("RENDER_GOAL_BUBBLES","GOAL_CAROUSEL_RENDER_FAILED","renderBubbles",()=>cleanGoals.map((goal,index)=>{
-    const numericId=Number(goal?.id||0),active=numericId===activeId,unlocked=Boolean(highest&&numericId<activeId),locked=!active&&!unlocked,tier=goalTier(goal);
-    const classes=["performance-goal-bubble","goal-bubble",active?"goal-bubble--active":"",unlocked?"goal-bubble--unlocked":"",locked?"goal-bubble--locked":"",tier?`goal-bubble--${tier}`:""].filter(Boolean).join(" ");
-    const label=`META ${numericId}`,percent=`${Number(goal.percent||0)}%`,isMaximum=Boolean(highest&&numericId===GOALS.at(-1)?.id),remaining=next?Math.max(0,Number(next.amount||0)-billing):0;
-    let detail="";if(active){if(isMaximum)detail='<small><b>META MÁXIMA</b><i>ALCANZADA</i></small>';else if(!highest)detail=`<small><b>PRÓXIMA META</b><i>TE FALTAN ${escapeHtml(money(remaining))}</i><i>PARA LA META ${numericId}</i></small>`;else detail=`<small><b>META ACTUAL</b><i>TE FALTAN ${escapeHtml(money(remaining))}</i><i>PARA LA META ${Number(next?.id||numericId)}</i></small>`;}
-    const aria=active?`${label}, ${percent}. ${isMaximum?"Meta máxima alcanzada":!highest?`Próxima meta. Te faltan ${money(remaining)} para la Meta ${numericId}`:`Meta actual. Te faltan ${money(remaining)} para la Meta ${Number(next?.id||numericId)}`}`:`${label}, ${percent}`;
+    const decorative=Boolean(goal?.decorative),zero=Boolean(goal?.zero),numericId=Number(goal?.id||0),active=!decorative&&numericId===activeId;
+    const unlocked=!decorative&&!active&&(zero||numericId<activeId);
+    const locked=!decorative&&!active&&!zero&&numericId>activeId;
+    const tier=!decorative&&!zero?goalTier(goal):"";
+    const classes=["performance-goal-bubble","goal-bubble",decorative?"goal-bubble--decorative":"",zero?"goal-bubble--zero":"",active?"goal-bubble--active":"",unlocked?"goal-bubble--unlocked":"",locked?"goal-bubble--locked":"",tier?`goal-bubble--${tier}`:""].filter(Boolean).join(" ");
+    const label=decorative?"METAS":`META ${numericId}`;
+    const percent=decorative?"✦":`${Number(goal.percent||0)}%`;
+    const aria=decorative?"Metas":`Meta ${numericId}, ${percent}`;
     const lockLayer=locked?'<span class="goal-bubble-lock-layer" aria-hidden="true"><span class="goal-bubble-lock-icon"></span></span>':"";
-    return `<button type="button" class="${classes}" data-performance-goal="${numericId}" data-goal-state="${active?"active":unlocked?"unlocked":"locked"}" aria-label="${escapeHtml(aria)}" aria-posinset="${index+1}" aria-setsize="${cleanGoals.length}"><em>${escapeHtml(label)}</em><strong>${escapeHtml(percent)}</strong>${detail}${lockLayer}</button>`;
+    return `<button type="button" class="${classes}" ${decorative?'tabindex="-1" aria-disabled="true"':`data-performance-goal="${numericId}"`} data-goal-state="${decorative?"decorative":active?"active":unlocked?"unlocked":"locked"}" aria-label="${escapeHtml(aria)}" aria-posinset="${index+1}" aria-setsize="${cleanGoals.length}"><em>${escapeHtml(label)}</em><strong>${escapeHtml(percent)}</strong>${lockLayer}</button>`;
   }).join(""),{billing:current.grossBilling,goalView:view,activeIndex:view.activeIndex,lockedGoals:view.lockedGoals.join(","),unlockedGoals:view.unlockedGoals.join(",")});
   if(markup===null)return view;
   track.innerHTML=markup;
@@ -19782,18 +19781,18 @@ function renderDerivator(){
 function renderSummary(){
   const current=state.current||{grossBilling:0,rewardPercent:0,missing:GOALS[0].amount,nextGoal:GOALS[0]};
   const view=state.goalView||safeGoalView(current.grossBilling);
-  const reached=view.highestAchievedGoal||null,next=view.nextGoal||GOALS[0]||null,displayGoal=reached||next||GOALS.at(-1),earnedPercent=Number(reached?.percent||current.rewardPercent||0);
+  const active=view.activeGoal||view.zeroGoal||GOALS[0],next=view.nextGoal||null;
   $("performanceCurrentBilling")&&($("performanceCurrentBilling").textContent=money(current.grossBilling));
-  $("performanceCurrentGoal")&&($("performanceCurrentGoal").textContent=displayGoal?`Meta ${displayGoal.id}`:"Meta 1");
-  $("performanceMissingAmount")&&($("performanceMissingAmount").textContent=next?money(Math.max(0,Number(next.amount||0)-Number(current.grossBilling||0))):"$0");
-  $("performanceRewardPercent")&&($("performanceRewardPercent").textContent=`${earnedPercent}%`);
+  $("performanceCurrentGoal")&&($("performanceCurrentGoal").textContent=active?`Meta ${active.id}`:"Meta 0");
+  $("performanceMissingAmount")&&($("performanceMissingAmount").textContent=next?money(view.remainingAmount):"$0");
+  $("performanceRewardPercent")&&($("performanceRewardPercent").textContent=`${view.activeGoalPercent||0}%`);
   $("performanceCycleLabel")&&($("performanceCycleLabel").textContent=`Semana ${activeWeeklyPeriod().id}`);
-  const dashboardGoal=$("dashboardWeeklyGoal");if(dashboardGoal)dashboardGoal.textContent=`${earnedPercent}%`;
-  const dashboardBenefit=$("dashboardWeeklyBenefit");if(dashboardBenefit)dashboardBenefit.textContent=`+${money(Math.round(Number(current.grossBilling||0)*earnedPercent/100))}`;
+  const dashboardGoal=$("dashboardWeeklyGoal");if(dashboardGoal)dashboardGoal.textContent=`${view.activeGoalPercent||0}%`;
+  const dashboardBenefit=$("dashboardWeeklyBenefit");if(dashboardBenefit)dashboardBenefit.textContent=`+${money(Math.round(Number(current.grossBilling||0)*Number(view.activeGoalPercent||0)/100))}`;
 }
 function renderGoals(){
   const list=$("performanceGoalsList"),current=state.current||{grossBilling:0};if(!list)return;
-  const view=state.goalView||safeGoalView(current.grossBilling),activeId=Number(view.highestAchievedGoal?.id||view.nextGoal?.id||1),next=view.nextGoal;
+  const view=state.goalView||safeGoalView(current.grossBilling),activeId=Number(view.activeGoal?.id||0),next=view.nextGoal;
   const progress=next?`<section class="performance-explanation-card"><h2>TE FALTAN ${money(view.remainingAmount)} PARA LA META ${next.id}</h2><p>Cada meta representa una facturación semanal.</p></section>`:`<section class="performance-explanation-card"><h2>META MÁXIMA ALCANZADA</h2><p>Cada meta representa una facturación semanal.</p></section>`;
   list.innerHTML=progress+GOALS.map(goal=>{const reached=current.grossBilling>=goal.amount,active=activeId===goal.id,tier=goalTier(goal);return `<article class="performance-goal-row${reached?" is-reached":""}${active?" is-active":""}" data-goal-row="${goal.id}" data-goal-tier="${tier}"><div class="performance-goal-number">${active?"★":reached?"✓":goal.id}</div><div class="performance-goal-copy"><strong>Meta ${goal.id}</strong><span>${money(goal.amount)} · facturación semanal</span></div><div class="performance-goal-value"><b>${goal.percent}%</b><small>${active?"ACTIVA":reached?"ALCANZADA":"PENDIENTE"}</small></div></article>`;}).join("");
 }
@@ -19809,7 +19808,7 @@ function renderRanking(){
   list.dataset.requestId=String(rankingSnapshot.requestId||0);list.replaceChildren();
   if(!rows.length){list.innerHTML='<div class="performance-history-empty">Sin facturación registrada esta semana.</div>';return;}
   const fragment=document.createDocumentFragment();
-  rows.forEach((row,index)=>{const goalId=Number(row.reachedGoal?.id||0),displayGoalId=goalId>0?goalId:Number(GOALS[0]?.id||1),goalState=goalId>0?`Meta ${displayGoalId}`:`Próxima Meta ${displayGoalId}`,benefit=Math.max(0,Number(row.equivalent||0)),position=row.position||index+1,article=document.createElement("article");article.className="performance-ranking-row";article.dataset.rankingPosition=String(position);article.dataset.rankingUid=row.uid;article.innerHTML=`<div class="performance-ranking-percent" aria-label="${escapeHtml(goalState)}, ${Number(row.rewardPercent||0)} por ciento"><small>META ${displayGoalId}</small>${Number(row.rewardPercent||0)}%</div><div class="performance-ranking-copy"><strong>${escapeHtml(row.name)}</strong><span>Puesto ${position} · ${money(row.grossBilling)} facturados · ${escapeHtml(goalState)}</span></div><button type="button" class="performance-ranking-money" data-goal-benefit-uid="${escapeHtml(row.uid)}" aria-label="Ganaste ${money(benefit)} por meta"><small>GANASTE</small>+${money(benefit)}</button>`;fragment.appendChild(article);});
+  rows.forEach((row,index)=>{const goalId=Number(row.reachedGoal?.id||0),benefit=Math.max(0,Number(row.equivalent||0)),position=row.position||index+1,article=document.createElement("article");article.className="performance-ranking-row";article.dataset.rankingPosition=String(position);article.dataset.rankingUid=row.uid;article.innerHTML=`<div class="performance-ranking-percent" aria-label="Meta ${goalId}, ${Number(row.rewardPercent||0)} por ciento"><small>META ${goalId}</small>${Number(row.rewardPercent||0)}%</div><div class="performance-ranking-copy"><strong>${escapeHtml(row.name)}</strong><span>Puesto ${position} · ${money(row.grossBilling)} facturados · Meta ${goalId}</span></div><button type="button" class="performance-ranking-money" data-goal-benefit-uid="${escapeHtml(row.uid)}" aria-label="Ganaste ${money(benefit)} por meta"><small>GANASTE</small>+${money(benefit)}</button>`;fragment.appendChild(article);});
   list.appendChild(fragment);
 }
 function findRankingRow(uid){const key=normalize(uid);return state.rows.find(row=>normalize(row.uid)===key||row.aliases?.has?.(key))||null;}
@@ -19819,7 +19818,7 @@ function openGoalBenefitDetail(uid){
     const row=normalizeBillingRankingRow(source),goalId=Number(row.reachedGoal?.id||0),percent=Number(row.rewardPercent||0),benefit=Number(row.equivalent||0),next=row.nextGoal||nextGoalForBilling(row.grossBilling),missing=next?Math.max(0,Number(next.amount||0)-Number(row.grossBilling||0)):0;
     $("goalBenefitDriver")&&($("goalBenefitDriver").textContent=row.name||"Chofer");
     $("goalBenefitBilling")&&($("goalBenefitBilling").textContent=money(row.grossBilling));
-    $("goalBenefitGoal")&&($("goalBenefitGoal").textContent=goalId>0?`Meta ${goalId}`:"Sin meta alcanzada");
+    $("goalBenefitGoal")&&($("goalBenefitGoal").textContent=`Meta ${goalId}`);
     $("goalBenefitPercent")&&($("goalBenefitPercent").textContent=`${percent}%`);
     $("goalBenefitCalculation")&&($("goalBenefitCalculation").textContent=`${money(row.grossBilling)} × ${percent}% = ${money(benefit)}`);
     $("goalBenefitAmount")&&($("goalBenefitAmount").textContent=`+${money(benefit)}`);
@@ -19924,18 +19923,11 @@ async function refresh({force=false,reason="manual"}={}){
     }
     await resetPromise;
     if(requestId!==state.refreshRequestId){diagnostic("RENDER_GOALS_RANKING_TAB","RANKING_OLD_REQUEST_DISCARDED",new Error("Se descartó una respuesta anterior del ranking para no sobrescribir datos nuevos."),{moduleName:"BILLING_RANKING_RESTORE",eventType:"WARNING",silent:true,functionName:"refresh",cycleId:cycle.id,weeklyPeriodId:currentPeriod.id,requestId,currentRequestId:state.refreshRequestId,cacheHit:Boolean(billingCache),cacheMiss:!billingCache,firestorePath:`performance_public/${cycle.id}/drivers`,query:"requestId guard"});return getState();}
-    state.rows=(rows||[]).map(normalizeBillingRankingRow);
-    const weeklySnapshot=window.ExploraWeeklyEngine?.getSnapshot?.();
-    if(weeklySnapshot&&String(weeklySnapshot.uid||weeklySnapshot.driverUid||"")===String(user.uid)&&String(weeklySnapshot.weeklyPeriodId||"")===String(currentPeriod.id)){
-      let own=currentRowForUid(state.rows,user.uid);if(!own){own=freshCurrentUserRow(user);own.uid=user.uid;state.rows.push(own);}
-      Object.assign(own,normalizeBillingRankingRow({...own,grossBilling:Number(weeklySnapshot.grossBilling??weeklySnapshot.totalFacturado??0),serviceCount:Number(weeklySnapshot.serviceCount??weeklySnapshot.cantidadCobros??0)}));
-      state.rows=mergePublicRows(state.rows,"uid","grossBilling").map(normalizeBillingRankingRow).sort((a,b)=>b.grossBilling-a.grossBilling||b.rewardPercent-a.rewardPercent||a.name.localeCompare(b.name,"es"));
-    }
-    state.rows.forEach((row,index)=>row.position=index+1);state.current=currentRowForUid(state.rows,user.uid)||freshCurrentUserRow(user);
+    state.rows=(rows||[]).map(normalizeBillingRankingRow);state.rows.forEach((row,index)=>row.position=index+1);state.current=currentRowForUid(state.rows,user.uid)||freshCurrentUserRow(user);
     state.activeDriverCount=Math.max(Number(rows?.activeDriverCount||rows?.expectedDriverCount||0),state.rows.length,(profilesData?.profiles||[]).filter(isActiveDriverProfile).length);state.rankingDocumentsRead=Number(rows?.documentsRead||0);state.billingDocumentsRead=Number(rows?.billingDocumentsRead||0);state.rankingSource=String(rows?.source||"merged");state.rankingSummaryComplete=rows?.publicSummaryComplete===true||state.rows.length>=state.activeDriverCount;state.rankingRefreshMs=Math.round(performance.now()-rankingStarted);state.rankingCacheAge=0;
     const newGoalId=state.current?.reachedGoal?.id||0;if(newGoalId>0&&(!wasLoaded||newGoalId!==previousGoalId)){state.dashboardAnimationPending=true;if($("profileScreen")?.classList.contains("is-open"))state.profileAnimationPending=true;}state.lastActiveGoalId=newGoalId;
     state.loaded=true;state.loading=false;state.lastRefresh=Date.now();state.error=null;state.goalView=safeGoalView(state.current?.grossBilling||0);state.forceOperationalRead=false;state.lastRankingContextKey=contextKey;persistPerformanceFastCache(currentPeriod,cycle);renderAll();
-    window.dispatchEvent(new CustomEvent("explora:performance-updated",{detail:{...getState(),phase:"billing-ready"}}));
+    if(!window.ExploraDashboardRealtimeCoordinator?.isCoordinating?.())window.dispatchEvent(new CustomEvent("explora:performance-updated",{detail:{...getState(),phase:"billing-ready"}}));
     if(state.rankingRefreshMs>800&&!wasLoaded){
       const latencyContext={moduleName:"BILLING_RANKING_RESTORE",functionName:"refresh",cycleId:cycle.id,weeklyPeriodId:currentPeriod.id,executionMs:state.rankingRefreshMs,activeDriversRead:state.activeDriverCount,rankingDocumentsRead:state.rankingDocumentsRead,billingDocumentsRead:state.billingDocumentsRead,rankingLength:state.rows.length,top3:state.rows.slice(0,3).map(row=>`${row.position}. ${row.name}`).join(" | "),cacheHit:Boolean(billingCache),cacheMiss:!billingCache,cacheAge:billingCache?.age,firestorePath:`performance_public/${cycle.id}/drivers`,query:"cache -> resumen público rápido -> perfiles activos",refreshBackground:true,result:"RANKING_RENDERED"};
       if(state.rankingRefreshMs>800)diagnostic("PERFORMANCE_TIMEOUT","RANKING_TOO_SLOW_WARNING",new Error(`El refresco de red del ranking tardó ${state.rankingRefreshMs} ms, pero el dashboard permaneció disponible.`),{...latencyContext,eventType:"WARNING"});
@@ -19943,17 +19935,17 @@ async function refresh({force=false,reason="manual"}={}){
     }
     const [derivationResult,historyResult]=await Promise.allSettled([loadDerivations(cycle,profilesData,currentPeriod.id,{preferOperational}),loadHistory(user.uid)]);
     if(requestId!==state.refreshRequestId){diagnostic("RENDER_GOALS_RANKING_TAB","RANKING_OLD_REQUEST_DISCARDED",new Error("Se descartó una respuesta anterior del ranking para no sobrescribir datos nuevos."),{moduleName:"BILLING_RANKING_RESTORE",eventType:"WARNING",silent:true,functionName:"refresh",cycleId:cycle.id,weeklyPeriodId:currentPeriod.id,requestId,currentRequestId:state.refreshRequestId,cacheHit:Boolean(billingCache),cacheMiss:!billingCache,firestorePath:`performance_public/${cycle.id}/drivers`,query:"requestId guard"});return getState();}
-    const serverDerivations=derivationResult.status==="fulfilled"?derivationResult.value:state.derivations||[],derivations=mergeLiveDerivationOverlay(serverDerivations);state.derivations=derivations;state.currentDerivationLeader=derivations[0]||null;state.liveDerivationOverlay.forEach((overlay,key)=>{const server=(serverDerivations||[]).find(row=>normalize(row.uid)===normalize(key));if(server&&Number(server.derivedAmount||0)>=Number(overlay.derivedAmount||0))state.liveDerivationOverlay.delete(key);});
+    const derivations=derivationResult.status==="fulfilled"?derivationResult.value:state.derivations||[];state.derivations=derivations;state.currentDerivationLeader=derivations[0]||null;state.liveDerivationOverlay.clear();
     if(historyResult.status==="fulfilled")state.history=historyResult.value;
     cachePeriodIncentive(currentPeriod,state.rows,derivations);
     const prev=previousPeriod(currentPeriod),closedWinner=await persistClosedPerformance(prev,profilesData);state.derivationLeader=closedWinner||state.derivationLeader||null;state.derivationPeriodId=prev?.id||"";
-    persistPerformanceFastCache(currentPeriod,cycle);renderAll();window.dispatchEvent(new CustomEvent("explora:performance-updated",{detail:getState()}));return getState();
+    persistPerformanceFastCache(currentPeriod,cycle);renderAll();if(!window.ExploraDashboardRealtimeCoordinator?.isCoordinating?.())window.dispatchEvent(new CustomEvent("explora:performance-updated",{detail:getState()}));return getState();
   },ctx,{ttl:300000,lockKey:`performance-bundle-${user.uid}-${cycle.id}-${preferOperational?"operational":"public"}`,background:true,visibleDiagnostic:false,slowThresholdMs:800,query:isAdmin()?"resúmenes públicos + fallback operativo Admin":"resúmenes públicos + fallback propio por auth.uid",firestorePath:isAdmin()?`performance_public/${cycle.id}/drivers + billing_records + derivaciones`:`performance_public/${cycle.id}/drivers + ranking_metas_public/${cycle.id}/drivers + derivation_ranking_public/${cycle.id}/drivers`,listenersActive:0,staleValue:getState()})||Promise.resolve(getState());
   state.refreshPromise=Promise.resolve(state.refreshPromise).catch(error=>{state.loading=false;const denied=isPermissionDenied(error);diagnostic("CACHE_VALIDATE",denied?"RANKING_PERMISSION_DENIED":"BILLING_RANKING_READ_FAILED",error,{cycleId:cycle.id,weeklyPeriodId:currentPeriod.id,functionName:"refresh",cacheHit:Boolean(billingCache||derivationCache||goalCache),cacheMiss:!billingCache&&!derivationCache&&!goalCache,billing:state.current?.grossBilling||0,derivedMoney:totalDerivedMoney(state.derivations),firestorePath:isAdmin()?"performance_public + billing_records + derivaciones":"performance_public + ranking_metas_public + derivation_ranking_public",query:isAdmin()?"refresh ranking bundle Admin":"refresh ranking bundle chofer (sin consultas globales operativas)"});const status=$("performanceScreenStatus");if(status){status.textContent=state.loaded?"Mostrando último dato válido":denied&&!isAdmin()?"Sin resumen público disponible":"Sin datos cargados todavía";status.classList.toggle("is-error",!state.loaded);}if(state.loaded){renderAll();return getState();}if(denied&&!isAdmin()){state.current=state.current||freshCurrentUserRow(user);state.rows=Array.isArray(state.rows)?state.rows:[];state.derivations=Array.isArray(state.derivations)?state.derivations:[];state.goalView=safeGoalView(state.current?.grossBilling||0);state.loaded=true;state.forceOperationalRead=false;renderAll();return getState();}throw error;}).finally(()=>{state.refreshPromise=null;if(state.pendingForcedRefresh){const queuedReason=state.pendingRefreshReason||"queued-update";state.pendingForcedRefresh=false;state.pendingRefreshReason="";queueMicrotask(()=>refresh({force:true,reason:queuedReason}).catch(()=>{}));}});
   return state.refreshPromise;
 }
 function setTab(tab){state.tab=tab;document.querySelectorAll(".performance-tab").forEach(button=>button.classList.toggle("is-active",button.dataset.performanceTab===tab));document.querySelectorAll("[data-performance-panel]").forEach(panel=>panel.classList.toggle("is-active",panel.dataset.performancePanel===tab));}
-function open(tab="goals",goalId=0){const screen=$("performanceScreen");if(!screen)return;state.open=true;state.highlightGoal=goalId;screen.classList.add("is-open");screen.setAttribute("aria-hidden","false");window.lockPageScroll?.("performance-screen");setTab(tab);setTimeout(()=>runUiRankingGoalsDerivationsAudit(`metas-${tab}`),120);const period=activeWeeklyPeriod(),cycle=cycleForPeriod(period);state.forceOperationalRead=isAdmin();restorePerformanceFastCache(cycle,period);refresh({force:true,reason:"ranking-open-background"}).catch(()=>{});if(goalId)requestAnimationFrame(()=>setTimeout(()=>document.querySelector(`[data-goal-row="${goalId}"]`)?.scrollIntoView?.({behavior:prefersReducedMotion()?"auto":"smooth",block:"center"}),80));}
+function open(tab="goals",goalId=0){const screen=$("performanceScreen");if(!screen)return;state.open=true;state.highlightGoal=goalId;screen.classList.add("is-open");screen.setAttribute("aria-hidden","false");window.lockPageScroll?.("performance-screen");setTab(tab);setTimeout(()=>runUiRankingGoalsDerivationsAudit(`metas-${tab}`),120);const period=activeWeeklyPeriod(),cycle=cycleForPeriod(period);state.forceOperationalRead=isAdmin();restorePerformanceFastCache(cycle,period);if(window.ExploraDashboardRealtimeCoordinator)window.ExploraDashboardRealtimeCoordinator.ensure?.("ranking-open");else refresh({force:true,reason:"ranking-open-background"}).catch(()=>{});if(goalId)requestAnimationFrame(()=>setTimeout(()=>document.querySelector(`[data-goal-row="${goalId}"]`)?.scrollIntoView?.({behavior:prefersReducedMotion()?"auto":"smooth",block:"center"}),80));}
 function close(){const screen=$("performanceScreen");screen?.classList.remove("is-open");screen?.setAttribute("aria-hidden","true");state.open=false;window.unlockPageScroll?.("performance-screen");}
 function getSettlementIncentive(uid,weeklyPeriodId){const periodData=state.incentiveByPeriod.get(String(weeklyPeriodId||"")),key=normalize(uid);let goal=Number(periodData?.goalPercentByUid?.get?.(key)||0),derivationBonusAmount=periodData&&normalize(periodData.derivationWinnerUid)===key?Number(periodData.derivationBonusAmount||0):0,derivation=derivationBonusAmount>0?DERIVATION_PERCENT:0;if(!periodData){const period=periodFromId(weeklyPeriodId)||activeWeeklyPeriod(),cycle=cycleForPeriod(period),row=state.rows.find(item=>normalize(item.uid)===key||item.aliases?.has?.(key));goal=Number(row?.rewardPercent||0);if(isFinalCycleClosurePeriod(period)&&normalize(state.currentDerivationLeader?.uid)===key){derivationBonusAmount=Math.round(Number(state.currentDerivationLeader?.derivedAmount||0)*DERIVATION_PERCENT/100);derivation=DERIVATION_PERCENT;}}return{percent:goal,goalPercent:goal,derivationPercent:derivation,derivationBonusAmount,estimatedDerivationBonus:Number(periodData?.estimatedDerivationBonus||0),cycleId:periodData?.cycleId||"",derivationWinnerUid:periodData?.derivationWinnerUid||""};}
 async function prepareSettlementIncentive(uid,weeklyPeriodId){
@@ -19967,15 +19959,7 @@ async function prepareSettlementIncentive(uid,weeklyPeriodId){
   }catch(error){diagnostic("WEEKLY_BENEFIT","SETTLEMENT_INCENTIVE_PREPARE_FAILED",error,{weeklyPeriodId:period.id,cycleId:cycleForPeriod(period).id,functionName:"prepareSettlementIncentive"});throw error;}
 }
 function resetOperationalState({resetAtMs=Date.now()}={}){cancelGoalReturn();state.refreshRequestId+=1;state.refreshPromise=null;state.operationalResetAtMs=Math.max(0,Number(resetAtMs||Date.now()));invalidatePerformanceCaches(fastContext(cycleForPeriod(activeWeeklyPeriod()),activeWeeklyPeriod()),"operational-reset");state.rows=[];state.derivations=[];state.history=[];state.currentDerivationLeader=null;state.derivationLeader=null;state.derivationPeriodId="";state.incentiveByPeriod.clear();state.cycleAwards.clear();state.liveDerivationOverlay.clear();state.lastActiveGoalId=0;state.dashboardAnimationPending=false;state.profileAnimationPending=false;state.error=null;state.lastDiagnostic=null;state.cacheRestored=false;state.forceOperationalRead=isAdmin();state.current=freshCurrentUserRow();state.goalView=safeGoalView(0);state.loaded=true;state.loading=false;state.lastRefresh=Date.now();renderAll();const profileCard=$("profileGoalCard");if(profileCard)profileCard.hidden=true;return getState();}
-function recordCompletedDerivation(uid,row){
-  const targetUid=String(uid||senderUid(row)||"").trim(),amount=derivationAmount(row),id=String(row?.derivationId||row?.id||operationId(row)||"");if(!targetUid||!(amount>0))return;
-  const key=normalize(targetUid),existing=state.liveDerivationOverlay.get(key)||state.derivations.find(item=>normalize(item.uid)===key)||{},ids=new Set(existing.operationIds||[]);if(id&&ids.has(id))return;if(id)ids.add(id);
-  const overlay={...existing,uid:targetUid,name:existing.name||row?.emisorName||row?.senderName||"Chofer",avatar:existing.avatar||row?.emisorPhotoUrl||row?.senderPhotoUrl||"",derivedAmount:Number(existing.derivedAmount||0)+amount,count:Number(existing.count||0)+1,collaborationGenerated:Number(existing.collaborationGenerated||0)+collaborationOf(row),operationIds:[...ids]};
-  state.liveDerivationOverlay.set(key,overlay);state.derivations=mergeLiveDerivationOverlay(state.derivations);state.currentDerivationLeader=state.derivations[0]||null;renderAll();
-  state.forceOperationalRead=true;invalidatePerformanceCaches(fastContext(cycleForPeriod(activeWeeklyPeriod()),activeWeeklyPeriod()),"derivation-completed");
-  if(window.ExploraOperationalSync)return;
-  refresh({force:true,reason:"derivation-completed"}).catch(error=>diagnostic("REFRESH_AFTER_DERIVATION","DERIVATION_RANKING_READ_FAILED",error,{emisorUid:targetUid,derivationId:id,derivedMoney:amount,derivationBonus:Math.round(amount*DERIVATION_PERCENT/100),functionName:"recordCompletedDerivation"}));
-}
+function recordCompletedDerivation(uid,row){state.forceOperationalRead=true;invalidatePerformanceCaches(fastContext(cycleForPeriod(activeWeeklyPeriod()),activeWeeklyPeriod()),"derivation-completed");refresh({force:true,reason:"derivation-completed"}).catch(error=>diagnostic("REFRESH_AFTER_DERIVATION","DERIVATION_RANKING_READ_FAILED",error,{emisorUid:uid,derivationId:row?.derivationId||row?.id,derivedMoney:derivationAmount(row),derivationBonus:Math.round(derivationAmount(row)*DERIVATION_PERCENT/100),functionName:"recordCompletedDerivation"}));}
 function applyUnifiedWeeklySnapshot(snapshot={}){
   const uid=String(snapshot.driverUid||snapshot.uid||auth?.currentUser?.uid||"").trim(),periodId=String(snapshot.weeklyPeriodId||"").trim(),active=activeWeeklyPeriod();
   if(!uid||!periodId||periodId!==active.id)return getState();
@@ -19990,6 +19974,31 @@ function applyUnifiedWeeklySnapshot(snapshot={}){
   row=currentRowForUid(state.rows,uid)||row;state.current=row;state.uid=uid;state.cycle=cycleForPeriod(active);state.goalView=safeGoalView(total);state.loaded=true;state.loading=false;state.lastRefresh=Date.now();state.error=null;
   persistPerformanceFastCache(active,state.cycle);renderAll();return getState();
 }
+
+function applyRealtimeOperationalRows(payload={}){
+  const periodId=String(payload.weeklyPeriodId||"").trim(),active=activeWeeklyPeriod(),revision=Math.max(0,Number(payload.snapshotRevision||payload.requestId||0));
+  if(!periodId||periodId!==active.id||revision<Number(state.lastAppliedUnifiedSnapshotId||0))return getState();
+  const rawRows=Array.isArray(payload.rows)?payload.rows:[],previousByUid=new Map((state.rows||[]).map(row=>[normalize(row.uid),row]));
+  const operational=rawRows.map((raw,index)=>{
+    const row=publicPerformanceRow(raw,raw?.id||raw?.driverUid||String(index));if(!row)return null;const previous=previousByUid.get(normalize(row.uid));
+    if(previous?.avatar)row.avatar=previous.avatar;if(previous?.name&&previous.name!=="Chofer")row.name=previous.name;
+    return row;
+  }).filter(Boolean);
+  const operationalUids=new Set(operational.map(row=>normalize(row.uid)));
+  const inactive=(state.rows||[]).filter(row=>!operationalUids.has(normalize(row.uid))).map(row=>normalizeBillingRankingRow({...row,grossBilling:0,serviceCount:0}));
+  state.rows=mergePublicRows([...inactive,...operational],"uid","grossBilling").map(normalizeBillingRankingRow).sort((a,b)=>b.grossBilling-a.grossBilling||b.rewardPercent-a.rewardPercent||a.name.localeCompare(b.name,"es"));
+  state.rows.forEach((row,index)=>row.position=index+1);
+  const billingByUid=new Map(state.rows.map(row=>[normalize(row.uid),row]));
+  state.derivations=rawRows.map((raw,index)=>{
+    const row=publicDerivationRow(raw,raw?.id||raw?.driverUid||String(index));if(!row||!(row.derivedAmount>0))return null;const billing=billingByUid.get(normalize(row.uid));if(billing?.avatar)row.avatar=billing.avatar;if(billing?.name)row.name=billing.name;return row;
+  }).filter(Boolean).sort((a,b)=>b.derivedAmount-a.derivedAmount||b.count-a.count||a.name.localeCompare(b.name,"es"));
+  state.derivations.forEach((row,index)=>row.position=index+1);state.currentDerivationLeader=state.derivations[0]||null;
+  const uid=String(payload.uid||payload.driverUid||auth?.currentUser?.uid||"").trim();state.current=currentRowForUid(state.rows,uid)||normalizeBillingRankingRow({...freshCurrentUserRow(auth?.currentUser),uid,grossBilling:Number(payload.totalFacturado??payload.grossBilling??0)});
+  if(!currentRowForUid(state.rows,uid)){state.rows.push(state.current);state.rows.sort((a,b)=>b.grossBilling-a.grossBilling||a.name.localeCompare(b.name,"es"));state.rows.forEach((row,index)=>row.position=index+1);}
+  state.uid=uid;state.cycle=cycleForPeriod(active);state.goalView=safeGoalView(state.current.grossBilling||0);state.activeDriverCount=Math.max(state.rows.length,Number(payload.activeDriverCount||0));state.rankingSummaryComplete=true;state.rankingSource="acumulados_semanales-realtime";state.loaded=true;state.loading=false;state.lastRefresh=Date.now();state.error=null;state.lastAppliedUnifiedSnapshotId=Math.max(Number(state.lastAppliedUnifiedSnapshotId||0),revision);
+  persistPerformanceFastCache(active,state.cycle);renderAll();return getState();
+}
+
 function getState(){return{loaded:state.loaded,loading:state.loading,uid:state.uid,role:state.role,cycle:state.cycle,rows:state.rows,current:state.current,goalView:state.goalView,rankingSnapshot:state.rankingSnapshot,derivations:state.derivations,currentDerivationLeader:state.currentDerivationLeader,derivationLeader:state.derivationLeader,derivationPeriodId:state.derivationPeriodId,history:state.history};}
 async function calculateForPeriod(period){
   const target=normalizeWeeklyPeriod(period);
@@ -20016,7 +20025,7 @@ function runUiRankingGoalsDerivationsAudit(screenName="dashboard"){
   });
 }
 window.ExploraUIRankingGoalsDerivationsRepair={audit:runUiRankingGoalsDerivationsAudit};
-window.ExploraPerformanceEngine={GOALS,refresh,open,close,getState,getGoalBubbleWindow,getVisibleGoalBubbles,renderProfileGoal,animateDashboardGoal,getSettlementIncentive,prepareSettlementIncentive,recordCompletedDerivation,calculateForPeriod,resetOperationalState,applyUnifiedWeeklySnapshot,openGoalBenefitDetail,closeGoalBenefitDetail,invalidateRankingCache:(reason="external")=>{state.forceOperationalRead=isAdmin();return invalidatePerformanceCaches(fastContext(cycleForPeriod(activeWeeklyPeriod()),activeWeeklyPeriod()),reason);},showDiagnostic:diagnostic,closeDiagnostic};
+window.ExploraPerformanceEngine={GOALS,refresh,open,close,getState,getGoalBubbleWindow,getVisibleGoalBubbles,renderProfileGoal,animateDashboardGoal,getSettlementIncentive,prepareSettlementIncentive,recordCompletedDerivation,calculateForPeriod,resetOperationalState,applyUnifiedWeeklySnapshot,applyRealtimeOperationalRows,openGoalBenefitDetail,closeGoalBenefitDetail,invalidateRankingCache:(reason="external")=>{state.forceOperationalRead=isAdmin();return invalidatePerformanceCaches(fastContext(cycleForPeriod(activeWeeklyPeriod()),activeWeeklyPeriod()),reason);},showDiagnostic:diagnostic,closeDiagnostic};
 window.addEventListener("explora:unified-weekly-snapshot",event=>applyUnifiedWeeklySnapshot(event.detail||{}));
 window.ExploraDerivationMoneyRankingEngine={refresh,getState,calculateForPeriod,getSettlementIncentive,DERIVATION_PERCENT};
 if(window.__exploraPendingGoalDiagnostic){const pending=window.__exploraPendingGoalDiagnostic;delete window.__exploraPendingGoalDiagnostic;setTimeout(()=>diagnostic(pending.stage,pending.code,pending.error,pending.context||{}),0);}
@@ -20037,10 +20046,11 @@ window.addEventListener("explora:main-nav-active",event=>{
   if(state.loaded)requestAnimationFrame(()=>animateDashboardGoal("DASHBOARD_ENTER"));
   else state.dashboardAnimationPending=true;
   if(auth?.currentUser&&!role().includes("admin")){
-    const period=activeWeeklyPeriod(),cycle=cycleForPeriod(period);state.forceOperationalRead=isAdmin();restorePerformanceFastCache(cycle,period);if(window.ExploraOperationalSync)return;refresh({force:true,reason:"dashboard-open-background"}).catch(()=>{});
+    if(window.ExploraDashboardRealtimeCoordinator){window.ExploraDashboardRealtimeCoordinator.ensure?.("performance-dashboard-open");return;}
+    const period=activeWeeklyPeriod(),cycle=cycleForPeriod(period);state.forceOperationalRead=isAdmin();restorePerformanceFastCache(cycle,period);refresh({force:true,reason:"dashboard-open-background"}).catch(()=>{});
   }
 });
-window.addEventListener("explora:session-opened",event=>{if(normalize(event.detail?.role).includes("admin"))return;state.dashboardAnimationPending=true;restorePerformanceFastCache();if(window.ExploraOperationalSync)return;refresh({force:false,reason:"session-opened"}).catch(()=>{});});
+window.addEventListener("explora:session-opened",event=>{if(normalize(event.detail?.role).includes("admin"))return;state.dashboardAnimationPending=true;restorePerformanceFastCache();if(window.ExploraDashboardRealtimeCoordinator){window.ExploraDashboardRealtimeCoordinator.ensure?.("performance-session");return;}refresh({force:false,reason:"session-opened"}).catch(()=>{});});
 window.addEventListener("explora:auth-cleared",()=>{
   cancelGoalReturn();try{state.goalResizeObserver?.disconnect?.();}catch(_){}state.goalResizeObserver=null;
   state.loaded=false;state.rows=[];state.current=null;state.goalView=null;state.derivations=[];state.operationalResetAtMs=0;state.activeDriverCount=0;state.rankingDocumentsRead=0;state.billingDocumentsRead=0;state.rankingSource="";state.rankingRefreshMs=0;state.rankingCacheAge=0;state.rankingSummaryComplete=false;state.diagnosticKeys.clear();state.cacheRestored=false;state.refreshRequestId+=1;state.currentDerivationLeader=null;state.derivationLeader=null;state.derivationPeriodId="";state.lastActiveGoalId=0;state.goalWindowStartLeft=0;state.dashboardAnimationPending=false;state.profileAnimationPending=false;state.forceOperationalRead=true;state.pendingForcedRefresh=false;state.pendingRefreshReason="";state.lastRankingContextKey="";
@@ -20048,19 +20058,16 @@ window.addEventListener("explora:auth-cleared",()=>{
   closeGoalBenefitDetail();renderAll();close();
 });
 function handleRankingMutation(event){
-  const isDerivation=/derivacion-(completada|facturada)/.test(event.type),stage=isDerivation?"REFRESH_AFTER_DERIVATION":"REFRESH_AFTER_PAYMENT",reason=isDerivation?"derivation-completed":"billing-created",period=activeWeeklyPeriod(),cycle=cycleForPeriod(period),ctx=fastContext(cycle,period);
-  if(isDerivation)recordCompletedDerivation(senderUid(event.detail||{}),event.detail||{});
+  const isDerivation=event.type==="explora:derivacion-completada",stage=isDerivation?"REFRESH_AFTER_DERIVATION":"REFRESH_AFTER_PAYMENT",reason=isDerivation?"derivation-completed":"billing-created",period=activeWeeklyPeriod(),cycle=cycleForPeriod(period),ctx=fastContext(cycle,period);
   state.forceOperationalRead=isAdmin();invalidatePerformanceCaches(ctx,reason);
-  if(window.ExploraOperationalSync)return;
-  if(window.refreshDashboardFromOperationalSnapshot){window.refreshDashboardFromOperationalSnapshot({force:true,reason,mutation:true}).catch(()=>{});return;}
   refresh({force:true,reason}).catch(error=>diagnostic(stage,isDerivation?"DERIVATION_RANKING_READ_FAILED":"BILLING_RANKING_READ_FAILED",error,{functionName:"handleRankingMutation",cycleId:cycle.id,weeklyPeriodId:period.id,firestorePath:isDerivation?"derivaciones":"billing_records",query:"invalidate cache + forced operational refresh",derivedMoney:isDerivation?derivationAmount(event.detail||{}):totalDerivedMoney(state.derivations),billing:isDerivation?state.current?.grossBilling:amountOf(event.detail||{})}));
 }
-["explora:cobro-registrado","explora:derivacion-completada","explora:derivacion-facturada"].forEach(name=>window.addEventListener(name,handleRankingMutation));
+["explora:cobro-registrado","explora:derivacion-completada"].forEach(name=>window.addEventListener(name,handleRankingMutation));
 window.addEventListener("explora:simulation-updated",event=>{
   const period=activeWeeklyPeriod(),cycle=cycleForPeriod(period),ctx=fastContext(cycle,period);state.forceOperationalRead=isAdmin();invalidatePerformanceCaches(ctx,"simulation-updated");
   refresh({force:true,reason:event.detail?.reason||"simulation-updated"}).catch(error=>diagnostic("CACHE_INVALIDATE_SIMULATION","CACHE_STALE_AFTER_SIMULATION",error,{functionName:"simulationUpdatedRefresh",cycleId:cycle.id,weeklyPeriodId:period.id,documentsAffected:event.detail?.documentsChanged??"—",firestorePath:"billing_records + gastos",query:"simulation event -> operational refresh"}));
 });
-document.addEventListener("visibilitychange",()=>{if(document.visibilityState!=="visible"||!auth?.currentUser||role().includes("admin"))return;const period=activeWeeklyPeriod(),cycle=cycleForPeriod(period);state.forceOperationalRead=false;restorePerformanceFastCache(cycle,period);if(window.ExploraOperationalSync)return;refresh({force:true,reason:"foreground-background"}).catch(()=>{});});
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState!=="visible"||!auth?.currentUser||role().includes("admin"))return;if(window.ExploraDashboardRealtimeCoordinator){window.ExploraDashboardRealtimeCoordinator.ensure?.("performance-foreground");return;}const period=activeWeeklyPeriod(),cycle=cycleForPeriod(period);state.forceOperationalRead=false;restorePerformanceFastCache(cycle,period);refresh({force:true,reason:"foreground-background"}).catch(()=>{});});
 bindGoalCarousel();
 if(!window.__exploraPerformanceFastRefreshRegistered){
   window.__exploraPerformanceFastRefreshRegistered=true;
@@ -20070,8 +20077,8 @@ if(!window.__exploraPerformanceFastRefreshRegistered){
   window.ExploraFastCache?.registerRefresher?.("derivation_ranking",scheduledPerformanceRefresh,{ttl:600000,lockKey:"performance-scheduled-refresh",context:performanceContext});
   window.ExploraFastCache?.registerRefresher?.("goal_bubbles",scheduledPerformanceRefresh,{ttl:300000,lockKey:"performance-scheduled-refresh",context:performanceContext});
 }
-if(auth?.currentUser&&!role().includes("admin")){state.dashboardAnimationPending=true;restorePerformanceFastCache();refresh({force:false,reason:"initial-load"}).catch(()=>{});}
-else setTimeout(()=>{if(auth?.currentUser&&!role().includes("admin")){state.dashboardAnimationPending=true;restorePerformanceFastCache();refresh({force:false,reason:"delayed-initial-load"}).catch(()=>{});}},1200);
+if(auth?.currentUser&&!role().includes("admin")){state.dashboardAnimationPending=true;restorePerformanceFastCache();if(window.ExploraDashboardRealtimeCoordinator)window.ExploraDashboardRealtimeCoordinator.ensure?.("performance-initial");else refresh({force:false,reason:"initial-load"}).catch(()=>{});}
+else setTimeout(()=>{if(auth?.currentUser&&!role().includes("admin")){state.dashboardAnimationPending=true;restorePerformanceFastCache();if(window.ExploraDashboardRealtimeCoordinator)window.ExploraDashboardRealtimeCoordinator.ensure?.("performance-delayed-initial");else refresh({force:false,reason:"delayed-initial-load"}).catch(()=>{});}},1200);
 renderAll();
 </script>
 
@@ -20277,12 +20284,12 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 <script type="module" id="exploraUnifiedWeeklySnapshotV250">
 import { getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 (()=>{
   "use strict";
-  if(window.__exploraUnifiedWeeklySnapshotV251)return;
-  window.__exploraUnifiedWeeklySnapshotV251=true;
+  if(window.__exploraUnifiedWeeklySnapshotV250)return;
+  window.__exploraUnifiedWeeklySnapshotV250=true;
 
   const app=getApps().length?getApp():null;
   const auth=app?getAuth(app):null;
@@ -20306,16 +20313,15 @@ import { getFirestore, doc, getDoc, setDoc, runTransaction, serverTimestamp } fr
   const parsePeriod=id=>{const m=text(id).match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?Date.UTC(+m[1],+m[2]-1,+m[3]):NaN;};
   const argentinaParts=(date=new Date())=>new Intl.DateTimeFormat("en-CA",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).formatToParts(date).reduce((a,p)=>{if(p.type!=="literal")a[p.type]=Number(p.value);return a;},{});
 
-  function activePeriod(date=null){
-    if(!date){const central=window.ExploraOperationalClock?.getActiveWeeklyPeriod?.();if(central)return{...central,id:central.id,weeklyPeriodId:central.id};}
-    const reference=date||window.ExploraOperationalClock?.getNow?.()||new Date(),p=argentinaParts(reference),dayKey=Date.UTC(p.year,p.month-1,p.day),dow=new Date(dayKey).getUTCDay();let back=(dow-6+7)%7;if(dow===6&&p.hour===0&&p.minute<5)back=7;const startKey=dayKey-back*86400000,startMs=startKey+10830000,endMs=startMs+WEEK_MS-1;
+  function activePeriod(date=new Date()){
+    const p=argentinaParts(date),dayKey=Date.UTC(p.year,p.month-1,p.day),dow=new Date(dayKey).getUTCDay();let back=(dow-6+7)%7;if(dow===6&&p.hour===0&&p.minute<5)back=7;const startKey=dayKey-back*86400000,startMs=startKey+10830000,endMs=startKey+10800000+WEEK_MS-1;
     return{id:isoDate(startKey),weeklyPeriodId:isoDate(startKey),startKeyMs:startKey,startMs,endMs,startAt:new Date(startMs),endAt:new Date(endMs),timezone:TZ};
   }
 
   function getCycleForPeriod(weeklyPeriodId){
     const periodId=text(weeklyPeriodId)||activePeriod().id,periodKey=parsePeriod(periodId);
     if(!Number.isFinite(periodKey))return getCycleForPeriod(activePeriod().id);
-    return{cycleId:`week_${periodId}`,cycleStart:periodId,cycleEnd:periodId,weekIndex:1,isFourthWeek:false,closesAt:new Date(periodKey+10830000+WEEK_MS-1).toISOString()};
+    return{cycleId:`week_${periodId}`,cycleStart:periodId,cycleEnd:periodId,weekIndex:1,isFourthWeek:false,closesAt:new Date(periodKey+10800000+WEEK_MS-1).toISOString()};
   }
   window.getCycleForPeriod=getCycleForPeriod;
 
@@ -20383,7 +20389,7 @@ import { getFirestore, doc, getDoc, setDoc, runTransaction, serverTimestamp } fr
       report("WEEKLY_SNAPSHOT","NORMALIZE_WEEKLY_SNAPSHOT","SNAPSHOT_ZERO_OVER_VALID_DATA",new Error("Se evitó reemplazar una facturación válida con $0 proveniente de una respuesta incompleta."),{driverUid:uid,weeklyPeriodId:periodId,snapshot:previous,dashboardBilling:positive(fallback?.grossBilling??fallback?.totalFacturado),rankingBilling:positive(window.ExploraPerformanceEngine?.getState?.().current?.grossBilling),cacheHit:Boolean(meta.cacheHit),cacheMiss:!meta.cacheHit,requestId:meta.requestId,firestorePath:"acumulados_semanales",query:"raw snapshot vs last valid snapshot"});
     }
     const totalFacturado=positive(source.totalFacturado??source.grossBilling??source.facturacion),gastos=positive(source.gastos??source.totalExpenses),efectivo=positive(source.efectivo??source.cashCollectedByDriver),transferencias=source.transferencias!=null?positive(source.transferencias):positive(source.transferCollectedByAdmin)+positive(source.aliasCollectedByAdmin),tarjetas=positive(source.tarjetas??source.cardCollectedByAdmin),qr=positive(source.qr??source.qrCollectedByAdmin),goal=goalData(totalFacturado),metaPercent=goal.percent,metaAmount=positive(goal.reached?.amount),nextMetaAmount=positive(goal.next),faltante=positive(nextMetaAmount?nextMetaAmount-totalFacturado:0),beneficioMeta=Math.round(totalFacturado*metaPercent/100),dineroDerivado=positive(source.dineroDerivado??source.derivedAmountForEmitter),bonoEstimado=positive(source.bonoDerivacionEstimado??source.derivationBonusAmount??Math.round(dineroDerivado*.10)),prestamos=positive(source.prestamos??source.operationalLoanDriverShare??source.operationalLoanTotal),prestamoExplora=positive(source.prestamoExplora??source.exploreLoanDiscount),multas=positive(source.multas??source.fines??source.fineAmount),aporte=positive(source.aporteAlBono??source.collaborationAmount),otros=positive(source.otrosDescuentos??source.otherDiscounts??source.otherAdjustments),descuentos=positive(source.descuentos??prestamos+prestamoExplora+multas+aporte+otros),hasSettlementValue=source.saldoFinal!=null||source.settlementAmount!=null||source.balanced===true,payer=text(source.quienPaga||source.payerRole||source.payer).toLowerCase(),saldoFinal=positive(source.saldoFinal??source.settlementAmount),isBalanced=source.balanced===true||(hasSettlementValue&&saldoFinal<=1&&!payer),quienPaga=isBalanced?"equilibrado":saldoFinal>1&&(payer==="driver"||payer==="chofer")?"driver":saldoFinal>1&&(payer==="admin"||payer==="david")?"david":"";
-    const value={...source,driverUid:uid,uid,choferUid:uid,weeklyPeriodId:periodId,periodoSemanalId:periodId,cycleId:text(source.cycleId||cycle.cycleId),totalFacturado,grossBilling:totalFacturado,facturacion:totalFacturado,efectivo,cashCollectedByDriver:efectivo,transferencias,transferCollectedByAdmin:transferencias,tarjetas,cardCollectedByAdmin:tarjetas,qr,qrCollectedByAdmin:qr,gastos,totalExpenses:gastos,cantidadCobros:positive(source.cantidadCobros??source.serviceCount??source.billingCount),serviceCount:positive(source.cantidadCobros??source.serviceCount??source.billingCount),cantidadGastos:positive(source.cantidadGastos??source.expenseCount),expenseCount:positive(source.cantidadGastos??source.expenseCount),metaName:goal.reached?`Meta ${goal.reached.id}`:"Próxima Meta 1",metaPercent,performanceGoalPercent:metaPercent,metaAmount,nextMetaName:goal.next?`Meta ${GOALS.indexOf(goal.next)+1}`:"Meta 10",nextMetaAmount,faltanteParaProximaMeta:faltante,beneficioMeta,goalRewardAmount:beneficioMeta,performanceRewardAmount:beneficioMeta,dineroDerivado,derivedAmountForEmitter:dineroDerivado,bonoDerivacionEstimado:bonoEstimado,derivationBonusAmount:bonoEstimado,descuentos,prestamos,prestamoExplora,exploreLoanDiscount:prestamoExplora,multas,aporteAlBono:aporte,collaborationAmount:aporte,otrosDescuentos:otros,saldoFinal,settlementAmount:saldoFinal,quienPaga,payerRole:quienPaga==="driver"?"driver":quienPaga==="david"?"admin":null,balanced:isBalanced,source:text(meta.source||source.source||"weeklySnapshot"),cacheHit:Boolean(meta.cacheHit),requestId:Number(meta.requestId||source.requestId||0),updatedAt:source.updatedAt||source.actualizadoEn||new Date().toISOString(),cycleStart:cycle.cycleStart,cycleEnd:cycle.cycleEnd,weekIndex:cycle.weekIndex,isFourthWeek:cycle.isFourthWeek,closesAt:cycle.closesAt};
+    const value={...source,driverUid:uid,uid,choferUid:uid,weeklyPeriodId:periodId,periodoSemanalId:periodId,cycleId:text(source.cycleId||cycle.cycleId),totalFacturado,grossBilling:totalFacturado,facturacion:totalFacturado,efectivo,cashCollectedByDriver:efectivo,transferencias,transferCollectedByAdmin:transferencias,tarjetas,cardCollectedByAdmin:tarjetas,qr,qrCollectedByAdmin:qr,gastos,totalExpenses:gastos,cantidadCobros:positive(source.cantidadCobros??source.serviceCount??source.billingCount),serviceCount:positive(source.cantidadCobros??source.serviceCount??source.billingCount),cantidadGastos:positive(source.cantidadGastos??source.expenseCount),expenseCount:positive(source.cantidadGastos??source.expenseCount),metaName:`Meta ${goal.reached?.id||0}`,metaPercent,performanceGoalPercent:metaPercent,metaAmount,nextMetaName:goal.next?`Meta ${GOALS.indexOf(goal.next)+1}`:"Meta 10",nextMetaAmount,faltanteParaProximaMeta:faltante,beneficioMeta,goalRewardAmount:beneficioMeta,performanceRewardAmount:beneficioMeta,dineroDerivado,derivedAmountForEmitter:dineroDerivado,bonoDerivacionEstimado:bonoEstimado,derivationBonusAmount:bonoEstimado,descuentos,prestamos,prestamoExplora,exploreLoanDiscount:prestamoExplora,multas,aporteAlBono:aporte,collaborationAmount:aporte,otrosDescuentos:otros,saldoFinal,settlementAmount:saldoFinal,quienPaga,payerRole:quienPaga==="driver"?"driver":quienPaga==="david"?"admin":null,balanced:isBalanced,source:text(meta.source||source.source||"weeklySnapshot"),cacheHit:Boolean(meta.cacheHit),requestId:Number(meta.requestId||source.requestId||0),updatedAt:source.updatedAt||source.actualizadoEn||new Date().toISOString(),cycleStart:cycle.cycleStart,cycleEnd:cycle.cycleEnd,weekIndex:cycle.weekIndex,isFourthWeek:cycle.isFourthWeek,closesAt:cycle.closesAt};
     if(metaPercent>0&&beneficioMeta<=0)report("RANKING_DE_METAS","CALCULATE_GOALS","META_BENEFIT_ZERO_WITH_PERCENT",new Error("La meta tiene porcentaje positivo pero el beneficio calculado es cero."),{driverUid:uid,weeklyPeriodId:periodId,snapshot:value,billing:totalFacturado,goalPercent:metaPercent,goalBenefit:beneficioMeta,requestId:value.requestId,firestorePath:"weeklySnapshot",query:"totalFacturado * metaPercent / 100"});
     if(totalFacturado>0||authoritativeZero||!previous)lastValidSnapshots.set(snapshotKey,value);
     return value;
@@ -20504,29 +20510,25 @@ import { getFirestore, doc, getDoc, setDoc, runTransaction, serverTimestamp } fr
     if(!db||!auth?.currentUser)return;
     const operationalNow=window.ExploraOperationalClock?.getNow?.().getTime?.()||Date.now(),active=activePeriod();if(operationalNow<active.startMs)return;
     const previousId=isoDate(parsePeriod(active.id)-WEEK_MS),cycle=getCycleForPeriod(previousId),marker=`explora_auto_closure_${auth.currentUser.uid}_${previousId}`,checkKey=`${auth.currentUser.uid}|${previousId}`,lastCheck=autoClosureChecks.get(checkKey)||0;
-    try{if(localStorage.getItem(marker)==="done"){completedAutoClosures.add(checkKey);return;}}catch(_){}
     if(completedAutoClosures.has(checkKey)||operationalNow-lastCheck<300000)return;autoClosureChecks.set(checkKey,operationalNow);
     try{
       const loader=window.ExploraWeeklyEngine?.getDriverWeeklyFinancialSnapshot||window.getDriverWeeklyFinancialSnapshot;if(typeof loader!=="function")return;
-      const snapshot=await loader(auth.currentUser.uid,previousId,{force:false,refreshInBackground:false,reason:"auto-weekly-closure"}),closureId=`${auth.currentUser.uid}_${previousId}`,reference=doc(db,"cierres_semanales",closureId);
-      const payload={closureId,driverUid:auth.currentUser.uid,choferUid:auth.currentUser.uid,uid:auth.currentUser.uid,weeklyPeriodId:previousId,cycleId:cycle.cycleId,weekIndex:cycle.weekIndex,isFourthWeek:cycle.isFourthWeek,status:"generated",estado:"generated",weeklySnapshot:snapshot,grossBilling:snapshot.totalFacturado,totalExpenses:snapshot.gastos,goalRewardAmount:snapshot.beneficioMeta,derivationBonusAmount:snapshot.derivationBonusAmount||snapshot.bonoDerivacionEstimado||0,exploreLoanOriginalAmount:snapshot.exploreLoanOriginalAmount||0,exploreLoanPreviousBalance:snapshot.exploreLoanBalance||0,exploreLoanDiscount:snapshot.exploreLoanDiscount||0,exploreLoanNewBalance:Math.max(0,positive(snapshot.exploreLoanBalance)-positive(snapshot.exploreLoanDiscount)),exploreLoanStatus:snapshot.activeLoan?.active?"active":"none",settlementAmount:snapshot.saldoFinal,payerRole:snapshot.payerRole,balanced:snapshot.balanced,autoGenerated:true,generatedAt:serverTimestamp(),updatedAt:serverTimestamp()};
-      let created=false;
-      await runTransaction(db,async tx=>{const existing=await tx.get(reference);if(existing.exists())return;tx.set(reference,payload,{merge:false});created=true;});
-      if(!created){try{localStorage.setItem(marker,"done");}catch(_){}completedAutoClosures.add(checkKey);return;}
+      const snapshot=await loader(auth.currentUser.uid,previousId,{force:false,refreshInBackground:false,reason:"auto-weekly-closure"}),closureId=`${auth.currentUser.uid}_${previousId}`,reference=doc(db,"cierres_semanales",closureId),existing=await getDoc(reference);
+      if(!existing.exists())await setDoc(reference,{closureId,driverUid:auth.currentUser.uid,choferUid:auth.currentUser.uid,uid:auth.currentUser.uid,weeklyPeriodId:previousId,cycleId:cycle.cycleId,weekIndex:cycle.weekIndex,isFourthWeek:cycle.isFourthWeek,status:"generated",estado:"generated",weeklySnapshot:snapshot,grossBilling:snapshot.totalFacturado,totalExpenses:snapshot.gastos,goalRewardAmount:snapshot.beneficioMeta,derivationBonusAmount:snapshot.derivationBonusAmount||snapshot.bonoDerivacionEstimado||0,exploreLoanOriginalAmount:snapshot.exploreLoanOriginalAmount||0,exploreLoanPreviousBalance:snapshot.exploreLoanBalance||0,exploreLoanDiscount:snapshot.exploreLoanDiscount||0,exploreLoanNewBalance:Math.max(0,positive(snapshot.exploreLoanBalance)-positive(snapshot.exploreLoanDiscount)),exploreLoanStatus:snapshot.activeLoan?.active?"active":"none",settlementAmount:snapshot.saldoFinal,payerRole:snapshot.payerRole,balanced:snapshot.balanced,autoGenerated:true,generatedAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});
       await window.ExploraApplyLoanClosurePayment?.(auth.currentUser.uid,previousId,positive(snapshot.exploreLoanDiscount),closureId);
-      try{localStorage.setItem(marker,"done");}catch(_){}completedAutoClosures.add(checkKey);window.ExploraInvalidateWeeklyClosure?.("auto-weekly-closure",{refresh:true});
+      localStorage.setItem(marker,"done");completedAutoClosures.add(checkKey);window.ExploraInvalidateWeeklyClosure?.("auto-weekly-closure",{refresh:true});
       window.dispatchEvent(new CustomEvent("explora:weekly-period-changed",{detail:{closedWeeklyPeriodId:previousId,newWeeklyPeriodId:active.id}}));
-    }catch(error){report("WEEKLY_UNIFIED_ENGINE","GENERATE_WEEKLY_CLOSURE","WEEKLY_RESET_FAILED",error,{weeklyPeriodId:previousId,cycleId:cycle.cycleId,functionName:"maybeAutoClose",firestorePath:"cierres_semanales",query:"snapshot + transactional idempotent closure + weekly reset"});}
+    }catch(error){report("WEEKLY_UNIFIED_ENGINE","GENERATE_WEEKLY_CLOSURE","WEEKLY_RESET_FAILED",error,{weeklyPeriodId:previousId,cycleId:cycle.cycleId,functionName:"maybeAutoClose",firestorePath:"cierres_semanales",query:"snapshot + idempotent closure + weekly reset"});}
   }
 
   const mutationEvents=["explora:cobro-registrado","explora:gasto-registrado","explora:derivacion-aceptada","explora:derivacion-rechazada","explora:derivacion-completada","explora:derivacion-facturada","explora:simulation-updated","explora:simulation-started","explora:simulation-stopped","explora:app-reset","explora:app-launched","explora:weekly-closure","explora:weekly-period-changed","explora:cycle-changed","explora:loan-requested","explora:loan-payment","explora:badge-unlocked"];
-  mutationEvents.forEach(name=>window.addEventListener(name,event=>{invalidate(name);if(window.ExploraOperationalSync)return;if(window.refreshDashboardFromOperationalSnapshot){window.refreshDashboardFromOperationalSnapshot({force:true,reason:name,mutation:true}).catch(()=>{});return;}setTimeout(()=>window.ExploraWeeklyEngine?.getDriverWeeklyFinancialSnapshot?.(auth?.currentUser?.uid,activePeriod().id,{force:true,reason:name}).catch(()=>{}),80);}));
-  window.addEventListener("explora:weekly-summary",event=>{const requestKey=`${auth?.currentUser?.uid||""}|${event.detail?.weeklyPeriodId||activePeriod().id}`,requestId=(snapshotRequestIds.get(requestKey)||0)+1;snapshotRequestIds.set(requestKey,requestId);const value=normalize(event.detail||{},{driverUid:auth?.currentUser?.uid,weeklyPeriodId:event.detail?.weeklyPeriodId||activePeriod().id,source:"weekly-summary",cacheHit:Boolean(event.detail?.fromFastCache||event.detail?.fromSessionCache),requestId});cacheSet(value);renderSnapshot(value);setTimeout(compareModules,80);});
+  mutationEvents.forEach(name=>window.addEventListener(name,event=>{invalidate(name);if(window.ExploraDashboardRealtimeCoordinator)return;setTimeout(()=>window.ExploraWeeklyEngine?.getDriverWeeklyFinancialSnapshot?.(auth?.currentUser?.uid,activePeriod().id,{force:true,reason:name}).catch(()=>{}),80);}));
+  window.addEventListener("explora:weekly-summary",event=>{const requestKey=`${auth?.currentUser?.uid||""}|${event.detail?.weeklyPeriodId||activePeriod().id}`,requestId=(snapshotRequestIds.get(requestKey)||0)+1;snapshotRequestIds.set(requestKey,requestId);const value=normalize(event.detail||{},{driverUid:auth?.currentUser?.uid,weeklyPeriodId:event.detail?.weeklyPeriodId||activePeriod().id,source:"weekly-summary",cacheHit:Boolean(event.detail?.fromFastCache||event.detail?.fromSessionCache),requestId});cacheSet(value);if(window.ExploraDashboardRealtimeCoordinator?.isCoordinating?.())return;renderSnapshot(value);setTimeout(compareModules,80);});
   window.addEventListener("explora:performance-updated",event=>{const state=event.detail||window.ExploraPerformanceEngine?.getState?.()||{},ctx=context(auth?.currentUser?.uid||"",activePeriod().id);window.ExploraFastCache?.set?.("rankingSnapshot",{rows:state.rows||[],current:state.current||null,cycle:state.cycle||null,updatedAt:new Date().toISOString()},ctx,{ttl:TTL});window.ExploraFastCache?.set?.("derivationSnapshot",{rows:state.derivations||[],leader:state.currentDerivationLeader||null,updatedAt:new Date().toISOString()},ctx,{ttl:TTL});setTimeout(compareModules,80);});
-  window.addEventListener("explora:session-opened",()=>{setTimeout(async()=>{await wrapEngine();if(!window.ExploraOperationalSync){const uid=auth?.currentUser?.uid;if(uid)window.ExploraWeeklyEngine?.getDriverWeeklyFinancialSnapshot?.(uid,activePeriod().id,{force:false,refreshInBackground:true,reason:"session-opened"}).catch(()=>{});}maybeAutoClose();},50);});
-  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){wrapEngine();maybeAutoClose();if(!window.ExploraOperationalSync)setTimeout(compareModules,150);}});
+  window.addEventListener("explora:session-opened",()=>{setTimeout(async()=>{await wrapEngine();if(!window.ExploraDashboardRealtimeCoordinator){const uid=auth?.currentUser?.uid;if(uid)window.ExploraWeeklyEngine?.getDriverWeeklyFinancialSnapshot?.(uid,activePeriod().id,{force:false,refreshInBackground:true,reason:"session-opened"}).catch(()=>{});}maybeAutoClose();},50);});
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){wrapEngine();window.ExploraDashboardRealtimeCoordinator?.ensure?.("unified-foreground");maybeAutoClose();setTimeout(compareModules,150);}});
 
-  const timer=setInterval(()=>{if(wrapEngine()){clearInterval(timer);const uid=auth?.currentUser?.uid;if(uid)window.ExploraWeeklyEngine?.getDriverWeeklyFinancialSnapshot?.(uid,activePeriod().id,{force:false,refreshInBackground:true,reason:"startup"}).catch(()=>{});maybeAutoClose();}},100);
+  const timer=setInterval(()=>{if(wrapEngine()){clearInterval(timer);if(!window.ExploraDashboardRealtimeCoordinator){const uid=auth?.currentUser?.uid;if(uid)window.ExploraWeeklyEngine?.getDriverWeeklyFinancialSnapshot?.(uid,activePeriod().id,{force:false,refreshInBackground:true,reason:"startup"}).catch(()=>{});}maybeAutoClose();}},100);
   setTimeout(()=>clearInterval(timer),15000);
   const autoClosureClock=setInterval(()=>{if(document.visibilityState!=="hidden")maybeAutoClose();},60000);
   window.addEventListener("beforeunload",()=>clearInterval(autoClosureClock),{once:true});
@@ -20841,68 +20843,156 @@ import { getFirestore, doc, getDoc, setDoc, runTransaction, serverTimestamp } fr
 </script>
 
 
-  <style id="explora-v251-live-sync-css">
-    /* Burbujas semanales con progreso real y barra móvil segura. */
-    .main-bottom-nav.performance-bottom-nav{--explora-bottom-nav-height:126px;min-height:calc(126px + env(safe-area-inset-bottom))!important}
-    .performance-goal-bubble,.goal-bubble{height:110px!important;min-height:110px!important;grid-template-rows:10px 20px minmax(42px,auto)!important;gap:3px!important;padding:7px 3px!important}
-    .performance-goal-bubble>small,.goal-bubble>small{display:grid!important;gap:2px!important;max-width:100%!important;overflow:visible!important}
-    .performance-goal-bubble>small b,.goal-bubble>small b{font-size:6.8px!important;line-height:1.05!important;color:#9ce8bb!important}
-    .performance-goal-bubble>small i,.goal-bubble>small i{font-size:6.1px!important;line-height:1.08!important;color:rgba(235,239,244,.82)!important;white-space:normal!important;text-wrap:balance!important}
-    .driver-dashboard{padding-bottom:calc(142px + env(safe-area-inset-bottom))!important}
-    @media(max-width:360px){.performance-goal-bubble,.goal-bubble{height:108px!important;min-height:108px!important}.performance-goal-bubble>small b,.goal-bubble>small b{font-size:6.3px!important}.performance-goal-bubble>small i,.goal-bubble>small i{font-size:5.8px!important}}
-    @media(prefers-reduced-motion:reduce){.goal-bubble--active{animation:none!important}}
-  </style>
-
-  <script id="exploraOperationalDashboardSyncV251">
+  <script type="module" id="exploraOperationalDashboardSyncV251">
+  import { getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { getFirestore, collection, doc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
   (()=>{
     "use strict";
-    if(window.ExploraOperationalSync)return;
-    const state={sequence:0,inFlight:new Map(),lastApplied:new Map(),queued:new Map(),lastPeriodId:""};
-    const auth=()=>window.ExploraFirebase?.auth||window.ExploraSession?.auth||null;
-    const currentUser=()=>auth()?.currentUser||window.ExploraSession?.authUser||null;
-    const role=()=>String(window.ExploraSession?.role||window.ExploraAuthSession?.role||"").trim().toLowerCase();
-    const period=()=>window.ExploraOperationalClock?.getActiveWeeklyPeriod?.()||window.ExploraWeeklyEngine?.getActiveWeeklyPeriod?.()||{};
-    const context=(uid,p)=>({uid,role:role()||"chofer",weeklyPeriodId:p.id,cycleId:`week_${p.id}`});
-    const affected=["dashboard_weekly_billing","dashboard_weekly_expenses","billing_ranking","derivation_ranking","goal_bubbles","performance_bundle","rankingSnapshot","derivationSnapshot"];
-    function invalidate(uid,p,reason="mutation"){
-      const ctx=context(uid,p);affected.forEach(name=>window.ExploraFastCache?.invalidate?.(name,ctx));
+    if(window.ExploraDashboardRealtimeCoordinator)return;
+    const app=getApps().length?getApp():null,auth=app?getAuth(app):null,db=app?getFirestore(app):null;
+    const DEBOUNCE_MS=180,RECONNECT_DELAY_MS=1200;
+    const ALL_CACHE_MODULES=["dashboard_weekly_billing","dashboard_weekly_expenses","billing_ranking","derivation_ranking","goal_bubbles","performance_bundle","rankingSnapshot","derivationSnapshot"];
+    const CACHE_BY_SOURCE={
+      billing:["dashboard_weekly_billing","billing_ranking","goal_bubbles","performance_bundle","rankingSnapshot"],
+      expense:["dashboard_weekly_expenses","performance_bundle"],
+      derivation:["dashboard_weekly_billing","billing_ranking","derivation_ranking","goal_bubbles","performance_bundle","rankingSnapshot","derivationSnapshot"],
+      profile:["driver_profiles","billing_ranking","derivation_ranking","rankingSnapshot","derivationSnapshot"],
+      closure:["performance_bundle"],loan:["dashboard_weekly_billing","dashboard_weekly_expenses","performance_bundle"],state:ALL_CACHE_MODULES,period:ALL_CACHE_MODULES,local:ALL_CACHE_MODULES
+    };
+    const state={contextKey:"",contextToken:0,uid:"",role:"",periodId:"",cycleId:"",unsubscribers:[],listenerSources:new Map(),debounceTimer:0,pendingReasons:new Set(),pendingSources:new Set(),active:false,activeRevision:0,activeToken:0,queued:null,issuedRevision:0,appliedRevision:0,lastSnapshot:null,lastServerAt:0,weeklyRows:[],weeklyRowsReady:false,hydratedContext:"",reconnectAttempts:0,reconnectTimer:0,stopped:true};
+    const text=value=>String(value??"").trim();
+    const session=()=>window.ExploraSession||window.ExploraAuthSession||{};
+    const currentUser=()=>auth?.currentUser||session().authUser||session().authenticatedUser||null;
+    const currentRole=()=>text(session().role||(document.body.classList.contains("explora-shared-admin")?"admin":"chofer")).toLowerCase()||"chofer";
+    const activePeriod=()=>window.ExploraOperationalClock?.getActiveWeeklyPeriod?.()||window.ExploraWeeklyEngine?.getActiveWeeklyPeriod?.()||{};
+    const context=(uid=state.uid,periodId=state.periodId,role=state.role)=>({uid,role:role||"chofer",weeklyPeriodId:periodId,cycleId:`week_${periodId}`});
+    const isPermissionError=error=>/permission-denied|unauthorized/i.test(text(error?.code||error?.message));
+    function statusElement(){let node=document.getElementById("dashboardRealtimeStatus");if(node)return node;const shell=document.querySelector("#dashboardReal .dashboard-shell-real,.driver-dashboard .dashboard-shell-real");if(!shell)return null;node=document.createElement("div");node.id="dashboardRealtimeStatus";node.className="dashboard-realtime-status";node.dataset.state="syncing";node.setAttribute("role","status");node.setAttribute("aria-live","polite");node.textContent="Actualizando…";const welcome=shell.querySelector(".driver-welcome-real");if(welcome?.nextSibling)shell.insertBefore(node,welcome.nextSibling);else shell.appendChild(node);return node;}
+    function setStatus(kind,message){const node=statusElement();if(!node)return;node.dataset.state=kind;node.textContent=message||({syncing:"Actualizando…",updated:"Actualizado",offline:"Sin conexión · mostrando última información",error:"No pudimos actualizar en tiempo real"}[kind]||"");}
+    function validContext(token=state.contextToken,uid=state.uid,periodId=state.periodId){return token===state.contextToken&&text(currentUser()?.uid)===text(uid)&&text(activePeriod().id)===text(periodId)&&state.contextKey===`${uid}|${currentRole()}|${periodId}`;}
+    function invalidate(source="local",reason="realtime-change",ctx=context()){
+      const modules=CACHE_BY_SOURCE[source]||ALL_CACHE_MODULES;modules.forEach(name=>window.ExploraFastCache?.invalidate?.(name,ctx));
       window.ExploraWeeklyEngine?.invalidate?.(reason,{refresh:false});
-      window.ExploraPerformanceEngine?.invalidateRankingCache?.(reason);
-      window.ExploraInvalidateWeeklyClosure?.(reason,{refresh:false});
+      if(["billing","derivation","profile","state","period","local"].includes(source))window.ExploraPerformanceEngine?.invalidateRankingCache?.(reason);
+      if(["billing","expense","derivation","closure","loan","state","period","local"].includes(source))window.ExploraInvalidateWeeklyClosure?.(reason,{refresh:false});
     }
-    function isCurrent(uid,periodId,requestId){return String(currentUser()?.uid||"")===String(uid)&&String(period().id||"")===String(periodId)&&Number(state.lastApplied.get(`${uid}|${periodId}`)||0)<=Number(requestId);}
-    function friendly(error,reason){console.error("[EXPLORA operational sync]",reason,error);window.ExploraProductionPolicy?.handle?.("ranking",error,{message:"No pudimos actualizar el ranking. Se mostrará la última información disponible.",context:{reason}});}
-    async function run(options={}){
-      const user=currentUser();if(!user?.uid)return null;const p=period();if(!p?.id)return null;const key=`${user.uid}|${p.id}`,force=options.force!==false,reason=String(options.reason||"dashboard-refresh");
-      if(options.mutation)invalidate(user.uid,p,reason);
-      else if(options.renderCache!==false)window.ExploraFastCache?.hydrateDashboard?.(context(user.uid,p));
-      if(state.inFlight.has(key)){if(force)state.queued.set(key,{...options,force:true});return state.inFlight.get(key);}
-      const requestId=++state.sequence;state.lastApplied.set(key,requestId);
-      const promise=(async()=>{
-        const loader=window.ExploraWeeklyEngine?.getDriverWeeklyFinancialSnapshot||window.ExploraWeeklyEngine?.getDriverWeeklySnapshot;if(typeof loader!=="function")return null;
-        const raw=await loader(user.uid,p.id,{force,allowLegacyScan:false,refreshInBackground:false,reason});
-        if(!isCurrent(user.uid,p.id,requestId))return null;
-        const snapshot={...(raw||{}),uid:user.uid,driverUid:user.uid,weeklyPeriodId:p.id,requestId,snapshotRequestId:requestId,operationalUpdatedAt:Date.now()};
-        window.ExploraFastCache?.set?.("dashboard_weekly_billing",snapshot,context(user.uid,p));window.ExploraFastCache?.set?.("dashboard_weekly_expenses",snapshot,context(user.uid,p));
-        window.ExploraFastCache?.renderWeeklySnapshot?.(snapshot);
-        window.ExploraPerformanceEngine?.applyUnifiedWeeklySnapshot?.(snapshot);
-        window.dispatchEvent(new CustomEvent("explora:unified-weekly-snapshot",{detail:snapshot}));
-        if(window.ExploraPerformanceEngine?.refresh){await window.ExploraPerformanceEngine.refresh({force:true,reason:`${reason}:performance`}).catch(error=>friendly(error,reason));if(isCurrent(user.uid,p.id,requestId))window.ExploraPerformanceEngine?.applyUnifiedWeeklySnapshot?.({...snapshot,requestId:requestId+0.01});}
-        if(!isCurrent(user.uid,p.id,requestId))return null;
-        window.ExploraFastCache?.renderWeeklySnapshot?.(snapshot);window.dispatchEvent(new CustomEvent("explora:operational-snapshot-updated",{detail:snapshot}));return snapshot;
-      })().catch(error=>{friendly(error,reason);return null;}).finally(()=>{state.inFlight.delete(key);const queued=state.queued.get(key);if(queued){state.queued.delete(key);queueMicrotask(()=>run(queued));}});
-      state.inFlight.set(key,promise);return promise;
+    function friendlyError(error,reason="realtime"){
+      console.error("[EXPLORA realtime]",reason,error);
+      setStatus(navigator.onLine?"error":"offline",navigator.onLine?"No pudimos actualizar en tiempo real":"Sin conexión · mostrando última información");
+      window.ExploraProductionPolicy?.handle?.("ranking",error,{message:"No pudimos actualizar la información en tiempo real.",context:{reason,weeklyPeriodId:state.periodId}});
     }
-    window.refreshDashboardFromOperationalSnapshot=run;window.ExploraOperationalSync=Object.freeze({refresh:run,invalidate,getState:()=>({sequence:state.sequence,inFlight:[...state.inFlight.keys()],lastApplied:[...state.lastApplied.entries()]})});
-    const mutationEvents=["explora:cobro-registrado","explora:gasto-registrado","explora:derivacion-completada","explora:derivacion-facturada","explora:weekly-closure","explora:loan-requested","explora:loan-payment"],pendingMutationReasons=new Set();let mutationFlushScheduled=false;
-    function scheduleMutationRefresh(name){pendingMutationReasons.add(name);if(mutationFlushScheduled)return;mutationFlushScheduled=true;queueMicrotask(()=>{mutationFlushScheduled=false;const reasons=[...pendingMutationReasons];pendingMutationReasons.clear();run({force:true,reason:reasons.join("+"),mutation:true});});}
-    mutationEvents.forEach(name=>window.addEventListener(name,()=>scheduleMutationRefresh(name)));
-    window.addEventListener("explora:session-opened",()=>run({force:true,reason:"session-opened",renderCache:true}));
-    window.addEventListener("explora:main-nav-active",event=>{if(event.detail?.section==="inicio")run({force:true,reason:"dashboard-open",renderCache:true});});
-    window.addEventListener("explora:operational-period-changed",event=>{state.inFlight.clear();state.queued.clear();run({force:true,reason:"operational-period-changed",mutation:true,renderCache:false});window.dispatchEvent(new CustomEvent("explora:weekly-period-changed",{detail:event.detail||{}}));});
-    document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")run({force:true,reason:"foreground",renderCache:true});});
-    window.addEventListener("pageshow",event=>{if(event.persisted)run({force:true,reason:"pageshow",renderCache:true});});
-    document.addEventListener("DOMContentLoaded",()=>{setTimeout(()=>run({force:true,reason:"startup",renderCache:true}),120);});
+    function cacheInitialView(){if(!state.uid||!state.periodId||state.hydratedContext===state.contextKey)return;state.hydratedContext=state.contextKey;window.ExploraFastCache?.hydrateDashboard?.(context());setStatus(navigator.onLine?"syncing":"offline",navigator.onLine?"Actualizando…":"Sin conexión · mostrando última información");}
+    function stopListeners({invalidateContext=false}={}){
+      const oldCtx=state.uid&&state.periodId?context():null;state.contextToken+=1;state.stopped=true;state.unsubscribers.splice(0).forEach(unsub=>{try{unsub?.();}catch(_){}});state.listenerSources.clear();state.weeklyRows=[];state.weeklyRowsReady=false;clearTimeout(state.debounceTimer);state.debounceTimer=0;clearTimeout(state.reconnectTimer);state.reconnectTimer=0;state.pendingReasons.clear();state.pendingSources.clear();if(state.queued)state.queued.resolve(null);state.queued=null;state.active=false;state.activeRevision=0;state.activeToken=0;state.issuedRevision+=1;if(invalidateContext&&oldCtx)ALL_CACHE_MODULES.forEach(name=>window.ExploraFastCache?.invalidate?.(name,oldCtx));
+    }
+    function sourceChanged(name,snapshot,token){
+      if(!validContext(token))return;const metadata=snapshot?.metadata||{},pending=metadata.hasPendingWrites===true,fromCache=metadata.fromCache===true;state.listenerSources.set(name,{pending,fromCache,at:Date.now()});
+      if(pending){setStatus("syncing","Actualizando…");return;}
+      if(fromCache){setStatus(navigator.onLine?"syncing":"offline",navigator.onLine?"Actualizando…":"Sin conexión · mostrando última información");return;}
+      if(name==="weekly-ranking"&&Array.isArray(snapshot?.docs)){state.weeklyRows=snapshot.docs.map(item=>({id:item.id,...(item.data?.()||{})})).filter(row=>String(row.weeklyPeriodId||row.periodoSemanalId||row.periodoId||"")===state.periodId);state.weeklyRowsReady=true;}
+      state.lastServerAt=Date.now();scheduleFirestoreRefresh(name);
+    }
+    function listenerError(name,error,token){if(!validContext(token))return;console.warn(`[EXPLORA realtime listener:${name}]`,error?.code||error?.message||error);state.listenerSources.set(name,{error:text(error?.code||error?.message),at:Date.now()});if(!isPermissionError(error))scheduleReconnect(error,name);else if(!state.listenerSources.size)friendlyError(error,`listener:${name}`);}
+    function addListener(name,reference,token){
+      try{const unsub=onSnapshot(reference,{includeMetadataChanges:true},snap=>sourceChanged(name,snap,token),error=>listenerError(name,error,token));state.unsubscribers.push(unsub);}
+      catch(error){listenerError(name,error,token);}
+    }
+    function buildListeners(token){
+      if(!db||!state.uid||!state.periodId)return;const uid=state.uid,pid=state.periodId,cycle=state.cycleId,profileId=text(session().profileDocumentId||session().driverId||"");
+      addListener("weekly-own",doc(db,"acumulados_semanales",`${pid}_${uid}`),token);
+      addListener("weekly-ranking",query(collection(db,"acumulados_semanales"),where("weeklyPeriodId","==",pid)),token);
+      if(state.role.includes("admin")){
+        addListener("billing-period",query(collection(db,"billing_records"),where("weeklyPeriodId","==",pid)),token);
+        addListener("expenses-period",query(collection(db,"gastos"),where("weeklyPeriodId","==",pid)),token);
+        addListener("derivations-created",query(collection(db,"derivaciones"),where("weeklyPeriodId","==",pid)),token);
+        addListener("derivations-completed",query(collection(db,"derivaciones"),where("weeklyPeriodIdCompleted","==",pid)),token);
+        addListener("closures-period",query(collection(db,"cierres_semanales"),where("weeklyPeriodId","==",pid)),token);
+        addListener("operational-loans-period",query(collection(db,"prestamos_operativos"),where("weeklyPeriodId","==",pid)),token);
+        addListener("explora-loans-period",query(collection(db,"prestamos_explora"),where("weeklyPeriodId","==",pid)),token);
+      }else{
+        addListener("billing-own-driver",query(collection(db,"billing_records"),where("driverUid","==",uid)),token);
+        addListener("billing-own-chofer",query(collection(db,"billing_records"),where("choferUid","==",uid)),token);
+        addListener("expenses-own-driver",query(collection(db,"gastos"),where("choferUid","==",uid)),token);
+        addListener("expenses-own-uid",query(collection(db,"gastos"),where("uid","==",uid)),token);
+        addListener("derivations-received",query(collection(db,"derivaciones"),where("receptorUid","==",uid)),token);
+        addListener("derivations-sent",query(collection(db,"derivaciones"),where("emisorUid","==",uid)),token);
+        addListener("derivations-sender",query(collection(db,"derivaciones"),where("senderUid","==",uid)),token);
+        addListener("closures-own",query(collection(db,"cierres_semanales"),where("driverUid","==",uid)),token);
+        addListener("operational-loans-own",query(collection(db,"prestamos_operativos"),where("driverUid","==",uid)),token);
+        addListener("explora-loans-own",query(collection(db,"prestamos_explora"),where("driverUid","==",uid)),token);
+      }
+      addListener("operational-state",doc(db,"app_operational_state","current"),token);
+      addListener("profile-user",doc(db,"usuarios",uid),token);
+      if(profileId)addListener("profile-driver-document",doc(db,"choferes",profileId),token);
+      else addListener("profile-driver-uid",query(collection(db,"choferes"),where("uid","==",uid)),token);
+      addListener("profiles-public",collection(db,"choferes"),token);
+      ["performance_public","ranking_metas_public","derivation_ranking_public","ranking_derivaciones_public"].forEach(parent=>{
+        addListener(`${parent}-summary`,doc(db,parent,cycle),token);addListener(`${parent}-drivers`,collection(db,parent,cycle,"drivers"),token);
+      });
+    }
+    function sourceType(name){if(name.startsWith("billing")||name.startsWith("weekly"))return"billing";if(name.startsWith("expense"))return"expense";if(name.startsWith("derivation")||name.startsWith("ranking_deriv"))return"derivation";if(name.startsWith("profile"))return"profile";if(name.startsWith("closure"))return"closure";if(name.includes("loan"))return"loan";return"state";}
+    function scheduleFirestoreRefresh(name){state.pendingReasons.add(`firestore:${name}`);state.pendingSources.add(sourceType(name));setStatus("syncing","Actualizando…");clearTimeout(state.debounceTimer);state.debounceTimer=setTimeout(()=>{state.debounceTimer=0;const reasons=[...state.pendingReasons],sources=[...state.pendingSources];state.pendingReasons.clear();state.pendingSources.clear();sources.forEach(source=>invalidate(source,reasons.join("+")));refresh({force:true,reason:reasons.join("+")||"firestore",sources,serverTriggered:true});},DEBOUNCE_MS);}
+    function scheduleReconnect(error,name){if(state.reconnectAttempts>=1){friendlyError(error,`listener:${name}`);return;}state.reconnectAttempts+=1;clearTimeout(state.reconnectTimer);state.reconnectTimer=setTimeout(()=>{if(!state.uid||!currentUser())return;const reason=`listener-reconnect:${name}`;const old={uid:state.uid,role:state.role,periodId:state.periodId};stopListeners();startContext(old.uid,old.role,old.periodId,reason,{hydrate:false});},RECONNECT_DELAY_MS);}
+    function finalSnapshot(raw,revision,reason){const uid=state.uid,pid=state.periodId,performance=window.ExploraPerformanceEngine?.getState?.()||{};return{...(raw||{}),uid,driverUid:uid,choferUid:uid,weeklyPeriodId:pid,periodoSemanalId:pid,cycleId:state.cycleId,snapshotRevision:revision,requestId:revision,snapshotRequestId:revision,calculatedAt:new Date().toISOString(),operationalUpdatedAt:Date.now(),realtime:true,realtimeCommitted:true,realtimeReason:reason,rankingRows:Array.isArray(performance.rows)?performance.rows:[],derivationRows:Array.isArray(performance.derivations)?performance.derivations:[],derivationLeader:performance.currentDerivationLeader||null};}
+    function commit(snapshot,revision,token){
+      if(!validContext(token)||revision!==state.issuedRevision||revision<state.appliedRevision)return null;state.appliedRevision=revision;state.lastSnapshot=snapshot;const ctx=context();
+      window.ExploraFastCache?.set?.("dashboard_weekly_billing",snapshot,ctx);window.ExploraFastCache?.set?.("dashboard_weekly_expenses",snapshot,ctx);
+      if(state.weeklyRowsReady)window.ExploraPerformanceEngine?.applyRealtimeOperationalRows?.({rows:state.weeklyRows,uid:state.uid,driverUid:state.uid,weeklyPeriodId:state.periodId,snapshotRevision:revision,totalFacturado:snapshot.totalFacturado??snapshot.grossBilling??0});
+      window.dispatchEvent(new CustomEvent("explora:unified-weekly-snapshot",{detail:snapshot}));
+      const performance=window.ExploraPerformanceEngine?.getState?.()||{};snapshot.rankingRows=performance.rows||[];snapshot.derivationRows=performance.derivations||[];snapshot.derivationLeader=performance.currentDerivationLeader||null;
+      window.ExploraFastCache?.set?.("rankingSnapshot",{rows:performance.rows||[],current:performance.current||null,cycle:performance.cycle||null,snapshotRevision:revision,updatedAt:snapshot.calculatedAt},ctx);
+      window.ExploraFastCache?.set?.("derivationSnapshot",{rows:performance.derivations||[],leader:performance.currentDerivationLeader||null,snapshotRevision:revision,updatedAt:snapshot.calculatedAt},ctx);
+      window.ExploraFastCache?.renderWeeklySnapshot?.(snapshot);
+      window.dispatchEvent(new CustomEvent("explora:weekly-summary",{detail:snapshot}));
+      window.dispatchEvent(new CustomEvent("explora:performance-updated",{detail:{...performance,snapshotRevision:revision,weeklyPeriodId:state.periodId,realtimeCommitted:true}}));
+      window.dispatchEvent(new CustomEvent("explora:operational-snapshot-updated",{detail:snapshot}));
+      setStatus(navigator.onLine?"updated":"offline",navigator.onLine?"Actualizado":"Sin conexión · mostrando última información");return snapshot;
+    }
+    async function execute(revision,options,token){
+      if(!validContext(token)||!state.uid)return null;state.active=true;state.activeRevision=revision;state.activeToken=token;setStatus(navigator.onLine?"syncing":"offline",navigator.onLine?"Actualizando…":"Sin conexión · mostrando última información");
+      try{
+        const loader=window.ExploraWeeklyEngine?.getDriverWeeklyFinancialSnapshot||window.ExploraWeeklyEngine?.getDriverWeeklySnapshot;if(typeof loader!=="function")throw new Error("WEEKLY_ENGINE_NOT_READY");
+        const weeklyPromise=loader(state.uid,state.periodId,{force:options.force!==false,allowLegacyScan:false,refreshInBackground:false,reason:options.reason||"realtime"});
+        const performancePromise=window.ExploraPerformanceEngine?.refresh?.({force:true,reason:`${options.reason||"realtime"}:performance`})||Promise.resolve(null);
+        const [raw]=await Promise.all([weeklyPromise,Promise.resolve(performancePromise).catch(error=>{console.warn("[EXPLORA realtime performance]",error?.code||error?.message);return null;})]);
+        if(!validContext(token)||revision!==state.issuedRevision)return null;
+        return commit(finalSnapshot(raw,revision,options.reason||"realtime"),revision,token);
+      }catch(error){if(validContext(token)&&revision===state.issuedRevision)friendlyError(error,options.reason||"realtime-refresh");return state.lastSnapshot;}
+      finally{
+        if(state.activeRevision!==revision||state.activeToken!==token)return;
+        state.active=false;state.activeRevision=0;state.activeToken=0;const queued=state.queued;state.queued=null;if(queued&&validContext(queued.token)){execute(queued.revision,queued.options,queued.token).then(queued.resolve,queued.reject);}
+      }
+    }
+    function refresh(options={}){
+      if(!state.uid||!state.periodId)return Promise.resolve(null);const token=state.contextToken,revision=++state.issuedRevision;
+      if(state.active){return new Promise((resolve,reject)=>{if(state.queued)state.queued.resolve(null);state.queued={revision,options:{...options,force:true},token,resolve,reject};});}
+      return execute(revision,options,token);
+    }
+    function startContext(uid,role,pid,reason="start",options={}){
+      if(!uid||!pid)return;state.uid=uid;state.role=role||"chofer";state.periodId=pid;state.cycleId=`week_${pid}`;state.contextKey=`${uid}|${state.role}|${pid}`;state.contextToken+=1;state.stopped=false;state.reconnectAttempts=0;const token=state.contextToken;if(options.hydrate!==false)cacheInitialView();buildListeners(token);invalidate("state",reason);return refresh({force:true,reason,serverTriggered:false});
+    }
+    function ensure(reason="ensure",{force=true}={}){
+      const user=currentUser(),p=activePeriod(),role=currentRole();if(!user?.uid||!p?.id){stopListeners();return Promise.resolve(null);}const nextKey=`${user.uid}|${role}|${p.id}`;
+      if(nextKey!==state.contextKey||state.stopped){const oldCtx=state.uid&&state.periodId?context():null;stopListeners({invalidateContext:Boolean(oldCtx&&state.periodId!==p.id)});return startContext(user.uid,role,p.id,reason)||Promise.resolve(null);}
+      return force?refresh({force:true,reason}):Promise.resolve(state.lastSnapshot);
+    }
+    function localMutation(name){const source=/gasto/.test(name)?"expense":/derivacion/.test(name)?"derivation":/foto|avatar|perfil/.test(name)?"profile":/cierre|comprobante/.test(name)?"closure":/prestamo|loan/.test(name)?"loan":"billing";invalidate(source,name);state.pendingReasons.add(name);state.pendingSources.add(source);clearTimeout(state.debounceTimer);state.debounceTimer=setTimeout(()=>{state.debounceTimer=0;const reason=[...state.pendingReasons].join("+")||name;state.pendingReasons.clear();state.pendingSources.clear();refresh({force:true,reason,localMutation:true});},DEBOUNCE_MS);}
+    const mutationEvents=["explora:cobro-registrado","explora:gasto-registrado","explora:derivacion-aceptada","explora:derivacion-rechazada","explora:derivacion-completada","explora:derivacion-facturada","explora:weekly-closure","explora:closure-receipt-updated","explora:loan-requested","explora:loan-payment","explora:avatar-updated","explora:profile-updated","explora:simulation-updated","explora:app-reset","explora:app-launched"];
+    mutationEvents.forEach(name=>window.addEventListener(name,()=>localMutation(name)));
+    window.addEventListener("explora:session-opened",()=>ensure("session-opened"));
+    window.addEventListener("explora:main-nav-active",event=>{if(event.detail?.section==="inicio")ensure("dashboard-open");});
+    window.addEventListener("explora:operational-period-changed",event=>{const previous=event.detail?.previousWeeklyPeriodId;if(previous&&state.uid)ALL_CACHE_MODULES.forEach(name=>window.ExploraFastCache?.invalidate?.(name,context(state.uid,previous,state.role)));stopListeners();ensure("operational-period-changed");window.dispatchEvent(new CustomEvent("explora:weekly-period-changed",{detail:event.detail||{}}));});
+    window.addEventListener("explora:auth-cleared",()=>{stopListeners();state.uid="";state.role="";state.periodId="";state.cycleId="";state.contextKey="";state.lastSnapshot=null;state.appliedRevision=0;state.hydratedContext="";});
+    document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")ensure("foreground");});
+    window.addEventListener("pageshow",()=>ensure("pageshow"));
+    window.addEventListener("online",()=>{setStatus("syncing","Actualizando…");ensure("online");});
+    window.addEventListener("offline",()=>setStatus("offline","Sin conexión · mostrando última información"));
+    if(auth)onAuthStateChanged(auth,user=>{if(user)queueMicrotask(()=>ensure("auth-state"));else window.dispatchEvent(new CustomEvent("explora:auth-cleared"));});
+    document.addEventListener("DOMContentLoaded",()=>{statusElement();setTimeout(()=>ensure("startup"),80);});
+    window.refreshDashboardFromOperationalSnapshot=options=>ensure(options?.reason||"external-refresh",{force:options?.force!==false});
+    window.ExploraOperationalSync=Object.freeze({refresh,ensure,invalidate,getState:()=>({contextKey:state.contextKey,contextToken:state.contextToken,issuedRevision:state.issuedRevision,appliedRevision:state.appliedRevision,listeners:state.unsubscribers.length,listenerSources:[...state.listenerSources.entries()],active:state.active,queued:Boolean(state.queued),lastServerAt:state.lastServerAt}),stop:stopListeners});
+    window.ExploraDashboardRealtimeCoordinator=Object.freeze({start:ensure,ensure,refresh,stop:stopListeners,invalidate,isCoordinating:()=>Boolean(state.contextKey&&!state.stopped),getState:window.ExploraOperationalSync.getState});
   })();
   </script>
 
