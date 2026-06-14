@@ -2,12 +2,12 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="explora-version" content="v274-derivation-ranking-self-test-repair">
+  <meta name="explora-version" content="v276-dashboard-information-overlap-definitive-fix">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>EXPLORA — Derivation ranking stable bonus only</title>
+  <title>EXPLORA — Dashboard information overlap definitive fix</title>
 
   <style>
     :root{
@@ -5947,6 +5947,32 @@
     }
   </style>
 
+
+  <style id="explora-goals-carousel-vertical-alignment-fix-css">
+    /* Ajuste final: baja de forma uniforme el bloque superior sin alterar altura, snap ni lógica. */
+    .performance-goal-bubble .goal-bubble-content,
+    .goal-bubble .goal-bubble-content{
+      box-sizing:border-box!important;
+      padding-top:8px!important;
+      grid-template-rows:minmax(8px,auto) minmax(21px,auto) minmax(16px,auto) minmax(26px,1fr)!important;
+      align-content:center!important;
+    }
+    .goal-bubble-lock-icon{
+      top:14px!important;
+    }
+    .goal-bubble--unlocked::after{
+      top:13px!important;
+    }
+    @media(max-width:340px){
+      .performance-goal-bubble .goal-bubble-content,
+      .goal-bubble .goal-bubble-content{
+        padding-top:7px!important;
+        grid-template-rows:7px 19px 15px minmax(25px,1fr)!important;
+      }
+      .goal-bubble-lock-icon{top:12px!important}
+      .goal-bubble--unlocked::after{top:11px!important}
+    }
+  </style>
 </head>
 
 <body class="explora-auth-checking">
@@ -6145,7 +6171,7 @@
 
         <div class="performance-dashboard-grid">
           <button id="performanceRankingCard" class="performance-dashboard-card performance-ranking-card" type="button" aria-label="Abrir ranking de metas">
-            <div class="performance-card-kicker">RANKING DE METAS</div>
+            <div class="performance-card-kicker">CICLO ACTUAL</div>
             <div id="performancePodium" class="performance-podium" aria-live="polite">
               <div class="performance-loading">Calculando metas…</div>
             </div>
@@ -6232,13 +6258,6 @@
         </div>
       </section>
 
-      <section class="dashboard-benefit-real" aria-labelledby="dashboardBenefitTitle">
-        <button id="dashboardBenefitCard" type="button" class="dashboard-benefit-card" data-action="prestamo-explora" aria-label="Abrir beneficio disponible">
-          <span class="dashboard-benefit-copy"><small id="dashboardBenefitTitle">BENEFICIO DISPONIBLE</small><strong id="dashboardAvailableBenefit">$0</strong><em id="dashboardAvailableBenefitStatus">Todavía te faltan insignias para solicitarlo.</em></span>
-          <span class="dashboard-benefit-arrow" aria-hidden="true">›</span>
-        </button>
-      </section>
-
       <section class="quick-summary-real" aria-labelledby="summaryTitle">
         <h2 id="summaryTitle">RESUMEN RÁPIDO</h2>
         <div class="summary-grid-real">
@@ -6247,25 +6266,22 @@
             <span>Cobros registrados</span>
             <strong id="dashboardTripsCount">0</strong>
           </button>
-          <button type="button" class="summary-card-real" data-action="resumen-comprobantes">
-            <svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M9 14h6"/></svg>
-            <span>Comprobantes</span>
-            <strong id="dashboardReceiptsCount">0</strong>
-          </button>
           <button type="button" class="summary-card-real" data-action="resumen-gastos">
             <svg viewBox="0 0 24 24"><path d="M5 7h14v12H5z"/><path d="M9 7V5h6v2"/></svg>
             <span>Gastos semanales</span>
             <strong id="dashboardExpenseCount">0</strong>
           </button>
-          <button type="button" class="summary-card-real" data-action="objetivo-semanal">
+          <button type="button" class="summary-card-real summary-card-goal" data-action="ver-ranking">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 3"/></svg>
-            <span>META SEMANAL</span>
-            <strong id="dashboardWeeklyGoal">0%</strong>
+            <span id="dashboardCurrentGoalTitle">META ACTUAL</span>
+            <strong id="dashboardCurrentGoal">—</strong>
+            <small id="dashboardCurrentGoalStatus">Cargando meta mensual…</small>
           </button>
-          <button type="button" class="summary-card-real summary-card-benefit" data-action="objetivo-semanal">
+          <button type="button" class="summary-card-real summary-card-benefit" data-action="ver-ranking">
             <svg viewBox="0 0 24 24"><path d="M12 3v18M7 7.5c0-2 2-3.5 5-3.5s5 1.4 5 3.5-1.7 3.2-5 3.8-5 1.7-5 4 2 4.2 5 4.2 5-1.8 5-4.2"/></svg>
             <span>GANASTE</span>
-            <strong id="dashboardWeeklyBenefit">+$0</strong>
+            <strong id="dashboardGoalBenefit">—</strong>
+            <small id="dashboardGoalBenefitStatus">Cargando beneficio mensual…</small>
           </button>
         </div>
       </section>
@@ -23723,5 +23739,161 @@ import {onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.12.5/fir
 })();
 </script>
 
+
+<style id="explora-v276-dashboard-overlap-definitive-css">
+  .dashboard-benefit-real{display:none!important}
+  .summary-grid-real{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    grid-auto-rows:minmax(122px,auto);
+    gap:10px!important;
+    margin-top:10px;
+    width:100%;
+    min-width:0;
+  }
+  .summary-card-real{
+    width:100%;
+    min-width:0;
+    min-height:122px!important;
+    height:100%;
+    padding:12px 11px!important;
+    justify-content:flex-start!important;
+    align-items:flex-start!important;
+    overflow:hidden;
+    box-sizing:border-box;
+  }
+  .summary-card-real svg{flex:0 0 auto}
+  .summary-card-real span{
+    display:block;
+    width:100%;
+    min-width:0;
+    color:var(--explora-muted);
+    font-size:10.5px!important;
+    font-weight:850;
+    line-height:1.15;
+    letter-spacing:.025em;
+    text-transform:uppercase;
+    overflow-wrap:anywhere;
+  }
+  .summary-card-real strong{
+    display:block;
+    width:100%;
+    min-width:0;
+    margin-top:2px;
+    font-size:clamp(21px,6vw,30px)!important;
+    line-height:1.05;
+    font-variant-numeric:tabular-nums;
+    overflow-wrap:anywhere;
+  }
+  .summary-card-real small{
+    display:block;
+    width:100%;
+    min-width:0;
+    margin-top:auto;
+    color:rgba(255,255,255,.62);
+    font-size:10.5px;
+    line-height:1.28;
+    overflow-wrap:anywhere;
+  }
+  .summary-card-goal strong{color:#f7cf71}
+  .summary-card-benefit strong{color:#72eba4}
+  .finance-grid-real{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:10px!important;
+  }
+  .finance-card-real{min-height:138px!important}
+  .performance-ranking-card .performance-card-kicker{white-space:nowrap}
+  .dashboard-shell-real{padding-bottom:calc(var(--explora-bottom-nav-height) + env(safe-area-inset-bottom) + 34px)!important}
+  @media(max-width:340px){
+    .dashboard-shell-real{padding-left:10px!important;padding-right:10px!important}
+    .summary-grid-real{gap:8px!important;grid-auto-rows:minmax(116px,auto)}
+    .summary-card-real{min-height:116px!important;padding:10px 9px!important}
+    .summary-card-real span,.summary-card-real small{font-size:9.5px!important}
+  }
+</style>
+
+<script type="module" id="explora-v276-dashboard-overlap-definitive-js">
+(() => {
+  "use strict";
+  const VERSION="v276-dashboard-information-overlap-definitive-fix";
+  const $=id=>document.getElementById(id);
+  const money=value=>new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(Math.max(0,Number(value)||0));
+  const state={generation:0,uid:"",role:"",cycleId:"",lastRevision:0,lastSignature:"",authUnsubscribe:null};
+
+  function currentAuth(){return window.ExploraFirebase?.auth||null}
+  function normalizeRole(value){return String(value||"").trim().toLowerCase()}
+  function currentRole(){return normalizeRole(window.ExploraSession?.role||document.body.dataset.role||"")}
+  function nodes(){return{goal:$("dashboardCurrentGoal"),goalStatus:$("dashboardCurrentGoalStatus"),benefit:$("dashboardGoalBenefit"),benefitStatus:$("dashboardGoalBenefitStatus")}}
+  function atomicWrite(goalValue,goalStatus,benefitValue,benefitStatus){
+    const n=nodes();if(!n.goal||!n.benefit)return;
+    n.goal.textContent=goalValue;n.goalStatus&&(n.goalStatus.textContent=goalStatus);
+    n.benefit.textContent=benefitValue;n.benefitStatus&&(n.benefitStatus.textContent=benefitStatus);
+  }
+  function clear(reason="loading"){
+    state.lastSignature="";
+    atomicWrite("—",reason==="signed-out"?"Sin sesión activa":"Cargando meta mensual…","—",reason==="signed-out"?"Sin sesión activa":"Cargando beneficio mensual…");
+  }
+  function sanitizeDashboard(){
+    document.querySelectorAll(".dashboard-benefit-real,#dashboardBenefitCard").forEach(node=>node.remove());
+    const summary=document.querySelector(".summary-grid-real");
+    summary?.querySelectorAll('[data-action="resumen-comprobantes"],#dashboardReceiptsCount').forEach(node=>(node.closest(".summary-card-real")||node).remove());
+    const kicker=document.querySelector("#performanceRankingCard .performance-card-kicker");if(kicker&&kicker.textContent!=="CICLO ACTUAL")kicker.textContent="CICLO ACTUAL";
+  }
+  function cycleIdOf(perf){return String(perf?.cycle?.id||perf?.cycle?.cycleId||perf?.current?.cycleId||"").trim()}
+  function buildModel(perf){
+    const auth=currentAuth(),user=auth?.currentUser;if(!user?.uid)return null;
+    const role=currentRole()||normalizeRole(perf?.role);if(role&&!role.includes("chofer")&&!role.includes("driver"))return null;
+    const uid=String(perf?.uid||perf?.current?.uid||user.uid).trim();if(uid!==user.uid)return null;
+    const cycleId=cycleIdOf(perf);if(!cycleId)return null;
+    const current=perf?.current||{};
+    const percentage=Math.max(0,Number(perf?.goalView?.activePercent??perf?.goalView?.activeGoalPercent??current?.rewardPercent??current?.goalPercent??0)||0);
+    const goalNumber=Math.max(0,Number(current?.reachedGoal?.id??perf?.goalView?.reached?.id??percentage)||0);
+    const grossBilling=Math.max(0,Number(current?.grossBilling??current?.billing??0)||0);
+    const earnedBenefit=Math.max(0,Math.round(grossBilling*percentage/100));
+    return{uid:user.uid,role:"chofer",cycleId,percentage,goalNumber,grossBilling,earnedBenefit,updatedAt:Date.now()};
+  }
+  function render(perf,source="performance"){
+    const generation=state.generation,auth=currentAuth(),user=auth?.currentUser;
+    if(!user?.uid){clear("signed-out");return}
+    const model=buildModel(perf);if(!model){clear("invalid-context");return}
+    queueMicrotask(()=>{
+      if(generation!==state.generation)return;
+      const liveAuth=currentAuth();if(!liveAuth?.currentUser||liveAuth.currentUser.uid!==model.uid)return;
+      const liveRole=currentRole();if(liveRole&&!liveRole.includes("chofer")&&!liveRole.includes("driver"))return;
+      const liveCycle=cycleIdOf(window.ExploraPerformanceEngine?.getState?.()||perf);if(!liveCycle||liveCycle!==model.cycleId)return;
+      const signature=[model.uid,model.cycleId,model.percentage,model.goalNumber,model.grossBilling,model.earnedBenefit].join("|");
+      if(signature===state.lastSignature)return;state.lastSignature=signature;state.uid=model.uid;state.role=model.role;state.cycleId=model.cycleId;
+      const goalText=`${model.percentage}%`;
+      const goalStatus=model.percentage>0?`Meta ${model.goalNumber||model.percentage} alcanzada`:"Aún no alcanzaste una meta";
+      const benefitText=model.earnedBenefit>0?`+${money(model.earnedBenefit)}`:money(0);
+      const benefitStatus=model.earnedBenefit>0?`Beneficio por meta activa del ${model.percentage}%`:"Aún no generaste beneficio por meta";
+      atomicWrite(goalText,goalStatus,benefitText,benefitStatus);
+      document.documentElement.dataset.dashboardGoalSource=source;
+    });
+  }
+  function beginSession(reason){
+    state.generation+=1;state.lastRevision=0;clear(reason);
+    requestAnimationFrame(()=>{const perf=window.ExploraPerformanceEngine?.getState?.();if(perf?.loaded)render(perf,"session-state")});
+  }
+  function bindAuth(){
+    const auth=currentAuth();if(!auth){setTimeout(bindAuth,100);return}
+    import("https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js").then(({onAuthStateChanged})=>{
+      state.authUnsubscribe?.();state.authUnsubscribe=onAuthStateChanged(auth,user=>{state.generation+=1;state.uid=user?.uid||"";state.cycleId="";state.lastSignature="";clear(user?"auth-change":"signed-out");if(user)setTimeout(()=>{const perf=window.ExploraPerformanceEngine?.getState?.();if(perf?.loaded)render(perf,"auth-state")},0)});
+    }).catch(()=>{});
+  }
+  window.addEventListener("explora:performance-updated",event=>render(event.detail||window.ExploraPerformanceEngine?.getState?.()||{},"performance-updated"));
+  window.addEventListener("explora:operational-snapshot-updated",event=>{
+    const revision=Number(event.detail?.snapshotRevision||event.detail?.requestId||0);if(revision&&revision<state.lastRevision)return;if(revision)state.lastRevision=revision;
+    const perf=window.ExploraPerformanceEngine?.getState?.();if(perf?.loaded)render(perf,"operational-committed");
+  });
+  ["explora:session-opened","explora:auth-cleared","explora:operational-period-changed"].forEach(name=>window.addEventListener(name,()=>beginSession(name)));
+  window.addEventListener("pageshow",()=>beginSession("pageshow"));
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")beginSession("foreground")});
+  const observer=new MutationObserver(()=>sanitizeDashboard());observer.observe(document.documentElement,{childList:true,subtree:true});
+  sanitizeDashboard();clear("startup");bindAuth();
+  window.ExploraDashboardGoalBenefitState={version:VERSION,clear,render,getState:()=>({...state})};
+})();
+</script>
 </body>
 </html>
