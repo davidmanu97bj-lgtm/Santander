@@ -2,12 +2,12 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="explora-version" content="v268-global-ranking-real-percentages-independent-auth">
+  <meta name="explora-version" content="v274-derivation-ranking-self-test-repair">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>EXPLORA — Ranking global real independiente de la sesión</title>
+  <title>EXPLORA — Derivation ranking stable bonus only</title>
 
   <style>
     :root{
@@ -5791,6 +5791,162 @@
       }
     }
   </style>
+<style id="explora-v270-derivation-financial-repair-css">.closure-derivation-contribution-section{border-color:rgba(245,185,66,.26);background:radial-gradient(circle at 92% 0%,rgba(245,185,66,.08),transparent 38%),linear-gradient(180deg,rgba(245,185,66,.045),rgba(255,255,255,.014))}.closure-derivation-contribution-section h3{color:#f3c45d}.closure-derivation-contribution-section #weeklyClosureReceivedGross{color:#86c8ff}.closure-derivation-contribution-section #weeklyClosureCollaboration,.closure-derivation-contribution-section #weeklyClosureContributionImpact{color:#ff9d9d}.closure-derivation-contribution-section #weeklyClosureExploreContribution{color:#72eba4}.derivation-ranking-count{display:block;margin-top:4px;color:rgba(255,255,255,.58);font-size:10px;font-weight:800;letter-spacing:.025em}</style><script id="explora-cycle-4w-definitive">
+(()=>{
+  "use strict";
+  const TZ="America/Argentina/Buenos_Aires",WEEK_MS=7*86400000,CYCLE_MS=4*WEEK_MS,EPOCH_KEY_MS=Date.UTC(2026,0,3);
+  const text=v=>String(v??"").trim();
+  const iso=ms=>{const d=new Date(ms);return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,"0")}-${String(d.getUTCDate()).padStart(2,"0")}`;};
+  const parse=id=>{const m=text(id).match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?Date.UTC(+m[1],+m[2]-1,+m[3]):NaN;};
+  const argentinaParts=(date=new Date())=>new Intl.DateTimeFormat("en-CA",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).formatToParts(date).reduce((a,p)=>{if(p.type!=="literal")a[p.type]=Number(p.value);return a;},{});
+  function activeWeeklyPeriod(date=new Date()){
+    const p=argentinaParts(date),dayKey=Date.UTC(p.year,p.month-1,p.day),dow=new Date(dayKey).getUTCDay();
+    let back=(dow-6+7)%7;if(dow===6&&p.hour===0&&p.minute<5)back=7;
+    const startKeyMs=dayKey-back*86400000,startMs=startKeyMs+3*3600000+5*60000,endMs=startKeyMs+3*3600000+WEEK_MS-1;
+    return{id:iso(startKeyMs),weeklyPeriodId:iso(startKeyMs),startKeyMs,startMs,endMs,timezone:TZ};
+  }
+  function periodFromId(id){const key=parse(id);return Number.isFinite(key)?{id:iso(key),weeklyPeriodId:iso(key),startKeyMs:key,startMs:key+3*3600000+5*60000,endMs:key+3*3600000+WEEK_MS-1,timezone:TZ}:null;}
+  function forPeriod(input){
+    const period=typeof input==="string"?periodFromId(input):(input?.id?periodFromId(input.id):null)||activeWeeklyPeriod();
+    const index=Math.floor((period.startKeyMs-EPOCH_KEY_MS)/CYCLE_MS),startKeyMs=EPOCH_KEY_MS+index*CYCLE_MS,endKeyMs=startKeyMs+3*WEEK_MS;
+    const periods=Array.from({length:4},(_,i)=>periodFromId(iso(startKeyMs+i*WEEK_MS)));
+    const weekIndex=Math.max(1,Math.min(4,Math.floor((period.startKeyMs-startKeyMs)/WEEK_MS)+1));
+    const startPeriodId=iso(startKeyMs),endPeriodId=iso(endKeyMs),id=`cycle_${startPeriodId}_${endPeriodId}`;
+    return{id,cycleId:id,index,weekIndex,weekInCycle:weekIndex,isFourthWeek:weekIndex===4,startPeriodId,endPeriodId,cycleStart:startPeriodId,cycleEnd:endPeriodId,periods,startKeyMs,endKeyMs,startMs:periods[0].startMs,endMs:periods[3].endMs,closesAt:new Date(periods[3].endMs).toISOString(),closed:Date.now()>periods[3].endMs,weeklyPeriodId:period.id,timezone:TZ,legacyIds:periods.map(p=>`week_${p.id}`)};
+  }
+  function fromAny(value){
+    const id=text(value?.weeklyPeriodId||value?.periodoSemanalId||value?.periodoId||value?.id||value);
+    if(/^\d{4}-\d{2}-\d{2}$/.test(id))return forPeriod(id);
+    const match=id.match(/^week_(\d{4}-\d{2}-\d{2})$/);if(match)return forPeriod(match[1]);
+    const cycleMatch=id.match(/^cycle_(\d{4}-\d{2}-\d{2})_(\d{4}-\d{2}-\d{2})$/);if(cycleMatch)return forPeriod(cycleMatch[1]);
+    return forPeriod(activeWeeklyPeriod());
+  }
+  function contains(cycle,row,dateMs=0){
+    const c=cycle?.periods?cycle:forPeriod(cycle),periodId=text(row?.weeklyPeriodIdCompleted||row?.weeklyPeriodId||row?.periodoSemanalId||row?.periodoId),cycleId=text(row?.cycleId||row?.monthlyCycleId||row?.performanceCycleId||row?.derivationCycleId);
+    if(cycleId&&(cycleId===c.id||c.legacyIds.includes(cycleId)))return true;
+    if(periodId&&c.periods.some(p=>p.id===periodId))return true;
+    const ms=Number(dateMs||0);return ms>0&&ms>=c.startMs&&ms<=c.endMs;
+  }
+  window.ExploraCycle4W=Object.freeze({TZ,WEEK_MS,CYCLE_MS,EPOCH_KEY_MS,activeWeeklyPeriod,periodFromId,forPeriod,fromAny,contains});
+})();
+</script>
+
+
+
+  <style id="explora-derivation-ranking-stable-card-css">
+    #performanceDerivatorCard[data-stable-derivation-card="true"]{
+      container-type:inline-size;
+    }
+    #performanceDerivatorBody{
+      width:100%;
+      min-width:0;
+    }
+    .performance-derivator-winner{
+      width:100%;
+      min-width:0;
+      min-height:154px;
+      display:grid;
+      align-content:center;
+      justify-items:center;
+      gap:9px;
+      text-align:center;
+    }
+    .performance-derivator-winner[hidden],
+    #performanceDerivatorEmpty[hidden]{
+      display:none!important;
+    }
+    .performance-derivator-initials{
+      display:grid;
+      place-items:center;
+      width:100%;
+      height:100%;
+      color:#f7d476;
+      font-size:19px;
+      font-weight:950;
+      letter-spacing:.02em;
+    }
+    #performanceDerivatorAvatarImage[hidden],
+    #performanceDerivatorAvatarInitials[hidden]{
+      display:none!important;
+    }
+    #performanceDerivatorName,
+    #performanceDerivatorDerived,
+    #performanceDerivatorBonus{
+      max-width:100%;
+      min-width:0;
+    }
+    #performanceDerivatorName{
+      display:block;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    #performanceDerivatorDerived{
+      display:block;
+      color:#f3c45d!important;
+      font-size:clamp(9px,7.1cqw,12px)!important;
+      line-height:1.2;
+      font-weight:900;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    #performanceDerivatorBonusBlock{
+      width:min(100%,180px);
+      min-width:0;
+      margin:5px auto 0;
+      padding:6px 8px 7px;
+      border:1px solid rgba(103,230,155,.28);
+      border-radius:12px;
+      background:rgba(42,190,100,.075);
+      display:grid!important;
+      place-items:center;
+      gap:1px;
+      line-height:1;
+      overflow:hidden;
+    }
+    #performanceDerivatorBonusBlock small{
+      display:block;
+      color:#9ddbb3;
+      font-size:clamp(8px,5.8cqw,10px);
+      font-weight:950;
+      letter-spacing:.09em;
+      white-space:nowrap;
+    }
+    #performanceDerivatorBonus{
+      display:block;
+      color:#67e69b;
+      font-size:clamp(14px,12cqw,21px);
+      font-weight:950;
+      letter-spacing:-.035em;
+      line-height:1.05;
+      white-space:nowrap;
+      overflow:visible;
+      font-variant-numeric:tabular-nums;
+    }
+    #performanceDerivatorBonus[data-fit="compact"]{font-size:clamp(12px,10.2cqw,18px)}
+    #performanceDerivatorBonus[data-fit="tight"]{font-size:clamp(10px,8.7cqw,15px);letter-spacing:-.05em}
+    #performanceDerivatorEmpty{
+      min-height:154px;
+      align-content:center;
+      justify-items:center;
+      text-align:center;
+    }
+    #performanceDerivatorEmpty b{
+      font-size:clamp(13px,9.5cqw,18px);
+      line-height:1.15;
+      text-wrap:balance;
+    }
+    #performanceDerivatorEmpty small{
+      max-width:210px;
+      font-size:clamp(10px,7.2cqw,13px);
+      text-wrap:balance;
+    }
+    @media(max-width:390px){
+      .performance-derivator-winner,#performanceDerivatorEmpty{min-height:132px}
+    }
+  </style>
+
 </head>
 
 <body class="explora-auth-checking">
@@ -5995,17 +6151,29 @@
             </div>
           </button>
 
-          <button id="performanceDerivatorCard" class="performance-dashboard-card performance-derivator-card" type="button" aria-label="Abrir ranking de derivaciones">
+          <button id="performanceDerivatorCard" class="performance-dashboard-card performance-derivator-card" type="button" aria-label="Abrir ranking de derivaciones" data-stable-derivation-card="true">
             <div class="performance-card-kicker">RANKING DE DERIVACIONES</div>
-            <div id="performanceDerivatorBody" class="performance-derivator-body" aria-live="polite">
-              <div class="performance-derivator-visual">
-                <span class="performance-derivator-avatar is-empty" aria-hidden="true"></span>
-                <span class="performance-derivator-percent-ring" aria-label="Bono del diez por ciento"><strong>10%</strong></span>
+            <div id="performanceDerivatorBody" class="performance-derivator-body" aria-live="polite" aria-atomic="true">
+              <div id="performanceDerivatorWinner" class="performance-derivator-winner" hidden>
+                <div class="performance-derivator-visual">
+                  <span id="performanceDerivatorAvatar" class="performance-derivator-avatar is-empty" aria-hidden="true">
+                    <img id="performanceDerivatorAvatarImage" alt="" hidden>
+                    <span id="performanceDerivatorAvatarInitials" class="performance-derivator-initials" aria-hidden="true"></span>
+                  </span>
+                  <span class="performance-derivator-percent-ring" aria-label="Bono del diez por ciento"><strong>10%</strong></span>
+                </div>
+                <div class="performance-derivator-copy">
+                  <strong id="performanceDerivatorName"></strong>
+                  <span id="performanceDerivatorDerived" class="performance-derivator-derived"></span>
+                  <span id="performanceDerivatorBonusBlock" class="performance-derivator-bonus">
+                    <small>BONO</small>
+                    <b id="performanceDerivatorBonus"></b>
+                  </span>
+                </div>
               </div>
-              <div class="performance-derivator-copy">
-                <strong>Sin líder</strong>
-                <span class="performance-derivator-derived">DINERO DERIVADO · $0</span>
-                <span class="performance-derivator-bonus">BONO +$0</span>
+              <div id="performanceDerivatorEmpty" class="performance-current-empty">
+                <b>SIN DERIVACIONES COMPLETADAS</b>
+                <small>Todavía no hay dinero derivado en este ciclo.</small>
               </div>
             </div>
           </button>
@@ -6390,7 +6558,14 @@
             <div class="closure-simple-row"><span>Préstamos operativos</span><strong id="weeklyClosureLoans" class="is-negative">$0</strong></div>
             <div class="closure-simple-row"><span>Préstamo Explora</span><strong id="weeklyClosureExploreLoan" class="is-negative">$0</strong></div>
             <div class="closure-simple-row"><span>Multas</span><strong id="weeklyClosureFines" class="is-negative">$0</strong></div>
-            <div class="closure-simple-row"><span>Aporte al bono</span><strong id="weeklyClosureCollaboration" class="is-negative">$0</strong></div>
+            <section id="weeklyClosureDerivationContributionSection" class="closure-summary-section closure-derivation-contribution-section">
+              <h3>DERIVACIONES RECIBIDAS COMPLETADAS</h3><div class="closure-simple-list">
+                <div class="closure-simple-row"><span>Cantidad de derivaciones recibidas, aceptadas y completadas</span><strong id="weeklyClosureReceivedDerivations">0</strong></div>
+                <div class="closure-simple-row"><span>Importe bruto de derivaciones</span><strong id="weeklyClosureReceivedGross" class="is-info">$0</strong></div>
+                <div class="closure-simple-row"><span>Colaboración para bono — 10%</span><strong id="weeklyClosureCollaboration" class="is-negative">$0</strong></div>
+                <div class="closure-simple-row"><span>A favor de EXPLORA</span><strong id="weeklyClosureExploreContribution" class="is-positive">$0</strong></div>
+                <div class="closure-simple-row"><span>Impacto en el saldo final</span><strong id="weeklyClosureContributionImpact" class="is-negative">$0</strong></div>
+              </div></section>
             <div class="closure-simple-row"><span>Otros</span><strong id="weeklyClosureOtherDiscounts" class="is-negative">$0</strong></div>
           </div>
         </section>
@@ -6923,7 +7098,7 @@
           <p>El monto verde muestra cuánto beneficio lleva ganado con ese porcentaje.</p>
           <div class="performance-rule-example"><strong>EJEMPLO</strong><span>Si Marcelo facturó $1.800.000 y alcanzó el 3%, su beneficio es $54.000.</span></div>
           <p>Los cierres semanales se hacen todos los sábados.</p>
-          <p>El ranking se reinicia cada sábado a las 00:05.</p>
+          <p>El ranking funciona por ciclos de cuatro semanas y cierra en el cuarto sábado a las 00:05.</p>
         </article>
         <div id="performanceRankingList" class="performance-ranking-list"></div>
       </section>
@@ -6935,7 +7110,7 @@
           <p>El emisor suma el monto final del servicio. El receptor no suma dinero derivado.</p>
           <p>El monto verde muestra el bono proyectado del 10%.</p>
           <div class="performance-rule-example"><strong>EJEMPLO</strong><span>Si Marcelo lleva $300.000 derivados, su bono proyectado es +$30.000.</span></div>
-          <p>El cierre y el ranking semanal se renuevan cada sábado a las 00:05.</p>
+          <p>El ranking de derivaciones funciona por ciclos de cuatro semanas y cierra en el cuarto sábado a las 00:05.</p>
         </article>
         <div class="ranking-derived-heading"><span>RANKING DE DERIVACIONES</span><small>Ordenado por dinero derivado facturado</small></div>
         <div id="performanceDerivationsList" class="performance-ranking-list performance-derivation-money-list"></div>
@@ -8091,7 +8266,10 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       vehicleId: "",
       role: null,
       initialized: false,
-      authReady: false
+      authReady: false,
+      generation: 0,
+      closing: false,
+      openedAt: 0
     };
 
     window.ExploraSession = exploraSession;
@@ -8809,11 +8987,11 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     }
 
     function getDerivationOrigin(data = {}) {
-      return String(data.senderUid || data.emisorUid || data.choferOrigenUid || data.choferOrigenId || data.origenChoferId || data.choferOrigen || data.derivadorId || data.fromChoferId || data.creadoPor || data.emisorId || "").trim();
+      return String(data.senderUid || data.sentByUid || data.derivadorUid || data.driverSenderUid || data.createdByUid || data.originDriverUid || data.fromUid || data.emisorUid || data.choferOrigenUid || data.choferOrigenId || data.origenChoferId || data.choferOrigen || data.derivadorId || data.fromChoferId || data.creadoPor || data.emisorId || "").trim();
     }
 
     function getDerivationReceiver(data = {}) {
-      return String(data.receiverUid || data.receptorUid || data.choferReceptorUid || data.choferReceptorId || data.receptorChoferId || data.choferDestino || data.receptor || data.recibidoPor || data.toChoferId || data.destinoChoferId || "").trim();
+      return String(data.receiverUid || data.receivedByUid || data.receptorUid || data.assignedDriverUid || data.acceptedByUid || data.toUid || data.choferReceptorUid || data.choferReceptorId || data.receptorChoferId || data.choferDestino || data.receptor || data.recibidoPor || data.toChoferId || data.destinoChoferId || "").trim();
     }
 
     function getDerivationServiceId(data = {}) {
@@ -8824,23 +9002,23 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     }
 
     function getDerivationFinalAmount(data = {}) {
-      return Math.max(0, toNumberSafe(data.derivedAmountForEmitter ?? data.finalAmount ?? data.amount ?? data.monto ?? data.suggestedAmount ?? data.fixedPrice));
+      const candidates = [data.linkedBillingGrossAmount,data.billingGrossAmount,data.confirmedBillingAmount,data.grossAmount,data.totalAmount,data.confirmedAmount,data.billedAmount,data.serviceAmount,data.valorServicio,data.total,data.importe,data.monto,data.amount,data.derivedAmountForEmitter,data.finalAmount,data.suggestedAmount,data.fixedPrice];
+      for (const candidate of candidates) { const amount = toNumberSafe(candidate); if (Number.isFinite(amount) && amount > 0) return Math.round(amount); }
+      return 0;
     }
 
     function getDerivationCollaborationAmount(data = {}) {
-      const finalAmount = getDerivationFinalAmount(data);
-      const explicit = Math.max(0, toNumberSafe(data.collaborationAmount));
-      if (explicit > 0) return explicit;
-      const rate = Math.max(0, toNumberSafe(data.collaborationRate || 0.10));
-      return Math.round(finalAmount * rate);
+      const grossAmount = getDerivationFinalAmount(data); return grossAmount > 0 ? Math.round(grossAmount * 0.10) : 0;
     }
 
     function isCompletedDerivation(data = {}) {
-      const status = normalizeStatus(data.status || data.estado || data.estadoDerivacion);
-      if (["pendiente","sent_pending_response","aceptada","accepted","pendiente_facturacion","accepted_pending_completion","rechazada","rejected","cerrada_rechazada","canceled","cancelada"].includes(status)) return false;
-      if (isInvalidState(status)) return false;
-      const completed = ["facturada","completed","completada"].includes(status) || status.includes("factur") || data.performanceQualified === true;
-      return completed && getDerivationFinalAmount(data) > 0 && Boolean(getDerivationOrigin(data)) && Boolean(getDerivationReceiver(data));
+      const norm = value => normalizeStatus(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[\s_-]+/g, " ").trim();
+      const states=[data.status,data.estado,data.estadoDerivacion,data.acceptanceStatus,data.completionStatus,data.billingStatus,data.paymentStatus].map(norm).filter(Boolean), joined=states.join(" | ");
+      if (["pendiente","sent pending response","rechazada","rejected","cancelada","canceled","cancelled","vencida","expired","eliminada","deleted"].some(token=>joined.includes(token)) || isInvalidState(joined)) return false;
+      const accepted=data.accepted===true||data.aceptada===true||data.aceptado===true||Boolean(data.acceptedAt||data.fechaAceptacion||data.acceptedByUid)||states.some(state=>["aceptada","aceptado","accepted"].includes(state)||state.includes("accepted"));
+      const completed=data.completed===true||data.completada===true||data.completado===true||data.realizada===true||data.realizado===true||Boolean(data.completedAt||data.finishedAt||data.fechaFinalizacion)||states.some(state=>["completed","completada","completado","realizada","realizado","confirmada","confirmado"].includes(state)||state.includes("complet")||state.includes("realiz"));
+      const billed=data.billed===true||data.facturada===true||data.facturado===true||data.paid===true||data.cobrada===true||data.cobrado===true||data.paymentConfirmed===true||data.billingConfirmed===true||Boolean(data.billedAt||data.invoicedAt||data.paidAt||data.fechaFacturacion||data.billingRecordId||data.paymentId||data.cobroId)||states.some(state=>["facturada","facturado","paid","cobrada","cobrado"].includes(state)||state.includes("factur")||state.includes("paid")||state.includes("cobrad"));
+      return accepted&&completed&&billed&&getDerivationFinalAmount(data)>0&&Boolean(getDerivationOrigin(data))&&Boolean(getDerivationReceiver(data));
     }
 
     const weeklyProfileCache = new Map();
@@ -10837,6 +11015,10 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
 
     async function performAuthenticatedExploraSessionOpen(authUser) {
       resetCurrentSessionUI();
+      const sessionGeneration = Number(exploraSession.generation || 0) + 1;
+      exploraSession.generation = sessionGeneration;
+      exploraSession.closing = false;
+      exploraSession.authReady = false;
       authSessionState.profileLoading = true;
 
       const loaded = await withTimeout(loadLegacyExploraProfile(authUser), 8000, "PROFILE_TIMEOUT");
@@ -10853,6 +11035,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       exploraSession.profile = profile;
       exploraSession.role = role;
       exploraSession.initialized = Boolean(exploraSession.profileRef && exploraSession.profileDocumentId && exploraSession.profileCollection);
+      exploraSession.openedAt = Date.now();
       exploraSession.vehicle = null;
       exploraSession.vehicleId = "";
 
@@ -10896,8 +11079,14 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         }
       });
 
-      window.dispatchEvent(new CustomEvent("explora:session-opened", { detail: { uid: authUser.uid, role } }));
-      return { user: authUser, profile, role, profileDocumentId: loaded.profileDocumentId };
+      if (auth.currentUser?.uid !== authUser.uid || exploraSession.generation !== sessionGeneration || exploraSession.closing) {
+        throw new Error("SESSION_OPEN_REPLACED");
+      }
+      exploraSession.authReady = true;
+      const sessionDetail = { uid: authUser.uid, role, generation: sessionGeneration, profileResolved: true, sessionInitialized: true };
+      window.dispatchEvent(new CustomEvent("explora:auth-ready", { detail: sessionDetail }));
+      window.dispatchEvent(new CustomEvent("explora:session-opened", { detail: sessionDetail }));
+      return { user: authUser, profile, role, profileDocumentId: loaded.profileDocumentId, generation: sessionGeneration };
     }
 
     async function openAuthenticatedExploraSession(authUser) {
@@ -10917,6 +11106,10 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     }
 
     function resetCurrentSessionUI() {
+      exploraSession.closing = true;
+      exploraSession.generation = Number(exploraSession.generation || 0) + 1;
+      exploraSession.authReady = false;
+      exploraSession.initialized = false;
       window.ExploraWeeklyEngine?.stop();
       window.ExploraStopWeeklyBilling?.();
       authSessionState.profile = null;
@@ -14495,7 +14688,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         ["COINCIDEN", "weeklyClosureDiagUidMatch"],["SEMANA ACTIVA", "weeklyClosureDiagPeriod"],["CICLO ACTIVO", "weeklyClosureDiagCycle"],
         ["CLOSURE ID", "weeklyClosureDiagClosureId"],["EFECTIVO", "weeklyClosureDiagCash"],["TRANSFERENCIAS", "weeklyClosureDiagTransfers"],
         ["TARJETAS", "weeklyClosureDiagCards"],["GASTOS", "weeklyClosureDiagExpenses"],["META %", "weeklyClosureDiagGoalPercent"],
-        ["BENEFICIO META", "weeklyClosureDiagGoalBenefit"],["BONO DERIVADOR", "weeklyClosureDiagBonus"],["APORTE AL BONO", "weeklyClosureDiagCollaboration"],
+        ["BENEFICIO META", "weeklyClosureDiagGoalBenefit"],["BONO DERIVADOR", "weeklyClosureDiagBonus"],["COLABORACIÓN PARA BONO", "weeklyClosureDiagCollaboration"],
         ["DEUDAS", "weeklyClosureDiagDebts"],["PRÉSTAMOS", "weeklyClosureDiagLoans"],["OTROS MOVIMIENTOS", "weeklyClosureDiagOtherAdjustments"],["RESULTADO FINAL", "weeklyClosureDiagFinal"],
         ["QUIÉN PAGA", "weeklyClosureDiagPayer"],["ARCHIVO", "weeklyClosureDiagFile"],["MIME", "weeklyClosureDiagMime"],
         ["PESO", "weeklyClosureDiagSize"],["RUTA STORAGE", "weeklyClosureDiagPath"],["RUTA FIRESTORE", "weeklyClosureDiagFirestorePath"],
@@ -14837,22 +15030,10 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     function deriveCycleForWeeklyPeriod(weeklyPeriodId) {
       const periodId = normalizeWeeklyCyclePeriodId(weeklyPeriodId);
       if (!periodId) return null;
+      const central = window.ExploraCycle4W?.forPeriod?.(periodId);
+      if (central) return {...central,cycleStartDate:central.startPeriodId,cycleEndDate:central.endPeriodId,source:"explora-cycle-4w",weeklyPeriodId:periodId,resolved:true};
       const period = closurePeriodObject(periodId);
-      return {
-        cycleId:`week_${periodId}`,
-        cycleStartDate:periodId,
-        cycleEndDate:periodId,
-        weekIndex:1,
-        isFourthWeek:false,
-        closesAt:new Date(period.endMs).toISOString(),
-        source:"weeklyPeriodId",
-        startPeriodId:periodId,
-        endPeriodId:periodId,
-        weekInCycle:1,
-        id:`week_${periodId}`,
-        weeklyPeriodId:periodId,
-        resolved:true
-      };
+      return {cycleId:`week_${periodId}`,cycleStartDate:periodId,cycleEndDate:periodId,weekIndex:1,isFourthWeek:false,closesAt:new Date(period.endMs).toISOString(),source:"weeklyPeriodId",startPeriodId:periodId,endPeriodId:periodId,weekInCycle:1,id:`week_${periodId}`,weeklyPeriodId:periodId,resolved:true};
     }
 
     async function getCycleForWeeklyPeriod(weeklyPeriodId) {
@@ -14924,7 +15105,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         `META %: ${Number(snapshot.performanceGoalPercent || 0)}%`,
         `BENEFICIO META: ${formatClosureMoney(snapshot.goalRewardAmount || 0)}`,
         `DINERO DERIVADO: ${formatClosureMoney(snapshot.derivedAmountForEmitter || 0)}`,
-        `APORTE AL BONO: ${formatClosureMoney(snapshot.collaborationAmount || 0)}`,
+        `COLABORACIÓN PARA BONO: ${formatClosureMoney(snapshot.collaborationAmount || 0)}`,
         `DEUDAS: ${formatClosureMoney(snapshot.directDebtInstallmentTotal || 0)}`,
         `PRÉSTAMOS: ${formatClosureMoney(snapshot.operationalLoanDriverShare || 0)}`,
         `OTROS MOVIMIENTOS: ${formatClosureMoney(context.otherAdjustments || 0)}`,
@@ -15287,6 +15468,10 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
           {id:"weeklyClosureExploreLoan",value:summary.exploreLoanDiscount > 0 ? `−${formatClosureMoney(summary.exploreLoanDiscount)}` : "$0",tone:summary.exploreLoanDiscount > 0 ? "negative" : "neutral"},
           {id:"weeklyClosureFines",value:summary.fines > 0 ? `−${formatClosureMoney(summary.fines)}` : "$0",tone:summary.fines > 0 ? "negative" : "neutral"},
           {id:"weeklyClosureCollaboration",value:summary.collaboration > 0 ? `−${formatClosureMoney(summary.collaboration)}` : "$0",tone:summary.collaboration > 0 ? "negative" : "neutral"},
+          {id:"weeklyClosureReceivedDerivations",value:String(Number(summary.snapshot?.receivedValidDerivations||summary.snapshot?.receivedDerivations?.length||0)),tone:"neutral"},
+          {id:"weeklyClosureReceivedGross",value:formatClosureMoney(Number(summary.collaboration||0)*10),tone:"info"},
+          {id:"weeklyClosureExploreContribution",value:formatClosureMoney(summary.collaboration||0),tone:summary.collaboration>0?"positive":"neutral"},
+          {id:"weeklyClosureContributionImpact",value:summary.collaboration>0?`−${formatClosureMoney(summary.collaboration)}`:"$0",tone:summary.collaboration>0?"negative":"neutral"},
           {id:"weeklyClosureOtherDiscounts",value:summary.otherDiscounts > 0 ? `−${formatClosureMoney(summary.otherDiscounts)}` : "$0",tone:summary.otherDiscounts > 0 ? "negative" : "neutral"}
         ], summary);
         renderClosureSection("D", [
@@ -18007,7 +18192,7 @@ const ExploraExpenseV202 = (() => {
   const normalizedStage=normalizeGoalDiagnosticStage(stage),cycle=state.cycle||{},periodId=context.weeklyPeriodId||activeWeeklyPeriod().id||"—";
   const incentive=context.incentive||getSettlementIncentive(auth?.currentUser?.uid||state.uid||"",periodId),leader=state.currentDerivationLeader||{};
   const jsMessage=String(error?.message||context.message||code||"Error sin mensaje"),firebaseCode=String(context.firebaseCode||error?.code||"—"),firebaseMessage=String(context.firebaseMessage||((error?.code||context.firestorePath)?jsMessage:"—")),stack=String(error?.stack||"—");
-  const payload=["EXPLORA - ERROR DERIVATION_MONEY_RANKING","MÓDULO: DERIVATION_MONEY_RANKING",`ETAPA: ${normalizedStage}`,`CÓDIGO INTERNO: ${code||"DERIVATION_MONEY_RANKING_ERROR"}`,`MENSAJE REAL FIREBASE: ${firebaseCode}${firebaseMessage!=="—"?` · ${firebaseMessage}`:""}`,`MENSAJE REAL JAVASCRIPT: ${jsMessage}`,`STACK: ${stack}`,`FUNCIÓN: ${inferFunctionName(error,context,stage)}`,`UID AUTH: ${auth?.currentUser?.uid||"—"}`,`ROL: ${state.role||role()||"—"}`,`EMISOR UID: ${context.emisorUid||context.senderUid||"—"}`,`RECEPTOR UID: ${context.receptorUid||context.receiverUid||"—"}`,`DERIVATION ID: ${context.derivationId||"—"}`,`STATUS: ${context.status||context.derivationState||"—"}`,`WEEKLY PERIOD ID: ${periodId}`,`CYCLE ID: ${context.cycleId||cycle.id||"—"}`,`MONTO SUGERIDO: ${money(context.suggestedAmount||0)}`,`MONTO FINAL: ${money(context.finalAmount||0)}`,`FORMA DE PAGO: ${context.paymentMethod||"—"}`,`DINERO DERIVADO: ${money(context.derivedAmount??leader.derivedAmount??0)}`,`APORTE AL BONO: ${money(context.collaborationAmount||0)}`,`BONO LÍDER: ${money(context.leaderBonus??incentive.derivationBonusAmount??0)}`,`RUTA FIRESTORE: ${context.firestorePath||context.firestore||"—"}`,`FIRESTORE CONFIRMADO: ${context.firestoreConfirmed===true?"SÍ":"NO"}`,`TIMESTAMP: ${new Date().toISOString()}`].join("\n");
+  const payload=["EXPLORA - ERROR DERIVATION_MONEY_RANKING","MÓDULO: DERIVATION_MONEY_RANKING",`ETAPA: ${normalizedStage}`,`CÓDIGO INTERNO: ${code||"DERIVATION_MONEY_RANKING_ERROR"}`,`MENSAJE REAL FIREBASE: ${firebaseCode}${firebaseMessage!=="—"?` · ${firebaseMessage}`:""}`,`MENSAJE REAL JAVASCRIPT: ${jsMessage}`,`STACK: ${stack}`,`FUNCIÓN: ${inferFunctionName(error,context,stage)}`,`UID AUTH: ${auth?.currentUser?.uid||"—"}`,`ROL: ${state.role||role()||"—"}`,`EMISOR UID: ${context.emisorUid||context.senderUid||"—"}`,`RECEPTOR UID: ${context.receptorUid||context.receiverUid||"—"}`,`DERIVATION ID: ${context.derivationId||"—"}`,`STATUS: ${context.status||context.derivationState||"—"}`,`WEEKLY PERIOD ID: ${periodId}`,`CYCLE ID: ${context.cycleId||cycle.id||"—"}`,`MONTO SUGERIDO: ${money(context.suggestedAmount||0)}`,`MONTO FINAL: ${money(context.finalAmount||0)}`,`FORMA DE PAGO: ${context.paymentMethod||"—"}`,`DINERO DERIVADO: ${money(context.derivedAmount??leader.derivedAmount??0)}`,`COLABORACIÓN PARA BONO: ${money(context.collaborationAmount||0)}`,`BONO LÍDER: ${money(context.leaderBonus??incentive.derivationBonusAmount??0)}`,`RUTA FIRESTORE: ${context.firestorePath||context.firestore||"—"}`,`FIRESTORE CONFIRMADO: ${context.firestoreConfirmed===true?"SÍ":"NO"}`,`TIMESTAMP: ${new Date().toISOString()}`].join("\n");
   state.error={stage:normalizedStage,code,message:jsMessage,payload};
   if(window.ExploraProductionPolicy&&!window.ExploraProductionPolicy.handle("ranking",error,{eventType:String(context.eventType||"ERROR"),silent:Boolean(context.silent),message:"No pudimos actualizar el ranking. Se mostrará la última información disponible.",context:{stage:normalizedStage,code,...context}}))return state.error;
   const backdrop=$("performanceDiagnosticBackdrop"),text=$("performanceDiagnosticText");if(text)text.textContent=payload;backdrop?.classList.add("is-open");backdrop?.setAttribute("aria-hidden","false");window.lockPageScroll?.("performance-diagnostic");return state.error;
@@ -19284,7 +19469,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <script type="module" id="exploraDebtNotificationsV189">
   import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-  const F=window.ExploraFirebase||{},db=F.db,auth=F.auth,$=id=>document.getElementById(id);let unsubscribe=null;
+  const F=window.ExploraFirebase||{};let db=F.db||null,auth=F.auth||null;const $=id=>document.getElementById(id);let unsubscribe=null;
   const esc=v=>String(v??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
   const money=v=>new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(Number(v)||0).replace(/\s/g,"");
   function render(rows=[]){const box=$("debtNotificationStack");if(!box)return;box.hidden=!rows.length;box.innerHTML=rows.map(row=>`<article class="debt-notification-card"><strong>NUEVA DEUDA REGISTRADA</strong><span>${esc(row.reasonLabel||row.reason||"Otro")} · ${money(row.totalAmount||0)}</span><small>${Number(row.installmentCount||1)} pago(s) semanal(es) · Cuota estimada ${money(row.weeklyInstallmentAmount||0)}</small>${row.notes?`<small>${esc(row.notes)}</small>`:""}<div class="debt-notification-actions">${row.receiptUrl?`<a href="${esc(row.receiptUrl)}" target="_blank" rel="noopener">VER COMPROBANTE</a>`:'<span></span>'}<button class="primary" type="button" data-ack-debt="${esc(row.id)}">ACEPTAR</button></div></article>`).join("");}
@@ -19410,7 +19595,7 @@ function launchConfirmationMarkup(){return`<p>Se eliminarán únicamente los dat
 function configureLaunchPanel({status="confirm",title="REINICIO OPERATIVO TOTAL",badge="REINICIO OPERATIVO TOTAL",copy="",details="",message="",messageType="",buttonText="CONFIRMAR REINICIO TOTAL",buttonMode="execute",showCancel=true}={}){const card=$("launchConfirmCard"),titleEl=$("launchConfirmTitle"),badgeEl=$("launchStatusBadge"),copyEl=$("launchConfirmCopy"),detailsEl=$("launchResetDetails"),messageEl=$("launchConfirmMessage"),button=$("launchExecuteBtn"),cancel=$("launchCancelBtn"),actions=$("launchConfirmActions");if(card)card.dataset.status=status;if(titleEl)titleEl.textContent=title;if(badgeEl)badgeEl.textContent=badge;if(copyEl)copyEl.innerHTML=copy;if(detailsEl){detailsEl.hidden=!details;detailsEl.textContent=details||"";}if(messageEl){messageEl.textContent=message||"";messageEl.className=`admin-shared-status${messageType?` ${messageType}`:""}`;}if(button){button.textContent=buttonText;button.dataset.mode=buttonMode;button.disabled=false;}if(cancel)cancel.hidden=!showCancel;if(actions)actions.classList.toggle("is-single",!showCancel);}
 function openLaunch(){const box=$("launchConfirmBackdrop");if(!box)return;configureLaunchPanel({status:"confirm",title:"REINICIO OPERATIVO TOTAL",badge:"REINICIO OPERATIVO TOTAL",copy:launchConfirmationMarkup(),buttonText:"CONFIRMAR REINICIO TOTAL",buttonMode:"execute",showCancel:true});box.classList.add("is-open");box.setAttribute("aria-hidden","false");window.lockPageScroll?.("launch-app");}
 function closeLaunch(){if(state.busy)return;const box=$("launchConfirmBackdrop");box?.classList.remove("is-open");box?.setAttribute("aria-hidden","true");window.unlockPageScroll?.("launch-app");}
-function activeResetCycle(){const engine=window.ExploraPerformanceEngine?.getState?.();if(engine?.cycle?.id)return engine.cycle;const periodId=window.ExploraWeeklyEngine?.getActiveWeeklyPeriod?.().id||window.ExploraPeriods?.getActivePeriods?.().weeklyPeriodId||"";if(!/^(\d{4})-(\d{2})-(\d{2})$/.test(String(periodId)))return{id:"",periods:[],startPeriodId:"",endPeriodId:""};return{id:`week_${periodId}`,periods:[{id:periodId}],startPeriodId:periodId,endPeriodId:periodId,weekInCycle:1};}
+function activeResetCycle(){const engine=window.ExploraPerformanceEngine?.getState?.();if(engine?.cycle?.id)return engine.cycle;const periodId=window.ExploraWeeklyEngine?.getActiveWeeklyPeriod?.().id||window.ExploraPeriods?.getActivePeriods?.().weeklyPeriodId||"";const central=window.ExploraCycle4W?.forPeriod?.(periodId);if(central)return central;if(!/^(\d{4})-(\d{2})-(\d{2})$/.test(String(periodId)))return{id:"",periods:[],startPeriodId:"",endPeriodId:""};return{id:`week_${periodId}`,periods:[{id:periodId}],startPeriodId:periodId,endPeriodId:periodId,weekInCycle:1};}
 async function deleteRefBatches(refs,{stage="DELETE_BATCH",collectionName="—",deadline=Infinity}={}){let deleted=0;for(let index=0;index<refs.length;index+=400){ensureResetDeadline(deadline,stage);const batch=writeBatch(db),slice=refs.slice(index,index+400);slice.forEach(ref=>batch.delete(ref));try{await batch.commit();deleted+=slice.length;}catch(error){throw resetError(stage,"APP_RESET_BATCH_FAILED",`No se pudo eliminar un lote de ${collectionName}.`,error,{collectionName,batchStart:index,batchSize:slice.length});}}return deleted;}
 async function deleteTopLevelCollection(spec,{deadline,cycleIds}){ensureResetDeadline(deadline,spec.stage);let snapshot;try{snapshot=await getDocs(collection(db,spec.name));}catch(error){throw resetError(spec.stage,"APP_RESET_COLLECTION_FAILED",`No se pudo leer la colección ${spec.name}.`,error,{collectionName:spec.name});}const refs=[];snapshot.forEach(item=>{refs.push(item.ref);const data=item.data()||{};[item.id,data.cycleId,data.cicloId,data.performanceCycleId].filter(Boolean).forEach(id=>{const value=String(id);if(value.startsWith("cycle_"))cycleIds.add(value);});});const deleted=await deleteRefBatches(refs,{stage:spec.stage,collectionName:spec.name,deadline});return deleted;}
 async function deleteKnownRankingSubcollections(cycleIds,{deadline}){const counts={};for(const parent of ["performance_public","derivation_ranking_public"]){let total=0;for(const cycleId of cycleIds){ensureResetDeadline(deadline,"DELETE_RANKINGS");try{const snapshot=await getDocs(collection(db,parent,cycleId,"drivers"));total+=await deleteRefBatches(snapshot.docs.map(item=>item.ref),{stage:"DELETE_RANKINGS",collectionName:`${parent}/${cycleId}/drivers`,deadline});}catch(error){if(error?.internalCode)throw error;throw resetError("DELETE_RANKINGS","APP_RESET_COLLECTION_FAILED",`No se pudo limpiar ${parent}/${cycleId}/drivers.`,error,{collectionName:parent,cycleId});}}counts[`${parent}/*/drivers`]=total;}return counts;}
@@ -19447,7 +19632,7 @@ const getAvatar=profile=>window.resolveProfileAvatar?.(profile)||profile?.avatar
 const getName=profile=>String(profile?.nombre||profile?.nombreCompleto||profile?.displayName||profile?.usuario||"Chofer").trim();
 const getVehicle=profile=>String(profile?.vehicleDisplay||profile?.vehiculoNombre||profile?.vehiculo||"Vehículo no asignado");
 function canonicalStatus(row={}){const raw=normalize(row.status||row.estado||row.estadoDerivacion);if(["pendiente","sent_pending_response"].includes(raw))return STATUS.PENDING;if(["aceptada","accepted"].includes(raw))return STATUS.ACCEPTED;if(["pendiente_facturacion","accepted_pending_completion"].includes(raw))return STATUS.PENDING_INVOICE;if(["facturada","completed","completada"].includes(raw))return STATUS.INVOICED;if(["rechazada","rejected"].includes(raw))return STATUS.REJECTED;if(["cerrada_rechazada","canceled","cancelada"].includes(raw))return STATUS.CLOSED_REJECTED;return String(row.status||row.estado||"").toUpperCase();}
-function cycleIdForPeriod(periodId){const id=String(periodId||"").trim();return /^(\d{4})-(\d{2})-(\d{2})$/.test(id)?`week_${id}`:"";}
+function cycleIdForPeriod(periodId){const id=String(periodId||"").trim();return window.ExploraCycle4W?.forPeriod?.(id)?.id||(/^(\d{4})-(\d{2})-(\d{2})$/.test(id)?`week_${id}`:"");}
 function setMessage(text="",type=""){const element=$("derivationFormMessage");if(element){element.textContent=text;element.className=`derivation-message${type?` ${type}`:""}`;}}
 async function ensureSession(){const user=auth?.currentUser;if(!user?.uid)throw Object.assign(new Error("Sesión Firebase inexistente."),{code:"AUTH_REQUIRED"});return user;}
 function reportDerivationError(stage,code,error,context={}){const payload={stage,code,error,context:{...context,module:"DERIVATION_MONEY_RANKING",functionName:context.functionName||"ExploraDerivations",derivationState:context.derivationState||context.status||"—",emisorUid:context.emisorUid||context.senderUid||uid()||"—",receptorUid:context.receptorUid||context.receiverUid||state.selectedReceiverUid||"—",derivationId:context.derivationId||"—",weeklyPeriodId:context.weeklyPeriodId||currentPeriod()||"—",cycleId:context.cycleId||cycleIdForPeriod(context.weeklyPeriodId||currentPeriod())||"—",firestorePath:context.firestorePath||"derivaciones",firestoreConfirmed:Boolean(context.firestoreConfirmed),suggestedAmount:Number(context.suggestedAmount||0),finalAmount:Number(context.finalAmount||0),paymentMethod:context.paymentMethod||"—",derivedAmount:Number(context.derivedAmount||0),collaborationAmount:Number(context.collaborationAmount||0),leaderBonus:Number(context.leaderBonus||0)}};if(typeof window.ExploraPerformanceEngine?.showDiagnostic==="function")window.ExploraPerformanceEngine.showDiagnostic(stage,code,error,payload.context);else window.__exploraPendingGoalDiagnostic=payload;}
@@ -19568,6 +19753,63 @@ window.addEventListener("explora:auth-cleared",stop);
 </script>
 
 
+
+<script id="explora-derivation-ranking-stable-renderer">
+(()=>{
+  "use strict";
+  if(window.ExploraStableDerivationCard)return;
+  const state={uid:"",cycleId:"",lastValid:null,authoritativeReady:false,renderVersion:0};
+  const byId=id=>document.getElementById(id);
+  const formatMoney=value=>new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(Math.round(Number(value)||0)).replace("ARS","$").replace(/\s+/g," ");
+  const setText=(node,value)=>{const next=String(value??"");if(node&&node.textContent!==next)node.textContent=next};
+  const setHidden=(node,value)=>{if(node&&node.hidden!==Boolean(value))node.hidden=Boolean(value)};
+  const initials=name=>String(name||"Chofer").trim().split(/\s+/).filter(Boolean).map(part=>part[0]||"").join("").slice(0,2).toUpperCase();
+  function nodes(){return{card:byId("performanceDerivatorCard"),winner:byId("performanceDerivatorWinner"),empty:byId("performanceDerivatorEmpty"),avatar:byId("performanceDerivatorAvatar"),image:byId("performanceDerivatorAvatarImage"),initials:byId("performanceDerivatorAvatarInitials"),name:byId("performanceDerivatorName"),derived:byId("performanceDerivatorDerived"),bonus:byId("performanceDerivatorBonus")}}
+  function beginSession(uid="",cycleId=""){
+    const nextUid=String(uid||""),nextCycle=String(cycleId||"");
+    if(state.uid===nextUid&&state.cycleId===nextCycle)return state.renderVersion;
+    state.uid=nextUid;state.cycleId=nextCycle;state.lastValid=null;state.authoritativeReady=false;state.renderVersion+=1;
+    renderEmpty({force:true,source:"session"});
+    return state.renderVersion;
+  }
+  function validPayload(payload){return payload&&Number(payload.derivedAmount)>0&&String(payload.name||"").trim()}
+  function renderWinner(payload){
+    const n=nodes();if(!n.card||!n.winner||!n.empty)return false;
+    const name=String(payload.name||"Chofer").trim().toUpperCase();
+    const derived=Math.max(0,Math.round(Number(payload.derivedAmount)||0));
+    const bonus=Math.max(0,Math.round(Number(payload.bonusAmount??derived*.10)||0));
+    const avatar=String(payload.avatar||"").trim();
+    setText(n.name,name);setText(n.derived,`DINERO DERIVADO · ${formatMoney(derived)}`);setText(n.bonus,`+${formatMoney(bonus)}`);
+    if(n.bonus){const len=n.bonus.textContent.length;n.bonus.dataset.fit=len>16?"tight":len>13?"compact":"normal"}
+    if(n.image&&n.initials&&n.avatar){
+      if(avatar){if(n.image.getAttribute("src")!==avatar)n.image.setAttribute("src",avatar);n.image.alt=`Foto de ${String(payload.name||"chofer").trim()}`;setHidden(n.image,false);setHidden(n.initials,true);n.avatar.classList.remove("is-empty");n.avatar.removeAttribute("aria-hidden")}
+      else{n.image.removeAttribute("src");n.image.alt="";setHidden(n.image,true);setText(n.initials,initials(payload.name));setHidden(n.initials,false);n.avatar.classList.add("is-empty");n.avatar.setAttribute("aria-hidden","true")}
+    }
+    setHidden(n.empty,true);setHidden(n.winner,false);n.card.dataset.stableState="winner";return true;
+  }
+  function renderEmpty({force=false}={}){
+    if(state.lastValid&&!force)return true;
+    const n=nodes();if(!n.card||!n.winner||!n.empty)return false;
+    setHidden(n.winner,true);setHidden(n.empty,false);n.card.dataset.stableState="empty";return true;
+  }
+  function render(payload,options={}){
+    const source=String(options.source||"unknown"),uid=String(options.uid??state.uid),cycleId=String(options.cycleId??state.cycleId);
+    if(uid!==state.uid||cycleId!==state.cycleId)return false;
+    if(source!=="v273"&&state.authoritativeReady)return true;
+    if(options.loading)return state.lastValid?true:renderEmpty();
+    if(validPayload(payload)){
+      state.lastValid={name:String(payload.name),avatar:String(payload.avatar||""),derivedAmount:Number(payload.derivedAmount),bonusAmount:Number(payload.bonusAmount??Number(payload.derivedAmount)*.10)};
+      if(options.authoritative)state.authoritativeReady=true;
+      return renderWinner(state.lastValid);
+    }
+    if(options.authoritative&&options.settled)state.authoritativeReady=true;
+    return renderEmpty({force:Boolean(options.forceEmpty)});
+  }
+  function clear(){state.lastValid=null;state.authoritativeReady=false;state.uid="";state.cycleId="";state.renderVersion+=1;renderEmpty({force:true})}
+  window.ExploraStableDerivationCard={version:"v273-derivation-ranking-stable-bonus-only",beginSession,render,clear,getState:()=>({...state,lastValid:state.lastValid?{...state.lastValid}:null})};
+})();
+</script>
+
 <script type="module" id="exploraPerformanceEngineV252">
 import { getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
@@ -19579,7 +19821,7 @@ const db=app?getFirestore(app):null;
 const $=id=>document.getElementById(id);
 const TZ="America/Argentina/Buenos_Aires";
 const WEEK_MS=7*24*60*60*1000;
-const CYCLE_MS=WEEK_MS;
+const CYCLE_MS=WEEK_MS*4;
 const EPOCH_KEY_MS=Date.UTC(2026,0,3);
 const GOALS=Object.freeze([
   {id:1,amount:200000,percent:1},
@@ -19685,7 +19927,8 @@ function previousPeriod(period=activeWeeklyPeriod()){
   return periodFromId(keyFromDateKeyMs(safe.startKeyMs-WEEK_MS));
 }
 function cycleForPeriod(period){
-  const safePeriod=normalizeWeeklyPeriod(period);
+  const safePeriod=normalizeWeeklyPeriod(period),central=window.ExploraCycle4W?.forPeriod?.(safePeriod.id);
+  if(central)return {...central,index:central.index,weekInCycle:central.weekInCycle,periods:central.periods.map(item=>normalizeWeeklyPeriod(item)),weeklyPeriodId:safePeriod.id,closed:(window.ExploraOperationalClock?.getNow?.().getTime?.()||Date.now())>central.endMs};
   return {id:`week_${safePeriod.id}`,index:0,weekInCycle:1,startPeriodId:safePeriod.id,endPeriodId:safePeriod.id,periods:[safePeriod],startMs:safePeriod.startMs,endMs:safePeriod.endMs,closed:(window.ExploraOperationalClock?.getNow?.().getTime?.()||Date.now())>safePeriod.endMs,weeklyPeriodId:safePeriod.id};
 }
 function goalForBilling(billing){return GOALS.filter(goal=>billing>=goal.amount).at(-1)||null;}
@@ -20294,9 +20537,9 @@ function publicPerformanceRow(data={},id=""){
   return normalizeBillingRankingRow({uid,profileId:uid,name:String(data.driverName||data.choferName||data.nombreChofer||data.name||data.nombre||uid||"Chofer"),avatar:String(data.avatar||data.driverAvatar||data.photoURL||data.avatarUrl||""),grossBilling:Math.max(0,Number(data.grossBilling??data.totalFacturado??data.facturacionBruta??data.facturacion??data.totalBilling??data.totalIngresos??0)||0),serviceCount:Number(data.serviceCount||data.cantidadCobros||data.billingCount||data.services||data.cantidadServicios||0),aliases:new Set([normalize(uid),normalize(data.email)]),periodBilling:{},isSimulated:data.isSimulated===true,realServiceCount:Number(data.realServiceCount||data.realPaymentsCount||0),simulatedServiceCount:Number(data.simulatedServiceCount||data.simulatedPaymentsCount||0),updatedAtMs:timestampMs(data.updatedAt||data.calculatedAt||data.createdAt||data.lastChangeAt)});
 }
 function publicDerivationRow(data={},id=""){
-  const uid=String(data.driverUid||data.uid||data.emisorUid||id||"").trim(),derivedAmount=Math.max(0,Number(data.derivedMoney??data.derivedAmountForEmitter??data.derivedAmount??data.totalDerivedMoney??0));
+  const uid=String(data.driverUid||data.uid||data.senderUid||data.sentByUid||data.derivadorUid||data.driverSenderUid||data.createdByUid||data.originDriverUid||data.fromUid||data.emisorUid||id||"").trim(),derivedAmount=Math.max(0,Number(data.derivedMoney??data.derivedAmountForEmitter??data.derivedAmount??data.totalDerivedMoney??0));
   if(!uid||!Number.isFinite(derivedAmount))return null;
-  return{uid,name:String(data.driverName||data.name||data.nombre||data.emisorName||"Chofer"),avatar:String(data.avatar||data.driverAvatar||data.photoURL||""),count:Math.max(0,Number(data.derivationCount||data.count||data.validDerivations||0)),derivedAmount,collaborationGenerated:Math.max(0,Number(data.collaborationGenerated??data.collaborationAmount??Math.round(derivedAmount*.10))),position:Number(data.derivationPosition||data.position||0),reachedAtMs:timestampMs(data.reachedAt||data.firstReachedAt||data.completedAt||data.updatedAt||data.calculatedAt||data.createdAt),updatedAtMs:timestampMs(data.updatedAt||data.calculatedAt||data.createdAt)};
+  return{uid,name:String(data.driverName||data.name||data.nombre||data.emisorName||"Chofer"),avatar:String(data.avatar||data.driverAvatar||data.photoURL||""),count:Math.max(0,Number(data.derivationCount||data.count||data.validDerivations||0)),derivedAmount,collaborationGenerated:Math.max(0,Number(data.collaborationGenerated??data.collaborationAmount??Math.round(derivedAmount*.10))),position:Number(data.derivationPosition||data.position||0),reachedAtMs:timestampMs(data.firstValidDerivationAt||data.firstCompletedAt||data.acceptedAt||data.reachedAt||data.firstReachedAt||data.completedAt||data.billedAt||data.updatedAt||data.calculatedAt||data.createdAt),updatedAtMs:timestampMs(data.updatedAt||data.calculatedAt||data.createdAt)};
 }
 function summaryRowsFromDocument(data={}){
   const direct=[data.rows,data.drivers,data.ranking,data.items,data.entries].find(Array.isArray);
@@ -20355,15 +20598,53 @@ async function readPublicPerformance(cycle){
   if(!result.length&&errors.length>=4)throw errors[0];
   return result;
 }
-async function readPublicDerivations(cycle){
-  const rows=[],errors=[];let documentsRead=0,documentsValid=0;
-  for(const parent of ["derivation_ranking_public","ranking_derivaciones_public","performance_public"]){
-    try{const snapshot=await getDocs(collection(db,parent,cycle.id,"drivers"));documentsRead+=snapshot.size;snapshot.forEach(item=>{const parsed=publicDerivationRow(item.data()||{},item.id);if(parsed&&parsed.derivedAmount>0){rows.push(parsed);documentsValid+=1;}});}catch(error){errors.push(error);}
-    try{const snap=await getDoc(doc(db,parent,cycle.id));if(snap.exists()){documentsRead+=1;summaryRowsFromDocument(snap.data()||{}).forEach((raw,index)=>{const parsed=publicDerivationRow(raw,raw?.id||raw?.driverUid||String(index));if(parsed&&parsed.derivedAmount>0){rows.push(parsed);documentsValid+=1;}});}}catch(error){errors.push(error);}
+const derivationRankingInit={promise:null,key:"",requestId:0};
+async function waitForDerivationRankingSession(cycle,timeoutMs=8000){
+  const started=Date.now();
+  while(Date.now()-started<timeoutMs){
+    const user=auth?.currentUser,session=window.ExploraSession||{};
+    const period=activeWeeklyPeriod?.();
+    const expectedCycle=period?.id?cycleForPeriod(period):null;
+    const ready=Boolean(user?.uid&&session.authReady&&session.initialized&&!session.closing&&session.profile&&session.role&&session.authUser?.uid===user.uid&&session.generation>0&&cycle?.id&&expectedCycle?.id===cycle.id);
+    if(ready)return{uid:user.uid,role:normalize(session.role),cycleId:cycle.id,generation:Number(session.generation),key:`${user.uid}|${normalize(session.role)}|${cycle.id}`};
+    await new Promise(resolve=>setTimeout(resolve,40));
   }
-  const result=mergePublicRows(rows,"uid","derivedAmount");result.sort((a,b)=>b.derivedAmount-a.derivedAmount||b.count-a.count||a.name.localeCompare(b.name,"es"));result.forEach((row,index)=>row.position=index+1);result.documentsRead=documentsRead;result.documentsValid=documentsValid;
-  if(!result.length&&errors.length>=6)throw errors[0];
-  return result;
+  throw Object.assign(new Error("La sesión no quedó lista para leer el ranking de derivaciones."),{code:"DERIVATION_SESSION_NOT_READY"});
+}
+async function readPublicDerivations(cycle){
+  const gate=await waitForDerivationRankingSession(cycle);
+  if(derivationRankingInit.promise&&derivationRankingInit.key===gate.key)return derivationRankingInit.promise;
+  const requestId=++derivationRankingInit.requestId;
+  derivationRankingInit.key=gate.key;
+  derivationRankingInit.promise=(async()=>{
+    const rows=[],errors=[];let documentsRead=0,documentsValid=0,authorizedReads=0,source="";
+    const assertCurrent=()=>{const session=window.ExploraSession||{};if(requestId!==derivationRankingInit.requestId||auth?.currentUser?.uid!==gate.uid||session.authUser?.uid!==gate.uid||Number(session.generation)!==gate.generation||session.closing)throw Object.assign(new Error("Solicitud de ranking reemplazada por otra sesión."),{code:"DERIVATION_REQUEST_STALE"});};
+    const parents=["performance_public","ranking_derivaciones_public","derivation_ranking_public"];
+    for(const parent of parents){
+      assertCurrent();
+      let routeAuthorized=false;
+      try{
+        const snapshot=await getDocs(collection(db,parent,cycle.id,"drivers"));
+        routeAuthorized=true;authorizedReads+=1;documentsRead+=snapshot.size;
+        snapshot.forEach(item=>{const parsed=publicDerivationRow(item.data()||{},item.id);if(parsed&&parsed.derivedAmount>0){rows.push(parsed);documentsValid+=1;}});
+      }catch(error){errors.push({error,parent,path:`${parent}/${cycle.id}/drivers`,kind:"drivers"});}
+      assertCurrent();
+      try{
+        const snap=await getDoc(doc(db,parent,cycle.id));
+        routeAuthorized=true;authorizedReads+=1;
+        if(snap.exists()){documentsRead+=1;summaryRowsFromDocument(snap.data()||{}).forEach((raw,index)=>{const parsed=publicDerivationRow(raw,raw?.id||raw?.driverUid||String(index));if(parsed&&parsed.derivedAmount>0){rows.push(parsed);documentsValid+=1;}});}
+      }catch(error){errors.push({error,parent,path:`${parent}/${cycle.id}`,kind:"summary"});}
+      if(routeAuthorized&&rows.length){source=parent;break;}
+    }
+    assertCurrent();
+    const result=mergePublicRows(rows,"uid","derivedAmount");
+    result.sort((a,b)=>Number(b.derivedAmount||0)-Number(a.derivedAmount||0)||Number(b.count||0)-Number(a.count||0)||normalize(a.name).localeCompare(normalize(b.name),"es")||String(a.uid||"").localeCompare(String(b.uid||"")));
+    result.forEach((row,index)=>row.position=index+1);
+    result.documentsRead=documentsRead;result.documentsValid=documentsValid;result.authorizedReads=authorizedReads;result.source=source||"authorized-empty";result.requestId=requestId;
+    if(!result.length&&!authorizedReads&&errors.length){const denied=errors.find(item=>isPermissionDenied(item.error))||errors[0];denied.error.failedPath=denied.path;denied.error.requestId=requestId;throw denied.error;}
+    return result;
+  })().finally(()=>{if(derivationRankingInit.requestId===requestId){derivationRankingInit.promise=null;derivationRankingInit.key="";}});
+  return derivationRankingInit.promise;
 }
 
 async function queryByPeriod(collectionName,periodId,fields){
@@ -20554,8 +20835,8 @@ function mergeDerivationRankingSources(...sources){
 async function loadDerivations(cycleOrPeriod,profilesData,throughPeriodId="",options={}){
   const cycle=Array.isArray(cycleOrPeriod?.periods)?cycleOrPeriod:cycleForPeriod(cycleOrPeriod),period=periodFromId(throughPeriodId)||activeWeeklyPeriod(),ctx=fastContext(cycle,period),cachedEntry=readValidatedPerformanceCache("derivation_ranking",ctx,{allowStale:true}),cachedRows=cachedEntry?.data?.rows?.map(row=>({...row}))||null,preferOperational=options.preferOperational===true;
   let publicRows=null,publicError=null,operationalRows=null,operationalError=null,ownRows=null;
-  try{publicRows=await window.ExploraFastCache?.run?.("derivation_ranking",()=>readPublicDerivations(cycle),ctx,{ttl:600000,lockKey:`derivation-ranking-public-${cycle.id}-${period.id}`,query:`derivation_ranking_public + ranking_derivaciones_public (${cycle.id})`,firestorePath:`derivation_ranking_public/${cycle.id}/drivers`,listenersActive:0});}
-  catch(error){publicError=error;diagnostic("READ_PUBLIC_SUMMARY",error?.code==="PUBLIC_SUMMARY_SCHEMA_INVALID"?"PUBLIC_SUMMARY_SCHEMA_INVALID":"DERIVATION_RANKING_READ_FAILED",error,{cycleId:cycle.id,weeklyPeriodId:period.id,functionName:"readPublicDerivations",firestorePath:`derivation_ranking_public/${cycle.id}/drivers`,query:"getDocs/getDoc public summaries",cacheHit:Boolean(cachedEntry),cacheMiss:!cachedEntry});}
+  try{publicRows=await window.ExploraFastCache?.run?.("derivation_ranking",()=>readPublicDerivations(cycle),ctx,{ttl:600000,lockKey:`derivation-ranking-public-${auth?.currentUser?.uid||"no-user"}-${role()}-${cycle.id}-${period.id}`,query:`performance_public + ranking_derivaciones_public + derivation_ranking_public (${cycle.id})`,firestorePath:`performance_public/${cycle.id}/drivers`,listenersActive:0});}
+  catch(error){publicError=error;}
   if(isAdmin()&&(preferOperational||!Array.isArray(publicRows)||!derivationRowsHaveData(publicRows))){
     try{operationalRows=await loadDerivationsLegacy(cycleOrPeriod,profilesData,throughPeriodId);}catch(error){operationalError=error;diagnostic("READ_DERIVATION_RANKING",isPermissionDenied(error)?"RANKING_PERMISSION_DENIED":"DERIVATION_RANKING_READ_FAILED",error,{cycleId:cycle.id,weeklyPeriodId:period.id,functionName:"loadDerivationsLegacy",firestorePath:"derivaciones",query:"where weeklyPeriodIdCompleted/weeklyPeriodId/periodoSemanalId/periodoId",cacheHit:Boolean(cachedEntry),cacheMiss:!cachedEntry,documentsRead:error?.documentsRead??"—",documentsValid:error?.documentsValid??"—",derivedMoney:totalDerivedMoney(publicRows||cachedRows||[]),derivationBonus:Math.round(totalDerivedMoney(publicRows||cachedRows||[])*DERIVATION_PERCENT/100)});}
   }else if(!isAdmin()){
@@ -20573,7 +20854,11 @@ async function loadDerivations(cycleOrPeriod,profilesData,throughPeriodId="",opt
   if(Array.isArray(publicRows))return publicRows;
   if(Array.isArray(cachedRows))return cachedRows;
   if(Array.isArray(ownRows))return ownRows;
-  if(isAdmin()&&publicError&&operationalError)throw operationalError;
+  if(isAdmin()&&publicError&&operationalError){
+    diagnostic("READ_DERIVATION_RANKING",isPermissionDenied(operationalError)?"RANKING_PERMISSION_DENIED":"DERIVATION_RANKING_READ_FAILED",operationalError,{cycleId:cycle.id,weeklyPeriodId:period.id,functionName:"loadDerivations",firestorePath:"derivaciones",query:"fallback administrativo autorizado",cacheHit:Boolean(cachedEntry),cacheMiss:!cachedEntry,requestId:publicError?.requestId||"—"});
+    throw operationalError;
+  }
+  if(publicError&&!isPermissionDenied(publicError)&&publicError?.code!=="DERIVATION_REQUEST_STALE"&&publicError?.code!=="DERIVATION_SESSION_NOT_READY")diagnostic("READ_PUBLIC_SUMMARY","DERIVATION_RANKING_READ_FAILED",publicError,{cycleId:cycle.id,weeklyPeriodId:period.id,functionName:"readPublicDerivations",firestorePath:publicError?.failedPath||`performance_public/${cycle.id}/drivers`,query:"getDocs/getDoc public summaries",cacheHit:Boolean(cachedEntry),cacheMiss:!cachedEntry,requestId:publicError?.requestId||"—"});
   return[];
 }
 async function loadDerivationsLegacy(cycleOrPeriod,profilesData,throughPeriodId=""){
@@ -20587,7 +20872,7 @@ async function loadDerivationsLegacy(cycleOrPeriod,profilesData,throughPeriodId=
   const result=[...totals.values()].sort((a,b)=>b.derivedAmount-a.derivedAmount||b.count-a.count||a.name.localeCompare(b.name,"es"));result.forEach((row,index)=>row.position=index+1);result.documentsRead=documentsRead;result.documentsValid=documentsValid;return result;
 }
 
-function cachePeriodIncentive(period,rows,derivations){if(!period?.id)return null;const goalPercentByUid=new Map();rows.forEach(row=>goalPercentByUid.set(normalize(row.uid),Number(row.rewardPercent||0)));const leader=derivations[0]||null,cycle=cycleForPeriod(period),payable=isFinalCycleClosurePeriod(period);const estimatedBonus=leader?Math.round(Number(leader.derivedAmount||0)*DERIVATION_PERCENT/100):0;const snapshot={weeklyPeriodId:period.id,cycleId:cycle.id,weekInCycle:1,goalPercentByUid,derivationWinnerUid:leader?.uid||"",derivationWinnerName:leader?.name||"",derivationPercent:leader?DERIVATION_PERCENT:0,derivationCount:leader?.count||0,derivedAmount:leader?.derivedAmount||0,estimatedDerivationBonus:estimatedBonus,derivationBonusAmount:payable?estimatedBonus:0,createdAt:Date.now()};state.incentiveByPeriod.set(period.id,snapshot);return snapshot;}
+function cachePeriodIncentive(period,rows,derivations){if(!period?.id)return null;const goalPercentByUid=new Map();rows.forEach(row=>goalPercentByUid.set(normalize(row.uid),Number(row.rewardPercent||0)));const leader=derivations[0]||null,cycle=cycleForPeriod(period),payable=isFinalCycleClosurePeriod(period);const estimatedBonus=leader?Math.round(Number(leader.derivedAmount||0)*DERIVATION_PERCENT/100):0;const snapshot={weeklyPeriodId:period.id,cycleId:cycle.id,weekInCycle:cycle.weekInCycle||1,goalPercentByUid,derivationWinnerUid:leader?.uid||"",derivationWinnerName:leader?.name||"",derivationPercent:leader?DERIVATION_PERCENT:0,derivationCount:leader?.count||0,derivedAmount:leader?.derivedAmount||0,estimatedDerivationBonus:estimatedBonus,derivationBonusAmount:payable?estimatedBonus:0,createdAt:Date.now()};state.incentiveByPeriod.set(period.id,snapshot);return snapshot;}
 const PERFORMANCE_HISTORY_CACHE_PREFIX="explora_performance_history_v3_";
 function performanceHistoryCacheKey(uid){return `${PERFORMANCE_HISTORY_CACHE_PREFIX}${String(uid||"").trim()}`;}
 function normalizeHistoryRows(rows){
@@ -20748,13 +21033,15 @@ function renderDerivator(){
   return runGoalStage("RENDER_DASHBOARD_CARD","DERIVATION_DASHBOARD_RENDER_FAILED","renderDerivator",()=>{
     const leader=state.currentDerivationLeader;
     const fixedPercent=Number(DERIVATION_PERCENT||10)||10;
-    if(!leader||Number(leader.derivedAmount||0)<=0){
-      container.innerHTML=`<div class="performance-card-kicker">RANKING DE DERIVACIONES</div><div class="performance-derivator-visual"><span class="performance-derivator-avatar is-empty" aria-hidden="true"></span><span class="performance-derivator-percent-ring" aria-label="Bono del diez por ciento"><strong>${fixedPercent}%</strong></span></div><div class="performance-derivator-copy"><strong>Sin líder</strong><span class="performance-derivator-derived">DINERO DERIVADO · ${money(0)}</span><span class="performance-derivator-bonus">BONO +${money(0)}</span></div>`;
-      return;
-    }
-    const avatar=String(leader.avatar||"").trim();
-    const projectedBonus=Math.round(Number(leader.derivedAmount||0)*fixedPercent/100);
-    container.innerHTML=`<div class="performance-card-kicker">RANKING DE DERIVACIONES</div><div class="performance-derivator-visual"><span class="performance-derivator-avatar${avatar?"":" is-empty"}"${avatar?"":' aria-hidden="true"'}>${avatar?`<img src="${escapeHtml(avatar)}" alt="Foto de ${escapeHtml(leader.name||"chofer")}">`:""}</span><span class="performance-derivator-percent-ring" aria-label="Bono del diez por ciento"><strong>${fixedPercent}%</strong></span></div><div class="performance-derivator-copy"><strong>${escapeHtml(String(leader.name||"Chofer").toUpperCase())}</strong><span class="performance-derivator-derived">DINERO DERIVADO · ${money(leader.derivedAmount||0)}</span><span class="performance-derivator-bonus">BONO +${money(projectedBonus)}</span></div>`;
+    const uid=window.ExploraFirebase?.auth?.currentUser?.uid||"";
+    const cycleId=state.cycle?.id||cycleForPeriod(activeWeeklyPeriod())?.id||"";
+    window.ExploraStableDerivationCard?.beginSession(uid,cycleId);
+    window.ExploraStableDerivationCard?.render(leader&&Number(leader.derivedAmount||0)>0?{
+      name:String(leader.name||"Chofer"),
+      avatar:String(leader.avatar||""),
+      derivedAmount:Number(leader.derivedAmount||0),
+      bonusAmount:Math.round(Number(leader.derivedAmount||0)*fixedPercent/100)
+    }:null,{source:"performance-engine",uid,cycleId,settled:!state.loading});
   });
 }
 
@@ -20813,7 +21100,7 @@ function renderDerivationsList(){
   const rows=[...state.derivations].filter(row=>Number(row.derivedAmount||0)>0).sort((a,b)=>Number(a.position||0)-Number(b.position||0));
   list.innerHTML=rows.length?rows.map((row,index)=>{
     const projected=Math.round(Number(row.derivedAmount||0)*fixedPercent/100);
-    return `<article class="performance-ranking-row${index===0?" is-leader":""}" data-derivation-position="${row.position||index+1}" data-derivation-uid="${escapeHtml(row.uid||"")}"><div class="performance-ranking-percent">${medals[index]||row.position||index+1}</div><div class="performance-ranking-copy"><strong>${escapeHtml(row.name)}</strong><span>DINERO DERIVADO · ${money(row.derivedAmount||0)}</span></div><div class="performance-ranking-money"><small>BONO</small>+${money(projected)}</div></article>`;
+    return `<article class="performance-ranking-row${index===0?" is-leader":""}" data-derivation-position="${row.position||index+1}" data-derivation-uid="${escapeHtml(row.uid||"")}"><div class="performance-ranking-percent">${medals[index]||row.position||index+1}</div><div class="performance-ranking-copy"><strong>${escapeHtml(row.name)}</strong><span>TOTAL DERIVADO · ${money(row.derivedAmount||0)}</span><small class="derivation-ranking-count">DERIVACIONES COMPLETADAS · ${Number(row.count||0)}</small></div><div class="performance-ranking-money"><small>BONO POTENCIAL</small>+${money(projected)}</div></article>`;
   }).join(""):'<div class="performance-history-empty"><strong>Sin líder</strong><br>DINERO DERIVADO · $0<br>BONO +$0</div>';
 }
 
@@ -21039,6 +21326,7 @@ window.addEventListener("explora:main-nav-active",event=>{
 window.addEventListener("explora:session-opened",event=>{if(normalize(event.detail?.role).includes("admin"))return;state.dashboardAnimationPending=true;if(!state.lastConfirmedSnapshot)restorePerformanceFastCache();if(window.ExploraDashboardRealtimeCoordinator){window.ExploraDashboardRealtimeCoordinator.ensure?.("performance-session");return;}refresh({force:false,reason:"session-opened"}).catch(()=>{});});
 window.addEventListener("explora:auth-cleared",()=>{
   cancelGoalReturn();try{state.goalResizeObserver?.disconnect?.();}catch(_){}state.goalResizeObserver=null;
+  derivationRankingInit.requestId+=1;derivationRankingInit.promise=null;derivationRankingInit.key="";
   state.loaded=false;state.rows=[];state.current=null;state.goalView=null;state.derivations=[];state.operationalResetAtMs=0;state.activeDriverCount=0;state.rankingDocumentsRead=0;state.billingDocumentsRead=0;state.rankingSource="";state.rankingRefreshMs=0;state.rankingCacheAge=0;state.rankingSummaryComplete=false;state.diagnosticKeys.clear();state.cacheRestored=false;state.refreshRequestId+=1;state.currentDerivationLeader=null;state.derivationLeader=null;state.derivationPeriodId="";state.lastActiveGoalId=0;state.goalWindowStartLeft=0;state.dashboardAnimationPending=false;state.profileAnimationPending=false;state.forceOperationalRead=true;state.pendingForcedRefresh=false;state.pendingRefreshReason="";state.lastRankingContextKey="";
   const profileCard=$("profileGoalCard");if(profileCard)profileCard.hidden=true;
   closeGoalBenefitDetail();renderAll();close();
@@ -21282,7 +21570,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
   const db=app?getFirestore(app):null;
   const TZ="America/Argentina/Buenos_Aires";
   const WEEK_MS=604800000;
-  const CYCLE_MS=604800000;
+  const CYCLE_MS=2419200000;
   const EPOCH_MS=Date.UTC(2026,0,3);
   const TTL=240000;
   const GOALS=[200000,400000,600000,800000,1000000,1200000,1400000,1600000,1800000,2000000];
@@ -21305,8 +21593,9 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
   }
 
   function getCycleForPeriod(weeklyPeriodId){
-    const periodId=text(weeklyPeriodId)||activePeriod().id,periodKey=parsePeriod(periodId);
-    if(!Number.isFinite(periodKey))return getCycleForPeriod(activePeriod().id);
+    const periodId=text(weeklyPeriodId)||activePeriod().id,central=window.ExploraCycle4W?.forPeriod?.(periodId);
+    if(central)return{...central,cycleId:central.id,cycleStart:central.startPeriodId,cycleEnd:central.endPeriodId,weekIndex:central.weekInCycle,isFourthWeek:central.isFourthWeek,closesAt:central.closesAt};
+    const periodKey=parsePeriod(periodId);if(!Number.isFinite(periodKey))return getCycleForPeriod(activePeriod().id);
     return{cycleId:`week_${periodId}`,cycleStart:periodId,cycleEnd:periodId,weekIndex:1,isFourthWeek:false,closesAt:new Date(periodKey+10800000+WEEK_MS-1).toISOString()};
   }
   window.getCycleForPeriod=getCycleForPeriod;
@@ -21865,8 +22154,8 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
     function scopedCollection(name,fields,g){for(const [suffix,field,value] of fields){if(value)add(`${name}:${suffix}`,query(collection(db,name),where(field,"==",value)),g)}}
     function build(g){const uid=state.uid,pid=state.periodId,cycle=state.cycleId,admin=isAdmin(state.role);add("profile:usuario",doc(db,"usuarios",uid),g);if(state.profileId)add("profile:chofer-doc",doc(db,"choferes",state.profileId),g);else add("profile:chofer-uid",query(collection(db,"choferes"),where("uid","==",uid)),g);add("operational:state",doc(db,"app_operational_state","current"),g);add("weekly:own",doc(db,"acumulados_semanales",`${pid}_${uid}`),g);add("weekly:ranking",query(collection(db,"acumulados_semanales"),where("weeklyPeriodId","==",pid)),g);
       if(admin){for(const [n,f] of [["billing_records","weeklyPeriodId"],["facturaciones","weeklyPeriodId"],["cobros","weeklyPeriodId"],["servicios","weeklyPeriodId"],["gastos","weeklyPeriodId"],["derivaciones","weeklyPeriodId"],["cierres_semanales","weeklyPeriodId"],["deudas_choferes","weeklyPeriodId"],["prestamos_operativos","weeklyPeriodId"],["prestamos_explora","weeklyPeriodId"],["pagos","weeklyPeriodId"]])add(`${n}:period`,query(collection(db,n),where(f,"==",pid)),g);for(const n of ["choferes","usuarios","vehiculos","autos","asignaciones_autos","configuracion","configuraciones","configuracion_metas","metas","porcentajes"])add(`${n}:admin`,collection(db,n),g)}else{scopedCollection("billing_records",[["driverUid","driverUid",uid],["choferUid","choferUid",uid],["uid","uid",uid]],g);scopedCollection("facturaciones",[["driverUid","driverUid",uid],["choferUid","choferUid",uid],["uid","uid",uid]],g);scopedCollection("cobros",[["driverUid","driverUid",uid],["choferUid","choferUid",uid],["uid","uid",uid]],g);scopedCollection("servicios",[["driverUid","driverUid",uid],["choferUid","choferUid",uid]],g);scopedCollection("gastos",[["choferUid","choferUid",uid],["driverUid","driverUid",uid],["uid","uid",uid],["ownerUid","ownerUid",uid]],g);scopedCollection("derivaciones",[["receptorUid","receptorUid",uid],["emisorUid","emisorUid",uid],["senderUid","senderUid",uid],["derivadorUid","derivadorUid",uid]],g);for(const n of ["cierres_semanales","deudas_choferes","prestamos_operativos","prestamos_explora","pagos"])scopedCollection(n,[["driverUid","driverUid",uid],["choferUid","choferUid",uid],["uid","uid",uid]],g);scopedCollection("asignaciones_autos",[["driverUid","driverUid",uid],["choferUid","choferUid",uid]],g)}
-      add("profiles:public",collection(db,"choferes"),g);for(const parent of ["performance_public","ranking_metas_public","derivation_ranking_public","ranking_derivaciones_public"]){add(`${parent}:summary`,doc(db,parent,cycle),g);add(`${parent}:drivers`,collection(db,parent,cycle,"drivers"),g)} }
-    function start(reason="start"){const user=auth.currentUser,p=period(),r=role();if(!user?.uid||!p?.id){stop();return Promise.resolve(null)}const profileId=txt(session().profileDocumentId||session().driverId||"");const key=`${user.uid}|${r}|${p.id}|${profileId}`;if(state.active&&state.contextKey===key){schedule(reason);return Promise.resolve(null)}stop();state.uid=user.uid;state.role=r;state.profileId=profileId;state.periodId=p.id;state.cycleId=`week_${p.id}`;state.contextKey=key;state.active=true;const g=state.generation;build(g);schedule(reason);return Promise.resolve(null)}
+      add("profiles:public",collection(db,"choferes"),g);for(const parent of ["performance_public","ranking_metas_public"]){add(`${parent}:summary`,doc(db,parent,cycle),g);add(`${parent}:drivers`,collection(db,parent,cycle,"drivers"),g)} }
+    function start(reason="start"){const user=auth.currentUser,p=period(),r=role(),activeSession=session();if(!user?.uid||!p?.id||!activeSession?.initialized||!activeSession?.authReady||activeSession?.closing||activeSession?.authUser?.uid!==user.uid||!r){stop();return Promise.resolve(null)}const profileId=txt(activeSession.profileDocumentId||activeSession.driverId||"");const key=`${user.uid}|${r}|${p.id}|${profileId}`;if(state.active&&state.contextKey===key){schedule(reason);return Promise.resolve(null)}stop();state.uid=user.uid;state.role=r;state.profileId=profileId;state.periodId=p.id;state.cycleId=`week_${p.id}`;state.contextKey=key;state.active=true;const g=state.generation;build(g);schedule(reason);return Promise.resolve(null)}
     const mutations=["explora:cobro-registrado","explora:gasto-registrado","explora:derivacion-aceptada","explora:derivacion-rechazada","explora:derivacion-completada","explora:derivacion-facturada","explora:weekly-closure","explora:closure-receipt-updated","explora:loan-requested","explora:loan-payment","explora:avatar-updated","explora:profile-updated","explora:simulation-updated","explora:app-reset","explora:app-launched"];
     mutations.forEach(n=>window.addEventListener(n,()=>schedule(`mutation:${n}`)));
     window.addEventListener("explora:session-opened",()=>start("session-opened"));window.addEventListener("explora:auth-cleared",()=>stop());window.addEventListener("explora:operational-period-changed",()=>start("period-changed"));window.addEventListener("online",()=>start("online"));window.addEventListener("pageshow",()=>start("pageshow"));document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")start("foreground")});onAuthStateChanged(auth,user=>{if(user)queueMicrotask(()=>start("auth-state"));else stop()});document.addEventListener("DOMContentLoaded",()=>setTimeout(()=>start("startup"),50));
@@ -23193,5 +23482,246 @@ window.ExploraActions["admin-launch"] = openLaunch;
   window.addEventListener("explora:operational-period-changed",reset);
 })();
 </script>
+<script id="explora-v270-derivation-financial-repair">(()=>{"use strict";const RATE=.10,text=v=>String(v??"").trim(),num=v=>{const n=Number(v);return Number.isFinite(n)?n:0},pick=(r,f)=>{for(const k of f){const v=text(r?.[k]);if(v)return v}return""},senderUid=r=>pick(r,["senderUid","sentByUid","derivadorUid","driverSenderUid","createdByUid","originDriverUid","fromUid","emisorUid","choferOrigenUid","choferOrigenId","derivadorId"]),receiverUid=r=>pick(r,["receiverUid","receivedByUid","receptorUid","assignedDriverUid","acceptedByUid","toUid","choferReceptorUid","choferReceptorId","receptorChoferId"]),grossAmount=r=>{for(const k of ["linkedBillingGrossAmount","billingGrossAmount","confirmedBillingAmount","grossAmount","totalAmount","confirmedAmount","billedAmount","serviceAmount","valorServicio","total","importe","monto","amount","finalAmount","suggestedAmount"]){const v=Math.round(num(r?.[k]));if(v>0)return v}return 0},derivationId=r=>text(r?.derivationId||r?.documentId||r?.id||r?.billingServiceId||r?.operationId||r?.operacionId),contribution=r=>Math.round(grossAmount(r)*RATE),ledgerId=r=>`derivation_contribution_${derivationId(r)}`,normalizeState=v=>text(v).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[\s_-]+/g," "),qualifies=r=>{const st=[r?.status,r?.estado,r?.estadoDerivacion,r?.acceptanceStatus,r?.completionStatus,r?.billingStatus,r?.paymentStatus].map(normalizeState).filter(Boolean),j=st.join(" | ");if(["pendiente","rechazada","rejected","cancelada","canceled","cancelled","vencida","expired","eliminada","deleted"].some(t=>j.includes(t)))return false;const a=r?.accepted===true||r?.aceptada===true||r?.aceptado===true||Boolean(r?.acceptedAt||r?.fechaAceptacion||r?.acceptedByUid)||st.some(v=>v==="aceptada"||v==="aceptado"||v==="accepted"),c=r?.completed===true||r?.completada===true||r?.completado===true||r?.realizada===true||r?.realizado===true||Boolean(r?.completedAt||r?.finishedAt||r?.fechaFinalizacion)||st.some(v=>v.includes("complet")||v.includes("realiz")||v==="completed"),b=r?.billed===true||r?.facturada===true||r?.facturado===true||r?.paid===true||r?.cobrada===true||r?.cobrado===true||r?.paymentConfirmed===true||r?.billingConfirmed===true||Boolean(r?.billedAt||r?.invoicedAt||r?.paidAt||r?.fechaFacturacion||r?.billingRecordId||r?.paymentId||r?.cobroId)||st.some(v=>v.includes("factur")||v.includes("paid")||v.includes("cobrad"));return a&&c&&b&&Boolean(derivationId(r))&&Boolean(senderUid(r))&&Boolean(receiverUid(r))&&senderUid(r)!==receiverUid(r)&&grossAmount(r)>0},normalize=r=>({derivationId:derivationId(r),senderUid:senderUid(r),receiverUid:receiverUid(r),grossAmount:grossAmount(r),collaborationRate:RATE,collaborationAmount:contribution(r),bonusPotential:contribution(r),ledgerId:ledgerId(r),qualifies:qualifies(r),weeklyPeriodId:text(r?.weeklyPeriodIdCompleted||r?.weeklyPeriodId||r?.periodoSemanalId||r?.periodoId),cycleId:text(r?.cycleId||r?.performanceCycleId),paymentMethod:text(r?.paymentMethod||r?.metodoPago||r?.paymentType),acceptedAt:r?.acceptedAt||r?.fechaAceptacion||null,completedAt:r?.completedAt||r?.finishedAt||r?.fechaFinalizacion||null,billedAt:r?.billedAt||r?.invoicedAt||r?.paidAt||r?.fechaFacturacion||null}),aggregate=rows=>{const seen=new Set,map=new Map;for(const source of Array.isArray(rows)?rows:[]){const r=normalize(source);if(!r.qualifies||seen.has(r.derivationId))continue;seen.add(r.derivationId);const ts=Date.parse(r.completedAt||r.billedAt||r.acceptedAt||0)||Number.MAX_SAFE_INTEGER,current=map.get(r.senderUid)||{uid:r.senderUid,grossAmount:0,count:0,bonusPotential:0,firstAt:ts};current.grossAmount+=r.grossAmount;current.count++;current.bonusPotential+=r.bonusPotential;current.firstAt=Math.min(current.firstAt,ts);map.set(r.senderUid,current)}return[...map.values()].sort((a,b)=>b.grossAmount-a.grossAmount||b.count-a.count||(a.firstAt||Number.MAX_SAFE_INTEGER)-(b.firstAt||Number.MAX_SAFE_INTEGER)||a.uid.localeCompare(b.uid)).map((r,i)=>({...r,position:i+1}))},adjustBalance=(normalNetToDriver,collaborationAmount)=>{const net=num(normalNetToDriver)-Math.max(0,num(collaborationAmount));return{netToDriver:net,balanced:Math.abs(net)<1,payerRole:Math.abs(net)<1?null:net>0?"admin":"driver",settlementAmount:Math.abs(Math.round(net))}};window.ExploraDerivationFinancialRepair={version:"v270",rate:RATE,senderUid,receiverUid,grossAmount,contribution,derivationId,ledgerId,qualifies,normalize,aggregate,adjustBalance}})();</script><script type="module" id="explora-v272-derivation-ranking-definitive-repair">
+import {collection,collectionGroup,doc,getDoc,getDocs,onSnapshot,query,where,runTransaction,setDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import {onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+(()=>{
+  "use strict";
+  if(window.__exploraDerivationRankingDefinitiveRepairV272)return;
+  window.__exploraDerivationRankingDefinitiveRepairV272=true;
+  const VERSION="v274-derivation-ranking-self-test-repair",RATE=.10;
+  const F=window.ExploraFirebase||{},$=id=>document.getElementById(id);let db=F.db,auth=F.auth;
+  const text=v=>String(v??"").trim(),esc=v=>text(v).replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
+  const norm=v=>text(v).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[\s_-]+/g," ").trim();
+  const money=v=>new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(Math.round(Number(v)||0)).replace("ARS","$").replace(/\s+/g," ");
+  const pick=(o,keys)=>{for(const k of keys){const v=o?.[k];if(v!==undefined&&v!==null&&text(v)!=="")return v}return null};
+  const dateMs=v=>{if(!v)return 0;if(typeof v?.toMillis==="function")return v.toMillis();if(Number.isFinite(Number(v?.seconds)))return Number(v.seconds)*1000+Math.floor(Number(v.nanoseconds||0)/1e6);const n=Date.parse(v);return Number.isFinite(n)?n:0};
+  function parseMoney(value){
+    if(typeof value==="number")return Number.isFinite(value)&&value>=0?Math.round((value+Number.EPSILON)*100)/100:0;
+    let s=text(value).replace(/\s+/g,"").replace(/[^0-9,.-]/g,"");
+    if(!s||s.startsWith("-")||/^-?0*(?:[.,]0*)?$/.test(s))return 0;
+    const comma=s.lastIndexOf(","),dot=s.lastIndexOf(".");
+    if(comma>=0&&dot>=0){
+      const decimalIndex=Math.max(comma,dot),fraction=s.slice(decimalIndex+1).replace(/[.,]/g,"");
+      s=s.slice(0,decimalIndex).replace(/[.,]/g,"")+(fraction.length<=2?"."+fraction:fraction);
+    }else if(comma>=0||dot>=0){
+      const separator=comma>=0?",":".",parts=s.split(separator),fraction=parts.at(-1)||"";
+      s=(parts.length>2||fraction.length===3)?parts.join(""):parts.slice(0,-1).join("")+"."+fraction;
+    }
+    const n=Number(s);return Number.isFinite(n)&&n>=0?Math.round((n+Number.EPSILON)*100)/100:0;
+  }
+  const senderKeys=["senderUid","senderId","senderDriverUid","derivatorUid","derivadorUid","fromUid","createdBy","createdByUid","ownerUid","emitterUid","emisorUid","sentByUid","driverSenderUid","originDriverUid","choferOrigenUid","choferOrigenId","derivadorId","originalSenderUid"];
+  const receiverKeys=["receiverUid","receiverId","receiverDriverUid","recipientUid","acceptedBy","acceptedByUid","completedBy","completedByUid","billedBy","driverUid","choferUid","receptorUid","assignedDriverUid","receivedByUid","toUid","choferReceptorUid","choferReceptorId","receptorChoferId"];
+  const amountKeys=["linkedBillingGrossAmount","billingGrossAmount","confirmedBillingAmount","grossAmount","montoFinal","finalAmount","totalAmount","serviceAmount","billedAmount","amountCharged","derivedAmount","dineroDerivado","cycleDerivedAmount","cycleDineroDerivado","billingAmount","amount","monto","total","confirmedAmount","valorServicio","importe","suggestedAmount","finalPrice"];
+  const linkKeys=["derivationId","derivacionId","referralId","sourceDerivationId","linkedDerivationId","originDerivationId","billingServiceId","serviceId","billingId","billingRecordId","cobroId","paymentId","operationId","operacionId","originServiceId","sourceServiceId","documentId"];
+  const statusKeys=["estado","status","normalizedStatus","derivationStatus","acceptanceStatus","confirmationStatus","billingStatus","completionStatus","paymentStatus","estadoDerivacion"];
+  const excluded=["pending","pendiente","sent","enviada","enviado","rejected","rechazada","rechazado","cancelled","canceled","cancelada","cancelado","anulada","anulado","deleted","eliminada","eliminado","expired","vencida","vencido","refunded","reembolsada","reembolsado","duplicada","duplicado","cerrada rechazada","closed rejected"];
+  const state={generation:0,userUid:"",role:"",cycle:null,profiles:new Map(),profileRows:[],rows:[],sourceRows:[],publicRows:[],loaded:false,loading:false,refreshing:false,pending:false,unsubs:[],observer:null,lastError:null,lastDiagnostic:"",counts:{documentsRead:0,valid:0,duplicates:0,discarded:0,billings:0,reasons:{}},lastContext:{},lastResult:{source:"EMPTY_VALID_RESULT",grossAmount:0,count:0,bonus:0},selfTests:null,selfTestPromise:null,startPromise:null};
+  const sessionRole=()=>norm(window.ExploraSession?.role||window.ExploraSession?.profile?.role||window.ExploraAuthSession?.role||(document.body.classList.contains("explora-shared-admin")?"admin":"chofer"));
+  const isAdmin=()=>/admin|administrador|owner|superadmin/.test(state.role||sessionRole());
+  const activeCycle=()=>window.ExploraCycle4W?.forPeriod?.(window.ExploraCycle4W.activeWeeklyPeriod())||{id:"",periods:[],legacyIds:[]};
+  const senderUid=o=>text(pick(o,senderKeys)),receiverUid=o=>text(pick(o,receiverKeys));
+  const statusText=o=>statusKeys.map(k=>norm(o?.[k])).filter(Boolean).join(" | ");
+  const hasExcluded=o=>{const s=statusText(o);return excluded.some(t=>s.includes(t))||o?.deleted===true||o?.isDeleted===true||o?.cancelled===true||o?.canceled===true||o?.refunded===true};
+  const accepted=o=>{const s=statusText(o);return o?.accepted===true||o?.aceptada===true||o?.aceptado===true||Boolean(pick(o,["acceptedAt","fechaAceptacion","acceptedByUid"]))||/(accepted|aceptad|confirmad|in progress|en curso|realizad|complet|factur|invoic)/.test(s)};
+  const completed=o=>{const s=statusText(o);return o?.completed===true||o?.completada===true||o?.completado===true||o?.realizada===true||o?.realizado===true||o?.confirmed===true||o?.confirmada===true||Boolean(pick(o,["completedAt","confirmedAt","finishedAt","fechaFinalizacion","fechaConfirmacion"]))||/(completed|complet|confirm|finished|realizad|factur|invoic)/.test(s)};
+  const billed=o=>{const s=statusText(o);return o?.billed===true||o?.facturada===true||o?.facturado===true||o?.invoiced===true||o?.paid===true||o?.cobrada===true||o?.cobrado===true||o?.paymentConfirmed===true||o?.billingConfirmed===true||Boolean(pick(o,["billedAt","invoicedAt","paidAt","fechaFacturacion","billingRecordId","billingId","paymentId","cobroId"]))||/(billed|factur|invoic|paid|cobrad|complet)/.test(s)};
+  const idsFor=(o,id="")=>{const set=new Set([text(id),text(o?.id)]);for(const k of linkKeys){const v=text(o?.[k]);if(v)set.add(v)}return [...set].filter(Boolean)};
+  const eventTime=(d,b)=>dateMs(pick(b||{},["billedAt","invoicedAt","paidAt","completedAt","createdAt","updatedAt"]))||dateMs(pick(d||{},["billedAt","invoicedAt","completedAt","confirmedAt","acceptedAt","updatedAt","createdAt"]));
+  const resolveAmount=(d,b)=>{for(const src of [b,d])for(const k of amountKeys){const n=parseMoney(src?.[k]);if(n>0)return n}return 0};
+  function fingerprint(d,b,gross){const explicit=text(pick(d,["derivationId","derivacionId","referralId","sourceDerivationId","linkedDerivationId","originDerivationId"])||pick(b,["derivationId","derivacionId","referralId","sourceDerivationId","linkedDerivationId","originDerivationId"]));if(explicit)return `derivation:${norm(explicit)}`;const billing=text(pick(b,["billingRecordId","billingId","cobroId","paymentId"])||pick(d,["billingRecordId","billingId","cobroId","paymentId"]));if(billing)return `billing:${norm(billing)}`;const day=new Date(eventTime(d,b)||0).toISOString().slice(0,10);return [senderUid(d)||senderUid(b),receiverUid(d)||receiverUid(b),text(pick(d,["serviceId","concept","description","descripcion"])),day,Number(gross).toFixed(2)].map(norm).join("|")}
+  function reason(key){state.counts.discarded++;state.counts.reasons[key]=(state.counts.reasons[key]||0)+1}
+  function profileUid(p,id=""){return text(p?.uid||p?.authUid||p?.firebaseUid||p?.userId||p?.driverUid||p?.choferUid||p?.id||id)}
+  function profileName(p,fallback="Chofer"){return text(p?.nombreCompleto||p?.fullName||p?.displayName||[p?.nombre,p?.apellido].filter(Boolean).join(" ")||p?.name||p?.nombre||p?.usuario||fallback||"Chofer")}
+  function profileAvatar(p){return text(p?.photoURL||p?.avatarUrl||p?.avatar||p?.fotoUrl||p?.profilePhotoUrl||p?.fotoPerfil||p?.foto)}
+  function profileFor(alias){return state.profiles.get(norm(alias))||null}
+  function canonicalUid(alias){const p=profileFor(alias);return profileUid(p,alias)||text(alias)}
+  function addProfile(raw,id,source){const p={id,source,...raw},uid=profileUid(p,id),aliases=[uid,id,p.authUid,p.firebaseUid,p.userId,p.driverUid,p.choferUid,p.driverId,p.choferId,p.email,p.username,p.usuario].map(norm).filter(Boolean);state.profileRows.push(p);aliases.forEach(a=>{const prev=state.profiles.get(a);if(!prev||profileUid(prev).length<uid.length)state.profiles.set(a,p)});}
+  async function readProfiles(){state.profiles.clear();state.profileRows=[];const errors=[];for(const name of ["choferes","users","usuarios","drivers","profiles","perfiles"]){try{const s=await getDocs(collection(db,name));state.counts.documentsRead+=s.size;s.forEach(x=>addProfile(x.data()||{},x.id,name));}catch(e){errors.push({name,error:e})}}if(!state.profiles.size&&errors.length===6)throw Object.assign(errors[0].error||new Error("No se pudieron resolver perfiles."),{internalCode:"DERIVATION_RANKING_PROFILE_NOT_RESOLVED"});}
+  function billingIndex(rows){const map=new Map();for(const b of rows){if(hasExcluded(b))continue;for(const id of idsFor(b,b.id)){const current=map.get(id);if(!current||eventTime({},b)>eventTime({},current))map.set(id,b)}}return map}
+  function normalizeSources(derivations,billings,cycle=state.cycle,{commitCounts=true}={}){
+    const localCounts={documentsRead:derivations.length+billings.length,valid:0,duplicates:0,discarded:0,billings:billings.length,reasons:{}};
+    const discard=key=>{localCounts.discarded++;localCounts.reasons[key]=(localCounts.reasons[key]||0)+1};
+    const bi=billingIndex(billings),seen=new Map();
+    for(const d of derivations){
+      if(hasExcluded(d)){discard("estado_excluido");continue}
+      let b=null;for(const id of idsFor(d,d.id)){if(bi.has(id)){b=bi.get(id);break}}
+      if(!accepted(d)){discard("no_aceptada");continue}
+      if(!completed(d)){discard("no_completada");continue}
+      if(!(b||billed(d))){discard("sin_facturacion");continue}
+      const time=eventTime(d,b),periodEvidence=pick(b||d,["weeklyPeriodIdCompleted","weeklyPeriodId","periodId","weekId","periodoSemanalId","periodoId","cycleId","cycle_id","monthlyCycleId"]),rowCycle=window.ExploraCycle4W?.fromAny?.(periodEvidence||new Date(time||Date.now()));
+      if(cycle?.id&&window.ExploraCycle4W?.contains&&!window.ExploraCycle4W.contains(cycle,{...d,...(b||{})},time)&&rowCycle?.id!==cycle.id){discard("fuera_de_ciclo");continue}
+      const rawSender=senderUid(d)||senderUid(b),rawReceiver=receiverUid(d)||receiverUid(b);
+      if(!rawSender){discard("derivador_no_resuelto");continue}
+      if(rawReceiver&&norm(rawSender)===norm(rawReceiver)){discard("receptor_como_derivador");continue}
+      const gross=resolveAmount(d,b);if(!(gross>0)){discard("monto_invalido");continue}
+      const key=fingerprint(d,b,gross);if(!key){discard("clave_invalida");continue}
+      const candidate={derivationId:text(pick(d,["derivationId","derivacionId","documentId"])||d.id||key),billingId:text(b?.id||pick(b||d,["billingRecordId","billingId","paymentId","cobroId"])||"embedded"),senderUid:canonicalUid(rawSender),senderRawUid:rawSender,receiverUid:canonicalUid(rawReceiver)||rawReceiver,grossAmount:gross,firstAt:time||Number.MAX_SAFE_INTEGER,cycleId:cycle?.id||text(pick(b||d,["cycleId","cycle_id","monthlyCycleId"])),weeklyPeriodId:text(pick(b||d,["weeklyPeriodIdCompleted","weeklyPeriodId","periodId","weekId","periodoSemanalId","periodoId"])),source:d,linkedBilling:b,key};
+      const previous=seen.get(key);
+      if(previous){
+        localCounts.duplicates++;
+        const previousScore=(previous.linkedBilling?4:0)+(previous.firstAt&&previous.firstAt!==Number.MAX_SAFE_INTEGER?1:0);
+        const candidateScore=(b?4:0)+(time?1:0);
+        if(candidateScore>previousScore)seen.set(key,candidate);
+        continue;
+      }
+      seen.set(key,candidate);
+    }
+    const qualified=[...seen.values()];localCounts.valid=qualified.length;
+    const byUid=new Map();
+    for(const q of qualified){
+      const p=profileFor(q.senderUid)||profileFor(q.senderRawUid),uid=profileUid(p,q.senderUid)||q.senderUid;
+      const cur=byUid.get(uid)||{uid,name:profileName(p,text(q.source?.emisorName||q.source?.senderName||uid)),avatar:profileAvatar(p)||text(q.source?.emisorPhotoUrl||q.source?.senderPhotoUrl),derivedAmount:0,count:0,projectedBonus:0,firstAt:Number.MAX_SAFE_INTEGER,aliases:new Set(),cycleId:cycle?.id||q.cycleId,items:[]};
+      cur.derivedAmount=Math.round((cur.derivedAmount+q.grossAmount+Number.EPSILON)*100)/100;cur.count++;cur.projectedBonus=Math.round((cur.derivedAmount*RATE+Number.EPSILON)*100)/100;cur.firstAt=Math.min(cur.firstAt,q.firstAt||Number.MAX_SAFE_INTEGER);[uid,q.senderRawUid,q.senderUid].map(norm).filter(Boolean).forEach(a=>cur.aliases.add(a));cur.items.push(q);byUid.set(uid,cur);
+    }
+    if(commitCounts)state.counts=localCounts;
+    return sortRows([...byUid.values()]);
+  }
+  function sortRows(rows){return rows.filter(r=>r&&r.uid&&Number(r.derivedAmount)>0).sort((a,b)=>Number(b.derivedAmount)-Number(a.derivedAmount)||Number(b.count)-Number(a.count)||(a.firstAt||Number.MAX_SAFE_INTEGER)-(b.firstAt||Number.MAX_SAFE_INTEGER)||norm(a.name).localeCompare(norm(b.name),"es")||text(a.uid).localeCompare(text(b.uid))).map((r,i)=>({...r,position:i+1,projectedBonus:Math.round(Number(r.derivedAmount)*RATE),bonus:Math.round(Number(r.derivedAmount)*RATE)}))}
+  function publicRow(raw,id=""){const uid=canonicalUid(pick(raw,["uid","driverUid","choferUid","emisorUid","senderUid"])||id),derived=parseMoney(pick(raw,["derivedAmount","derivedAmountForEmitter","dineroDerivadoBruto","totalDerivedMoney","grossDerivedAmount","derivedMoney"]));if(!uid||!derived)return null;const p=profileFor(uid);return{uid,name:profileName(p,text(pick(raw,["name","driverName","nombreCompleto","emisorName"])||uid)),avatar:profileAvatar(p)||text(pick(raw,["avatar","photoURL","avatarUrl","driverAvatar"])),count:Math.max(0,Math.round(Number(pick(raw,["count","derivationCount","validDerivations","cantidadDerivaciones","serviceCount"])||0))),derivedAmount:derived,projectedBonus:Math.round(derived*RATE),firstAt:Number(raw?.firstAtMs)||dateMs(pick(raw,["firstAt","firstValidDerivationAt","reachedAt","updatedAt","createdAt"]))||Number.MAX_SAFE_INTEGER,cycleId:text(raw?.cycleId||state.cycle?.id),aliases:new Set([norm(uid)])}}
+  function mergeRows(...sets){const map=new Map();for(const rows of sets)for(const r of rows||[]){if(!r?.uid||!(Number(r.derivedAmount)>0))continue;const uid=canonicalUid(r.uid),k=norm(uid),p=map.get(k);if(!p){map.set(k,{...r,uid,aliases:new Set(r.aliases||[k])});continue}const prefer=Number(r.derivedAmount)>Number(p.derivedAmount)||(Number(r.derivedAmount)===Number(p.derivedAmount)&&Number(r.count)>Number(p.count));if(prefer)map.set(k,{...p,...r,uid,aliases:new Set([...(p.aliases||[]),...(r.aliases||[]),k])})}return sortRows([...map.values()])}
+  async function readCollectionSafe(ref,tag){try{const s=await getDocs(ref);state.counts.documentsRead+=s.size;return{rows:s.docs.map(x=>({id:x.id,...(x.data()||{})})),ok:true,tag}}catch(error){return{rows:[],ok:false,error,tag}}}
+  async function readPublicRows(cycle){
+    const canonical=[],legacy=[],errors=[];
+    for(const parent of ["derivation_ranking_public","ranking_derivaciones_public","performance_public"]){
+      const first=await readCollectionSafe(collection(db,parent,cycle.id,"drivers"),`${parent}/${cycle.id}/drivers`);if(first.ok)first.rows.forEach(x=>{const r=publicRow(x,x.id);if(r)canonical.push(r)});else errors.push(first);
+      if(!canonical.length){for(const legacyId of cycle.legacyIds||[]){const got=await readCollectionSafe(collection(db,parent,legacyId,"drivers"),`${parent}/${legacyId}/drivers`);if(got.ok)got.rows.forEach(x=>{const r=publicRow(x,x.id);if(r)legacy.push({...r,_legacyId:legacyId})});else errors.push(got)}}
+      try{const d=await getDoc(doc(db,parent,cycle.id));state.counts.documentsRead++;if(d.exists()){const raw=d.data()||{};for(const arr of [raw.rows,raw.drivers,raw.ranking,raw.derivations,raw.items])if(Array.isArray(arr))arr.forEach((x,i)=>{const r=publicRow(x,text(x?.uid||i));if(r)canonical.push(r)})}}catch(error){errors.push({error,tag:`${parent}/${cycle.id}`})}
+      if(canonical.length)break;
+    }
+    if(!canonical.length){try{const cg=await getDocs(query(collectionGroup(db,"drivers"),where("cycleId","==",cycle.id)));state.counts.documentsRead+=cg.size;cg.forEach(x=>{const r=publicRow(x.data()||{},x.id);if(r)canonical.push(r)})}catch(error){errors.push({error,tag:`collectionGroup(drivers) where cycleId == ${cycle.id}`})}}
+    let rows=canonical.length?mergeRows(canonical):[];
+    if(!rows.length&&legacy.length){const totals=new Map();for(const r of legacy){const k=norm(r.uid),cur=totals.get(k)||{...r,derivedAmount:0,count:0,firstAt:Number.MAX_SAFE_INTEGER};cur.derivedAmount+=Number(r.derivedAmount||0);cur.count+=Number(r.count||0);cur.firstAt=Math.min(cur.firstAt,r.firstAt||Number.MAX_SAFE_INTEGER);totals.set(k,cur)}rows=sortRows([...totals.values()])}
+    return{rows,errors,authorized:errors.length<3||rows.length>0};
+  }
+  async function readEvents(cycle){const events=[],errors=[];for(const id of [cycle.id,...(cycle.legacyIds||[])]){const got=await readCollectionSafe(collection(db,"derivation_ranking_public",id,"events"),`derivation_ranking_public/${id}/events`);if(got.ok)events.push(...got.rows);else errors.push(got)}if(!events.length)return{rows:[],events,errors};const derivations=events.map(e=>({...e,id:e.derivationId||e.id,status:e.status||"FACTURADA",estado:e.estado||"FACTURADA",accepted:e.accepted!==false,completed:e.completed!==false,billed:e.billed!==false,finalAmount:e.grossAmount||e.derivedAmount,derivedAmountForEmitter:e.grossAmount||e.derivedAmount,emisorUid:e.senderUid,receptorUid:e.receiverUid,completedAt:e.completedAt||e.updatedAt,cycleId:e.cycleId||cycle.id}));return{rows:normalizeSources(derivations,[],cycle),events,errors}}
+  async function queryByAliases(collectionName,fields,value,map,errors){for(const field of fields){try{const s=await getDocs(query(collection(db,collectionName),where(field,"==",value)));s.forEach(x=>map.set(`${collectionName}:${x.id}`,{id:x.id,...(x.data()||{})}));}catch(error){errors.push({error,tag:`${collectionName} where ${field}`})}}}
+  async function readDetailed(cycle){
+    const derivations=new Map(),billings=new Map(),errors=[],uid=state.userUid;
+    if(isAdmin()){
+      for(const name of ["derivaciones","historial_derivaciones"]){const r=await readCollectionSafe(collection(db,name),name);if(r.ok)r.rows.forEach(x=>derivations.set(`${name}:${x.id}`,x));else errors.push(r)}
+      for(const name of ["billing_records","facturaciones","cobros","servicios"]){const r=await readCollectionSafe(collection(db,name),name);if(r.ok)r.rows.forEach(x=>billings.set(`${name}:${x.id}`,x));else errors.push(r)}
+    }else{
+      for(const name of ["derivaciones","historial_derivaciones"])await queryByAliases(name,["emisorUid","senderUid","derivadorUid","fromUid","createdByUid","receptorUid","receiverUid","acceptedByUid","completedByUid"],uid,derivations,errors);
+      for(const name of ["billing_records","facturaciones","cobros","servicios"])await queryByAliases(name,["driverUid","choferUid","uid","ownerUid","originalSenderUid","emisorUid","receptorUid"],uid,billings,errors);
+    }
+    const rows=normalizeSources([...derivations.values()],[...billings.values()],cycle);state.sourceRows=[...derivations.values()];return{rows,derivations:[...derivations.values()],billings:[...billings.values()],errors};
+  }
+  async function upsertFromQualified(q,{silent=true}={}){
+    if(!q?.derivationId||!q?.senderUid||!(q.grossAmount>0)||!state.cycle?.id)return false;
+    const cycle=state.cycle,eventRef=doc(db,"derivation_ranking_public",cycle.id,"events",q.derivationId),newSummaryRef=doc(db,"derivation_ranking_public",cycle.id,"drivers",q.senderUid);
+    try{
+      await runTransaction(db,async tx=>{
+        const oldEventSnap=await tx.get(eventRef),old=oldEventSnap.exists()?oldEventSnap.data():null,oldSender=text(old?.senderUid),oldAmount=parseMoney(old?.grossAmount),oldActive=old?.active!==false&&oldAmount>0,oldSummaryRef=oldSender&&norm(oldSender)!==norm(q.senderUid)?doc(db,"derivation_ranking_public",cycle.id,"drivers",oldSender):null;
+        const refs=[newSummaryRef];if(oldSummaryRef)refs.push(oldSummaryRef);const snaps=[];for(const ref of refs)snaps.push(await tx.get(ref));
+        const newSnap=snaps[0],newData=newSnap.exists()?newSnap.data():{},newBaseAmount=parseMoney(newData.derivedAmount||newData.dineroDerivadoBruto),newBaseCount=Math.max(0,Math.round(Number(newData.count||newData.derivationCount||0)));
+        const sameSender=oldActive&&norm(oldSender)===norm(q.senderUid),summaryApplied=old?.summaryApplied===true,deltaAmount=q.grossAmount-(sameSender&&summaryApplied?oldAmount:0),deltaCount=oldEventSnap.exists()?(sameSender&&summaryApplied?0:1):1,p=profileFor(q.senderUid);
+        tx.set(newSummaryRef,{uid:q.senderUid,driverUid:q.senderUid,name:profileName(p,text(q.source?.emisorName||q.source?.senderName||q.senderUid)),driverName:profileName(p,text(q.source?.emisorName||q.source?.senderName||q.senderUid)),avatar:profileAvatar(p)||text(q.source?.emisorPhotoUrl||q.source?.senderPhotoUrl),derivedAmount:Math.max(0,newBaseAmount+deltaAmount),dineroDerivadoBruto:Math.max(0,newBaseAmount+deltaAmount),count:Math.max(0,newBaseCount+deltaCount),derivationCount:Math.max(0,newBaseCount+deltaCount),bonusProjected:Math.round(Math.max(0,newBaseAmount+deltaAmount)*RATE),firstAtMs:Math.min(Number(newData.firstAtMs)||Number.MAX_SAFE_INTEGER,Number(q.firstAt)||Date.now()),cycleId:cycle.id,startPeriodId:cycle.startPeriodId,endPeriodId:cycle.endPeriodId,schemaVersion:272,updatedAt:serverTimestamp()},{merge:true});
+        if(oldSummaryRef){const oldSnap=snaps[1],od=oldSnap.exists()?oldSnap.data():{},oa=parseMoney(od.derivedAmount||od.dineroDerivadoBruto),oc=Math.max(0,Math.round(Number(od.count||od.derivationCount||0)));tx.set(oldSummaryRef,{derivedAmount:Math.max(0,oa-oldAmount),dineroDerivadoBruto:Math.max(0,oa-oldAmount),count:Math.max(0,oc-1),derivationCount:Math.max(0,oc-1),bonusProjected:Math.round(Math.max(0,oa-oldAmount)*RATE),updatedAt:serverTimestamp()},{merge:true})}
+        tx.set(eventRef,{derivationId:q.derivationId,billingId:q.billingId||"",senderUid:q.senderUid,receiverUid:q.receiverUid||"",grossAmount:q.grossAmount,derivedAmount:q.grossAmount,collaborationRate:RATE,collaborationAmount:Math.round(q.grossAmount*RATE),projectedBonus:Math.round(q.grossAmount*RATE),cycleId:cycle.id,weeklyPeriodId:q.weeklyPeriodId||"",accepted:true,completed:true,billed:true,active:true,status:"FACTURADA",estado:"FACTURADA",completedAt:q.source?.completedAt||q.source?.confirmedAt||q.source?.invoicedAt||serverTimestamp(),summaryApplied:true,updatedAt:serverTimestamp(),schemaVersion:272},{merge:true});
+      });return true;
+    }catch(error){if(!silent)diagnostic("WRITE_PUBLIC_SUMMARY","DERIVATION_RANKING_PERMISSION_DENIED",error,{derivationId:q.derivationId,senderUid:q.senderUid,receiverUid:q.receiverUid,billingId:q.billingId,amount:q.grossAmount,path:`derivation_ranking_public/${cycle.id}`});return false}
+  }
+  async function backfillQualified(rows){const items=[];for(const r of rows||[])for(const q of r.items||[])items.push(q);for(const q of items.slice(0,40))await upsertFromQualified(q,{silent:true});return items.length}
+  function renderLoading(){state.loading=true;const list=$("performanceDerivationsList"),status=$("performanceScreenStatus");window.ExploraStableDerivationCard?.render(null,{source:"v273",uid:state.userUid,cycleId:state.cycle?.id||"",loading:true});if(list&&!state.loaded)list.innerHTML='<div class="performance-history-empty">Cargando dinero derivado del ciclo activo…</div>';if(status)status.textContent="Sincronizando ranking de derivaciones…";}
+  function rowMarkup(r){return `<article class="performance-ranking-row${r.position===1?" is-leader":""}" data-derivation-uid="${esc(r.uid)}"><div class="performance-ranking-percent"><small>PUESTO</small>${r.position}</div><div class="performance-ranking-copy"><strong>${esc(r.name)}</strong><span>TOTAL DERIVADO · ${money(r.derivedAmount)}</span><span class="derivation-ranking-count">DERIVACIONES COMPLETADAS · ${r.count}</span></div><div class="performance-ranking-money"><small>BONO POTENCIAL · 10%</small>+${money(r.projectedBonus)}</div></article>`}
+  function render(rows,{force=false}={}){
+    if(!state.loaded&&!force)return;state.rows=sortRows(rows);state.loading=false;const leader=state.rows[0]||null,list=$("performanceDerivationsList"),status=$("performanceScreenStatus");
+    window.ExploraStableDerivationCard?.render(leader?{name:leader.name,avatar:leader.avatar,derivedAmount:leader.derivedAmount,bonusAmount:leader.projectedBonus}:null,{source:"v273",authoritative:true,settled:true,uid:state.userUid,cycleId:state.cycle?.id||""});
+    if(list){list.dataset.v273="true";list.innerHTML=state.rows.length?state.rows.map(rowMarkup).join(""):'<div class="performance-history-empty">No hay derivaciones completadas y facturadas en el ciclo activo.</div>'}
+    if(status){status.textContent=`Ciclo ${state.cycle.startPeriodId} al ${state.cycle.endPeriodId} · Actualizado ${new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})}`;status.classList.remove("is-error")}
+  }
+  function validateState(rows,detailRows){const issues=[];if(state.counts.valid>0&&!rows.length)issues.push("DERIVATION_RANKING_EMPTY_WITH_VALID_DATA");rows.forEach((r,i)=>{if(r.position!==i+1)issues.push("POSITION_MISMATCH");if(Math.round(r.derivedAmount*.10)!==r.projectedBonus)issues.push("BONUS_MISMATCH")});if(rows.length>1&&rows.some((r,i)=>i>0&&r.derivedAmount>rows[i-1].derivedAmount))issues.push("ORDER_MISMATCH");if(detailRows?.length&&state.userUid&&rows[0]?.uid===state.userUid&&rows.some(r=>r.derivedAmount>rows[0].derivedAmount))issues.push("AUTH_USER_FALSE_LEADER");return[...new Set(issues)]}
+  function diagnostic(stage,code,error,extra={}){
+    const context={...state.lastContext,...extra},message=text(error?.message||error||"—"),firebaseCode=text(error?.code||"—"),denied=/permission-denied|insufficient permissions/i.test(firebaseCode+" "+message),internal=denied?"DERIVATION_RANKING_PERMISSION_DENIED":code;
+    state.lastError={stage,code:internal,error,extra};
+    const result=state.lastResult||{source:"EMPTY_VALID_RESULT",grossAmount:0,count:0,bonus:0};
+    state.lastDiagnostic=["EXPLORA - ERROR DERIVATION_RANKING_DEFINITIVE_REPAIR","MÓDULO: DERIVATION_RANKING_DEFINITIVE_REPAIR",`ETAPA: ${stage}`,`TIPO_EVENTO: ${context.eventType||"ERROR"}`,`CÓDIGO INTERNO: ${internal}`,`MENSAJE REAL FIREBASE: ${firebaseCode}`,`MENSAJE REAL JAVASCRIPT: ${message}`,`FUNCIÓN: ${context.functionName||"refresh"}`,`UID AUTH: ${state.userUid||auth?.currentUser?.uid||"—"}`,`ROL: ${state.role||"—"}`,`DRIVER UID: ${context.driverUid||state.userUid||"—"}`,`CYCLE ID: ${state.cycle?.id||"—"}`,`WEEKLY PERIOD ID: ${state.cycle?.weeklyPeriodId||state.cycle?.endPeriodId||"—"}`,`RUTA FIRESTORE: ${context.path||"derivation_ranking_public + derivaciones + billing_records"}`,`CONSULTA: ${context.query||"resumen público + fallback por UID"}`,`ESTADO NORMALIZADO: ${context.normalizedStatus||"—"}`,`DERIVATION ID: ${context.derivationId||"—"}`,`SENDER UID: ${context.senderUid||"—"}`,`RECEIVER UID: ${context.receiverUid||"—"}`,`BILLING ID: ${context.billingId||"—"}`,`IMPORTE RESUELTO: ${context.amount!=null?money(context.amount):"—"}`,`CANTIDAD DE DOCUMENTOS LEÍDOS: ${state.counts.documentsRead}`,`CANTIDAD DE DOCUMENTOS VÁLIDOS: ${state.counts.valid}`,`CANTIDAD DE DUPLICADOS DESCARTADOS: ${state.counts.duplicates}`,`FUENTE DEL RESULTADO: ${result.source}`,`TOTAL BRUTO AGREGADO: ${money(result.grossAmount)}`,`CANTIDAD DE DERIVACIONES AGREGADAS: ${result.count}`,`BONO CALCULADO: ${money(result.bonus)}`,`TIMESTAMP: ${new Date().toISOString()}`,`STACK: ${text(error?.stack||"—")}`].join("\n");
+    let panel=$("v272DerivationRankingDiagnostic");if(!panel){panel=document.createElement("section");panel.id="v272DerivationRankingDiagnostic";panel.style.cssText="position:fixed;z-index:9999;left:12px;right:12px;bottom:calc(90px + env(safe-area-inset-bottom));max-width:520px;margin:auto;padding:14px;border:1px solid #ff7f87;border-radius:18px;background:#251014;color:#fff;font:12px/1.4 ui-monospace,monospace;max-height:62vh;overflow:auto;box-shadow:0 24px 70px rgba(0,0,0,.55)";document.body.appendChild(panel)}
+    panel.innerHTML=`<pre style="white-space:pre-wrap;margin:0 0 10px">${esc(state.lastDiagnostic)}</pre><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button data-v272-copy type="button" style="min-height:44px;border:1px solid #f5b942;border-radius:12px;background:#2b2110;color:#f5cf75;font-weight:900">COPIAR ERROR</button><button data-v272-retry type="button" style="min-height:44px;border:1px solid #fff3;border-radius:12px;background:#ffffff0d;color:#fff;font-weight:900">REINTENTAR</button></div>`;panel.querySelector("[data-v272-copy]").onclick=()=>navigator.clipboard?.writeText(state.lastDiagnostic);panel.querySelector("[data-v272-retry]").onclick=()=>refresh("diagnostic-retry",{force:true});
+  }
+  async function refresh(reason="manual",{force=false}={}){
+    if(!auth?.currentUser?.uid||!state.cycle?.id)return;
+    if(state.refreshing){state.pending=true;return}
+    state.refreshing=true;const generation=state.generation,userUid=auth.currentUser.uid;state.userUid=userUid;state.role=sessionRole();if(force||!state.loaded)renderLoading();
+    try{
+      await readProfiles();if(generation!==state.generation||userUid!==auth.currentUser?.uid)return;
+      const [pub,events,detail]=await Promise.all([readPublicRows(state.cycle),readEvents(state.cycle),readDetailed(state.cycle)]);if(generation!==state.generation||userUid!==auth.currentUser?.uid)return;
+      state.publicRows=pub.rows;
+      const rows=mergeRows(pub.rows,events.rows,detail.rows),grossAmount=Math.round((rows.reduce((sum,r)=>sum+Number(r.derivedAmount||0),0)+Number.EPSILON)*100)/100,count=rows.reduce((sum,r)=>sum+Number(r.count||0),0);
+      const source=pub.rows.length?"PUBLIC_SUMMARY":(events.rows.length&&detail.rows.length?"MERGED_FALLBACK":events.rows.length?"FALLBACK_DERIVATIONS":detail.rows.length?"FALLBACK_BILLING":"EMPTY_VALID_RESULT");
+      state.lastResult={source,grossAmount,count,bonus:Math.round((grossAmount*RATE+Number.EPSILON)*100)/100};state.loaded=true;
+      const issues=validateState(rows,detail.rows);render(rows,{force:true});
+      backfillQualified(detail.rows).then(c=>{if(c)setTimeout(()=>refresh("post-backfill"),350)}).catch(()=>{});
+      if(issues.length)diagnostic("VALIDATE_AGGREGATION",issues[0],new Error(issues.join(" | ")),{functionName:"validateState",query:reason});
+      else if(!rows.length&&pub.errors.length&&detail.errors.length&&events.errors.length&&navigator.onLine!==false){const err=pub.errors[0]?.error||detail.errors[0]?.error||events.errors[0]?.error||new Error("No se pudieron leer las fuentes del ranking.");diagnostic("READ_RANKING","DERIVATION_RANKING_READ_FAILED",err,{functionName:"refresh",query:reason});}
+      else $("v272DerivationRankingDiagnostic")?.remove();
+    }catch(error){
+      state.loaded=state.rows.length>0;if(state.loaded)render(state.rows,{force:true});
+      const transient=navigator.onLine===false||/unavailable|network|offline|deadline-exceeded/i.test(text(error?.code)+" "+text(error?.message));
+      if(!transient)diagnostic("REFRESH_RANKING",error?.internalCode||"DERIVATION_RANKING_AGGREGATION_FAILED",error,{functionName:"refresh",query:reason});
+    }finally{state.refreshing=false;if(state.pending){state.pending=false;queueMicrotask(()=>refresh("queued"))}}
+  }
+  function stop(){state.generation++;state.unsubs.splice(0).forEach(fn=>{try{fn()}catch(_){}});state.userUid="";state.role="";state.rows=[];state.sourceRows=[];state.publicRows=[];state.loaded=false;state.loading=false;state.observer?.disconnect?.();state.observer=null;window.ExploraStableDerivationCard?.clear();}
+  function debounceRefresh(reason){clearTimeout(debounceRefresh.t);debounceRefresh.t=setTimeout(()=>refresh(reason),120)}
+  function subscribe(){
+    state.unsubs.splice(0).forEach(fn=>{try{fn()}catch(_){}});
+    const generation=state.generation,cycleId=state.cycle?.id||"",userUid=state.userUid;
+    if(!cycleId||!userUid)return;
+    try{
+      const unsubscribe=onSnapshot(collection(db,"derivation_ranking_public",cycleId,"drivers"),()=>{
+        if(generation!==state.generation||userUid!==state.userUid||userUid!==auth?.currentUser?.uid)return;
+        debounceRefresh("snapshot:derivation_ranking_public");
+      },error=>{
+        if(generation!==state.generation||userUid!==state.userUid)return;
+        if(!/permission-denied/.test(text(error?.code)))diagnostic("PUBLIC_LISTENER","DERIVATION_RANKING_SNAPSHOT_MISMATCH",error,{path:`derivation_ranking_public/${cycleId}/drivers`});
+      });
+      state.unsubs.push(unsubscribe);
+    }catch(error){diagnostic("PUBLIC_LISTENER","DERIVATION_RANKING_SNAPSHOT_MISMATCH",error,{path:`derivation_ranking_public/${cycleId}/drivers`})}
+  }
+  function installObserver(){state.observer?.disconnect?.();state.observer=null;}
+  function runSelfTests(){
+    if(state.selfTestPromise)return state.selfTestPromise;
+    state.selfTestPromise=Promise.resolve().then(()=>{
+      const cycle=state.cycle?.id?state.cycle:{id:"cycle_test",weeklyPeriodId:"week_test",startPeriodId:"week_test",endPeriodId:"week_test",legacyIds:[]};
+      const base={accepted:true,completed:true,billed:true,status:"facturada",cycleId:cycle.id,weeklyPeriodId:cycle.weeklyPeriodId,completedAt:new Date("2026-06-01T12:00:00Z")};
+      const build=(derivations,billings=[])=>normalizeSources(derivations,billings,cycle,{commitCounts:false});
+      const checks=[];const check=(name,condition)=>checks.push({name,ok:Boolean(condition)});
+      let r=sortRows([publicRow({uid:"A",count:2,derivedAmount:100000,cycleId:cycle.id},"A")].filter(Boolean));check("PUBLIC_SUMMARY_TOTAL_COUNT_BONUS",r[0]?.count===2&&r[0]?.derivedAmount===100000&&r[0]?.projectedBonus===10000);
+      r=build([{...base,id:"d1",derivationId:"D1",senderUid:"A",receiverUid:"B"},{...base,id:"d2",derivationId:"D2",senderUid:"A",receiverUid:"C"}],[{...base,id:"b1",derivationId:"D1",grossAmount:40000,driverUid:"B"},{...base,id:"b2",derivationId:"D2",grossAmount:60000,driverUid:"C"}]);check("FALLBACK_TWO_LINKED_BILLINGS",r[0]?.count===2&&r[0]?.derivedAmount===100000);
+      r=build([{...base,id:"source-a",derivationId:"D3",senderUid:"A",receiverUid:"B",grossAmount:50000},{...base,id:"source-b",derivationId:"D3",senderUid:"A",receiverUid:"B",grossAmount:50000}],[{...base,id:"billing-d3",derivationId:"D3",grossAmount:50000,driverUid:"B"}]);check("CROSS_SOURCE_DEDUPLICATION",r[0]?.count===1&&r[0]?.derivedAmount===50000);
+      check("ARGENTINE_THOUSANDS",parseMoney("100.000")===100000);check("ARGENTINE_DECIMALS",parseMoney("100.000,50")===100000.5);
+      check("ACCEPTED_NOT_BILLED_EXCLUDED",build([{...base,id:"d6",status:"aceptada",completed:false,billed:false,senderUid:"A",receiverUid:"B",grossAmount:10000}]).length===0);
+      r=build([{...base,id:"doc-1",derivationId:"D7A",senderUid:"A",receiverUid:"B",grossAmount:30000},{...base,id:"doc-2",derivationId:"D7B",senderUid:"A",receiverUid:"C",grossAmount:70000}]);check("VALID_TWO_DOCUMENT_AGGREGATION",r[0]?.count===2&&r[0]?.derivedAmount===100000&&r[0]?.projectedBonus===10000);
+      r=build([]);check("EMPTY_IS_VALID",r.length===0);
+      r=build([{...base,id:"d9",derivationId:"D9",senderUid:"SENDER",receiverUid:"RECEIVER",grossAmount:50000}]);check("ATTRIBUTED_TO_SENDER",r[0]?.uid==="SENDER"&&!r.some(x=>x.uid==="RECEIVER")&&r[0]?.projectedBonus===5000);
+      r=build([{...base,id:"d10",derivationId:"D10",senderUid:"A",receiverUid:"B",grossAmount:100000,netAmount:90000,retentionAmount:10000}]);check("GROSS_NOT_NET",r[0]?.derivedAmount===100000&&r[0]?.projectedBonus===10000);
+      const concurrentSelfTest=runSelfTests();check("SHARED_EXECUTION_LOCK",concurrentSelfTest===state.selfTestPromise);
+      r=build([{...base,id:"legacy",derivacionId:"DL",fromUid:"LEGACY_SENDER",acceptedByUid:"LEGACY_RECEIVER",importe:"100.000,50",estado:"facturada"}]);check("LEGACY_FIELDS_NORMALIZED",r[0]?.uid==="LEGACY_SENDER"&&r[0]?.derivedAmount===100000.5&&r[0]?.count===1);
+      const failed=checks.filter(x=>!x.ok);state.selfTests={ok:failed.length===0,passed:checks.length-failed.length,total:checks.length,failed:failed.map(x=>x.name),version:VERSION};return state.selfTests;
+    }).catch(error=>{state.selfTests={ok:false,passed:0,total:12,failed:[text(error?.message||error)],version:VERSION};return state.selfTests;}).finally(()=>{setTimeout(()=>{state.selfTestPromise=null},0)});
+    return state.selfTestPromise;
+  }
+  async function start(){
+    if(state.startPromise)return state.startPromise;
+    state.startPromise=(async()=>{
+      if(!auth?.currentUser?.uid||!db)return;
+      const role=sessionRole(),cycle=activeCycle();if(!role||!cycle?.id)return;
+      stop();state.generation++;state.userUid=auth.currentUser.uid;state.role=role;state.cycle=cycle;window.ExploraStableDerivationCard?.beginSession(state.userUid,state.cycle.id);
+      const tests=await runSelfTests();if(!tests.ok)diagnostic("SELF_TEST","DERIVATION_RANKING_AGGREGATION_FAILED",new Error(tests.failed.join(" | ")||"SELF_TEST_FAILED"),{functionName:"runSelfTests"});
+      await refresh("start",{force:true});if(state.userUid===auth?.currentUser?.uid)subscribe();
+    })().finally(()=>{state.startPromise=null});
+    return state.startPromise;
+  }
+  async function upsertFromDerivation(row){if(!row)return false;const rows=normalizeSources([{id:row.derivationId||row.id,...row}],[],state.cycle||activeCycle()),q=rows.flatMap(r=>r.items||[])[0];const ok=await upsertFromQualified(q,{silent:false});if(ok)setTimeout(()=>refresh("upsert-from-derivation"),80);return ok}
+  const events=["explora:cobro-registrado","explora:derivacion-aceptada","explora:derivacion-completada","explora:derivacion-facturada","explora:profile-updated","explora:avatar-updated","explora:performance-updated","explora:operational-snapshot-updated","explora:session-ready","explora:session-opened"];
+  events.forEach(name=>window.addEventListener(name,event=>{if(name==="explora:derivacion-completada"&&event.detail)upsertFromDerivation(event.detail).catch(()=>{});debounceRefresh(name)}));
+  window.addEventListener("explora:auth-cleared",stop);document.addEventListener("visibilitychange",()=>{if(!document.hidden)debounceRefresh("visibility")});
+  function bindAuth(){const live=window.ExploraFirebase||{};db=live.db||db;auth=live.auth||auth;if(!db||!auth){setTimeout(bindAuth,100);return}onAuthStateChanged(auth,user=>{if(user?.uid)setTimeout(start,30);else stop()});}
+  bindAuth();setInterval(()=>{if(!auth?.currentUser?.uid)return;const next=activeCycle();if(next.id!==state.cycle?.id)start();},60000);
+  window.ExploraDerivationRankingDefinitiveRepair={version:VERSION,refresh,start,stop,runSelfTests,upsertFromDerivation,parseMoney,normalizeSources,getState:()=>({rows:state.rows.map(r=>({...r,aliases:[...(r.aliases||[])]})),cycle:state.cycle,counts:{...state.counts},selfTests:state.selfTests,lastError:state.lastError})};
+})();
+</script>
+
 </body>
 </html>
