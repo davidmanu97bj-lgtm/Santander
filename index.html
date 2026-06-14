@@ -2,12 +2,12 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="explora-version" content="v262-single-writer-dashboard-state">
+  <meta name="explora-version" content="v263-financial-cards-atomic-commit">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>EXPLORA — Dashboard v262 · Estado único single-writer</title>
+  <title>EXPLORA — Dashboard v263 · Commit financiero atómico</title>
 
   <style>
     :root{
@@ -22767,15 +22767,15 @@ window.ExploraActions["admin-launch"] = openLaunch;
 
 
 
-<!-- EXPLORA v262 · SINGLE WRITER DASHBOARD STATE -->
-<script id="explora-dashboard-single-writer-v262">
+<!-- EXPLORA v263 · FINANCIAL CARDS ATOMIC COMMIT · SINGLE WRITER -->
+<script id="explora-dashboard-single-writer-v263">
 (()=>{
   "use strict";
-  if(window.ExploraDashboardStateEngine?.VERSION==="v262-single-writer-dashboard-state")return;
+  if(window.ExploraDashboardStateEngine?.VERSION==="v263-financial-cards-atomic-commit")return;
 
-  const VERSION="v262-single-writer-dashboard-state";
-  const SCHEMA_VERSION=262;
-  const CACHE_PREFIX="explora_dashboard_viewmodel_v262";
+  const VERSION="v263-financial-cards-atomic-commit";
+  const SCHEMA_VERSION=263;
+  const CACHE_PREFIX="explora_dashboard_viewmodel_v263";
   const ADMIN_UID="2LziyTTdFcZzSOhK3hLbAKs2U4s2";
   const $=id=>document.getElementById(id);
   const num=value=>Math.max(0,Number(value||0)||0);
@@ -22786,6 +22786,7 @@ window.ExploraActions["admin-launch"] = openLaunch;
   const isAdminRole=value=>["admin","administrador","owner","superadmin","sistema","system"].includes(normalize(value));
 
   window.__EXPLORA_DASHBOARD_SINGLE_WRITER_V262__=true;
+  window.__EXPLORA_DASHBOARD_FINANCIAL_ATOMIC_COMMIT_V263__=true;
 
   const protectedTextIds=[
     "dashboardWeeklyRevenue","dashboardWeeklyExpenses","dashboardWeeklyGoal","dashboardWeeklyBenefit",
@@ -22797,7 +22798,7 @@ window.ExploraActions["admin-launch"] = openLaunch;
   let commitPermit=0;
 
   function protectProperty(node,property){
-    if(!node||Object.prototype.hasOwnProperty.call(node,`__v262_${property}`))return;
+    if(!node||Object.prototype.hasOwnProperty.call(node,`__v263_${property}`))return;
     const proto=property==="innerHTML"?Element.prototype:Node.prototype;
     const descriptor=Object.getOwnPropertyDescriptor(proto,property);
     if(!descriptor?.get||!descriptor?.set)return;
@@ -22812,7 +22813,7 @@ window.ExploraActions["admin-launch"] = openLaunch;
         if(state.blockedWriters.length>80)state.blockedWriters.shift();
       }
     });
-    Object.defineProperty(node,`__v262_${property}`,{value:true,configurable:true});
+    Object.defineProperty(node,`__v263_${property}`,{value:true,configurable:true});
   }
 
   function installWriterGuards(){
@@ -22828,7 +22829,8 @@ window.ExploraActions["admin-launch"] = openLaunch;
     renderRequestId:0,committedRevision:0,committedViewModel:null,pendingPromise:null,
     rebuildNeeded:false,queued:false,pendingReasons:new Set(),subscribers:new Set(),
     lastError:null,loadingState:"idle",sourceRevisions:{},blockedWriters:[],destroyed:false,
-    invalidCommitCount:0,lastDiagnostic:null
+    invalidCommitCount:0,lastDiagnostic:null,commitInFlight:null,financialDomRetryCount:0,
+    optimisticOperations:new Map(),confirmedOperationIds:new Set()
   };
 
   function session(){
@@ -22905,7 +22907,7 @@ window.ExploraActions["admin-launch"] = openLaunch;
   }
   function writeCache(vm){try{if(vm?.completeness===true)localStorage.setItem(cacheKey(vm,vm.goalConfigVersion),JSON.stringify(vm));}catch(_){ }}
   function purgeOldCaches(){
-    try{for(let i=localStorage.length-1;i>=0;i--){const key=localStorage.key(i)||"";if(key.includes("unified_v261")||key.includes("v260")||key.startsWith("explora_dashboard_unified_v261"))localStorage.removeItem(key);}}catch(_){ }
+    try{for(let i=localStorage.length-1;i>=0;i--){const key=localStorage.key(i)||"";if(key.includes("unified_v261")||key.includes("v260")||key.includes("viewmodel_v262")||key.startsWith("explora_dashboard_unified_v261"))localStorage.removeItem(key);}}catch(_){ }
   }
 
   function benefitStatus(vm){
@@ -22976,35 +22978,118 @@ window.ExploraActions["admin-launch"] = openLaunch;
     if(isAdminRole(ctx.role))window.ExploraPerformanceEngine?.showDiagnostic?.("DASHBOARD_STATE_CONFLICT",code,new Error(code),payload);
   }
 
-  function commitDashboardViewModel(vm,context={}){
+  function currentDashboardNodes(){
+    const ids=[
+      "dashboardWeeklyRevenue","dashboardWeeklyRevenueMeta","dashboardWeeklyExpenses","dashboardWeeklyExpensesMeta",
+      "dashboardWeeklyBenefit","dashboardWeeklyGoal","dashboardGoalPercent","dashboardTripsCount","dashboardExpenseCount",
+      "dashboardAvailableBenefit","dashboardAvailableBenefitStatus","dashboardExploreLoanMeta","exploreLoanAvailableAmount",
+      "performancePodium","performanceGoalTrack","performanceRankingList"
+    ];
+    const nodes={};
+    const missing=[];
+    const required=new Set(["dashboardWeeklyRevenue","dashboardWeeklyExpenses","dashboardWeeklyBenefit","dashboardWeeklyGoal","dashboardTripsCount","dashboardExpenseCount","dashboardAvailableBenefit","dashboardAvailableBenefitStatus","performancePodium","performanceGoalTrack"]);
+    for(const id of ids){
+      const matches=document.querySelectorAll(`#${CSS.escape(id)}`);
+      if(matches.length!==1){if(matches.length===0&&required.has(id))missing.push(id);else if(matches.length>1)diagnostic("DUPLICATE_DASHBOARD_NODE_ID",{id,count:matches.length});}
+      nodes[id]=document.getElementById(id)||null;
+    }
+    return{nodes,missing};
+  }
+
+  function normalizedVisibleNumber(value){
+    const raw=String(value??"").replace(/[^0-9-]/g,"");
+    return Number(raw||0)||0;
+  }
+
+  function verifyDashboardFinancialDom(vm,nodes){
+    const checks={
+      dashboardWeeklyRevenue:{expected:Math.round(num(vm.grossBilling)),visible:normalizedVisibleNumber(nodes.dashboardWeeklyRevenue?.textContent)},
+      dashboardWeeklyExpenses:{expected:Math.round(num(vm.totalExpenses)),visible:normalizedVisibleNumber(nodes.dashboardWeeklyExpenses?.textContent)},
+      dashboardWeeklyBenefit:{expected:Math.round(num(vm.goalBenefit)),visible:normalizedVisibleNumber(nodes.dashboardWeeklyBenefit?.textContent)},
+      dashboardWeeklyGoal:{expected:Math.round(num(vm.rewardPercent)),visible:normalizedVisibleNumber(nodes.dashboardWeeklyGoal?.textContent)},
+      dashboardTripsCount:{expected:Math.round(num(vm.serviceCount)),visible:normalizedVisibleNumber(nodes.dashboardTripsCount?.textContent)},
+      dashboardExpenseCount:{expected:Math.round(num(vm.expenseCount)),visible:normalizedVisibleNumber(nodes.dashboardExpenseCount?.textContent)}
+    };
+    const mismatches=Object.entries(checks).filter(([,v])=>v.expected!==v.visible).map(([id,v])=>({id,...v}));
+    return{valid:mismatches.length===0,checks,mismatches};
+  }
+
+  function buildCommitTexts(vm){
+    return{
+      dashboardWeeklyRevenue:money(vm.grossBilling),dashboardWeeklyRevenueMeta:"Esta semana",
+      dashboardWeeklyExpenses:money(vm.totalExpenses),dashboardWeeklyExpensesMeta:"Esta semana",
+      dashboardTripsCount:String(Math.round(num(vm.serviceCount))),dashboardExpenseCount:String(Math.round(num(vm.expenseCount))),
+      dashboardWeeklyGoal:`${Math.round(num(vm.rewardPercent))}%`,dashboardGoalPercent:`${Math.round(num(vm.rewardPercent))}%`,
+      dashboardWeeklyBenefit:`+${money(vm.goalBenefit)}`,dashboardAvailableBenefit:money(vm.availableBenefit),
+      dashboardAvailableBenefitStatus:benefitStatus(vm),exploreLoanAvailableAmount:money(vm.availableBenefit),
+      dashboardExploreLoanMeta:vm.activeLoan?.active?"Préstamo activo":vm.eligibility?.eligible?"Listo para solicitar":"Beneficio según tu desempeño"
+    };
+  }
+
+  async function commitDashboardViewModel(vm,context={}){
     const current=session();
     if(!vm||vm.uid!==current.uid||vm.weeklyPeriodId!==current.weeklyPeriodId)return false;
+    if(vm.mutationVersion<state.mutationVersion)return false;
     const check=validate(vm);if(!check.valid){diagnostic(check.errors[0],{incomingViewModel:vm,validationErrors:check.errors});return false;}
     const rejection=regression(state.committedViewModel,vm);if(rejection){diagnostic(rejection,{previousViewModel:state.committedViewModel,incomingViewModel:vm});return false;}
-    const signature=semantic(vm);if(signature===state.lastSignature)return true;
-    const apply=()=>withCommitPermit(()=>{
-      const set=(id,value)=>{const node=$(id);if(node)node.textContent=value;};
-      set("dashboardWeeklyRevenue",money(vm.grossBilling));set("dashboardWeeklyExpenses",money(vm.totalExpenses));
-      set("dashboardTripsCount",String(vm.serviceCount));set("dashboardExpenseCount",String(vm.expenseCount));
-      set("dashboardWeeklyGoal",`${vm.rewardPercent}%`);set("dashboardGoalPercent",`${vm.rewardPercent}%`);
-      set("dashboardWeeklyBenefit",`+${money(vm.goalBenefit)}`);set("dashboardAvailableBenefit",money(vm.availableBenefit));
-      set("dashboardAvailableBenefitStatus",benefitStatus(vm));set("exploreLoanAvailableAmount",money(vm.availableBenefit));
-      set("dashboardExploreLoanMeta",vm.activeLoan?.active?"Préstamo activo":vm.eligibility?.eligible?"Listo para solicitar":"Beneficio según tu desempeño");
-      renderPodium(vm.rankingRows,vm.rankingState);renderRankingList(vm.rankingRows);renderBubbles(vm);
-    });
-    requestAnimationFrame(apply);
-    state.lastSignature=signature;state.committedViewModel=Object.freeze({...vm,committedAtMs:now()});state.committedRevision=vm.revision;
-    state.loadingState=vm.rankingState;writeCache(state.committedViewModel);
-    state.subscribers.forEach(callback=>{try{callback(state.committedViewModel,context);}catch(_){}});
-    window.dispatchEvent(new CustomEvent("dashboard:state-committed",{detail:state.committedViewModel}));
-    return true;
+    const signature=semantic(vm);if(signature===state.lastSignature&&state.committedRevision>=vm.revision)return true;
+    if(state.commitInFlight)await state.commitInFlight.catch(()=>{});
+
+    const perform=async()=>{
+      const texts=buildCommitTexts(vm);
+      let verification=null;
+      let refs=null;
+      for(let attempt=0;attempt<2;attempt++){
+        refs=currentDashboardNodes();
+        installWriterGuards();
+        if(refs.missing.length){
+          diagnostic("DASHBOARD_FINANCIAL_DOM_COMMIT_FAILED",{reason:"NODE_NOT_FOUND",idsFaltantes:refs.missing,incomingViewModel:vm});
+          return false;
+        }
+        await new Promise(resolve=>requestAnimationFrame(()=>{
+          withCommitPermit(()=>{
+            for(const [id,value] of Object.entries(texts)){const node=document.getElementById(id);if(node)node.textContent=value;}
+            if(vm.rankingComplete){renderPodium(vm.rankingRows,vm.rankingState);renderRankingList(vm.rankingRows);}
+            if(vm.performanceComplete)renderBubbles(vm);
+          });
+          resolve();
+        }));
+        refs=currentDashboardNodes();
+        verification=verifyDashboardFinancialDom(vm,refs.nodes);
+        if(verification.valid)break;
+      }
+      if(!verification?.valid){
+        state.financialDomRetryCount+=1;
+        diagnostic("DASHBOARD_FINANCIAL_DOM_COMMIT_FAILED",{
+          reason:context.reason||vm.reason||"commit",grossBillingEsperado:vm.grossBilling,
+          grossBillingVisible:verification?.checks?.dashboardWeeklyRevenue?.visible,totalExpensesEsperado:vm.totalExpenses,
+          totalExpensesVisible:verification?.checks?.dashboardWeeklyExpenses?.visible,goalBenefitEsperado:vm.goalBenefit,
+          goalBenefitVisible:verification?.checks?.dashboardWeeklyBenefit?.visible,rewardPercent:vm.rewardPercent,
+          financialComplete:vm.financialComplete,rankingComplete:vm.rankingComplete,benefitComplete:vm.benefitComplete,
+          idsFaltantes:refs?.missing||[],firmaAnterior:state.lastSignature,firmaEntrante:signature,mismatches:verification?.mismatches||[]
+        });
+        return false;
+      }
+      const committed=Object.freeze({...vm,committedAtMs:now()});
+      state.lastSignature=signature;
+      state.committedViewModel=committed;
+      state.committedRevision=vm.revision;
+      state.loadingState=vm.rankingState;
+      if(committed.source!=="v263-optimistic")state.optimisticOperations.clear();
+      writeCache(committed);
+      state.subscribers.forEach(callback=>{try{callback(committed,context);}catch(_){}});
+      window.dispatchEvent(new CustomEvent("dashboard:state-committed",{detail:committed}));
+      return true;
+    };
+    state.commitInFlight=perform();
+    try{return await state.commitInFlight;}finally{state.commitInFlight=null;}
   }
 
   async function collectSources(ctx,reason,version,requestId){
     const weeklyEngine=window.ExploraWeeklyEngine,performanceEngine=window.ExploraPerformanceEngine,coordinator=window.ExploraDashboardRealtimeCoordinator;
-    const weeklyTask=weeklyEngine?.getDriverWeeklyFinancialSnapshot?.(ctx.uid,ctx.weeklyPeriodId,{force:true,refreshInBackground:false,reason:`v262:${reason}`})||weeklyEngine?.getDriverWeeklySnapshot?.(ctx.uid,ctx.weeklyPeriodId,{force:true,reason:`v262:${reason}`})||Promise.resolve(null);
-    const performanceTask=performanceEngine?.refresh?.({force:true,reason:`v262:${reason}`})||Promise.resolve(null);
-    const coordinatorTask=coordinator?.ensure?.(`v262:${reason}`,{force:true})||Promise.resolve(null);
+    const weeklyTask=weeklyEngine?.getDriverWeeklyFinancialSnapshot?.(ctx.uid,ctx.weeklyPeriodId,{force:true,refreshInBackground:false,reason:`v263:${reason}`})||weeklyEngine?.getDriverWeeklySnapshot?.(ctx.uid,ctx.weeklyPeriodId,{force:true,reason:`v263:${reason}`})||Promise.resolve(null);
+    const performanceTask=performanceEngine?.refresh?.({force:true,reason:`v263:${reason}`})||Promise.resolve(null);
+    const coordinatorTask=coordinator?.ensure?.(`v263:${reason}`,{force:true})||Promise.resolve(null);
     const loanTask=window.getExploreLoanSnapshot?.(ctx.uid,{force:true})||Promise.resolve(null);
     const settled=await Promise.allSettled([weeklyTask,performanceTask,coordinatorTask,loanTask]);
     const [weeklyResult,,coordinatorResult,loanResult]=settled;
@@ -23026,19 +23111,20 @@ window.ExploraActions["admin-launch"] = openLaunch;
     const weeklyComplete=Boolean(snapshot&&Object.keys(snapshot).length&&(snapshot.grossBilling!=null||snapshot.totalFacturado!=null));
     const profileComplete=Boolean(ctx.uid&&ctx.role&&!isAdminRole(ctx.role));
     const performanceComplete=Boolean(canonical.goalConfigVersion);
-    const completeness=profileComplete&&weeklyComplete&&performanceComplete&&rankingComplete&&loanComplete;
+    const financialComplete=weeklyComplete&&(snapshot.totalExpenses!=null||snapshot.gastos!=null)&&(snapshot.serviceCount!=null||snapshot.cantidadCobros!=null||snapshot.billingCount!=null)&&(snapshot.expenseCount!=null||snapshot.cantidadGastos!=null);
+    const completeness=profileComplete&&financialComplete&&performanceComplete&&rankingComplete&&loanComplete;
     const previous=state.committedViewModel;
     const availableBenefit=loanComplete?num(loan.availableBenefit??loan.benefitAvailable):num(previous?.availableBenefit);
     return{
       schemaVersion:SCHEMA_VERSION,uid:ctx.uid,role:ctx.role,weeklyPeriodId:ctx.weeklyPeriodId,cycleId:String(loan.cycleId||ctx.cycleId),
       generationId:state.generationId,mutationVersion:state.mutationVersion,revision,sourceRevision:num(snapshot.snapshotRevision??snapshot.revision),
-      grossBilling,totalExpenses:num(snapshot.totalExpenses??snapshot.gastos),serviceCount:num(snapshot.serviceCount??snapshot.cantidadCobros??snapshot.billingCount),expenseCount:num(snapshot.expenseCount??snapshot.cantidadGastos),
+      grossBilling:weeklyComplete?grossBilling:num(previous?.grossBilling),totalExpenses:snapshot.totalExpenses!=null||snapshot.gastos!=null?num(snapshot.totalExpenses??snapshot.gastos):num(previous?.totalExpenses),serviceCount:snapshot.serviceCount!=null||snapshot.cantidadCobros!=null||snapshot.billingCount!=null?num(snapshot.serviceCount??snapshot.cantidadCobros??snapshot.billingCount):num(previous?.serviceCount),expenseCount:snapshot.expenseCount!=null||snapshot.cantidadGastos!=null?num(snapshot.expenseCount??snapshot.cantidadGastos):num(previous?.expenseCount),
       activeGoalId:canonical.activeGoalId,rewardPercent:canonical.rewardPercent,goalBenefit:canonical.goalBenefit,nextGoal:canonical.nextGoal,goalConfigVersion:canonical.goalConfigVersion,
       availableBenefit,eligibility:loan.eligibility||previous?.eligibility||{enoughWeeks:false,allBadges:false,noActiveLoan:true,eligible:false},activeWeeks:num(loan.activeWeeks??previous?.activeWeeks),badgesObtained:num(loan.badgesObtained??previous?.badgesObtained),badgeList:Array.isArray(loan.badgeList)?loan.badgeList:(previous?.badgeList||[]),activeLoan:loan.activeLoan||previous?.activeLoan||null,
       rankingRows,currentDriver:rankingRows.find(row=>row.uid===ctx.uid)||perfState.current||null,
-      profileValidationComplete:profileComplete,weeklyComplete,performanceComplete,rankingComplete,benefitComplete:loanComplete,
+      profileValidationComplete:profileComplete,weeklyComplete,financialComplete,performanceComplete,rankingComplete,benefitComplete:loanComplete,
       completeness,loading:false,rankingState:rankingRows.length?"ready":rankingComplete?"empty-confirmed":previous?.rankingRows?.length?"stale-visible":"loading",
-      source:String(snapshot.source||snapshot.realtimeReason||"v262-consolidated"),sourceRevisions:{weekly:sourceMeta("weekly",snapshot,500),performance:sourceMeta("performance",perfState,450),ranking:sourceMeta("ranking",perfState,450),loan:sourceMeta("loan",loan,450)},
+      source:String(snapshot.source||snapshot.realtimeReason||"v263-consolidated"),sourceRevisions:{weekly:sourceMeta("weekly",snapshot,500),performance:sourceMeta("performance",perfState,450),ranking:sourceMeta("ranking",perfState,450),loan:sourceMeta("loan",loan,450)},
       calculatedAtMs:now(),committedAtMs:0,reason
     };
   }
@@ -23059,7 +23145,9 @@ window.ExploraActions["admin-launch"] = openLaunch;
         const revision=Math.max(state.committedRevision+1,num(sources.bestWeekly?.snapshotRevision),requestId);
         const vm=buildViewModel(ctx,sources,revision,reason);
         if(vm.rankingState==="loading"&&state.committedViewModel?.rankingRows?.length){vm.rankingRows=state.committedViewModel.rankingRows;vm.rankingState="stale-visible";}
-        commitDashboardViewModel(vm,{reason,requestId});state.rebuildCompletedAtVersion=startedVersion;return vm;
+        const committed=await commitDashboardViewModel(vm,{reason,requestId});
+        if(committed)state.rebuildCompletedAtVersion=startedVersion;else state.rebuildNeeded=true;
+        return committed?vm:state.committedViewModel;
       }catch(error){
         state.lastError=error;state.loadingState=state.committedViewModel?.rankingRows?.length?"stale-visible":"error";
         diagnostic("DASHBOARD_REBUILD_FAILED",{message:error?.message||String(error),stack:error?.stack||"—"});
@@ -23089,12 +23177,34 @@ window.ExploraActions["admin-launch"] = openLaunch;
   function initialize(){
     installWriterGuards();purgeOldCaches();
     const ctx=session();const cached=ctx.uid&&ctx.weeklyPeriodId?readCache(ctx):null;
-    if(cached){state.committedRevision=num(cached.revision);state.committedViewModel={...cached,rankingState:"stale-visible"};commitDashboardViewModel(state.committedViewModel,{reason:"cache-stale-visible"});}
+    if(cached){state.committedRevision=num(cached.revision);state.committedViewModel={...cached,rankingState:"stale-visible"};void commitDashboardViewModel(state.committedViewModel,{reason:"cache-stale-visible"});}
     return queueDashboardInvalidation("initialize",{mutation:false});
   }
   function getState(){return{...state,pendingReasons:[...state.pendingReasons],subscribers:state.subscribers.size};}
   function subscribe(callback){if(typeof callback!=="function")return()=>{};state.subscribers.add(callback);return()=>state.subscribers.delete(callback);}
   function destroy(){state.destroyed=true;state.subscribers.clear();state.pendingReasons.clear();}
+
+  function extractMutationOperation(detail,kind){
+    const source=detail?.original||detail||{};
+    const amount=num(source.amount??source.monto??source.total??source.value);
+    const operationId=String(source.operationId||source.billingId||source.expenseId||source.documentId||source.id||"").trim();
+    if(!amount||!operationId||state.confirmedOperationIds.has(operationId)||state.optimisticOperations.has(operationId))return null;
+    return{operationId,kind,amount,uid:String(source.uid||source.driverUid||state.uid),weeklyPeriodId:String(source.weeklyPeriodId||state.weeklyPeriodId),at:now()};
+  }
+
+  async function applyOptimisticOperation(operation){
+    const previous=state.committedViewModel;
+    if(!previous||!operation||operation.uid&&operation.uid!==previous.uid||operation.weeklyPeriodId&&operation.weeklyPeriodId!==previous.weeklyPeriodId)return false;
+    state.optimisticOperations.set(operation.operationId,operation);
+    const grossBilling=operation.kind==="billing"?num(previous.grossBilling)+operation.amount:num(previous.grossBilling);
+    const totalExpenses=operation.kind==="expense"?num(previous.totalExpenses)+operation.amount:num(previous.totalExpenses);
+    const perf=canonicalPerformance(grossBilling);
+    const vm={...previous,revision:Math.max(state.committedRevision+1,state.renderRequestId+1),mutationVersion:state.mutationVersion,
+      grossBilling,totalExpenses,serviceCount:num(previous.serviceCount)+(operation.kind==="billing"?1:0),expenseCount:num(previous.expenseCount)+(operation.kind==="expense"?1:0),
+      activeGoalId:perf.activeGoalId,rewardPercent:perf.rewardPercent,goalBenefit:perf.goalBenefit,nextGoal:perf.nextGoal,goalConfigVersion:perf.goalConfigVersion,
+      financialComplete:true,source:"v263-optimistic",reason:`optimistic:${operation.kind}:${operation.operationId}`,calculatedAtMs:now(),committedAtMs:0};
+    return commitDashboardViewModel(vm,{reason:vm.reason,operationId:operation.operationId,optimistic:true});
+  }
 
   const eventMap={
     "explora:session-opened":"dashboard:session-ready","explora:cobro-registrado":"dashboard:billing-mutated","explora:billing-created":"dashboard:billing-mutated",
@@ -23104,12 +23214,17 @@ window.ExploraActions["admin-launch"] = openLaunch;
   };
   const canonicalMutationEvents=new Set(["dashboard:billing-mutated","dashboard:expense-mutated","dashboard:derivation-mutated","dashboard:loan-mutated","dashboard:period-changed","dashboard:reset"]);
   Object.entries(eventMap).forEach(([legacy,canonical])=>window.addEventListener(legacy,event=>window.dispatchEvent(new CustomEvent(canonical,{detail:{legacy,original:event.detail||{}}}))));
-  ["dashboard:session-ready","dashboard:billing-mutated","dashboard:expense-mutated","dashboard:derivation-mutated","dashboard:loan-mutated","dashboard:period-changed","dashboard:reset"].forEach(name=>window.addEventListener(name,()=>queueDashboardInvalidation(name,{mutation:canonicalMutationEvents.has(name)})));
+  ["dashboard:session-ready","dashboard:billing-mutated","dashboard:expense-mutated","dashboard:derivation-mutated","dashboard:loan-mutated","dashboard:period-changed","dashboard:reset"].forEach(name=>window.addEventListener(name,event=>{
+    const isMutation=canonicalMutationEvents.has(name);
+    const queued=queueDashboardInvalidation(name,{mutation:isMutation});
+    if(name==="dashboard:billing-mutated"||name==="dashboard:expense-mutated"){const op=extractMutationOperation(event.detail,name.includes("billing")?"billing":"expense");if(op)void applyOptimisticOperation(op);}
+    return queued;
+  }));
   window.addEventListener("explora:weekly-summary",()=>queueDashboardInvalidation("weekly-summary",{mutation:false}));
   window.addEventListener("explora:performance-updated",()=>queueDashboardInvalidation("performance-updated",{mutation:false}));
   document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")queueDashboardInvalidation("visibilitychange",{mutation:false});});
 
-  window.ExploraDashboardStateEngine=Object.freeze({VERSION,SCHEMA_VERSION,initialize,invalidate,rebuild,commit:commitDashboardViewModel,getState,subscribe,destroy,queueDashboardInvalidation,calculateCanonicalPerformance:canonicalPerformance,selectBestSource,validateDashboardConsistency:validate});
+  window.ExploraDashboardStateEngine=Object.freeze({VERSION,SCHEMA_VERSION,initialize,invalidate,rebuild,commit:commitDashboardViewModel,getState,subscribe,destroy,queueDashboardInvalidation,calculateCanonicalPerformance:canonicalPerformance,selectBestSource,validateDashboardConsistency:validate,verifyDashboardFinancialDom});
   window.queueDashboardInvalidation=queueDashboardInvalidation;
   window.ensureDashboardReady=options=>queueDashboardInvalidation(options?.reason||"compat-ensure",{mutation:false});
   window.applyUnifiedBenefitSnapshot=()=>state.committedViewModel;
