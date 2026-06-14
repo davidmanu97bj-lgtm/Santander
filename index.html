@@ -2,12 +2,12 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="explora-version" content="v258-admin-storage-reset-permissions">
+  <meta name="explora-version" content="v259-storage-list-permission-diagnostic">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>EXPLORA — Dashboard v258 · Reinicio Storage seguro y reintentable</title>
+  <title>EXPLORA — Dashboard v259 · Diagnóstico de permisos list en Storage</title>
 
   <style>
     :root{
@@ -3337,6 +3337,23 @@
     .launch-confirm-card[data-status="warning"] .launch-danger{background:linear-gradient(180deg,#f5cf75,#d99b25);color:#151008}
     .launch-confirm-card[data-status="error"] .launch-danger{background:rgba(255,255,255,.08);color:#fff}
 
+
+    .storage-permission-diagnostic{margin-top:13px;border:1px solid rgba(105,184,255,.35);border-radius:17px;background:linear-gradient(180deg,rgba(20,48,78,.30),rgba(7,14,24,.92));overflow:hidden}
+    .storage-permission-diagnostic[hidden]{display:none!important}
+    .storage-permission-diagnostic header{padding:13px 14px;border-bottom:1px solid rgba(255,255,255,.08)}
+    .storage-permission-diagnostic header strong{display:block;color:#9fd4ff;font-size:12px;letter-spacing:.05em}
+    .storage-permission-diagnostic header small{display:block;margin-top:4px;color:rgba(255,255,255,.62);font-size:10px;line-height:1.35}
+    .storage-permission-diagnostic pre{margin:0;padding:12px 14px;color:#f2f6fa;font:650 10.5px/1.48 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:250px;overflow:auto}
+    .storage-permission-route-results{display:grid;gap:7px;padding:0 14px 12px}
+    .storage-permission-route{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 10px;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:rgba(255,255,255,.035)}
+    .storage-permission-route span{min-width:0;color:#fff;font-size:12px;font-weight:800;overflow-wrap:anywhere}
+    .storage-permission-route b{font-size:10px;letter-spacing:.035em}
+    .storage-permission-route[data-state="AUTHORIZED"] b,.storage-permission-route[data-state="EMPTY"] b{color:#8ff0b2}
+    .storage-permission-route[data-state="LIST_PERMISSION_DENIED"] b,.storage-permission-route[data-state="ERROR"] b{color:#ffb2b2}
+    .storage-permission-actions{display:grid;grid-template-columns:1.2fr .8fr;gap:8px;padding:0 14px 14px}
+    .storage-permission-actions button{min-height:44px;border-radius:13px;border:1px solid rgba(105,184,255,.38);background:rgba(105,184,255,.11);color:#a8d8ff;font:inherit;font-size:11px;font-weight:950}
+    .storage-permission-actions button:last-child{border-color:rgba(245,185,66,.36);background:rgba(245,185,66,.09);color:#f5cf75}
+    @media(max-width:360px){.storage-permission-actions{grid-template-columns:1fr}}
     @media (max-width:390px){
       .weekly-closure-modal{width:min(100%,520px);max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 28px);overflow-y:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--ex-border);border-radius:var(--ex-card-radius);background:var(--ex-panel);color:#fff;box-shadow:0 30px 84px rgba(0,0,0,.62)}
       .closure-simple-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;min-height:44px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.06)}
@@ -6529,7 +6546,16 @@
       </div>
       <div id="launchResetDetails" class="launch-reset-details" hidden></div>
       <div id="launchConfirmMessage" class="admin-shared-status" role="status" aria-live="polite"></div>
-      <button id="launchStorageRetryBtn" type="button" class="launch-storage-retry" hidden>REINTENTAR LIMPIEZA DE STORAGE</button>
+      <section id="storagePermissionDiagnostic" class="storage-permission-diagnostic" hidden aria-live="polite">
+        <header><div><strong>DIAGNÓSTICO DE AUTORIZACIÓN STORAGE</strong><small>Visible exclusivamente para Admin. No muestra tokens completos.</small></div></header>
+        <pre id="storagePermissionDiagnosticText">Sin ejecutar.</pre>
+        <div id="storagePermissionRouteResults" class="storage-permission-route-results"></div>
+        <div class="storage-permission-actions">
+          <button id="storagePermissionTestBtn" type="button">PROBAR PERMISOS STORAGE</button>
+          <button id="storagePermissionCopyBtn" type="button">COPIAR INFORME</button>
+        </div>
+      </section>
+      <button id="launchStorageRetryBtn" type="button" class="launch-storage-retry" hidden disabled>REINTENTAR LIMPIEZA DE STORAGE</button>
       <div id="launchConfirmActions" class="launch-confirm-actions">
         <button id="launchCancelBtn" type="button" class="launch-cancel">CANCELAR</button>
         <button id="launchExecuteBtn" type="button" class="launch-danger" data-mode="execute" disabled>CONFIRMAR REINICIO TOTAL</button>
@@ -21372,8 +21398,8 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
   </script>
 
 
-<!-- EXPLORA v258 · ADMIN → LANZAR APP · manifiesto Storage, borrado exacto y reintento seguro -->
-<script type="module" id="exploraOperationalResetV258">
+<!-- EXPLORA v259 · ADMIN → diagnóstico de identidad, proyecto, bucket y permiso list antes del reintento Storage -->
+<script type="module" id="exploraOperationalResetV259">
 import {
   collection, query, orderBy, documentId, limit, startAfter, where,
   getDocs, getCountFromServer, doc, getDoc, setDoc, writeBatch,
@@ -21389,7 +21415,7 @@ const auth = F.auth;
 const storage = F.storage;
 const $ = id => document.getElementById(id);
 
-const VERSION = "v258-admin-storage-reset-permissions";
+const VERSION = "v259-storage-list-permission-diagnostic";
 const FULL_RESET_PHRASE = "LANZAR EXPLORA";
 const STORAGE_RETRY_PHRASE = "REINTENTAR STORAGE";
 const LEGACY_RESET_ID = "reset_1781403245159_2LziyTTd";
@@ -21466,7 +21492,10 @@ const state = {
   manifest:new Map(),
   storageResults:[],
   storageStats:{discovered:0,indexed:0,listed:0,deleted:0,notFound:0,listDenied:0,deleteDenied:0,protected:0,unknown:0,failed:0,skippedNewer:0},
-  retryCandidate:null
+  retryCandidate:null,
+  storagePermissionTestPassed:false,
+  storagePermissionTest:null,
+  adminIdentityDiagnostic:null
 };
 
 const role = value => String(value || "").trim().toLowerCase();
@@ -21636,17 +21665,35 @@ async function getClaims(user) {
 }
 
 async function readProtectedAdminRecord(uid) {
-  for (const name of ["administradores", "admins", "usuarios"]) {
+  const session = window.ExploraSession || {};
+  const candidates = [];
+  const add = (collectionName, documentId, source) => {
+    const collection = String(collectionName || "").trim();
+    const id = String(documentId || "").trim();
+    if (!collection || !id) return;
+    const key = `${collection}/${id}`;
+    if (!candidates.some(item => item.key === key)) candidates.push({key, collectionName:collection, documentId:id, source});
+  };
+  add(session.profileCollection || session.profileRef?.parent?.id, session.profileDocumentId || session.driverId, "ExploraSession");
+  for (const name of ["administradores", "admins", "usuarios", "choferes"]) add(name, uid, "uid-direct");
+
+  const inspected = [];
+  for (const candidate of candidates) {
     try {
-      const snap = await getDoc(doc(db, name, uid));
-      if (!snap.exists()) continue;
+      const snap = await getDoc(doc(db, candidate.collectionName, candidate.documentId));
+      if (!snap.exists()) { inspected.push({...candidate, exists:false}); continue; }
       const data = snap.data() || {};
-      const detectedRole = role(data.role || data.rol || data.tipo || data.tipoUsuario);
-      const active = !(data.active === false || data.activo === false || role(data.estado) === "inactivo" || data.disabled === true || data.deleted === true);
-      if (active && ADMIN_ROLES.has(detectedRole)) return {collectionName:name, data, role:detectedRole};
-    } catch (_) {}
+      const detectedRole = role(data.role || data.rol || data.tipo || data.tipoUsuario || data.userRole || data.profileType);
+      const active = !(data.active === false || data.activo === false || role(data.estado) === "inactivo" || data.enabled === false || data.disabled === true || data.deleted === true);
+      const adminFlag = data.isAdmin === true || data.admin === true;
+      const valid = active && (ADMIN_ROLES.has(detectedRole) || adminFlag);
+      inspected.push({...candidate, exists:true, detectedRole, active, adminFlag, valid, fields:Object.keys(data).filter(k => ["role","rol","tipo","tipoUsuario","userRole","profileType","isAdmin","admin","active","activo","enabled","disabled","estado"].includes(k))});
+      if (valid) return {collectionName:candidate.collectionName, documentId:candidate.documentId, data, role:detectedRole || (adminFlag ? "admin" : ""), source:candidate.source, inspected};
+    } catch (error) {
+      inspected.push({...candidate, exists:null, errorCode:String(error?.code || "READ_FAILED")});
+    }
   }
-  return null;
+  return {valid:false, inspected};
 }
 
 async function readVerifiedAdmin() {
@@ -21656,18 +21703,129 @@ async function readVerifiedAdmin() {
   const claimRole = role(claims.role || claims.rol || claims.tipo);
   const claimAdmin = claims.admin === true || ADMIN_ROLES.has(claimRole);
   const protectedRecord = await readProtectedAdminRecord(user.uid);
-  const sessionRole = role(window.ExploraSession?.role || window.ExploraSession?.profile?.role || window.ExploraSession?.profile?.rol);
+  const sessionRole = role(window.ExploraSession?.role || window.ExploraSession?.profile?.role || window.ExploraSession?.profile?.rol || window.ExploraSession?.profile?.tipoUsuario);
   const uidAllowed = ADMIN_UIDS.has(user.uid);
-  if (!uidAllowed || !(claimAdmin || protectedRecord || ADMIN_ROLES.has(sessionRole))) {
+  const protectedRecordValid = Boolean(protectedRecord && protectedRecord.valid !== false && protectedRecord.collectionName);
+  if (!uidAllowed || !(claimAdmin || protectedRecordValid || ADMIN_ROLES.has(sessionRole))) {
     throw resetError("VALIDATE_ADMIN", "ADMIN_REQUIRED", "El rol Admin no pudo confirmarse con UID, token o documento protegido.", null, {
       uid:user.uid,
       uidAllowed,
       sessionRole,
       claimKeys:Object.keys(claims).filter(key => ["admin", "role", "rol", "tipo"].includes(key)),
-      protectedRecord:protectedRecord?.collectionName || ""
+      protectedRecord:protectedRecordValid ? `${protectedRecord.collectionName}/${protectedRecord.documentId || user.uid}` : "",
+      inspectedAdminPaths:protectedRecord?.inspected || []
     });
   }
-  return {uid:user.uid, claims, claimAdmin, protectedRecord, sessionRole};
+  return {uid:user.uid, email:user.email || "", claims, claimAdmin, protectedRecord, protectedRecordValid, sessionRole, uidAllowed};
+}
+
+
+function firebaseProjectDiagnostic() {
+  const appOptions = storage?.app?.options || auth?.app?.options || {};
+  const configured = window.ExploraFirebase?.app?.options || appOptions;
+  return {
+    projectId:String(configured?.projectId || appOptions?.projectId || ""),
+    storageBucket:String(configured?.storageBucket || appOptions?.storageBucket || ""),
+    appId:String(configured?.appId || appOptions?.appId || "")
+  };
+}
+
+function safeClaimSummary(claims = {}) {
+  const allowed = ["admin", "role", "rol", "tipo", "isAdmin"];
+  const out = {};
+  for (const key of allowed) if (Object.prototype.hasOwnProperty.call(claims, key)) out[key] = claims[key];
+  return out;
+}
+
+function renderStoragePermissionDiagnostic(report) {
+  state.storagePermissionTest = report || null;
+  state.storagePermissionTestPassed = Boolean(report?.allAuthorized);
+  const box = $("storagePermissionDiagnostic");
+  const textNode = $("storagePermissionDiagnosticText");
+  const routesNode = $("storagePermissionRouteResults");
+  if (box) box.hidden = false;
+  if (textNode) textNode.textContent = report?.text || "Sin diagnóstico.";
+  if (routesNode) routesNode.innerHTML = (report?.routes || []).map(item => `<div class="storage-permission-route" data-state="${item.state}"><span>${item.path}</span><b>${item.state}</b></div>`).join("");
+  const retry = $("launchStorageRetryBtn");
+  if (retry) retry.disabled = !state.storagePermissionTestPassed || state.busy;
+  if ($("launchConfirmMessage")) {
+    $("launchConfirmMessage").textContent = state.storagePermissionTestPassed
+      ? "Las cuatro raíces permiten list. Ya podés reintentar exclusivamente Storage."
+      : "El reintento permanece bloqueado hasta que las cuatro raíces autoricen list.";
+  }
+}
+
+async function runStoragePermissionDiagnostic() {
+  const button = $("storagePermissionTestBtn");
+  if (button) { button.disabled = true; button.textContent = "PROBANDO…"; }
+  state.storagePermissionTestPassed = false;
+  try {
+    const admin = await readVerifiedAdmin();
+    const project = firebaseProjectDiagnostic();
+    const session = window.ExploraSession || {};
+    const expectedUid = [...ADMIN_UIDS][0] || "";
+    const routes = [];
+    for (const root of STORAGE_OPERATIONAL_ROOTS) {
+      try {
+        const result = await listStorage(storageRef(storage, root), {maxResults:1});
+        routes.push({path:root, state:(result.items.length || result.prefixes.length) ? "AUTHORIZED" : "EMPTY", items:result.items.length, prefixes:result.prefixes.length});
+      } catch (error) {
+        const code = String(error?.code || "");
+        routes.push({path:root, state:code === "storage/unauthorized" ? "LIST_PERMISSION_DENIED" : "ERROR", code:code || "UNKNOWN", message:String(error?.message || error)});
+      }
+    }
+    const direct = admin.protectedRecord;
+    const claims = safeClaimSummary(admin.claims);
+    const allAuthorized = routes.every(item => item.state === "AUTHORIZED" || item.state === "EMPTY");
+    const uidMatches = admin.uid === expectedUid;
+    const expectedProjectId = "explora-control-operativo";
+    const expectedBucket = "explora-control-operativo.firebasestorage.app";
+    const projectMatches = project.projectId === expectedProjectId;
+    const bucketMatches = project.storageBucket === expectedBucket;
+    const lines = [
+      "EXPLORA · STORAGE LIST PERMISSION DIAGNOSTIC v259",
+      `Timestamp: ${new Date().toISOString()}`,
+      `Auth UID: ${admin.uid || "—"}`,
+      `UID esperado: ${expectedUid || "—"}`,
+      `UID coincide: ${uidMatches ? "SÍ" : "NO"}`,
+      `Email autenticado: ${admin.email || "—"}`,
+      `Frontend role: ${admin.sessionRole || "—"}`,
+      `Custom Claims visibles: ${JSON.stringify(claims)}`,
+      `Documento Admin válido: ${admin.protectedRecordValid ? "SÍ" : "NO"}`,
+      `Documento Admin encontrado: ${direct?.collectionName ? `${direct.collectionName}/${direct.documentId || admin.uid}` : "—"}`,
+      `Origen documento: ${direct?.source || "—"}`,
+      `Campos Admin detectados: ${(direct?.inspected || []).map(x => `${x.collectionName}/${x.documentId}:${x.exists === true ? `exists role=${x.detectedRole || "—"} active=${x.active}` : x.exists === false ? "not-found" : x.errorCode || "unknown"}`).join(" | ") || "—"}`,
+      `projectId: ${project.projectId || "—"}`,
+      `projectId esperado: ${expectedProjectId}`,
+      `projectId coincide: ${projectMatches ? "SÍ" : "NO"}`,
+      `storageBucket: ${project.storageBucket || "—"}`,
+      `storageBucket esperado: ${expectedBucket}`,
+      `storageBucket coincide: ${bucketMatches ? "SÍ" : "NO"}`,
+      `appId: ${project.appId || "—"}`,
+      "",
+      ...routes.map(item => `${item.path}: ${item.state}${item.code ? ` · ${item.code}` : ""}`),
+      "",
+      `Resultado general: ${allAuthorized ? "AUTORIZADO" : "BLOQUEADO"}`,
+      !uidMatches ? "DIAGNÓSTICO: UID autenticado diferente del Admin esperado." : "",
+      !projectMatches || !bucketMatches ? "DIAGNÓSTICO: BUCKET INCORRECTO o proyecto distinto al esperado." : "",
+      uidMatches && projectMatches && bucketMatches && !allAuthorized ? "DIAGNÓSTICO: identidad/proyecto coinciden; revisar reglas publicadas, claim o documento Admin consultado por Storage Rules." : ""
+    ].filter(Boolean);
+    const report = {admin, project, routes, allAuthorized, uidMatches, projectMatches, bucketMatches, text:lines.join("\n")};
+    state.adminIdentityDiagnostic = report;
+    renderStoragePermissionDiagnostic(report);
+    return report;
+  } catch (error) {
+    const report = {routes:[], allAuthorized:false, text:`DIAGNÓSTICO FALLIDO\nCódigo: ${error?.code || "DIAGNOSTIC_FAILED"}\nMensaje: ${error?.message || error}\nUID: ${auth?.currentUser?.uid || "—"}\nTimestamp: ${new Date().toISOString()}`};
+    renderStoragePermissionDiagnostic(report);
+    return report;
+  } finally {
+    if (button) { button.disabled = false; button.textContent = "PROBAR PERMISOS STORAGE"; }
+  }
+}
+
+function copyStoragePermissionDiagnostic() {
+  const text = $("storagePermissionDiagnosticText")?.textContent || "Sin diagnóstico.";
+  navigator.clipboard?.writeText(text).then(() => window.showToast?.("Informe Storage copiado.")).catch(() => window.showToast?.("No se pudo copiar el informe."));
 }
 
 function renderPanel({
@@ -21690,7 +21848,9 @@ function renderPanel({
   const executeButton = $("launchExecuteBtn");
   if (executeButton) { executeButton.textContent = button; executeButton.dataset.mode = mode; }
   const retryButton = $("launchStorageRetryBtn");
-  if (retryButton) { retryButton.hidden = !showRetry; retryButton.textContent = retryLabel; retryButton.disabled = state.busy; }
+  if (retryButton) { retryButton.hidden = !showRetry; retryButton.textContent = retryLabel; retryButton.disabled = state.busy || !state.storagePermissionTestPassed; }
+  const diagnostic = $("storagePermissionDiagnostic");
+  if (diagnostic) diagnostic.hidden = !(showRetry || mode === "retry-storage");
   if ($("launchCancelBtn")) $("launchCancelBtn").hidden = !showCancel;
   $("launchConfirmActions")?.classList.toggle("is-single", !showCancel);
   for (const id of ["launchPhraseLabel", "launchConfirmPhrase", "launchSecondConfirmWrap"]) {
@@ -22363,7 +22523,7 @@ function resultText(result) {
   const docs = Object.values(state.deletedByCollection).reduce((sum, value) => sum + Number(value || 0), 0);
   const denied = state.storageStats.listDenied + state.storageStats.deleteDenied;
   const warningRows = [...state.failures, ...state.warnings];
-  return `resetId: ${state.targetResetId || state.resetId}\nModo: ${result.mode === "storage-retry" ? "REINTENTO EXCLUSIVO DE STORAGE" : "REINICIO OPERATIVO TOTAL"}\nEstado: ${result.result}\nDocumentos Firestore eliminados: ${docs}\nArchivos Storage eliminados: ${state.storageStats.deleted}\nArchivos Storage ya inexistentes: ${state.storageStats.notFound}\nRutas sin permiso: ${denied}\nPermisos de listado denegados: ${state.storageStats.listDenied}\nPermisos de borrado denegados: ${state.storageStats.deleteDenied}\nRutas protegidas omitidas: ${state.storageStats.protected}\nRutas desconocidas omitidas: ${state.storageStats.unknown}\n${storageSummaryMessage()}\nPerfiles revisados: ${state.profilesReviewed}\nPerfiles modificados: ${state.profilesModified}\nChoferes conservados: ${result.master.drivers}\nVehículos conservados: ${result.master.vehicles}\nCachés eliminadas: ${state.cacheEntries}\nErrores/advertencias: ${warningRows.length}\nDuración: ${result.durationMs} ms${warningRows.length ? `\n\nADVERTENCIAS\n${warningRows.map(item => `${item.stage} · ${item.operation || "—"} · ${item.path || item.collection || "—"} · ${item.code}: ${item.message}`).join("\n")}` : ""}${!storageCleanupComplete() ? "\n\nLos datos Firestore fueron reiniciados, pero la limpieza Storage no quedó completa. Publicá storage-v258.rules y ejecutá REINTENTAR LIMPIEZA DE STORAGE." : ""}`;
+  return `resetId: ${state.targetResetId || state.resetId}\nModo: ${result.mode === "storage-retry" ? "REINTENTO EXCLUSIVO DE STORAGE" : "REINICIO OPERATIVO TOTAL"}\nEstado: ${result.result}\nDocumentos Firestore eliminados: ${docs}\nArchivos Storage eliminados: ${state.storageStats.deleted}\nArchivos Storage ya inexistentes: ${state.storageStats.notFound}\nRutas sin permiso: ${denied}\nPermisos de listado denegados: ${state.storageStats.listDenied}\nPermisos de borrado denegados: ${state.storageStats.deleteDenied}\nRutas protegidas omitidas: ${state.storageStats.protected}\nRutas desconocidas omitidas: ${state.storageStats.unknown}\n${storageSummaryMessage()}\nPerfiles revisados: ${state.profilesReviewed}\nPerfiles modificados: ${state.profilesModified}\nChoferes conservados: ${result.master.drivers}\nVehículos conservados: ${result.master.vehicles}\nCachés eliminadas: ${state.cacheEntries}\nErrores/advertencias: ${warningRows.length}\nDuración: ${result.durationMs} ms${warningRows.length ? `\n\nADVERTENCIAS\n${warningRows.map(item => `${item.stage} · ${item.operation || "—"} · ${item.path || item.collection || "—"} · ${item.code}: ${item.message}`).join("\n")}` : ""}${!storageCleanupComplete() ? "\n\nLos datos Firestore fueron reiniciados, pero la limpieza Storage no quedó completa. Publicá storage-v259.rules y ejecutá REINTENTAR LIMPIEZA DE STORAGE." : ""}`;
 }
 
 async function openLaunch() {
@@ -22396,6 +22556,12 @@ async function openLaunch() {
 
 function prepareStorageRetry(resetId) {
   if (state.busy) return;
+  if (!state.storagePermissionTestPassed) {
+    const diagnostic = $("storagePermissionDiagnostic");
+    if (diagnostic) diagnostic.hidden = false;
+    if ($("launchConfirmMessage")) $("launchConfirmMessage").textContent = "Primero ejecutá PROBAR PERMISOS STORAGE. Las cuatro raíces deben quedar AUTORIZADO o VACÍA.";
+    return;
+  }
   state.targetResetId = String(resetId || state.retryCandidate?.resetId || LEGACY_RESET_ID);
   setConfirmationPhrase(STORAGE_RETRY_PHRASE, "CONFIRMAR REINTENTO DE STORAGE");
   renderPanel({
@@ -22429,6 +22595,12 @@ async function execute() {
   if ($("launchCancelBtn")) $("launchCancelBtn").hidden = true;
   if ($("launchStorageRetryBtn")) $("launchStorageRetryBtn").hidden = true;
   const retryMode = mode === "retry-storage";
+  if (retryMode && !state.storagePermissionTestPassed) {
+    state.busy = false;
+    if (button) button.disabled = true;
+    if ($("launchConfirmMessage")) $("launchConfirmMessage").textContent = "Reintento bloqueado: primero autorizá y probá las cuatro raíces Storage.";
+    return;
+  }
   renderPanel({
     status:"warning",
     title:retryMode ? "LIMPIEZA STORAGE EN CURSO" : "REINICIO OPERATIVO EN CURSO",
@@ -22460,7 +22632,7 @@ async function execute() {
   } catch (error) {
     const report = `ETAPA: ${error.resetStage || "UNKNOWN"}\nCÓDIGO: ${error.code || "RESET_FAILED"}\nMENSAJE: ${error.message}\nUID: ${auth?.currentUser?.uid || "—"}\nRESET ID: ${state.targetResetId || state.resetId || "—"}\nTIMESTAMP: ${new Date().toISOString()}\nSTACK: ${error.stack || "—"}`;
     renderPanel({status:"error", title:"OPERACIÓN FALLIDA O REANUDABLE", badge:"ERROR", copy:"<p>No se declaró éxito. Los datos maestros permanecen protegidos.</p>", details:report, message:`${error.code || "RESET_FAILED"} · ${error.message}`, button:"CERRAR", mode:"close", showCancel:false, showInputs:false, showRetry:Boolean(state.targetResetId || state.retryCandidate)});
-    window.ExploraPerformanceEngine?.showDiagnostic?.(error.resetStage || "OPERATIONAL_RESET", error.code || "RESET_FAILED", error, {eventType:"ERROR", functionName:"ExploraOperationalResetV258", resetId:state.targetResetId || state.resetId, uid:auth?.currentUser?.uid || "—"});
+    window.ExploraPerformanceEngine?.showDiagnostic?.(error.resetStage || "OPERATIONAL_RESET", error.code || "RESET_FAILED", error, {eventType:"ERROR", functionName:"ExploraOperationalResetV259", resetId:state.targetResetId || state.resetId, uid:auth?.currentUser?.uid || "—"});
   } finally {
     state.busy = false;
     if (button) button.disabled = false;
@@ -22483,6 +22655,8 @@ document.addEventListener("DOMContentLoaded", () => {
   $("launchCancelBtn")?.addEventListener("click", closeLaunch);
   $("launchExecuteBtn")?.addEventListener("click", execute);
   $("launchStorageRetryBtn")?.addEventListener("click", () => prepareStorageRetry(state.retryCandidate?.resetId || state.targetResetId || LEGACY_RESET_ID));
+  $("storagePermissionTestBtn")?.addEventListener("click", runStoragePermissionDiagnostic);
+  $("storagePermissionCopyBtn")?.addEventListener("click", copyStoragePermissionDiagnostic);
   $("launchConfirmPhrase")?.addEventListener("input", validateConfirm);
   $("launchSecondConfirm")?.addEventListener("change", validateConfirm);
   $("launchConfirmBackdrop")?.addEventListener("click", event => {
@@ -22490,13 +22664,14 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-window.ExploraStorageResetV258 = Object.freeze({
+window.ExploraStorageResetV259 = Object.freeze({
   isProtectedStoragePath,
   isOperationalStoragePath,
   normalizeStoragePath,
   deleteOperationalStorageObject,
   buildStorageManifest,
   retryStorageOnly:runStorageRetry,
+  testListPermissions:runStoragePermissionDiagnostic,
   getState:() => ({
     resetId:state.resetId,
     operationId:state.operationId,
@@ -22505,10 +22680,13 @@ window.ExploraStorageResetV258 = Object.freeze({
     profilesReviewed:state.profilesReviewed,
     profilesModified:state.profilesModified,
     failures:[...state.failures],
-    warnings:[...state.warnings]
+    warnings:[...state.warnings],
+    storagePermissionTestPassed:state.storagePermissionTestPassed,
+    storagePermissionTest:state.storagePermissionTest
   })
 });
-window.ExploraAdminTools = {...(window.ExploraAdminTools || {}), openLaunch, closeLaunch, retryStorageCleanup:prepareStorageRetry};
+window.ExploraStorageResetV258 = window.ExploraStorageResetV259;
+window.ExploraAdminTools = {...(window.ExploraAdminTools || {}), openLaunch, closeLaunch, retryStorageCleanup:prepareStorageRetry, testStoragePermissions:runStoragePermissionDiagnostic};
 window.ExploraActions = window.ExploraActions || {};
 window.ExploraActions["admin-launch"] = openLaunch;
 </script>
