@@ -2,12 +2,12 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="explora-version" content="v260-performance-snapshot-no-regression">
+  <meta name="explora-version" content="v268-global-ranking-real-percentages-independent-auth">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>EXPLORA — Dashboard v260 · Performance estable sin regresión</title>
+  <title>EXPLORA — Ranking global real independiente de la sesión</title>
 
   <style>
     :root{
@@ -5335,6 +5335,462 @@
 <style id="explora-operational-reset-v257-css">
 .launch-reset-confirm-label{display:block;margin:14px 0 7px;color:#dce1e6;font-size:13px;line-height:1.35}.launch-reset-confirm-label strong{color:#ffb0b0;letter-spacing:.05em}.launch-reset-second-confirm{display:flex;align-items:center;gap:10px;margin-top:11px;padding:11px 12px;border:1px solid rgba(255,255,255,.10);border-radius:14px;background:rgba(255,255,255,.035);color:#fff;font-size:12px;font-weight:900}.launch-reset-second-confirm input{width:21px!important;min-height:21px!important;height:21px;padding:0;flex:0 0 auto}.launch-reset-progress{display:grid;gap:8px;margin-top:14px;padding:12px;border:1px solid rgba(245,185,66,.22);border-radius:15px;background:rgba(245,185,66,.06)}.launch-reset-progress[hidden]{display:none!important}.launch-reset-progress-head{display:flex;justify-content:space-between;gap:10px;color:#f5cf75;font-size:12px}.launch-reset-progress-track{height:9px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}.launch-reset-progress-track i{display:block;width:0;height:100%;background:linear-gradient(90deg,#f5b942,#ffd36a);transition:width .18s ease}.launch-confirm-list--delete{border-color:rgba(255,103,103,.22);background:rgba(255,93,93,.055)}.launch-confirm-list--keep{border-color:rgba(98,223,145,.22);background:rgba(98,223,145,.05)}.launch-reset-details{max-height:240px;overflow:auto;-webkit-overflow-scrolling:touch}.launch-danger:disabled{opacity:.42;cursor:not-allowed}.launch-confirm-card[data-status="running"]{border-color:rgba(245,185,66,.5)}
 </style>
+
+  <style id="explora-goal-bubbles-symmetric-reference-css">
+    /* Única definición visual dominante para el carrusel de metas. */
+    :root{--explora-bottom-nav-height:clamp(198px,52vw,214px)}
+    .main-bottom-nav.performance-bottom-nav{
+      min-height:calc(var(--explora-bottom-nav-height) + env(safe-area-inset-bottom))!important;
+      padding:10px 8px calc(10px + env(safe-area-inset-bottom))!important;
+      overflow:hidden!important;
+    }
+    .driver-dashboard,.profile-screen,.new-service-screen,.expense-screen,.receipts-screen,.ranking-screen,.derivation-screen,.explore-loan-screen{
+      padding-bottom:calc(var(--explora-bottom-nav-height) + env(safe-area-inset-bottom) + 28px)!important;
+    }
+    .performance-goal-viewport{
+      height:clamp(178px,48vw,196px)!important;
+      overflow-x:auto!important;
+      overflow-y:hidden!important;
+      scroll-padding-inline:calc((100% - var(--goal-bubble-width,120px))/2)!important;
+      scroll-snap-type:x proximity!important;
+      -webkit-overflow-scrolling:touch!important;
+    }
+    .performance-goal-track{
+      --goal-bubble-width:clamp(112px,31vw,138px);
+      display:grid!important;
+      grid-auto-flow:column!important;
+      grid-auto-columns:var(--goal-bubble-width)!important;
+      gap:clamp(8px,2.4vw,12px)!important;
+      min-width:max-content!important;
+      width:max-content!important;
+      height:100%!important;
+      padding:0 2px!important;
+      align-items:stretch!important;
+    }
+    .performance-goal-bubble,.goal-bubble{
+      position:relative!important;
+      width:var(--goal-bubble-width)!important;
+      min-width:var(--goal-bubble-width)!important;
+      max-width:var(--goal-bubble-width)!important;
+      height:100%!important;
+      min-height:178px!important;
+      max-height:196px!important;
+      padding:14px 10px 12px!important;
+      border-radius:clamp(24px,7vw,30px)!important;
+      display:grid!important;
+      place-items:stretch!important;
+      overflow:hidden!important;
+      scroll-snap-align:center!important;
+      scroll-snap-stop:normal!important;
+      transform:none!important;
+      -webkit-transform:none!important;
+      animation:none!important;
+      isolation:isolate!important;
+    }
+    .goal-bubble-content{
+      position:relative;
+      z-index:2;
+      min-width:0;
+      height:100%;
+      display:grid;
+      grid-template-rows:minmax(16px,auto) minmax(42px,auto) minmax(30px,auto) minmax(48px,1fr);
+      align-items:center;
+      justify-items:center;
+      align-content:center;
+      gap:5px;
+      text-align:center;
+    }
+    .performance-goal-bubble em,.goal-bubble em{
+      align-self:end;
+      max-width:100%;
+      color:rgba(255,255,255,.84)!important;
+      font-size:clamp(10px,2.75vw,12px)!important;
+      line-height:1.1!important;
+      letter-spacing:.11em!important;
+      white-space:nowrap!important;
+    }
+    .performance-goal-bubble>strong,.goal-bubble>strong{display:none!important}
+    .goal-bubble-content>strong{
+      align-self:center;
+      color:#fff;
+      font-size:clamp(31px,8.7vw,40px);
+      line-height:1;
+      font-weight:950;
+      letter-spacing:-.035em;
+      white-space:nowrap;
+    }
+    .goal-bubble-status{
+      width:100%;
+      min-height:28px;
+      display:grid;
+      place-items:center;
+      color:rgba(255,255,255,.78);
+      font-size:clamp(10px,2.75vw,12px);
+      line-height:1.08;
+      font-weight:950;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      text-wrap:balance;
+    }
+    .goal-bubble-details{
+      width:100%;
+      min-width:0;
+      align-self:end;
+      display:grid;
+      place-items:center;
+      align-content:center;
+      gap:5px;
+      padding-top:6px;
+      border-top:1px solid rgba(255,255,255,.075);
+    }
+    .goal-bubble-value-label,.goal-bubble-current-row>span{
+      color:rgba(255,255,255,.78);
+      font-size:clamp(8px,2.25vw,10px);
+      line-height:1.08;
+      font-weight:950;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      white-space:nowrap;
+    }
+    .goal-bubble-value,.goal-bubble-current-row>b{
+      display:block;
+      max-width:100%;
+      color:#fff;
+      font-size:clamp(13px,3.65vw,17px);
+      line-height:1.05;
+      font-weight:950;
+      white-space:nowrap;
+      letter-spacing:-.015em;
+      font-variant-numeric:tabular-nums;
+    }
+    .goal-bubble-current-row{
+      width:100%;
+      min-width:0;
+      display:grid;
+      place-items:center;
+      gap:2px;
+    }
+    .performance-goal-bubble>small,.goal-bubble>small{display:none!important}
+    .goal-bubble-lock-layer{display:none!important}
+    .goal-bubble-lock-icon{
+      position:absolute!important;
+      z-index:5!important;
+      top:14px!important;
+      right:13px!important;
+      width:20px!important;
+      height:17px!important;
+      border:2px solid rgba(235,239,244,.86)!important;
+      border-radius:5px!important;
+      background:rgba(6,9,12,.54)!important;
+      box-shadow:0 4px 10px rgba(0,0,0,.28)!important;
+    }
+    .goal-bubble-lock-icon::before{left:3px!important;right:3px!important;top:-10px!important;height:9px!important;border-width:2px!important}
+    .goal-bubble-lock-icon::after{top:5px!important;height:6px!important}
+    .goal-bubble--unlocked{
+      border-color:rgba(91,224,144,.58)!important;
+      background:radial-gradient(circle at 18% 0%,rgba(80,220,128,.18),transparent 42%),linear-gradient(155deg,rgba(20,65,43,.96),rgba(7,21,14,.99))!important;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 0 18px rgba(63,210,120,.08),0 10px 24px rgba(0,0,0,.30)!important;
+    }
+    .goal-bubble--unlocked::after{
+      right:12px!important;top:11px!important;width:25px!important;height:25px!important;
+      border-color:rgba(112,232,161,.58)!important;background:rgba(37,118,73,.38)!important;color:#9cf0ba!important;font-size:14px!important;
+    }
+    .goal-bubble--unlocked .goal-bubble-status{color:#69e79b!important}
+    .goal-bubble--active{
+      z-index:3!important;
+      border:2px solid rgba(245,197,78,.88)!important;
+      background:radial-gradient(circle at 18% 0%,rgba(245,185,66,.17),transparent 42%),linear-gradient(155deg,rgba(63,48,17,.96),rgba(24,17,6,.99))!important;
+      color:#fff5cf!important;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 0 22px rgba(245,185,66,.20),0 10px 26px rgba(0,0,0,.34)!important;
+    }
+    .goal-bubble--active::before{opacity:.4!important}
+    .goal-bubble--active .goal-bubble-status{color:#f5c75d!important}
+    .goal-bubble--active .goal-bubble-details{border-top-color:rgba(245,197,78,.18)}
+    .goal-bubble--locked{
+      border-color:rgba(255,255,255,.13)!important;
+      background:linear-gradient(155deg,rgba(19,24,30,.96),rgba(5,8,12,.995))!important;
+      color:rgba(245,247,249,.44)!important;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.035),0 8px 20px rgba(0,0,0,.27)!important;
+    }
+    .goal-bubble--locked .goal-bubble-content{opacity:.46}
+    .goal-bubble--locked .goal-bubble-content>strong,.goal-bubble--locked .goal-bubble-value{color:rgba(235,239,244,.60)}
+    .goal-bubble--zero{border-color:rgba(183,146,255,.42)!important}
+    @media(max-width:340px){
+      .performance-goal-viewport{height:178px!important}
+      .performance-goal-track{--goal-bubble-width:112px!important;gap:8px!important}
+      .performance-goal-bubble,.goal-bubble{min-height:178px!important;padding:12px 8px 10px!important}
+      .goal-bubble-content{grid-template-rows:15px 38px 28px minmax(46px,1fr);gap:4px}
+      .goal-bubble-content>strong{font-size:30px}
+    }
+    @media(prefers-reduced-motion:reduce){.performance-goal-viewport{scroll-behavior:auto!important}}
+  </style>
+
+
+  <style id="explora-goal-bubbles-compact-css">
+    :root{
+      --explora-bottom-nav-height:clamp(116px,32vw,132px);
+      --goal-bubble-gap:clamp(3px,.9vw,5px);
+    }
+    .main-bottom-nav.performance-bottom-nav{
+      min-height:calc(var(--explora-bottom-nav-height) + env(safe-area-inset-bottom))!important;
+      padding:5px max(5px,env(safe-area-inset-left)) calc(5px + env(safe-area-inset-bottom)) max(5px,env(safe-area-inset-right))!important;
+      overflow:hidden!important;
+    }
+    .driver-dashboard,.profile-screen,.new-service-screen,.expense-screen,.receipts-screen,.ranking-screen,.derivation-screen,.explore-loan-screen{
+      padding-bottom:calc(var(--explora-bottom-nav-height) + env(safe-area-inset-bottom) + 24px)!important;
+    }
+    .performance-goal-viewport{
+      height:clamp(104px,29vw,118px)!important;
+      width:100%!important;
+      min-width:0!important;
+      overflow-x:auto!important;
+      overflow-y:hidden!important;
+      scroll-padding-inline:2px!important;
+      scroll-snap-type:x proximity!important;
+      overscroll-behavior-x:contain!important;
+      touch-action:pan-x pan-y!important;
+      -webkit-overflow-scrolling:touch!important;
+      scrollbar-width:none!important;
+      container-type:inline-size!important;
+    }
+    .performance-goal-viewport::-webkit-scrollbar{display:none!important}
+    .performance-goal-track{
+      --goal-bubble-width:clamp(56px,16.5cqw,72px);
+      display:grid!important;
+      grid-auto-flow:column!important;
+      grid-auto-columns:var(--goal-bubble-width)!important;
+      gap:var(--goal-bubble-gap)!important;
+      width:max-content!important;
+      min-width:max-content!important;
+      height:100%!important;
+      padding:1px!important;
+      margin:0!important;
+      align-items:stretch!important;
+    }
+    .performance-goal-bubble,.goal-bubble{
+      width:var(--goal-bubble-width)!important;
+      min-width:var(--goal-bubble-width)!important;
+      max-width:var(--goal-bubble-width)!important;
+      height:100%!important;
+      min-height:104px!important;
+      max-height:118px!important;
+      padding:6px 3px 5px!important;
+      border-width:1px!important;
+      border-radius:clamp(14px,4vw,18px)!important;
+      scroll-snap-align:start!important;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 5px 12px rgba(0,0,0,.24)!important;
+    }
+    .goal-bubble-content{
+      height:100%!important;
+      grid-template-rows:minmax(8px,auto) minmax(21px,auto) minmax(16px,auto) minmax(34px,1fr)!important;
+      gap:2px!important;
+      align-content:center!important;
+    }
+    .performance-goal-bubble em,.goal-bubble em{
+      font-size:clamp(6.2px,1.55cqw,7.3px)!important;
+      line-height:1.02!important;
+      letter-spacing:.055em!important;
+    }
+    .goal-bubble-content>strong{
+      font-size:clamp(18px,4.9cqw,23px)!important;
+      line-height:.96!important;
+    }
+    .goal-bubble-status{
+      min-height:14px!important;
+      padding:0 1px!important;
+      font-size:clamp(5.5px,1.42cqw,6.8px)!important;
+      line-height:1.03!important;
+      letter-spacing:.035em!important;
+      overflow-wrap:anywhere!important;
+      word-break:normal!important;
+    }
+    .goal-bubble-details{
+      gap:2px!important;
+      padding-top:3px!important;
+      border-top-width:1px!important;
+    }
+    .goal-bubble-value-label,.goal-bubble-current-row>span{
+      max-width:100%!important;
+      font-size:clamp(4.8px,1.22cqw,5.8px)!important;
+      line-height:1.02!important;
+      letter-spacing:.025em!important;
+      white-space:normal!important;
+      text-wrap:balance!important;
+    }
+    .goal-bubble-value,.goal-bubble-current-row>b{
+      max-width:100%!important;
+      font-size:clamp(7.2px,1.85cqw,9px)!important;
+      line-height:1.02!important;
+      letter-spacing:-.035em!important;
+      white-space:nowrap!important;
+    }
+    .goal-bubble-current-row{gap:1px!important}
+    .goal-bubble-lock-icon{
+      top:6px!important;
+      right:5px!important;
+      width:11px!important;
+      height:11px!important;
+      border-width:1.3px!important;
+      border-radius:3px!important;
+      box-shadow:0 2px 5px rgba(0,0,0,.25)!important;
+    }
+    .goal-bubble-lock-icon::before{
+      left:2px!important;right:2px!important;top:-6px!important;height:7px!important;border-width:1.3px!important;border-radius:6px 6px 0 0!important;
+    }
+    .goal-bubble-lock-icon::after{top:3px!important;width:1.5px!important;height:4px!important}
+    .goal-bubble--unlocked::after{
+      right:5px!important;top:5px!important;width:14px!important;height:14px!important;font-size:8px!important;border-width:1px!important;
+    }
+    .goal-bubble--active{
+      border-width:1.5px!important;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 0 12px rgba(245,185,66,.16),0 6px 15px rgba(0,0,0,.30)!important;
+    }
+    @media(max-width:340px){
+      :root{--explora-bottom-nav-height:112px;--goal-bubble-gap:3px}
+      .performance-goal-viewport{height:100px!important}
+      .performance-goal-track{--goal-bubble-width:clamp(52px,16.8cqw,58px)}
+      .performance-goal-bubble,.goal-bubble{min-height:100px!important;padding:5px 2px 4px!important;border-radius:13px!important}
+      .goal-bubble-content{grid-template-rows:7px 19px 15px minmax(32px,1fr)!important}
+      .goal-bubble-content>strong{font-size:17px!important}
+    }
+    @media(min-width:421px){
+      .performance-goal-track{--goal-bubble-width:clamp(64px,16cqw,74px)}
+    }
+  </style>
+
+
+  <style id="explora-goal-bubbles-five-visible-css">
+    /* Carrusel inferior: cinco metas completas por viewport, resto mediante scroll táctil. */
+    html,body,.driver-dashboard,.dashboard-shell-real{max-width:100%;overflow-x:hidden!important}
+    .main-bottom-nav.performance-bottom-nav{overflow:hidden!important}
+    .performance-goal-viewport{
+      --goal-bubble-gap:clamp(3px,.9vw,5px);
+      width:100%!important;
+      min-width:0!important;
+      max-width:100%!important;
+      overflow-x:auto!important;
+      overflow-y:hidden!important;
+      -webkit-overflow-scrolling:touch!important;
+      overscroll-behavior-x:contain!important;
+      touch-action:pan-x!important;
+      scrollbar-width:none!important;
+      scroll-snap-type:x proximity!important;
+      scroll-padding-inline:1px!important;
+      container-type:inline-size!important;
+    }
+    .performance-goal-viewport::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
+    .performance-goal-track{
+      --goal-bubble-width:calc((100cqw - 2px - (var(--goal-bubble-gap) * 4)) / 5);
+      display:flex!important;
+      flex-flow:row nowrap!important;
+      align-items:stretch!important;
+      gap:var(--goal-bubble-gap)!important;
+      width:max-content!important;
+      min-width:max-content!important;
+      max-width:none!important;
+      height:100%!important;
+      padding:1px!important;
+      margin:0!important;
+      overflow:visible!important;
+    }
+    .performance-goal-bubble,.goal-bubble{
+      flex:0 0 var(--goal-bubble-width)!important;
+      width:var(--goal-bubble-width)!important;
+      min-width:var(--goal-bubble-width)!important;
+      max-width:var(--goal-bubble-width)!important;
+      box-sizing:border-box!important;
+      scroll-snap-align:start!important;
+      scroll-snap-stop:normal!important;
+      touch-action:pan-x!important;
+    }
+    .goal-bubble-content{min-width:0!important;width:100%!important}
+    .goal-bubble-status,.goal-bubble-details,.goal-bubble-current-row{max-width:100%!important;min-width:0!important}
+    .goal-bubble-value,.goal-bubble-current-row>b{white-space:nowrap!important;text-overflow:clip!important;overflow:visible!important}
+    @media(max-width:340px){
+      .performance-goal-track{--goal-bubble-width:calc((100cqw - 2px - (var(--goal-bubble-gap) * 4)) / 5)!important}
+    }
+    @media(min-width:421px){
+      .performance-goal-track{--goal-bubble-width:calc((100cqw - 2px - (var(--goal-bubble-gap) * 4)) / 5)!important}
+    }
+  </style>
+
+  <style id="explora-goal-carousel-bottom-background-css">
+    /* Carrusel de metas compacto, fijado en la zona inferior y con fondo propio. */
+    .main-bottom-nav.performance-bottom-nav,
+    html.explora-ios-webview .main-bottom-nav.performance-bottom-nav,
+    html.explora-bottom-nav-safe-mode .main-bottom-nav.performance-bottom-nav{
+      position:fixed!important;
+      inset:auto 0 0 0!important;
+      bottom:0!important;
+      width:min(100%,520px)!important;
+      min-height:calc(var(--explora-bottom-nav-height,118px) + env(safe-area-inset-bottom))!important;
+      margin:0 auto!important;
+      padding:5px max(5px,env(safe-area-inset-right)) calc(5px + env(safe-area-inset-bottom)) max(5px,env(safe-area-inset-left))!important;
+      display:block!important;
+      overflow:hidden!important;
+      background-color:rgba(2,5,8,.99)!important;
+      background-image:linear-gradient(180deg,rgba(8,12,16,.94),rgba(2,5,8,.99))!important;
+      border:0!important;
+      border-top:1px solid rgba(255,255,255,.07)!important;
+      box-shadow:0 -10px 30px rgba(0,0,0,.30)!important;
+      -webkit-backdrop-filter:none!important;
+      backdrop-filter:none!important;
+      transform:none!important;
+      -webkit-transform:none!important;
+      z-index:2200!important;
+      isolation:isolate!important;
+    }
+    .main-bottom-nav.performance-bottom-nav::before,
+    .main-bottom-nav.performance-bottom-nav::after,
+    html.explora-ios-webview .main-bottom-nav.performance-bottom-nav::before,
+    html.explora-ios-webview .main-bottom-nav.performance-bottom-nav::after,
+    html.explora-bottom-nav-safe-mode .main-bottom-nav.performance-bottom-nav::before,
+    html.explora-bottom-nav-safe-mode .main-bottom-nav.performance-bottom-nav::after{
+      content:none!important;
+      display:none!important;
+    }
+    .performance-goal-viewport,
+    html.explora-ios-webview .performance-goal-viewport,
+    html.explora-bottom-nav-safe-mode .performance-goal-viewport{
+      position:relative!important;
+      z-index:2!important;
+      margin:0!important;
+      background:transparent!important;
+      border:0!important;
+      box-shadow:none!important;
+      -webkit-backdrop-filter:none!important;
+      backdrop-filter:none!important;
+    }
+    .performance-goal-track,
+    html.explora-ios-webview .performance-goal-track,
+    html.explora-bottom-nav-safe-mode .performance-goal-track{
+      position:relative!important;
+      z-index:2!important;
+      margin:0!important;
+      background:transparent!important;
+      border:0!important;
+      box-shadow:none!important;
+    }
+    .performance-goal-viewport::before,
+    .performance-goal-viewport::after,
+    .performance-goal-track::before,
+    .performance-goal-track::after{
+      content:none!important;
+      display:none!important;
+    }
+    body:not(.explora-shared-admin) .driver-dashboard{
+      padding-bottom:calc(var(--explora-bottom-nav-height,118px) + env(safe-area-inset-bottom) + 8px)!important;
+    }
+    @media(max-width:340px){
+      .main-bottom-nav.performance-bottom-nav,
+      html.explora-ios-webview .main-bottom-nav.performance-bottom-nav,
+      html.explora-bottom-nav-safe-mode .main-bottom-nav.performance-bottom-nav{
+        min-height:calc(var(--explora-bottom-nav-height,112px) + env(safe-area-inset-bottom))!important;
+        padding-top:4px!important;
+        padding-bottom:calc(4px + env(safe-area-inset-bottom))!important;
+      }
+    }
+  </style>
 </head>
 
 <body class="explora-auth-checking">
@@ -19507,8 +19963,11 @@ function measureGoalCarousel(){
   return runGoalStage("CSS_OVERFLOW_CHECK","DRIVER_GOAL_SCROLL_FAILED","measureGoalCarousel",()=>{
     const viewport=$("performanceGoalViewport"),track=$("performanceGoalTrack");if(!viewport||!track)return;
     const width=viewport.clientWidth;if(!(width>0))return;
-    const computed=getComputedStyle(track),gap=Math.max(0,parseFloat(computed.columnGap||computed.gap||"7")||7);
-    const bubbleWidth=Math.max(1,(width-gap*4)/5);
+    const computed=getComputedStyle(track);
+    const gap=Math.max(0,parseFloat(computed.columnGap||computed.gap||"0")||0);
+    const paddingLeft=Math.max(0,parseFloat(computed.paddingLeft||"0")||0);
+    const paddingRight=Math.max(0,parseFloat(computed.paddingRight||"0")||0);
+    const bubbleWidth=Math.max(0,(width-paddingLeft-paddingRight-(gap*4))/5);
     track.style.setProperty("--goal-bubble-width",`${bubbleWidth.toFixed(3)}px`);
     state.goalWindowStartLeft=goalWindowStartLeft(state.goalView);
   });
@@ -19614,8 +20073,33 @@ function canonicalGoalMetrics(grossBillingValue){
   return{grossBilling,reachedGoal,nextGoal,rewardPercent,benefitAmount,missing:nextGoal?Math.max(0,Number(nextGoal.amount||0)-grossBilling):0,progress:Math.min(100,grossBilling/MAX_BILLING*100)};
 }
 function normalizeBillingRankingRow(row={}){
-  const metrics=canonicalGoalMetrics(row.grossBilling??row.facturacion??row.totalBilling??0),uid=String(row.uid||row.driverUid||row.choferUid||row.simulationDriverUid||"").trim();
-  return{...row,uid:uid||String(row.profileId||"").trim(),name:String(row.name||row.driverName||row.nombre||"Chofer").trim()||"Chofer",grossBilling:metrics.grossBilling,reachedGoal:metrics.reachedGoal,nextGoal:metrics.nextGoal,rewardPercent:metrics.rewardPercent,activeGoalPercent:metrics.rewardPercent,goalPercent:metrics.rewardPercent,missing:metrics.missing,equivalent:metrics.benefitAmount,benefitAmount:metrics.benefitAmount,goalBenefit:metrics.benefitAmount,accruedGoalBenefit:metrics.benefitAmount,progress:metrics.progress};
+  const metrics=canonicalGoalMetrics(row.grossBilling??row.facturacion??row.totalBilling??0),uid=String(row.uid||row.driverUid||row.choferUid||row.simulationDriverUid||row.userId||row.choferId||row.profileId||"").trim();
+  const reachedAtMs=timestampMs(row.reachedAt||row.goalReachedAt||row.achievedAt||row.firstReachedAt||row.updatedAt||row.calculatedAt||row.createdAt)||Number(row.reachedAtMs||row.updatedAtMs||0);
+  return{...row,uid,name:String(row.name||row.driverName||row.nombre||"Chofer").trim()||"Chofer",grossBilling:metrics.grossBilling,serviceCount:Math.max(0,Number(row.serviceCount||row.billingCount||row.services||row.cantidadServicios||0)),reachedAtMs,updatedAtMs:Math.max(0,Number(row.updatedAtMs||reachedAtMs||0)),reachedGoal:metrics.reachedGoal,nextGoal:metrics.nextGoal,rewardPercent:metrics.rewardPercent,activeGoalPercent:metrics.rewardPercent,goalPercent:metrics.rewardPercent,missing:metrics.missing,equivalent:metrics.benefitAmount,benefitAmount:metrics.benefitAmount,goalBenefit:metrics.benefitAmount,accruedGoalBenefit:metrics.benefitAmount,progress:metrics.progress};
+}
+function normalizedRankingName(value){return String(value||"").trim().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("es-AR");}
+function compareBillingRanking(aSource={},bSource={}){
+  const a=normalizeBillingRankingRow(aSource),b=normalizeBillingRankingRow(bSource);
+  return Number(b.grossBilling||0)-Number(a.grossBilling||0)
+    || Number(b.rewardPercent||0)-Number(a.rewardPercent||0)
+    || ((Number(a.reachedAtMs||0)||Number.MAX_SAFE_INTEGER)-(Number(b.reachedAtMs||0)||Number.MAX_SAFE_INTEGER))
+    || normalizedRankingName(a.name).localeCompare(normalizedRankingName(b.name),"es",{sensitivity:"base"})
+    || String(a.uid||"").localeCompare(String(b.uid||""));
+}
+function compareDerivationRanking(a={},b={}){
+  return Number(b.derivedAmount||0)-Number(a.derivedAmount||0)
+    || Number(b.count||0)-Number(a.count||0)
+    || ((Number(a.reachedAtMs||a.updatedAtMs||0)||Number.MAX_SAFE_INTEGER)-(Number(b.reachedAtMs||b.updatedAtMs||0)||Number.MAX_SAFE_INTEGER))
+    || normalizedRankingName(a.name).localeCompare(normalizedRankingName(b.name),"es",{sensitivity:"base"})
+    || String(a.uid||"").localeCompare(String(b.uid||""));
+}
+function canonicalizeBillingRanking(rows=[]){
+  const merged=mergePublicRows((Array.isArray(rows)?rows:[]).filter(isEligibleRankingParticipant).map(normalizeBillingRankingRow),"uid","grossBilling");
+  merged.sort(compareBillingRanking);merged.forEach((row,index)=>row.position=index+1);return merged;
+}
+function canonicalizeDerivationRanking(rows=[]){
+  const merged=mergePublicRows((Array.isArray(rows)?rows:[]).filter(row=>row&&String(row.uid||"").trim()),"uid","derivedAmount");
+  merged.sort(compareDerivationRanking);merged.forEach((row,index)=>row.position=index+1);return merged;
 }
 function canonicalProfileUid(profile={}){
   return String(profile.uid||profile.authUid||profile.firebaseUid||profile.userId||profile.driverUid||profile.choferUid||profile.id||"").trim();
@@ -19708,9 +20192,8 @@ function buildEligibleRankingParticipants(rows=[],profilesData={},meta={}){
     existing.name=profileName(profile,uid);existing.avatar=profileAvatar(profile)||existing.avatar||"";existing.profileId=profile.id||uid;existing.isSimulated=existing.isSimulated===true||profile.isSimulated===true;existing.aliases=new Set(aliasesForProfile(profile,profile.id||uid));
   });
   const result=[...merged.values()].map(normalizeBillingRankingRow);
-  result.sort((a,b)=>Number(b.grossBilling||0)-Number(a.grossBilling||0)||Number(b.rewardPercent||0)-Number(a.rewardPercent||0)||String(a.name||"").localeCompare(String(b.name||""),"es",{sensitivity:"base"})||String(a.uid||"").localeCompare(String(b.uid||"")));
-  result.forEach((row,index)=>row.position=index+1);
-  return attachRankingMeta(result,{...meta,activeDriverCount:eligibleProfiles.length,expectedDriverCount:eligibleProfiles.length,publicSummaryComplete:result.length===eligibleProfiles.length,source:String(meta.source||"eligible-uid")});
+  const canonical=canonicalizeBillingRanking(result);
+  return attachRankingMeta(canonical,{...meta,activeDriverCount:eligibleProfiles.length,expectedDriverCount:eligibleProfiles.length,publicSummaryComplete:result.length===eligibleProfiles.length,source:String(meta.source||"eligible-uid")});
 }
 function zeroBillingRowFromProfile(profile={}){
   const uid=String(profile.uid||profile.authUid||profile.firebaseUid||profile.userId||profile.id||"").trim();
@@ -19790,7 +20273,7 @@ function restorePerformanceFastCache(cycle=cycleForPeriod(activeWeeklyPeriod()),
   if(derivations?.data?.rows)state.derivations=derivations.data.rows.map(row=>({...row}));
   state.currentDerivationLeader=state.derivations[0]||derivations?.data?.leader||null;
   if(goals?.data?.current&&isEligibleRankingParticipant(goals.data.current))state.current=hydrateRow(goals.data.current);
-  if(!state.current&&state.rows.length){const key=normalize(auth.currentUser.uid);state.current=state.rows.find(row=>normalize(row.uid)===key||row.aliases?.has?.(key))||state.rows[0];}
+  if(!state.current&&state.rows.length){const key=normalize(auth.currentUser.uid);state.current=state.rows.find(row=>normalize(row.uid)===key||row.aliases?.has?.(key))||null;}
   state.cycle=cycle;state.uid=auth.currentUser.uid;state.role=role();
   if(state.current){const cachedSnapshot=performanceSnapshotFromRow(state.current,{weeklyPeriodId:period.id,cycleId:cycle.id,updatedAtMs:Number(billing?.savedAt||direct?.savedAt||goals?.savedAt||0),generationId:state.performanceGeneration,requestId:state.refreshRequestId,source:"cache",sourcePriority:200,completeness:true,isConfirmed:true});if(!commitConfirmedPerformanceSnapshot(cachedSnapshot,{functionName:"restorePerformanceFastCache",trigger:"cache-restore",cacheKey:performanceRankingCacheKey(cycle,period)})){state.current=state.lastConfirmedSnapshot?normalizeBillingRankingRow({...state.current,grossBilling:state.lastConfirmedSnapshot.grossBilling}):state.current;}}
   state.goalView=safeGoalView(state.current?.grossBilling||0);state.loaded=Boolean(state.current||state.rows.length||state.derivations.length);state.loading=false;state.lastRefresh=Math.max(Number(billing?.savedAt||billingData?.createdAt||0),Number(derivations?.savedAt||0),Number(goals?.savedAt||0));state.cacheRestored=state.loaded;state.lastRankingContextKey=rankingContextKey(ctx);
@@ -19808,12 +20291,12 @@ function persistPerformanceFastCache(period=activeWeeklyPeriod(),cycle=state.cyc
 function publicPerformanceRow(data={},id=""){
   const uid=String(data.driverUid||data.uid||data.choferUid||data.simulationDriverUid||id||"").trim();
   if(!uid)return null;
-  return normalizeBillingRankingRow({uid,profileId:uid,name:String(data.driverName||data.name||data.nombre||uid||"Chofer"),avatar:String(data.avatar||data.driverAvatar||data.photoURL||""),grossBilling:Math.max(0,Number(data.grossBilling??data.facturacion??data.totalBilling??0)||0),serviceCount:Number(data.serviceCount||data.billingCount||data.services||0),aliases:new Set([normalize(uid),normalize(data.email)]),periodBilling:{},isSimulated:data.isSimulated===true,realServiceCount:Number(data.realServiceCount||data.realPaymentsCount||0),simulatedServiceCount:Number(data.simulatedServiceCount||data.simulatedPaymentsCount||0),updatedAtMs:timestampMs(data.updatedAt||data.calculatedAt||data.createdAt)});
+  return normalizeBillingRankingRow({uid,profileId:uid,name:String(data.driverName||data.choferName||data.nombreChofer||data.name||data.nombre||uid||"Chofer"),avatar:String(data.avatar||data.driverAvatar||data.photoURL||data.avatarUrl||""),grossBilling:Math.max(0,Number(data.grossBilling??data.totalFacturado??data.facturacionBruta??data.facturacion??data.totalBilling??data.totalIngresos??0)||0),serviceCount:Number(data.serviceCount||data.cantidadCobros||data.billingCount||data.services||data.cantidadServicios||0),aliases:new Set([normalize(uid),normalize(data.email)]),periodBilling:{},isSimulated:data.isSimulated===true,realServiceCount:Number(data.realServiceCount||data.realPaymentsCount||0),simulatedServiceCount:Number(data.simulatedServiceCount||data.simulatedPaymentsCount||0),updatedAtMs:timestampMs(data.updatedAt||data.calculatedAt||data.createdAt||data.lastChangeAt)});
 }
 function publicDerivationRow(data={},id=""){
   const uid=String(data.driverUid||data.uid||data.emisorUid||id||"").trim(),derivedAmount=Math.max(0,Number(data.derivedMoney??data.derivedAmountForEmitter??data.derivedAmount??data.totalDerivedMoney??0));
   if(!uid||!Number.isFinite(derivedAmount))return null;
-  return{uid,name:String(data.driverName||data.name||data.nombre||data.emisorName||"Chofer"),avatar:String(data.avatar||data.driverAvatar||data.photoURL||""),count:Math.max(0,Number(data.derivationCount||data.count||data.validDerivations||0)),derivedAmount,collaborationGenerated:Math.max(0,Number(data.collaborationGenerated??data.collaborationAmount??Math.round(derivedAmount*.10))),position:Number(data.derivationPosition||data.position||0),updatedAtMs:timestampMs(data.updatedAt||data.calculatedAt||data.createdAt)};
+  return{uid,name:String(data.driverName||data.name||data.nombre||data.emisorName||"Chofer"),avatar:String(data.avatar||data.driverAvatar||data.photoURL||""),count:Math.max(0,Number(data.derivationCount||data.count||data.validDerivations||0)),derivedAmount,collaborationGenerated:Math.max(0,Number(data.collaborationGenerated??data.collaborationAmount??Math.round(derivedAmount*.10))),position:Number(data.derivationPosition||data.position||0),reachedAtMs:timestampMs(data.reachedAt||data.firstReachedAt||data.completedAt||data.updatedAt||data.calculatedAt||data.createdAt),updatedAtMs:timestampMs(data.updatedAt||data.calculatedAt||data.createdAt)};
 }
 function summaryRowsFromDocument(data={}){
   const direct=[data.rows,data.drivers,data.ranking,data.items,data.entries].find(Array.isArray);
@@ -19842,8 +20325,8 @@ async function readPublicPerformance(cycle){
   };
   const finalize=(source)=>{
     const result=mergePublicRows(rows,"uid","grossBilling").map(normalizeBillingRankingRow);
-    result.sort((a,b)=>b.grossBilling-a.grossBilling||b.rewardPercent-a.rewardPercent||b.serviceCount-a.serviceCount||a.name.localeCompare(b.name,"es"));
-    result.forEach((row,index)=>row.position=index+1);
+    const canonical=canonicalizeBillingRanking(result);
+    result.splice(0,result.length,...canonical);
     attachRankingMeta(result,{documentsRead,documentsValid,activeDriverCount:Math.max(expectedDriverCount,result.length),expectedDriverCount:Math.max(expectedDriverCount,result.length),publicSummaryComplete:expectedDriverCount===0||result.length>=expectedDriverCount,source});
     return result;
   };
@@ -19979,8 +20462,8 @@ async function loadCycleRows(cycle,profilesData,throughPeriodId="",options={}){
   let publicRows=null,publicError=null,operationalRows=null,operationalError=null,ownRows=null;
   try{publicRows=await window.ExploraFastCache?.run?.("billing_ranking",()=>readPublicPerformance(cycle),ctx,{ttl:600000,lockKey:`billing-ranking-public-${cycle.id}-${period.id}`,query:`performance_public + ranking_metas_public (${cycle.id})`,firestorePath:`performance_public/${cycle.id}/drivers`,listenersActive:0});}
   catch(error){publicError=error;diagnostic("READ_PUBLIC_SUMMARY",error?.code==="PUBLIC_SUMMARY_SCHEMA_INVALID"?"PUBLIC_SUMMARY_SCHEMA_INVALID":isPermissionDenied(error)?"RANKING_PERMISSION_DENIED":"BILLING_RANKING_READ_FAILED",error,{cycleId:cycle.id,weeklyPeriodId:period.id,functionName:"readPublicPerformance",firestorePath:`performance_public/${cycle.id}/drivers`,query:"getDocs/getDoc public summaries",cacheHit:Boolean(cachedEntry),cacheMiss:!cachedEntry,documentsRead:error?.documentsRead??"—"});}
-  const canReadGlobalOperational=isAdmin();
-  const shouldReadOperational=canReadGlobalOperational&&(preferOperational||!Array.isArray(publicRows)||!billingRowsHaveData(publicRows));
+  const canReadGlobalOperational=true;
+  const shouldReadOperational=preferOperational||!Array.isArray(publicRows)||!billingRowsHaveData(publicRows)||publicRows.length<(profilesData?.profiles||[]).filter(isActiveDriverProfile).length;
   if(shouldReadOperational){try{operationalRows=await loadCycleRowsLegacy(cycle,profilesData,throughPeriodId);}catch(error){operationalError=error;diagnostic("READ_BILLING_RANKING",isPermissionDenied(error)?"RANKING_PERMISSION_DENIED":"BILLING_RANKING_READ_FAILED",error,{cycleId:cycle.id,weeklyPeriodId:period.id,functionName:"loadCycleRowsLegacy",firestorePath:"billing_records",query:"Admin: where weeklyPeriodId/periodoSemanalId/periodoId",cacheHit:Boolean(cachedEntry),cacheMiss:!cachedEntry,documentsRead:error?.documentsRead??"—",documentsValid:error?.documentsValid??"—",billing:totalGrossBilling(publicRows||cachedRows||[])});}}
   if(!canReadGlobalOperational){
     const currentUid=normalize(auth?.currentUser?.uid),publicHasOwn=(publicRows||[]).some(row=>normalize(row?.uid)===currentUid&&Number(row?.grossBilling||0)>0),cacheHasOwn=(cachedRows||[]).some(row=>normalize(row?.uid)===currentUid&&Number(row?.grossBilling||0)>0);
@@ -20198,30 +20681,62 @@ function renderBubbles({animate=false,reason="RENDER_GOAL_CAROUSEL"}={}){
     diagnostic("REMOVE_FAKE_GOALS","FAKE_GOAL_CARDS_DETECTED",new Error("Se detectaron tarjetas de metas no permitidas."),{functionName:"renderBubbles",fakeCardsDetected:fakeCards.map(goal=>goal.label||goal.key).join(", ")});
   }
   const cleanGoals=renderGoals.filter(goal=>!goal?.decorative);
-  const markup=runGoalStage("RENDER_GOAL_BUBBLES","GOAL_CAROUSEL_RENDER_FAILED","renderBubbles",()=>cleanGoals.map((goal,index)=>{
-    const decorative=Boolean(goal?.decorative),zero=Boolean(goal?.zero),numericId=Number(goal?.id||0),active=!decorative&&numericId===activeId;
-    const unlocked=!decorative&&!active&&(zero||numericId<activeId);
-    const locked=!decorative&&!active&&!zero&&numericId>activeId;
-    const tier=!decorative&&!zero?goalTier(goal):"";
-    const classes=["performance-goal-bubble","goal-bubble",decorative?"goal-bubble--decorative":"",zero?"goal-bubble--zero":"",active?"goal-bubble--active":"",unlocked?"goal-bubble--unlocked":"",locked?"goal-bubble--locked":"",tier?`goal-bubble--${tier}`:""].filter(Boolean).join(" ");
-    const label=decorative?"METAS":`META ${numericId}`;
-    const percent=decorative?"✦":`${Number(goal.percent||0)}%`;
-    const aria=decorative?"Metas":`Meta ${numericId}, ${percent}`;
-    const lockLayer=locked?'<span class="goal-bubble-lock-layer" aria-hidden="true"><span class="goal-bubble-lock-icon"></span></span>':"";
-    return `<button type="button" class="${classes}" ${decorative?'tabindex="-1" aria-disabled="true"':`data-performance-goal="${numericId}"`} data-goal-state="${decorative?"decorative":active?"active":unlocked?"unlocked":"locked"}" aria-label="${escapeHtml(aria)}" aria-posinset="${index+1}" aria-setsize="${cleanGoals.length}"><em>${escapeHtml(label)}</em><strong>${escapeHtml(percent)}</strong>${lockLayer}</button>`;
-  }).join(""),{billing:current.grossBilling,goalView:view,activeIndex:view.activeIndex,lockedGoals:view.lockedGoals.join(","),unlockedGoals:view.unlockedGoals.join(",")});
-  if(markup===null)return view;
-  track.innerHTML=markup;
+  const billing=Math.max(0,Number(current.grossBilling||0)||0);
+  const signature=cleanGoals.map(goal=>{
+    const id=Number(goal?.id||0),active=id===activeId,unlocked=!active&&(Boolean(goal?.zero)||id<activeId),locked=!active&&!goal?.zero&&id>activeId;
+    return [id,Number(goal?.percent||0),Number(goal?.amount||0),active?"active":unlocked?"unlocked":"locked",billing,active&&view.nextGoal?Number(view.remainingAmount||0):0].join(":");
+  }).join("|");
+  const previousActiveId=Number(track.dataset.activeGoalId||-1);
+  const shouldReplace=track.dataset.goalSignature!==signature;
+
+  if(shouldReplace){
+    const markup=runGoalStage("RENDER_GOAL_BUBBLES","GOAL_CAROUSEL_RENDER_FAILED","renderBubbles",()=>cleanGoals.map((goal,index)=>{
+      const zero=Boolean(goal?.zero),numericId=Number(goal?.id||0),active=numericId===activeId;
+      const unlocked=!active&&(zero||numericId<activeId);
+      const locked=!active&&!zero&&numericId>activeId;
+      const tier=!zero?goalTier(goal):"";
+      const classes=["performance-goal-bubble","goal-bubble",zero?"goal-bubble--zero":"",active?"goal-bubble--active":"",unlocked?"goal-bubble--unlocked":"",locked?"goal-bubble--locked":"",tier?`goal-bubble--${tier}`:""].filter(Boolean).join(" ");
+      const label=`META ${numericId}`;
+      const percent=`${Number(goal.percent||0)}%`;
+      const amount=money(Number(goal.amount||0));
+      const maximumReached=numericId===10&&unlocked;
+      const status=zero?(unlocked?"NIVEL INICIAL":"NIVEL INICIAL"):maximumReached?"META MÁXIMA<br>ALCANZADA":active?"ACTUAL":unlocked?"ALCANZADA":"BLOQUEADA";
+      let detail=`<span class="goal-bubble-value-label">VALOR DE META</span><span class="goal-bubble-value">${escapeHtml(amount)}</span>`;
+      if(active){
+        const remaining=Math.max(0,Number(view.nextGoal?view.remainingAmount:0)||0);
+        detail=`<span class="goal-bubble-current-row"><span>FACTURASTE</span><b>${escapeHtml(money(billing))}</b></span>${view.nextGoal?`<span class="goal-bubble-current-row"><span>TE FALTAN</span><b>${escapeHtml(money(remaining))}</b></span>`:`<span class="goal-bubble-current-row"><span>VALOR DE META</span><b>${escapeHtml(amount)}</b></span>`}`;
+      }
+      const aria=`Meta ${numericId}, ${percent}, ${status.replace(/<br>/g," ")}, valor ${amount}`;
+      const lockIcon=locked?'<span class="goal-bubble-lock-icon" aria-hidden="true"></span>':"";
+      return `<button type="button" class="${classes}" data-performance-goal="${numericId}" data-goal-state="${active?"active":unlocked?"unlocked":"locked"}" aria-label="${escapeHtml(aria)}" aria-posinset="${index+1}" aria-setsize="${cleanGoals.length}">${lockIcon}<span class="goal-bubble-content"><em>${escapeHtml(label)}</em><strong>${escapeHtml(percent)}</strong><span class="goal-bubble-status">${status}</span><span class="goal-bubble-details">${detail}</span></span></button>`;
+    }).join(""),{billing,goalView:view,activeIndex:view.activeIndex,lockedGoals:view.lockedGoals.join(","),unlockedGoals:view.unlockedGoals.join(",")});
+    if(markup===null)return view;
+    track.innerHTML=markup;
+    track.dataset.goalSignature=signature;
+    track.dataset.activeGoalId=String(activeId);
+  }
+
   viewport.setAttribute("dir","ltr");track.setAttribute("dir","ltr");
   requestAnimationFrame(()=>{
-    runGoalStage("SCROLL_HORIZONTAL","GOAL_SCROLL_INIT_FAILED","renderBubbles",()=>{measureGoalCarousel();bindGoalCarousel();returnGoalCarouselToStart({immediate:true});return true;},{billing:current.grossBilling,goalView:view});
+    runGoalStage("SCROLL_HORIZONTAL","GOAL_SCROLL_INIT_FAILED","renderBubbles",()=>{
+      measureGoalCarousel();bindGoalCarousel();
+      if(previousActiveId!==activeId||!track.dataset.goalCentered){
+        const activeBubble=track.querySelector(`[data-performance-goal="${activeId}"]`);
+        if(activeBubble){
+          const target=Math.max(0,Math.min(activeBubble.offsetLeft-(viewport.clientWidth-activeBubble.offsetWidth)/2,viewport.scrollWidth-viewport.clientWidth));
+          viewport.scrollTo({left:target,top:0,behavior:prefersReducedMotion()?"auto":"smooth"});
+          track.dataset.goalCentered="true";
+        }
+      }
+      return true;
+    },{billing,goalView:view});
     if(animate&&view.highestAchievedGoal)animateDashboardGoal(reason);
   });
   return view;
 }
 function renderPodium(){
   const podium=$("performancePodium");if(!podium)return;
-  const ordered=[...state.rows].filter(isEligibleRankingParticipant).map(normalizeBillingRankingRow).sort((a,b)=>Number(a.position||999)-Number(b.position||999)||Number(b.grossBilling||0)-Number(a.grossBilling||0)),top=ordered.slice(0,3);
+  const ordered=canonicalizeBillingRanking(state.rows),top=ordered.slice(0,3);
   if(!top.length){podium.innerHTML=state.loading?'<div class="podium-skeleton" aria-label="Cargando ranking"><span></span><span></span><span></span></div>':'<div class="performance-loading">Todavía no hay choferes disponibles para el ranking.</div>';return;}
   const classes=["is-first","is-second","is-third"],medals=["🥇","🥈","🥉"];
   podium.innerHTML=top.map((row,index)=>`<div class="performance-podium-person ${classes[index]}" data-podium-position="${index+1}"><div class="performance-podium-circle"><span class="performance-podium-medal" aria-label="Puesto ${index+1}">${medals[index]}</span>${row.rewardPercent}%</div><strong>${escapeHtml(row.name)}</strong><small>+${money(row.equivalent)}</small></div>`).join("");
@@ -20262,8 +20777,7 @@ function renderGoals(){
   list.innerHTML=progress+GOALS.map(goal=>{const reached=current.grossBilling>=goal.amount,active=activeId===goal.id,tier=goalTier(goal);return `<article class="performance-goal-row${reached?" is-reached":""}${active?" is-active":""}" data-goal-row="${goal.id}" data-goal-tier="${tier}"><div class="performance-goal-number">${active?"★":reached?"✓":goal.id}</div><div class="performance-goal-copy"><strong>Meta ${goal.id}</strong><span>${money(goal.amount)} · facturación semanal</span></div><div class="performance-goal-value"><b>${goal.percent}%</b><small>${active?"ACTIVA":reached?"ALCANZADA":"PENDIENTE"}</small></div></article>`;}).join("");
 }
 function buildRankingSnapshot(){
-  const period=activeWeeklyPeriod(),cycle=state.cycle||cycleForPeriod(period),rows=[...state.rows].filter(isEligibleRankingParticipant).map(normalizeBillingRankingRow).sort((a,b)=>Number(a.position||0)-Number(b.position||0)||Number(b.grossBilling||0)-Number(a.grossBilling||0));
-  rows.forEach((row,index)=>row.position=index+1);
+  const period=activeWeeklyPeriod(),cycle=state.cycle||cycleForPeriod(period),rows=canonicalizeBillingRanking(state.rows);
   state.rankingSnapshot={schemaVersion:RANKING_CACHE_SCHEMA,cycleId:cycle.id,weeklyPeriodId:period.id,createdAt:Date.now(),requestId:state.refreshRequestId,rows};
   return state.rankingSnapshot;
 }
@@ -20343,7 +20857,9 @@ function auditFinanceGoalsTextLayout(){
   });
 }
 function renderAll(){
-  state.rows=(Array.isArray(state.rows)?state.rows:[]).filter(isEligibleRankingParticipant);
+  state.rows=canonicalizeBillingRanking(state.rows);
+  state.derivations=canonicalizeDerivationRanking(state.derivations);
+  state.currentDerivationLeader=state.derivations[0]||null;
   if(state.current?.uid===EXPLORA_ADMIN_UID)state.current=null;
   const animateDashboard=Boolean(state.dashboardAnimationPending);
   renderBubbles({animate:animateDashboard,reason:state.lastActiveGoalId?"ACTIVE_GOAL_CHANGED":"DASHBOARD_ENTER"});
@@ -20435,12 +20951,10 @@ function applyUnifiedWeeklySnapshot(snapshot={}){
   const incoming=performanceSnapshotFromRow({uid,grossBilling:total,serviceCount:Number(snapshot.cantidadCobros??snapshot.serviceCount??0)},{weeklyPeriodId:periodId,cycleId:cycle.id,updatedAtMs:Number(snapshot.operationalUpdatedAt||snapshot.updatedAtMs||Date.now()),generationId:Number(snapshot.generationId||state.performanceGeneration),requestId,source:String(snapshot.realtimeCommitted?"live-realtime":"weekly-firestore"),sourcePriority:snapshot.realtimeCommitted?500:300,completeness:snapshot.loading!==true,isConfirmed:snapshot.realtimeCommitted===true||snapshot.isConfirmed===true||snapshot.loading!==true,explicitDecrease:snapshot.explicitDecrease===true});
   if(!commitConfirmedPerformanceSnapshot(incoming,{functionName:"applyUnifiedWeeklySnapshot",trigger:snapshot.realtimeReason||"unified-weekly-snapshot",cacheKey:buildSnapshotCacheKey?.(uid,periodId)||"weeklySnapshot"}))return getState();
   state.lastAppliedUnifiedSnapshotId=Math.max(Number(state.lastAppliedUnifiedSnapshotId||0),requestId);
-  let row=currentRowForUid(state.rows,uid);
-  if(!row){row=normalizeBillingRankingRow({...freshCurrentUserRow(auth?.currentUser),uid,role:"chofer",eligibilityConfirmed:true});state.rows.push(row);}
-  Object.assign(row,normalizeBillingRankingRow({...row,uid,role:"chofer",eligibilityConfirmed:true,grossBilling:total,serviceCount:Number(snapshot.cantidadCobros??snapshot.serviceCount??row.serviceCount??0),updatedAtMs:incoming.updatedAtMs}));
-  state.rows=mergePublicRows(state.rows.filter(isEligibleRankingParticipant),"uid","grossBilling").map(normalizeBillingRankingRow).sort((a,b)=>b.grossBilling-a.grossBilling||b.rewardPercent-a.rewardPercent||a.name.localeCompare(b.name,"es"));
-  state.rows.forEach((item,index)=>item.position=index+1);
-  row=currentRowForUid(state.rows,uid)||row;state.current=row;state.uid=uid;state.cycle=cycle;state.goalView=safeGoalView(incoming.grossBilling);state.loaded=true;state.loading=false;state.lastRefresh=Date.now();state.error=null;
+  const globalRow=currentRowForUid(state.rows,uid);
+  state.rows=canonicalizeBillingRanking(state.rows);
+  state.authenticatedUserState=normalizeBillingRankingRow({...(globalRow||{}),uid,role:"chofer",eligibilityConfirmed:true,grossBilling:total,serviceCount:Number(snapshot.cantidadCobros??snapshot.serviceCount??globalRow?.serviceCount??0),updatedAtMs:incoming.updatedAtMs});
+  state.current=state.authenticatedUserState;state.uid=uid;state.cycle=cycle;state.goalView=safeGoalView(incoming.grossBilling);state.loaded=true;state.loading=false;state.lastRefresh=Date.now();state.error=null;
   persistPerformanceFastCache(active,state.cycle);renderAll();return getState();
 }
 
@@ -20455,18 +20969,18 @@ function applyRealtimeOperationalRows(payload={}){
   }).filter(row=>row&&row.uid!==EXPLORA_ADMIN_UID);
   const operationalUids=new Set(operational.map(row=>normalize(row.uid)));
   const inactive=(state.rows||[]).filter(isEligibleRankingParticipant).filter(row=>!operationalUids.has(normalize(row.uid)));
-  state.rows=mergePublicRows([...inactive,...operational],"uid","grossBilling").map(normalizeBillingRankingRow).sort((a,b)=>b.grossBilling-a.grossBilling||b.rewardPercent-a.rewardPercent||a.name.localeCompare(b.name,"es"));
-  state.rows.forEach((row,index)=>row.position=index+1);
+  state.rows=canonicalizeBillingRanking([...inactive,...operational]);
   const billingByUid=new Map(state.rows.map(row=>[normalize(row.uid),row]));
   state.derivations=rawRows.map((raw,index)=>{
     const row=publicDerivationRow(raw,raw?.id||raw?.driverUid||String(index));if(!row||!(row.derivedAmount>0))return null;const billing=billingByUid.get(normalize(row.uid));if(billing?.avatar)row.avatar=billing.avatar;if(billing?.name)row.name=billing.name;return row;
-  }).filter(Boolean).sort((a,b)=>b.derivedAmount-a.derivedAmount||b.count-a.count||a.name.localeCompare(b.name,"es"));
-  state.derivations.forEach((row,index)=>row.position=index+1);state.currentDerivationLeader=state.derivations[0]||null;
-  const uid=String(payload.uid||payload.driverUid||auth?.currentUser?.uid||"").trim(),candidateCurrent=currentRowForUid(state.rows,uid)||normalizeBillingRankingRow({...freshCurrentUserRow(auth?.currentUser),uid,role:"chofer",eligibilityConfirmed:true,grossBilling:Number(payload.totalFacturado??payload.grossBilling??0)});
-  const incoming=performanceSnapshotFromRow(candidateCurrent,{weeklyPeriodId:periodId,cycleId:cycleForPeriod(active).id,updatedAtMs:Number(payload.operationalUpdatedAt||payload.updatedAtMs||Date.now()),generationId:Number(payload.generationId||state.performanceGeneration),requestId:revision,source:"acumulados_semanales-realtime",sourcePriority:500,completeness:true,isConfirmed:true,explicitDecrease:payload.explicitDecrease===true});
-  if(!commitConfirmedPerformanceSnapshot(incoming,{functionName:"applyRealtimeOperationalRows",trigger:payload.reason||"realtime-operational-rows",cacheKey:"acumulados_semanales"}))return getState();
+  }).filter(Boolean);
+  state.derivations=canonicalizeDerivationRanking(state.derivations);state.currentDerivationLeader=state.derivations[0]||null;
+  const uid=String(payload.uid||payload.driverUid||auth?.currentUser?.uid||"").trim(),candidateCurrent=currentRowForUid(state.rows,uid)||null;
+  if(candidateCurrent){
+    const incoming=performanceSnapshotFromRow(candidateCurrent,{weeklyPeriodId:periodId,cycleId:cycleForPeriod(active).id,updatedAtMs:Number(payload.operationalUpdatedAt||payload.updatedAtMs||Date.now()),generationId:Number(payload.generationId||state.performanceGeneration),requestId:revision,source:"acumulados_semanales-realtime",sourcePriority:500,completeness:true,isConfirmed:true,explicitDecrease:payload.explicitDecrease===true});
+    if(!commitConfirmedPerformanceSnapshot(incoming,{functionName:"applyRealtimeOperationalRows",trigger:payload.reason||"realtime-operational-rows",cacheKey:"acumulados_semanales"}))return getState();
+  }
   state.current=candidateCurrent;
-  if(!currentRowForUid(state.rows,uid)){state.rows.push(state.current);state.rows.sort((a,b)=>b.grossBilling-a.grossBilling||a.name.localeCompare(b.name,"es"));state.rows.forEach((row,index)=>row.position=index+1);}
   state.uid=uid;state.cycle=cycleForPeriod(active);state.goalView=safeGoalView(state.current.grossBilling||0);state.activeDriverCount=Math.max(state.rows.length,Number(payload.activeDriverCount||0));state.rankingSummaryComplete=true;state.rankingSource="acumulados_semanales-realtime";state.loaded=true;state.loading=false;state.lastRefresh=Date.now();state.error=null;state.lastAppliedUnifiedSnapshotId=Math.max(Number(state.lastAppliedUnifiedSnapshotId||0),revision);
   persistPerformanceFastCache(active,state.cycle);renderAll();return getState();
 }
@@ -21315,156 +21829,48 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
 </script>
 
 
-  <script type="module" id="exploraOperationalDashboardSyncV251">
+  <script type="module" id="exploraFirestoreGlobalRealtimeSyncV266">
   import { getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
   import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
   import { getFirestore, collection, doc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
   (()=>{
     "use strict";
-    if(window.ExploraDashboardRealtimeCoordinator)return;
+    if(window.ExploraFirestoreGlobalSync?.version==="v266-firestore-global-realtime-sync")return;
     const app=getApps().length?getApp():null,auth=app?getAuth(app):null,db=app?getFirestore(app):null;
-    const DEBOUNCE_MS=180,RECONNECT_DELAY_MS=1200;
-    const ALL_CACHE_MODULES=["dashboard_weekly_billing","dashboard_weekly_expenses","billing_ranking","derivation_ranking","goal_bubbles","performance_bundle","rankingSnapshot","derivationSnapshot"];
-    const CACHE_BY_SOURCE={
-      billing:["dashboard_weekly_billing","billing_ranking","goal_bubbles","performance_bundle","rankingSnapshot"],
-      expense:["dashboard_weekly_expenses","performance_bundle"],
-      derivation:["dashboard_weekly_billing","billing_ranking","derivation_ranking","goal_bubbles","performance_bundle","rankingSnapshot","derivationSnapshot"],
-      profile:["driver_profiles","billing_ranking","derivation_ranking","rankingSnapshot","derivationSnapshot"],
-      closure:["performance_bundle"],loan:["dashboard_weekly_billing","dashboard_weekly_expenses","performance_bundle"],state:ALL_CACHE_MODULES,period:ALL_CACHE_MODULES,local:ALL_CACHE_MODULES
-    };
-    const state={contextKey:"",contextToken:0,uid:"",role:"",periodId:"",cycleId:"",unsubscribers:[],listenerSources:new Map(),debounceTimer:0,pendingReasons:new Set(),pendingSources:new Set(),active:false,activeRevision:0,activeToken:0,queued:null,issuedRevision:0,appliedRevision:0,lastSnapshot:null,lastServerAt:0,weeklyRows:[],weeklyRowsReady:false,hydratedContext:"",reconnectAttempts:0,reconnectTimer:0,stopped:true};
-    const text=value=>String(value??"").trim();
+    if(!auth||!db)return;
+    const VERSION="v266-firestore-global-realtime-sync";
+    const TZ="America/Argentina/Cordoba";
+    const DEBOUNCE=120;
+    const CACHE_PREFIXES=["explora_fast_cache_","explora_weekly_v","explora_closure_v","performanceRankingCache_","explora_performance_history_","explora.dashboard.notice."];
+    const state={generation:0,uid:"",role:"",profileId:"",periodId:"",cycleId:"",contextKey:"",listeners:new Map(),entities:new Map(),sourceMeta:new Map(),errors:new Map(),pending:new Set(),timer:0,revision:0,committedRevision:0,refreshing:false,queued:false,lastCommittedAt:0,lastReason:"",active:false};
+    const txt=v=>String(v??"").trim();
     const session=()=>window.ExploraSession||window.ExploraAuthSession||{};
-    const currentUser=()=>auth?.currentUser||session().authUser||session().authenticatedUser||null;
-    const currentRole=()=>text(session().role||(document.body.classList.contains("explora-shared-admin")?"admin":"chofer")).toLowerCase()||"chofer";
-    const activePeriod=()=>window.ExploraOperationalClock?.getActiveWeeklyPeriod?.()||window.ExploraWeeklyEngine?.getActiveWeeklyPeriod?.()||{};
-    const context=(uid=state.uid,periodId=state.periodId,role=state.role)=>({uid,role:role||"chofer",weeklyPeriodId:periodId,cycleId:`week_${periodId}`});
-    const isPermissionError=error=>/permission-denied|unauthorized/i.test(text(error?.code||error?.message));
-    function statusElement(){let node=document.getElementById("dashboardRealtimeStatus");if(node)return node;const shell=document.querySelector("#dashboardReal .dashboard-shell-real,.driver-dashboard .dashboard-shell-real");if(!shell)return null;node=document.createElement("div");node.id="dashboardRealtimeStatus";node.className="dashboard-realtime-status";node.dataset.state="syncing";node.setAttribute("role","status");node.setAttribute("aria-live","polite");node.textContent="Actualizando…";const welcome=shell.querySelector(".driver-welcome-real");if(welcome?.nextSibling)shell.insertBefore(node,welcome.nextSibling);else shell.appendChild(node);return node;}
-    function setStatus(kind,message){const node=statusElement();if(!node)return;node.dataset.state=kind;node.textContent=message||({syncing:"Actualizando…",updated:"Actualizado",offline:"Sin conexión · mostrando última información",error:"No pudimos actualizar en tiempo real"}[kind]||"");}
-    function validContext(token=state.contextToken,uid=state.uid,periodId=state.periodId){return token===state.contextToken&&text(currentUser()?.uid)===text(uid)&&text(activePeriod().id)===text(periodId)&&state.contextKey===`${uid}|${currentRole()}|${periodId}`;}
-    function invalidate(source="local",reason="realtime-change",ctx=context()){
-      const modules=CACHE_BY_SOURCE[source]||ALL_CACHE_MODULES;modules.forEach(name=>window.ExploraFastCache?.invalidate?.(name,ctx));
-      window.ExploraWeeklyEngine?.invalidate?.(reason,{refresh:false});
-      if(["billing","derivation","profile","state","period","local"].includes(source))window.ExploraPerformanceEngine?.invalidateRankingCache?.(reason);
-      if(["billing","expense","derivation","closure","loan","state","period","local"].includes(source))window.ExploraInvalidateWeeklyClosure?.(reason,{refresh:false});
-    }
-    function friendlyError(error,reason="realtime"){
-      console.error("[EXPLORA realtime]",reason,error);
-      setStatus(navigator.onLine?"error":"offline",navigator.onLine?"No pudimos actualizar en tiempo real":"Sin conexión · mostrando última información");
-      window.ExploraProductionPolicy?.handle?.("ranking",error,{message:"No pudimos actualizar la información en tiempo real.",context:{reason,weeklyPeriodId:state.periodId}});
-    }
-    function cacheInitialView(){if(!state.uid||!state.periodId||state.hydratedContext===state.contextKey)return;state.hydratedContext=state.contextKey;window.ExploraFastCache?.hydrateDashboard?.(context());setStatus(navigator.onLine?"syncing":"offline",navigator.onLine?"Actualizando…":"Sin conexión · mostrando última información");}
-    function stopListeners({invalidateContext=false}={}){
-      const oldCtx=state.uid&&state.periodId?context():null;state.contextToken+=1;state.stopped=true;state.unsubscribers.splice(0).forEach(unsub=>{try{unsub?.();}catch(_){}});state.listenerSources.clear();state.weeklyRows=[];state.weeklyRowsReady=false;clearTimeout(state.debounceTimer);state.debounceTimer=0;clearTimeout(state.reconnectTimer);state.reconnectTimer=0;state.pendingReasons.clear();state.pendingSources.clear();if(state.queued)state.queued.resolve(null);state.queued=null;state.active=false;state.activeRevision=0;state.activeToken=0;state.issuedRevision+=1;if(invalidateContext&&oldCtx)ALL_CACHE_MODULES.forEach(name=>window.ExploraFastCache?.invalidate?.(name,oldCtx));
-    }
-    function sourceChanged(name,snapshot,token){
-      if(!validContext(token))return;const metadata=snapshot?.metadata||{},pending=metadata.hasPendingWrites===true,fromCache=metadata.fromCache===true;state.listenerSources.set(name,{pending,fromCache,at:Date.now()});
-      if(pending){setStatus("syncing","Actualizando…");return;}
-      if(fromCache){setStatus(navigator.onLine?"syncing":"offline",navigator.onLine?"Actualizando…":"Sin conexión · mostrando última información");return;}
-      if(name==="weekly-ranking"&&Array.isArray(snapshot?.docs)){state.weeklyRows=snapshot.docs.map(item=>({id:item.id,...(item.data?.()||{})})).filter(row=>String(row.weeklyPeriodId||row.periodoSemanalId||row.periodoId||"")===state.periodId);state.weeklyRowsReady=true;}
-      state.lastServerAt=Date.now();scheduleFirestoreRefresh(name);
-    }
-    function listenerError(name,error,token){if(!validContext(token))return;console.warn(`[EXPLORA realtime listener:${name}]`,error?.code||error?.message||error);state.listenerSources.set(name,{error:text(error?.code||error?.message),at:Date.now()});if(!isPermissionError(error))scheduleReconnect(error,name);else if(!state.listenerSources.size)friendlyError(error,`listener:${name}`);}
-    function addListener(name,reference,token){
-      try{const unsub=onSnapshot(reference,{includeMetadataChanges:true},snap=>sourceChanged(name,snap,token),error=>listenerError(name,error,token));state.unsubscribers.push(unsub);}
-      catch(error){listenerError(name,error,token);}
-    }
-    function buildListeners(token){
-      if(!db||!state.uid||!state.periodId)return;const uid=state.uid,pid=state.periodId,cycle=state.cycleId,profileId=text(session().profileDocumentId||session().driverId||"");
-      addListener("weekly-own",doc(db,"acumulados_semanales",`${pid}_${uid}`),token);
-      addListener("weekly-ranking",query(collection(db,"acumulados_semanales"),where("weeklyPeriodId","==",pid)),token);
-      if(state.role.includes("admin")){
-        addListener("billing-period",query(collection(db,"billing_records"),where("weeklyPeriodId","==",pid)),token);
-        addListener("expenses-period",query(collection(db,"gastos"),where("weeklyPeriodId","==",pid)),token);
-        addListener("derivations-created",query(collection(db,"derivaciones"),where("weeklyPeriodId","==",pid)),token);
-        addListener("derivations-completed",query(collection(db,"derivaciones"),where("weeklyPeriodIdCompleted","==",pid)),token);
-        addListener("closures-period",query(collection(db,"cierres_semanales"),where("weeklyPeriodId","==",pid)),token);
-        addListener("operational-loans-period",query(collection(db,"prestamos_operativos"),where("weeklyPeriodId","==",pid)),token);
-        addListener("explora-loans-period",query(collection(db,"prestamos_explora"),where("weeklyPeriodId","==",pid)),token);
-      }else{
-        addListener("billing-own-driver",query(collection(db,"billing_records"),where("driverUid","==",uid)),token);
-        addListener("billing-own-chofer",query(collection(db,"billing_records"),where("choferUid","==",uid)),token);
-        addListener("expenses-own-driver",query(collection(db,"gastos"),where("choferUid","==",uid)),token);
-        addListener("expenses-own-uid",query(collection(db,"gastos"),where("uid","==",uid)),token);
-        addListener("derivations-received",query(collection(db,"derivaciones"),where("receptorUid","==",uid)),token);
-        addListener("derivations-sent",query(collection(db,"derivaciones"),where("emisorUid","==",uid)),token);
-        addListener("derivations-sender",query(collection(db,"derivaciones"),where("senderUid","==",uid)),token);
-        addListener("closures-own",query(collection(db,"cierres_semanales"),where("driverUid","==",uid)),token);
-        addListener("operational-loans-own",query(collection(db,"prestamos_operativos"),where("driverUid","==",uid)),token);
-        addListener("explora-loans-own",query(collection(db,"prestamos_explora"),where("driverUid","==",uid)),token);
-      }
-      addListener("operational-state",doc(db,"app_operational_state","current"),token);
-      addListener("profile-user",doc(db,"usuarios",uid),token);
-      if(profileId)addListener("profile-driver-document",doc(db,"choferes",profileId),token);
-      else addListener("profile-driver-uid",query(collection(db,"choferes"),where("uid","==",uid)),token);
-      addListener("profiles-public",collection(db,"choferes"),token);
-      ["performance_public","ranking_metas_public","derivation_ranking_public","ranking_derivaciones_public"].forEach(parent=>{
-        addListener(`${parent}-summary`,doc(db,parent,cycle),token);addListener(`${parent}-drivers`,collection(db,parent,cycle,"drivers"),token);
-      });
-    }
-    function sourceType(name){if(name.startsWith("billing")||name.startsWith("weekly"))return"billing";if(name.startsWith("expense"))return"expense";if(name.startsWith("derivation")||name.startsWith("ranking_deriv"))return"derivation";if(name.startsWith("profile"))return"profile";if(name.startsWith("closure"))return"closure";if(name.includes("loan"))return"loan";return"state";}
-    function scheduleFirestoreRefresh(name){state.pendingReasons.add(`firestore:${name}`);state.pendingSources.add(sourceType(name));setStatus("syncing","Actualizando…");clearTimeout(state.debounceTimer);state.debounceTimer=setTimeout(()=>{state.debounceTimer=0;const reasons=[...state.pendingReasons],sources=[...state.pendingSources];state.pendingReasons.clear();state.pendingSources.clear();sources.forEach(source=>invalidate(source,reasons.join("+")));refresh({force:true,reason:reasons.join("+")||"firestore",sources,serverTriggered:true});},DEBOUNCE_MS);}
-    function scheduleReconnect(error,name){if(state.reconnectAttempts>=1){friendlyError(error,`listener:${name}`);return;}state.reconnectAttempts+=1;clearTimeout(state.reconnectTimer);state.reconnectTimer=setTimeout(()=>{if(!state.uid||!currentUser())return;const reason=`listener-reconnect:${name}`;const old={uid:state.uid,role:state.role,periodId:state.periodId};stopListeners();startContext(old.uid,old.role,old.periodId,reason,{hydrate:false});},RECONNECT_DELAY_MS);}
-    function finalSnapshot(raw,revision,reason){const uid=state.uid,pid=state.periodId,performance=window.ExploraPerformanceEngine?.getState?.()||{};return{...(raw||{}),uid,driverUid:uid,choferUid:uid,weeklyPeriodId:pid,periodoSemanalId:pid,cycleId:state.cycleId,snapshotRevision:revision,requestId:revision,snapshotRequestId:revision,calculatedAt:new Date().toISOString(),operationalUpdatedAt:Date.now(),realtime:true,realtimeCommitted:true,realtimeReason:reason,rankingRows:Array.isArray(performance.rows)?performance.rows:[],derivationRows:Array.isArray(performance.derivations)?performance.derivations:[],derivationLeader:performance.currentDerivationLeader||null};}
-    function commit(snapshot,revision,token){
-      if(!validContext(token)||revision!==state.issuedRevision||revision<state.appliedRevision)return null;state.appliedRevision=revision;state.lastSnapshot=snapshot;const ctx=context();
-      window.ExploraFastCache?.set?.("dashboard_weekly_billing",snapshot,ctx);window.ExploraFastCache?.set?.("dashboard_weekly_expenses",snapshot,ctx);
-      if(state.weeklyRowsReady)window.ExploraPerformanceEngine?.applyRealtimeOperationalRows?.({rows:state.weeklyRows,uid:state.uid,driverUid:state.uid,weeklyPeriodId:state.periodId,snapshotRevision:revision,totalFacturado:snapshot.totalFacturado??snapshot.grossBilling??0});
-      window.dispatchEvent(new CustomEvent("explora:unified-weekly-snapshot",{detail:snapshot}));
-      const performance=window.ExploraPerformanceEngine?.getState?.()||{};snapshot.rankingRows=performance.rows||[];snapshot.derivationRows=performance.derivations||[];snapshot.derivationLeader=performance.currentDerivationLeader||null;
-      window.ExploraFastCache?.set?.("rankingSnapshot",{rows:performance.rows||[],current:performance.current||null,cycle:performance.cycle||null,snapshotRevision:revision,updatedAt:snapshot.calculatedAt},ctx);
-      window.ExploraFastCache?.set?.("derivationSnapshot",{rows:performance.derivations||[],leader:performance.currentDerivationLeader||null,snapshotRevision:revision,updatedAt:snapshot.calculatedAt},ctx);
-      window.ExploraFastCache?.renderWeeklySnapshot?.(snapshot);
-      window.dispatchEvent(new CustomEvent("explora:weekly-summary",{detail:snapshot}));
-      window.dispatchEvent(new CustomEvent("explora:performance-updated",{detail:{...performance,snapshotRevision:revision,weeklyPeriodId:state.periodId,realtimeCommitted:true}}));
-      window.dispatchEvent(new CustomEvent("explora:operational-snapshot-updated",{detail:snapshot}));
-      setStatus(navigator.onLine?"updated":"offline",navigator.onLine?"Actualizado":"Sin conexión · mostrando última información");return snapshot;
-    }
-    async function execute(revision,options,token){
-      if(!validContext(token)||!state.uid)return null;state.active=true;state.activeRevision=revision;state.activeToken=token;setStatus(navigator.onLine?"syncing":"offline",navigator.onLine?"Actualizando…":"Sin conexión · mostrando última información");
-      try{
-        const loader=window.ExploraWeeklyEngine?.getDriverWeeklyFinancialSnapshot||window.ExploraWeeklyEngine?.getDriverWeeklySnapshot;if(typeof loader!=="function")throw new Error("WEEKLY_ENGINE_NOT_READY");
-        const weeklyPromise=loader(state.uid,state.periodId,{force:options.force!==false,allowLegacyScan:false,refreshInBackground:false,reason:options.reason||"realtime"});
-        const performancePromise=window.ExploraPerformanceEngine?.refresh?.({force:true,reason:`${options.reason||"realtime"}:performance`})||Promise.resolve(null);
-        const [raw]=await Promise.all([weeklyPromise,Promise.resolve(performancePromise).catch(error=>{console.warn("[EXPLORA realtime performance]",error?.code||error?.message);return null;})]);
-        if(!validContext(token)||revision!==state.issuedRevision)return null;
-        return commit(finalSnapshot(raw,revision,options.reason||"realtime"),revision,token);
-      }catch(error){if(validContext(token)&&revision===state.issuedRevision)friendlyError(error,options.reason||"realtime-refresh");return state.lastSnapshot;}
-      finally{
-        if(state.activeRevision!==revision||state.activeToken!==token)return;
-        state.active=false;state.activeRevision=0;state.activeToken=0;const queued=state.queued;state.queued=null;if(queued&&validContext(queued.token)){execute(queued.revision,queued.options,queued.token).then(queued.resolve,queued.reject);}
-      }
-    }
-    function refresh(options={}){
-      if(!state.uid||!state.periodId)return Promise.resolve(null);const token=state.contextToken,revision=++state.issuedRevision;
-      if(state.active){return new Promise((resolve,reject)=>{if(state.queued)state.queued.resolve(null);state.queued={revision,options:{...options,force:true},token,resolve,reject};});}
-      return execute(revision,options,token);
-    }
-    function startContext(uid,role,pid,reason="start",options={}){
-      if(!uid||!pid)return;state.uid=uid;state.role=role||"chofer";state.periodId=pid;state.cycleId=`week_${pid}`;state.contextKey=`${uid}|${state.role}|${pid}`;state.contextToken+=1;state.stopped=false;state.reconnectAttempts=0;const token=state.contextToken;if(options.hydrate!==false)cacheInitialView();buildListeners(token);invalidate("state",reason);return refresh({force:true,reason,serverTriggered:false});
-    }
-    function ensure(reason="ensure",{force=true}={}){
-      const user=currentUser(),p=activePeriod(),role=currentRole();if(!user?.uid||!p?.id){stopListeners();return Promise.resolve(null);}const nextKey=`${user.uid}|${role}|${p.id}`;
-      if(nextKey!==state.contextKey||state.stopped){const oldCtx=state.uid&&state.periodId?context():null;stopListeners({invalidateContext:Boolean(oldCtx&&state.periodId!==p.id)});return startContext(user.uid,role,p.id,reason)||Promise.resolve(null);}
-      return force?refresh({force:true,reason}):Promise.resolve(state.lastSnapshot);
-    }
-    function localMutation(name){const source=/gasto/.test(name)?"expense":/derivacion/.test(name)?"derivation":/foto|avatar|perfil/.test(name)?"profile":/cierre|comprobante/.test(name)?"closure":/prestamo|loan/.test(name)?"loan":"billing";invalidate(source,name);state.pendingReasons.add(name);state.pendingSources.add(source);clearTimeout(state.debounceTimer);state.debounceTimer=setTimeout(()=>{state.debounceTimer=0;const reason=[...state.pendingReasons].join("+")||name;state.pendingReasons.clear();state.pendingSources.clear();refresh({force:true,reason,localMutation:true});},DEBOUNCE_MS);}
-    const mutationEvents=["explora:cobro-registrado","explora:gasto-registrado","explora:derivacion-aceptada","explora:derivacion-rechazada","explora:derivacion-completada","explora:derivacion-facturada","explora:weekly-closure","explora:closure-receipt-updated","explora:loan-requested","explora:loan-payment","explora:avatar-updated","explora:profile-updated","explora:simulation-updated","explora:app-reset","explora:app-launched"];
-    mutationEvents.forEach(name=>window.addEventListener(name,()=>localMutation(name)));
-    window.addEventListener("explora:session-opened",()=>ensure("session-opened"));
-    window.addEventListener("explora:main-nav-active",event=>{if(event.detail?.section==="inicio")ensure("dashboard-open");});
-    window.addEventListener("explora:operational-period-changed",event=>{const previous=event.detail?.previousWeeklyPeriodId;if(previous&&state.uid)ALL_CACHE_MODULES.forEach(name=>window.ExploraFastCache?.invalidate?.(name,context(state.uid,previous,state.role)));stopListeners();ensure("operational-period-changed");window.dispatchEvent(new CustomEvent("explora:weekly-period-changed",{detail:event.detail||{}}));});
-    window.addEventListener("explora:auth-cleared",()=>{stopListeners();state.uid="";state.role="";state.periodId="";state.cycleId="";state.contextKey="";state.lastSnapshot=null;state.appliedRevision=0;state.hydratedContext="";});
-    document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")ensure("foreground");});
-    window.addEventListener("pageshow",()=>ensure("pageshow"));
-    window.addEventListener("online",()=>{setStatus("syncing","Actualizando…");ensure("online");});
-    window.addEventListener("offline",()=>setStatus("offline","Sin conexión · mostrando última información"));
-    if(auth)onAuthStateChanged(auth,user=>{if(user)queueMicrotask(()=>ensure("auth-state"));else window.dispatchEvent(new CustomEvent("explora:auth-cleared"));});
-    document.addEventListener("DOMContentLoaded",()=>{statusElement();setTimeout(()=>ensure("startup"),80);});
-    window.refreshDashboardFromOperationalSnapshot=options=>ensure(options?.reason||"external-refresh",{force:options?.force!==false});
-    window.ExploraOperationalSync=Object.freeze({refresh,ensure,invalidate,getState:()=>({contextKey:state.contextKey,contextToken:state.contextToken,issuedRevision:state.issuedRevision,appliedRevision:state.appliedRevision,listeners:state.unsubscribers.length,listenerSources:[...state.listenerSources.entries()],active:state.active,queued:Boolean(state.queued),lastServerAt:state.lastServerAt}),stop:stopListeners});
-    window.ExploraDashboardRealtimeCoordinator=Object.freeze({start:ensure,ensure,refresh,stop:stopListeners,invalidate,isCoordinating:()=>Boolean(state.contextKey&&!state.stopped),getState:window.ExploraOperationalSync.getState});
+    const role=()=>txt(session().role||(document.body.classList.contains("explora-shared-admin")?"admin":"chofer")).toLowerCase()||"chofer";
+    const isAdmin=r=>/admin|administrador|owner|super/.test(r);
+    const period=()=>window.ExploraOperationalClock?.getActiveWeeklyPeriod?.()||window.ExploraWeeklyEngine?.getActiveWeeklyPeriod?.()||{};
+    const valid=(g=state.generation)=>g===state.generation&&state.active&&txt(auth.currentUser?.uid)===state.uid;
+    const mapFor=name=>{if(!state.entities.has(name))state.entities.set(name,new Map());return state.entities.get(name)};
+    const detail=snap=>({fromCache:Boolean(snap?.metadata?.fromCache),pending:Boolean(snap?.metadata?.hasPendingWrites)});
+    function purgeStorage(){for(const storage of [localStorage,sessionStorage]){try{const keys=[];for(let i=0;i<storage.length;i++){const k=storage.key(i);if(k&&CACHE_PREFIXES.some(p=>k.startsWith(p)))keys.push(k)}keys.forEach(k=>storage.removeItem(k))}catch(_){}}try{window.ExploraFastCache?.clearOperational?.()}catch(_){} }
+    function clearPrivateState(){state.entities.clear();state.sourceMeta.clear();state.errors.clear();state.pending.clear();state.lastReason="";state.lastCommittedAt=0;try{window.ExploraWeeklyEngine?.stop?.({reset:true})}catch(_){}try{window.ExploraPerformanceEngine?.resetOperationalState?.({resetAtMs:Date.now()})}catch(_){}try{window.ExploraReceiptsController?.invalidate?.()}catch(_){}window.dispatchEvent(new CustomEvent("explora:firestore-state-cleared",{detail:{version:VERSION,generation:state.generation}}));}
+    function stop({purge=true}={}){state.generation++;state.active=false;clearTimeout(state.timer);state.timer=0;for(const [,u] of state.listeners){try{u()}catch(_){}}state.listeners.clear();state.refreshing=false;state.queued=false;state.revision++;clearPrivateState();if(purge)purgeStorage();}
+    function normalizeSnapshot(name,snap){const target=mapFor(name);const changes=typeof snap.docChanges==="function"?snap.docChanges():[];if(changes.length){for(const ch of changes){const id=ch.doc.id;if(ch.type==="removed")target.delete(id);else target.set(id,{id,...(ch.doc.data()||{})})}}else if(Array.isArray(snap.docs)){target.clear();for(const d of snap.docs)target.set(d.id,{id:d.id,...(d.data()||{})})}else if(typeof snap.exists==="function"){target.clear();if(snap.exists())target.set(snap.id,{id:snap.id,...(snap.data()||{})})}return target;}
+    function sourceKind(name){if(/billing|cobro|servicio|factur/.test(name))return"billing";if(/gasto|expense/.test(name))return"expense";if(/deriv/.test(name))return"derivation";if(/cierre|closure/.test(name))return"closure";if(/deuda|debt/.test(name))return"debt";if(/prestamo|loan/.test(name))return"loan";if(/perfil|profile|chofer|usuario|avatar/.test(name))return"profile";if(/auto|vehic|asign/.test(name))return"vehicle";if(/meta|ranking|percent|config/.test(name))return"performance";return"state";}
+    function invalidate(kind,reason){const ctx={uid:state.uid,role:state.role,weeklyPeriodId:state.periodId,cycleId:state.cycleId};const all=["dashboard_weekly_billing","dashboard_weekly_expenses","billing_ranking","derivation_ranking","goal_bubbles","performance_bundle","rankingSnapshot","derivationSnapshot"];const by={billing:["dashboard_weekly_billing","billing_ranking","goal_bubbles","performance_bundle","rankingSnapshot"],expense:["dashboard_weekly_expenses","performance_bundle"],derivation:["billing_ranking","derivation_ranking","goal_bubbles","performance_bundle","rankingSnapshot","derivationSnapshot"],closure:["performance_bundle"],profile:["billing_ranking","derivation_ranking","rankingSnapshot","derivationSnapshot"],performance:all,vehicle:all,debt:["performance_bundle"],loan:["performance_bundle"],state:all};for(const n of by[kind]||all)try{window.ExploraFastCache?.invalidate?.(n,ctx)}catch(_){}try{window.ExploraWeeklyEngine?.invalidate?.(reason,{refresh:false})}catch(_){}if(["billing","derivation","profile","performance","state"].includes(kind))try{window.ExploraPerformanceEngine?.invalidateRankingCache?.(reason)}catch(_){}if(["billing","expense","derivation","closure","debt","loan","state"].includes(kind))try{window.ExploraInvalidateWeeklyClosure?.(reason,{refresh:false})}catch(_){} }
+    function schedule(name){state.pending.add(name);clearTimeout(state.timer);state.timer=setTimeout(commitPending,DEBOUNCE)}
+    async function commitPending(){state.timer=0;if(!valid())return;const names=[...state.pending];state.pending.clear();if(!names.length)return;const g=state.generation,rev=++state.revision,reason=names.map(n=>`firestore:${n}`).join("+");for(const n of names)invalidate(sourceKind(n),reason);if(state.refreshing){state.queued=true;return}state.refreshing=true;try{const loader=window.ExploraWeeklyEngine?.getDriverWeeklyFinancialSnapshot||window.ExploraWeeklyEngine?.getDriverWeeklySnapshot;const tasks=[];if(typeof loader==="function"&&state.periodId)tasks.push(Promise.resolve(loader(state.uid,state.periodId,{force:true,allowLegacyScan:false,refreshInBackground:false,reason})));else tasks.push(Promise.resolve(null));tasks.push(Promise.resolve(window.ExploraPerformanceEngine?.refresh?.({force:true,reason})||null).catch(()=>null));const [weekly]=await Promise.all(tasks);if(!valid(g)||rev<state.revision)return;state.committedRevision=rev;state.lastCommittedAt=Date.now();state.lastReason=reason;const perf=window.ExploraPerformanceEngine?.getState?.()||{};const payload={...(weekly||{}),uid:state.uid,driverUid:state.uid,choferUid:state.uid,weeklyPeriodId:state.periodId,periodoSemanalId:state.periodId,cycleId:state.cycleId,timeZone:TZ,snapshotRevision:rev,requestId:rev,calculatedAt:new Date().toISOString(),realtime:true,realtimeCommitted:true,realtimeReason:reason,rankingRows:perf.rows||[],derivationRows:perf.derivations||[],derivationLeader:perf.currentDerivationLeader||null};window.dispatchEvent(new CustomEvent("explora:unified-weekly-snapshot",{detail:payload}));window.dispatchEvent(new CustomEvent("explora:weekly-summary",{detail:payload}));window.dispatchEvent(new CustomEvent("explora:performance-updated",{detail:{...perf,snapshotRevision:rev,weeklyPeriodId:state.periodId,realtimeCommitted:true}}));window.dispatchEvent(new CustomEvent("explora:operational-snapshot-updated",{detail:payload}));window.dispatchEvent(new CustomEvent("explora:firestore-global-state",{detail:{version:VERSION,generation:g,revision:rev,reason,entities:Object.fromEntries([...state.entities].map(([k,v])=>[k,[...v.values()]]))}}));try{window.ExploraFastCache?.renderWeeklySnapshot?.(payload)}catch(_){}
+      }catch(error){if(valid(g)){console.error("[EXPLORA v266 realtime]",error);window.ExploraProductionPolicy?.handle?.("firestore-sync",error,{message:"No pudimos actualizar la información en tiempo real.",context:{reason,uid:state.uid,role:state.role}})}}finally{state.refreshing=false;if(state.queued&&valid(g)){state.queued=false;schedule("queued")}}}
+    function listenerError(name,error,g){if(!valid(g))return;state.errors.set(name,{code:txt(error?.code),message:txt(error?.message),at:Date.now()});console.warn(`[EXPLORA v266 listener:${name}]`,error?.code||error?.message||error);window.dispatchEvent(new CustomEvent("explora:firestore-listener-error",{detail:{name,code:error?.code||"",permissionDenied:/permission-denied|unauthorized/i.test(txt(error?.code||error?.message)),generation:g}}));}
+    function add(name,ref,g){if(state.listeners.has(name))return;try{const unsub=onSnapshot(ref,{includeMetadataChanges:true},snap=>{if(!valid(g))return;const m=detail(snap);state.sourceMeta.set(name,{...m,at:Date.now()});normalizeSnapshot(name,snap);if(m.pending)return;if(m.fromCache&&navigator.onLine)return;schedule(name)},error=>listenerError(name,error,g));state.listeners.set(name,unsub)}catch(error){listenerError(name,error,g)}}
+    function scopedCollection(name,fields,g){for(const [suffix,field,value] of fields){if(value)add(`${name}:${suffix}`,query(collection(db,name),where(field,"==",value)),g)}}
+    function build(g){const uid=state.uid,pid=state.periodId,cycle=state.cycleId,admin=isAdmin(state.role);add("profile:usuario",doc(db,"usuarios",uid),g);if(state.profileId)add("profile:chofer-doc",doc(db,"choferes",state.profileId),g);else add("profile:chofer-uid",query(collection(db,"choferes"),where("uid","==",uid)),g);add("operational:state",doc(db,"app_operational_state","current"),g);add("weekly:own",doc(db,"acumulados_semanales",`${pid}_${uid}`),g);add("weekly:ranking",query(collection(db,"acumulados_semanales"),where("weeklyPeriodId","==",pid)),g);
+      if(admin){for(const [n,f] of [["billing_records","weeklyPeriodId"],["facturaciones","weeklyPeriodId"],["cobros","weeklyPeriodId"],["servicios","weeklyPeriodId"],["gastos","weeklyPeriodId"],["derivaciones","weeklyPeriodId"],["cierres_semanales","weeklyPeriodId"],["deudas_choferes","weeklyPeriodId"],["prestamos_operativos","weeklyPeriodId"],["prestamos_explora","weeklyPeriodId"],["pagos","weeklyPeriodId"]])add(`${n}:period`,query(collection(db,n),where(f,"==",pid)),g);for(const n of ["choferes","usuarios","vehiculos","autos","asignaciones_autos","configuracion","configuraciones","configuracion_metas","metas","porcentajes"])add(`${n}:admin`,collection(db,n),g)}else{scopedCollection("billing_records",[["driverUid","driverUid",uid],["choferUid","choferUid",uid],["uid","uid",uid]],g);scopedCollection("facturaciones",[["driverUid","driverUid",uid],["choferUid","choferUid",uid],["uid","uid",uid]],g);scopedCollection("cobros",[["driverUid","driverUid",uid],["choferUid","choferUid",uid],["uid","uid",uid]],g);scopedCollection("servicios",[["driverUid","driverUid",uid],["choferUid","choferUid",uid]],g);scopedCollection("gastos",[["choferUid","choferUid",uid],["driverUid","driverUid",uid],["uid","uid",uid],["ownerUid","ownerUid",uid]],g);scopedCollection("derivaciones",[["receptorUid","receptorUid",uid],["emisorUid","emisorUid",uid],["senderUid","senderUid",uid],["derivadorUid","derivadorUid",uid]],g);for(const n of ["cierres_semanales","deudas_choferes","prestamos_operativos","prestamos_explora","pagos"])scopedCollection(n,[["driverUid","driverUid",uid],["choferUid","choferUid",uid],["uid","uid",uid]],g);scopedCollection("asignaciones_autos",[["driverUid","driverUid",uid],["choferUid","choferUid",uid]],g)}
+      add("profiles:public",collection(db,"choferes"),g);for(const parent of ["performance_public","ranking_metas_public","derivation_ranking_public","ranking_derivaciones_public"]){add(`${parent}:summary`,doc(db,parent,cycle),g);add(`${parent}:drivers`,collection(db,parent,cycle,"drivers"),g)} }
+    function start(reason="start"){const user=auth.currentUser,p=period(),r=role();if(!user?.uid||!p?.id){stop();return Promise.resolve(null)}const profileId=txt(session().profileDocumentId||session().driverId||"");const key=`${user.uid}|${r}|${p.id}|${profileId}`;if(state.active&&state.contextKey===key){schedule(reason);return Promise.resolve(null)}stop();state.uid=user.uid;state.role=r;state.profileId=profileId;state.periodId=p.id;state.cycleId=`week_${p.id}`;state.contextKey=key;state.active=true;const g=state.generation;build(g);schedule(reason);return Promise.resolve(null)}
+    const mutations=["explora:cobro-registrado","explora:gasto-registrado","explora:derivacion-aceptada","explora:derivacion-rechazada","explora:derivacion-completada","explora:derivacion-facturada","explora:weekly-closure","explora:closure-receipt-updated","explora:loan-requested","explora:loan-payment","explora:avatar-updated","explora:profile-updated","explora:simulation-updated","explora:app-reset","explora:app-launched"];
+    mutations.forEach(n=>window.addEventListener(n,()=>schedule(`mutation:${n}`)));
+    window.addEventListener("explora:session-opened",()=>start("session-opened"));window.addEventListener("explora:auth-cleared",()=>stop());window.addEventListener("explora:operational-period-changed",()=>start("period-changed"));window.addEventListener("online",()=>start("online"));window.addEventListener("pageshow",()=>start("pageshow"));document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")start("foreground")});onAuthStateChanged(auth,user=>{if(user)queueMicrotask(()=>start("auth-state"));else stop()});document.addEventListener("DOMContentLoaded",()=>setTimeout(()=>start("startup"),50));
+    const api=Object.freeze({version:VERSION,start,ensure:start,refresh:(o={})=>{schedule(o.reason||"manual");return Promise.resolve(null)},stop,invalidate:(kind="state",reason="manual")=>{invalidate(kind,reason);schedule(reason)},getState:()=>({version:VERSION,generation:state.generation,uid:state.uid,role:state.role,periodId:state.periodId,cycleId:state.cycleId,contextKey:state.contextKey,listeners:state.listeners.size,listenerNames:[...state.listeners.keys()],revision:state.revision,committedRevision:state.committedRevision,lastCommittedAt:state.lastCommittedAt,lastReason:state.lastReason,errors:[...state.errors.entries()],sources:[...state.sourceMeta.entries()]})});window.ExploraFirestoreGlobalSync=api;window.ExploraOperationalSync=api;window.ExploraDashboardRealtimeCoordinator=api;window.refreshDashboardFromOperationalSnapshot=o=>api.refresh(o||{});
   })();
   </script>
 
@@ -22763,5 +23169,29 @@ window.ExploraActions["admin-launch"] = openLaunch;
 </script>
 
 <!-- EXPLORA v260 · performance snapshot monotónico, UID canónico y caché schema 260 -->
+
+<script type="module" id="exploraGlobalRankingIndependentAuthV268">
+(()=>{
+  "use strict";
+  if(window.__exploraGlobalRankingIndependentAuthV268)return;
+  window.__exploraGlobalRankingIndependentAuthV268=true;
+  const normalize=value=>String(value||"").trim().toLowerCase();
+  let generation=0,renderRevision=0,profilesReady=false,rankingReady=false,periodReady=false;
+  let activePeriodId="",profiles=[],weeklyRows=[];
+  const profileUid=row=>String(row?.uid||row?.authUid||row?.firebaseUid||row?.userId||row?.driverUid||row?.choferUid||row?.id||"").trim();
+  const profileName=row=>String(row?.nombreCompleto||row?.displayName||row?.nombre||row?.name||row?.driverName||"Chofer").trim()||"Chofer";
+  const profileAvatar=row=>String(row?.photoURL||row?.avatarUrl||row?.avatar||row?.driverAvatar||"").trim();
+  const isEligible=row=>{const uid=profileUid(row),role=normalize(row?.role||row?.rol||row?.tipo||row?.profileType),status=normalize(row?.status||row?.estado);if(!uid)return false;if(row?.isAdmin===true||row?.admin===true||row?.owner===true||row?.superadmin===true)return false;if(row?.deleted===true||row?.isDeleted===true||row?.disabled===true||row?.isDisabled===true||row?.active===false||row?.activo===false||row?.enabled===false)return false;if(/admin|administrador|owner|superadmin|system|sistema/.test(role))return false;if(/deleted|eliminado|disabled|deshabilitado|inactive|inactivo|blocked|bloqueado/.test(status))return false;return !role||role.includes("chofer")||role.includes("driver")||row?.isSimulated===true;};
+  const aliases=row=>new Set([profileUid(row),row?.id,row?.email,row?.username,row?.usuario].map(normalize).filter(Boolean));
+  const rowUid=row=>String(row?.driverUid||row?.choferUid||row?.uid||row?.userId||row?.ownerUid||row?.id||"").trim();
+  const rowBilling=row=>Math.max(0,Number(row?.grossBilling??row?.totalFacturado??row?.facturacionBruta??row?.facturacion??row?.totalBilling??0)||0);
+  const rowCount=row=>Math.max(0,Number(row?.serviceCount??row?.cantidadCobros??row?.billingCount??row?.cantidadServicios??0)||0);
+  function reset(){generation+=1;renderRevision+=1;profilesReady=false;rankingReady=false;periodReady=false;activePeriodId="";profiles=[];weeklyRows=[];}
+  function rebuild(){if(!profilesReady||!rankingReady||!periodReady)return;const localGeneration=generation,revision=++renderRevision,profileList=profiles.filter(isEligible),aliasMap=new Map();profileList.forEach(profile=>aliases(profile).forEach(key=>aliasMap.set(key,profile)));const byUid=new Map();profileList.forEach(profile=>{const uid=profileUid(profile);byUid.set(uid,{uid,driverUid:uid,role:"chofer",eligibilityConfirmed:true,driverName:profileName(profile),name:profileName(profile),avatar:profileAvatar(profile),grossBilling:0,totalFacturado:0,serviceCount:0,updatedAt:profile.updatedAt||profile.createdAt||null});});weeklyRows.forEach(raw=>{const rawUid=rowUid(raw),profile=aliasMap.get(normalize(rawUid)),uid=profileUid(profile)||rawUid;if(!uid)return;const previous=byUid.get(uid)||{uid,driverUid:uid,role:"chofer",eligibilityConfirmed:true,driverName:profileName(profile)||String(raw.driverName||raw.choferName||raw.nombre||"Chofer"),name:profileName(profile)||String(raw.driverName||raw.choferName||raw.nombre||"Chofer"),avatar:profileAvatar(profile)||String(raw.avatar||raw.photoURL||""),grossBilling:0,totalFacturado:0,serviceCount:0};const amount=rowBilling(raw);previous.grossBilling=Math.max(Number(previous.grossBilling||0),amount);previous.totalFacturado=previous.grossBilling;previous.serviceCount=Math.max(Number(previous.serviceCount||0),rowCount(raw));previous.updatedAt=raw.updatedAt||raw.calculatedAt||raw.createdAt||previous.updatedAt;byUid.set(uid,previous);});const rows=[...byUid.values()];queueMicrotask(()=>{if(localGeneration!==generation||revision!==renderRevision)return;window.ExploraPerformanceEngine?.applyRealtimeOperationalRows?.({rows,uid:window.ExploraFirebase?.auth?.currentUser?.uid||"",driverUid:window.ExploraFirebase?.auth?.currentUser?.uid||"",weeklyPeriodId:activePeriodId,snapshotRevision:revision,requestId:revision,activeDriverCount:profileList.length,reason:"global-ranking-independent-auth",operationalUpdatedAt:Date.now()});});}
+  window.addEventListener("explora:firestore-global-state",event=>{const detail=event.detail||{},entities=detail.entities||{},periodId=String(window.ExploraPeriods?.getActivePeriods?.().weeklyPeriodId||detail.periodId||"").trim();if(!periodId)return;if(activePeriodId&&activePeriodId!==periodId)reset();activePeriodId=periodId;periodReady=true;profiles=Array.isArray(entities["profiles:public"])?entities["profiles:public"]:profiles;weeklyRows=Array.isArray(entities["weekly:ranking"])?entities["weekly:ranking"].filter(row=>String(row.weeklyPeriodId||row.periodoSemanalId||row.periodoId||periodId)===periodId):weeklyRows;profilesReady=Array.isArray(profiles);rankingReady=Array.isArray(weeklyRows);rebuild();});
+  window.addEventListener("explora:auth-cleared",reset);
+  window.addEventListener("explora:operational-period-changed",reset);
+})();
+</script>
 </body>
 </html>
