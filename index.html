@@ -2,12 +2,12 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="explora-version" content="v251-live-dashboard-ranking-referral-date-sync">
+  <meta name="explora-version" content="v256-derivations-received-first-workflow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>EXPLORA — Dashboard v251 · Tiempo real</title>
+  <title>EXPLORA — Dashboard v256 · Derivaciones recibidas primero</title>
 
   <style>
     :root{
@@ -5257,6 +5257,60 @@
     @media(prefers-reduced-motion:reduce){.dashboard-realtime-status[data-state="syncing"]::before{animation:none}}
   </style>
 
+
+  <style id="explora-v253-balanced-closure-css">
+    .closure-receipt-panel[data-requirement="BALANCED_NO_RECEIPT"],
+    .closure-receipt-panel[data-requirement="ALREADY_CONFIRMED"]{border-color:rgba(92,226,142,.34);background:linear-gradient(180deg,rgba(26,126,70,.16),rgba(10,45,28,.18));}
+    .closure-receipt-panel[data-requirement="BALANCED_NO_RECEIPT"] .closure-receipt-panel-head span,
+    .closure-receipt-panel[data-requirement="BALANCED_NO_RECEIPT"] .closure-administrative-status strong{color:#8ff0b2;}
+    .closure-receipt-panel[data-requirement="BALANCED_NO_RECEIPT"] .closure-receipt-panel-head small{display:none;}
+    .closure-receipt-panel[data-requirement="BALANCED_NO_RECEIPT"] .closure-administrative-status{border-color:rgba(92,226,142,.28);background:rgba(26,126,70,.12);}
+    .closure-receipt-panel[data-requirement="BALANCED_NO_RECEIPT"] .closure-receipt-actions{display:none!important;}
+  </style>
+
+  <style id="explora-v254-live-weekly-summary-css">
+    .weekly-closure-live-state{display:grid;gap:5px;padding:13px 14px;border:1px solid rgba(105,184,255,.28);border-radius:18px;background:linear-gradient(135deg,rgba(36,105,177,.16),rgba(10,31,55,.28));color:#fff}
+    .weekly-closure-live-state[data-state="closed"]{border-color:rgba(92,226,142,.30);background:linear-gradient(135deg,rgba(26,126,70,.16),rgba(12,60,38,.24))}
+    .weekly-closure-live-state[data-state="loading"]{opacity:.82}
+    .weekly-closure-live-state>span{color:#8ecbff;font-size:10px;font-weight:950;letter-spacing:.105em;text-transform:uppercase}
+    .weekly-closure-live-state[data-state="closed"]>span{color:#8ef0b1}
+    .weekly-closure-live-state>strong{font-size:15px;line-height:1.25}
+    .weekly-closure-live-state>small,.weekly-closure-live-state>time{color:rgba(255,255,255,.66);font-size:11px;line-height:1.35}
+    .weekly-closure-content[data-live-loading="true"] [data-weekly-section] strong{color:transparent!important;position:relative;overflow:hidden;border-radius:8px;background:linear-gradient(90deg,rgba(255,255,255,.05),rgba(255,255,255,.13),rgba(255,255,255,.05));background-size:220% 100%;animation:weeklyClosureSkeleton 1.15s ease-in-out infinite}
+    @keyframes weeklyClosureSkeleton{0%{background-position:200% 0}100%{background-position:-20% 0}}
+    @media(prefers-reduced-motion:reduce){.weekly-closure-content[data-live-loading="true"] [data-weekly-section] strong{animation:none}}
+  </style>
+
+  <style id="explora-v255-closure-status-css">
+    .weekly-closure-human-status{display:inline-flex;align-items:center;width:max-content;max-width:100%;margin-top:10px;padding:7px 11px;border-radius:999px;font-size:11px;font-weight:950;letter-spacing:.06em}
+    .weekly-closure-human-status[data-state="ok"]{color:#8ff0b2;background:rgba(91,220,137,.12);border:1px solid rgba(91,220,137,.32)}
+    .weekly-closure-human-status[data-state="upcoming"]{color:#ffd37b;background:rgba(245,185,66,.12);border:1px solid rgba(245,185,66,.34)}
+    .weekly-closure-human-status[data-state="pending"]{color:#ffb4b4;background:rgba(255,80,80,.12);border:1px solid rgba(255,80,80,.34)}
+    .weekly-closure-human-status[data-state="david-pending"]{color:#a8d8ff;background:rgba(80,140,255,.12);border:1px solid rgba(80,140,255,.34)}
+    .weekly-closure-acknowledgement{display:grid;gap:10px;padding:14px;border:1px solid rgba(245,185,66,.32);border-radius:18px;background:rgba(245,185,66,.08)}
+    .weekly-closure-acknowledgement[hidden]{display:none!important}.weekly-closure-acknowledgement strong{color:#ffd37b;font-size:14px;letter-spacing:.04em}.weekly-closure-acknowledgement p{margin:0;color:rgba(255,255,255,.76);font-size:13px;line-height:1.4}.weekly-closure-acknowledgement button{min-height:52px;border:0;border-radius:15px;background:linear-gradient(180deg,#ffd36a,#d99b25);color:#111;font-weight:950}
+    .profile-pending-closure-card[data-status="pending"]{border-color:rgba(255,80,80,.34);background:linear-gradient(180deg,rgba(128,26,36,.24),rgba(40,10,15,.94))}.profile-pending-closure-card[data-status="david-pending"]{border-color:rgba(80,140,255,.34);background:linear-gradient(180deg,rgba(30,76,135,.24),rgba(9,24,46,.94))}.profile-pending-closure-card[data-status="upcoming"]{border-color:rgba(245,185,66,.34)}
+  </style>
+
+  <style id="explora-v256-derivations-received-first-css">
+    .derivation-screen{padding-bottom:calc(var(--explora-bottom-nav-height,78px) + env(safe-area-inset-bottom) + 120px)!important}
+    .derivation-shell--simple{padding-bottom:calc(var(--explora-bottom-nav-height,78px) + env(safe-area-inset-bottom) + 130px)!important}
+    .derivation-simple-main--v256{padding-bottom:calc(var(--explora-bottom-nav-height,78px) + env(safe-area-inset-bottom) + 110px)!important}
+    .derivation-tabs--v256{grid-template-columns:1fr 1fr;margin-bottom:14px;position:sticky;top:0;z-index:3;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);background:rgba(7,10,13,.92)}
+    .derivation-tabs--v256 .derivation-tab{font-size:11px;letter-spacing:.025em;padding:0 8px}.derivation-tabs--v256 .derivation-tab span{display:inline-grid;place-items:center;min-width:21px;height:21px;margin-left:5px;border-radius:999px;background:rgba(255,255,255,.11);font-size:10px}.derivation-tabs--v256 .derivation-tab.is-active span{background:rgba(0,0,0,.18)}
+    .derivation-create-intro{padding:3px 2px 2px}.derivation-create-intro>span,.derivation-section-title-row span{color:#f4ca68;font-size:10px;font-weight:950;letter-spacing:.105em}.derivation-create-intro h2{margin:5px 0 0;font-size:22px}.derivation-create-intro p{margin:6px 0 0;color:var(--ex-muted);font-size:13px;line-height:1.4}
+    .derivation-section-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}.derivation-section-title-row h2{margin:4px 0 0!important;font-size:18px!important}.derivation-section-title-row>b{min-width:30px;height:30px;display:grid;place-items:center;border-radius:999px;background:rgba(245,185,66,.12);color:#f4ca68}
+    .derivation-current-section{border-color:rgba(183,146,255,.42)!important;background:radial-gradient(circle at 10% 0%,rgba(183,146,255,.13),transparent 42%),var(--ex-panel-soft)!important;box-shadow:0 0 28px rgba(183,146,255,.10),var(--ex-shadow)!important}
+    .derivation-finalized-section .derivation-history-card{opacity:.9}.derivation-finalized-section .derivation-history-actions{display:none}
+    .derivation-empty-state{display:grid;gap:10px;text-align:center;padding:28px 18px;border:1px solid rgba(255,255,255,.09);border-radius:22px;background:rgba(255,255,255,.025)}.derivation-empty-state[hidden]{display:none!important}.derivation-empty-state strong{font-size:17px}.derivation-empty-state span{color:var(--ex-muted);font-size:13px;line-height:1.4}.derivation-empty-state button{min-height:48px;border:1px solid rgba(245,185,66,.36);border-radius:14px;background:rgba(245,185,66,.10);color:#f4ca68;font-weight:900}
+    .derivation-operational-card{display:grid;gap:10px;padding:13px;border:1px solid rgba(255,255,255,.09);border-radius:18px;background:rgba(255,255,255,.034)}.derivation-operational-card.is-current{border-color:rgba(183,146,255,.38);background:rgba(183,146,255,.07)}
+    .derivation-operational-head{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:10px;align-items:center}.derivation-operational-copy strong{display:block;font-size:15px}.derivation-operational-copy small{display:block;margin-top:4px;color:rgba(255,255,255,.58);font-size:11px;line-height:1.3}.derivation-operational-amount{color:#f7cf70;font-size:17px;font-weight:950;white-space:nowrap}
+    .derivation-operational-status{display:flex;justify-content:space-between;gap:10px;align-items:center;padding-top:9px;border-top:1px solid rgba(255,255,255,.06)}.derivation-operational-status span{font-size:10px;font-weight:950;letter-spacing:.05em;color:#d9c6ff}.derivation-operational-status small{color:rgba(255,255,255,.58);text-align:right;line-height:1.3}
+    .derivation-operational-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.derivation-operational-actions button{min-height:44px;border-radius:13px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#fff;font-weight:900}.derivation-operational-actions .primary{border:0;background:linear-gradient(180deg,#efd36a,#b98a20);color:#070707}.derivation-operational-actions .accept{border:0;background:linear-gradient(180deg,#79e4a2,#35b76b);color:#06120a}.derivation-operational-actions .danger{color:#ffabab;border-color:rgba(255,95,95,.25)}
+    .derivation-final-card{display:grid;gap:7px;padding:12px;border:1px solid rgba(255,255,255,.07);border-radius:16px;background:rgba(255,255,255,.025)}.derivation-final-card-head{display:flex;justify-content:space-between;gap:10px}.derivation-final-card strong{font-size:14px}.derivation-final-card b{color:#79e39a}.derivation-final-card small{color:rgba(255,255,255,.55);line-height:1.35}
+    #derivationFinalizeConfirmBtn:disabled{opacity:.45!important;cursor:not-allowed}.derivation-payment-required{color:#ffcf77!important}
+    @media(max-width:390px){.derivation-operational-head{grid-template-columns:44px minmax(0,1fr)}.derivation-operational-amount{grid-column:2;justify-self:start}.derivation-operational-actions{grid-template-columns:1fr}.derivation-tabs--v256 .derivation-tab{font-size:10px}}
+  </style>
 </head>
 
 <body class="explora-auth-checking">
@@ -5813,6 +5867,13 @@
       <div id="weeklyClosureContent" class="weekly-closure-content">
         <div id="weeklyClosureLoading" class="weekly-closure-loading" hidden>Calculando el cierre con los datos reales de la semana…</div>
 
+        <section id="weeklyClosureLiveState" class="weekly-closure-live-state" data-state="loading" aria-live="polite">
+          <span id="weeklyClosureLiveBadge">ACTUALIZANDO RESUMEN…</span>
+          <strong id="weeklyClosureLiveTitle">Resumen semanal</strong>
+          <small id="weeklyClosureLiveDetail">Esperando el snapshot operativo consolidado.</small>
+          <time id="weeklyClosureLiveUpdated">—</time>
+        </section>
+
         <div class="closure-period-card">
           <div class="closure-period-cell"><span>SEMANA</span><strong id="weeklyClosurePeriod">—</strong></div>
           <div class="closure-period-cell"><span>CHOFER</span><strong id="weeklyClosureDriver">—</strong></div>
@@ -6242,40 +6303,62 @@
 
 
 
-  <section id="derivationScreen" class="derivation-screen" aria-label="Derivar servicio" aria-hidden="true">
+  <section id="derivationScreen" class="derivation-screen" aria-label="Derivaciones" aria-hidden="true" data-derivation-view="received">
     <div class="derivation-shell derivation-shell--simple">
       <header class="derivation-header">
         <button id="derivationBackBtn" class="derivation-back" type="button" aria-label="Volver"><svg viewBox="0 0 24 24"><path d="M15 5 8 12l7 7"/></svg></button>
-        <div class="derivation-heading"><h1>DERIVAR SERVICIO</h1><p>Envía un servicio a otro chofer de EXPLORA.</p></div>
-        <button id="derivationRefreshBtn" class="derivation-refresh" type="button" aria-label="Actualizar choferes"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.2 5.5"/><path d="M20 4v7h-7"/></svg></button>
+        <div class="derivation-heading"><h1>DERIVACIONES</h1><p>Primero resolvé los servicios que recibiste.</p></div>
+        <button id="derivationRefreshBtn" class="derivation-refresh" type="button" aria-label="Actualizar derivaciones"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.2 5.5"/><path d="M20 4v7h-7"/></svg></button>
       </header>
-      <main class="derivation-simple-main">
-        <form id="derivationForm" class="derivation-simple-form" novalidate>
-          <section class="derivation-section-card derivation-fields-card">
-            <label for="derivationAmount">1. MONTO
-              <input id="derivationAmount" type="text" inputmode="numeric" placeholder="$ 0" autocomplete="off" enterkeyhint="next">
-            </label>
-            <label for="derivationDescription">2. CONCEPTO
-              <input id="derivationDescription" type="text" maxlength="120" placeholder="Ej.: Cataratas" autocomplete="off" enterkeyhint="next">
-            </label>
+      <nav class="derivation-tabs derivation-tabs--v256" aria-label="Vistas de derivaciones">
+        <button id="derivationReceivedTab" class="derivation-tab is-active" type="button" data-derivation-tab="received">RECIBIDAS <span id="derivationReceivedCount">0</span></button>
+        <button id="derivationCreateTab" class="derivation-tab" type="button" data-derivation-tab="create">DERIVAR SERVICIO</button>
+      </nav>
+      <main class="derivation-simple-main derivation-simple-main--v256">
+        <section id="derivationReceivedPanel" class="derivation-panel is-active" data-derivation-panel="received">
+          <section id="derivationCurrentSection" class="derivation-section-card derivation-current-section" hidden>
+            <div class="derivation-section-title-row"><div><span>SERVICIO ACTUAL</span><h2>DERIVACIÓN EN CURSO</h2></div><b id="derivationCurrentCount">0</b></div>
+            <div id="derivationCurrentList" class="derivation-list"></div>
           </section>
-          <section class="derivation-section-card">
-            <h2>3. CHOFER RECEPTOR</h2>
-            <div id="derivationDriverGrid" class="derivation-driver-grid"></div>
+          <section id="derivationPendingSection" class="derivation-section-card" hidden>
+            <div class="derivation-section-title-row"><div><span>REQUIEREN ACCIÓN</span><h2>PENDIENTES</h2></div><b id="derivationPendingCount">0</b></div>
+            <div id="derivationPendingList" class="derivation-list"></div>
           </section>
-          <section class="derivation-section-card derivation-compact-summary">
-            <div class="derivation-summary-row"><span>Chofer</span><strong id="derivationSummaryReceiver">Sin seleccionar</strong></div>
-            <div class="derivation-summary-row"><span>Monto</span><strong id="derivationSummaryPrice" class="price">$0</strong></div>
-            <div class="derivation-summary-row"><span>Concepto</span><strong id="derivationSummaryService">Sin completar</strong></div>
+          <section id="derivationFinalizedSection" class="derivation-section-card derivation-finalized-section" hidden>
+            <div class="derivation-section-title-row"><div><span>SEMANA ACTUAL</span><h2>FINALIZADAS ESTA SEMANA</h2></div><b id="derivationFinalizedCount">0</b></div>
+            <div id="derivationFinalizedList" class="derivation-list"></div>
           </section>
-          <div id="derivationFormMessage" class="derivation-message" aria-live="polite"></div>
-          <div class="derivation-form-actions"><button id="derivationCancelBtn" class="derivation-secondary" type="button">CANCELAR</button><button id="derivationSendBtn" class="derivation-primary derivation-primary--wide" type="submit" disabled>4. CONFIRMAR</button></div>
-        </form>
-        <section id="derivationReceiverPendingSection" class="derivation-section-card derivation-receiver-pending" hidden>
-          <h2>DERIVACIONES PENDIENTES DE CARGA</h2>
-          <p>Completa el monto real facturado y la forma de pago.</p>
-          <div id="derivationReceiverPendingList" class="derivation-list"></div>
+          <section id="derivationReceivedEmpty" class="derivation-empty-state" hidden>
+            <strong>NO TENÉS DERIVACIONES RECIBIDAS</strong>
+            <span>Cuando otro chofer te derive un servicio, aparecerá aquí.</span>
+            <button type="button" data-derivation-tab="create">DERIVAR UN SERVICIO</button>
+          </section>
         </section>
+        <section id="derivationCreatePanel" class="derivation-panel" data-derivation-panel="create">
+          <div class="derivation-create-intro"><span>ENVIAR NUEVA DERIVACIÓN</span><h2>DERIVAR UN SERVICIO</h2><p>Seleccioná el monto, el concepto y el chofer que recibirá el servicio.</p></div>
+          <form id="derivationForm" class="derivation-simple-form" novalidate>
+            <section class="derivation-section-card derivation-fields-card">
+              <label for="derivationAmount">1. MONTO
+                <input id="derivationAmount" type="text" inputmode="numeric" placeholder="$ 0" autocomplete="off" enterkeyhint="next">
+              </label>
+              <label for="derivationDescription">2. CONCEPTO
+                <input id="derivationDescription" type="text" maxlength="120" placeholder="Ej.: Cataratas" autocomplete="off" enterkeyhint="next">
+              </label>
+            </section>
+            <section class="derivation-section-card">
+              <h2>3. CHOFER RECEPTOR</h2>
+              <div id="derivationDriverGrid" class="derivation-driver-grid"></div>
+            </section>
+            <section class="derivation-section-card derivation-compact-summary">
+              <div class="derivation-summary-row"><span>Chofer receptor</span><strong id="derivationSummaryReceiver">Sin seleccionar</strong></div>
+              <div class="derivation-summary-row"><span>Monto</span><strong id="derivationSummaryPrice" class="price">$0</strong></div>
+              <div class="derivation-summary-row"><span>Concepto</span><strong id="derivationSummaryService">Sin completar</strong></div>
+            </section>
+            <div id="derivationFormMessage" class="derivation-message" aria-live="polite"></div>
+            <div class="derivation-form-actions"><button id="derivationCancelBtn" class="derivation-secondary" type="button">VOLVER A RECIBIDAS</button><button id="derivationSendBtn" class="derivation-primary derivation-primary--wide" type="submit" disabled>ENVIAR</button></div>
+          </form>
+        </section>
+        <section id="derivationReceiverPendingSection" hidden aria-hidden="true"><div id="derivationReceiverPendingList"></div></section>
       </main>
     </div>
   </section>
@@ -8984,7 +9067,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     };
 
     function buildSnapshotCacheKey(uid, periodId) {
-      return `${String(uid || "").toLowerCase()}|${String(periodId || "")}`;
+      return `v254|${String(uid || "").toLowerCase()}|${String(exploraSession.role || "unknown").toLowerCase()}|${String(periodId || "")}|open`;
     }
 
     function getIdentitySetForDriver(uid, performanceResult) {
@@ -12028,6 +12111,17 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         adminReceiptUploadedByUid:auth.currentUser.uid,
         adminReceiptUploadedByRole:"admin",
         adminReceiptStatus:"uploaded",
+        adminPaymentCompleted:true,
+        adminPaymentCompletedAt:serverTimestamp(),
+        isResolved:true,
+        closureStatus:"completed",
+        status:"completed",
+        driverAcknowledged:true,
+        driverAcknowledgedAt:serverTimestamp(),
+        driverAcknowledgedBy:"admin_payment",
+        driverAcknowledgedPeriodId:periodId,
+        acknowledgementStatus:"confirmed_by_admin_payment",
+        statusSchemaVersion:255,
         actualizadoEn:serverTimestamp(),
         updatedAt:serverTimestamp()
       };
@@ -12819,6 +12913,52 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       CLOSURE_ERROR: "CLOSURE_ERROR"
     });
 
+    const DRIVER_WEEKLY_CLOSURE_STATUS = Object.freeze({
+      UP_TO_DATE:"UP_TO_DATE",
+      NEW_CLOSURE_UNSEEN:"NEW_CLOSURE_UNSEEN",
+      BALANCED_AWAITING_ACKNOWLEDGEMENT:"BALANCED_AWAITING_ACKNOWLEDGEMENT",
+      DRIVER_PAYMENT_PENDING:"DRIVER_PAYMENT_PENDING",
+      DRIVER_RECEIPT_SUBMITTED:"DRIVER_RECEIPT_SUBMITTED",
+      DRIVER_RECEIPT_REJECTED:"DRIVER_RECEIPT_REJECTED",
+      ADMIN_PAYMENT_PENDING:"ADMIN_PAYMENT_PENDING",
+      ADMIN_PAYMENT_COMPLETED:"ADMIN_PAYMENT_COMPLETED",
+      CLOSURE_COMPLETED:"CLOSURE_COMPLETED",
+      REVIEW_REQUIRED:"REVIEW_REQUIRED"
+    });
+
+    function getDriverWeeklyClosureStatus(closureInput = {}, currentUser = {}, receiptData = {}) {
+      const statusData = closureInput?.statusData || closureInput || {};
+      const closure = { ...(statusData.closureRecord?.data || {}), ...(statusData.closure || {}), ...(receiptData || {}) };
+      const payment = { ...(statusData.paymentRecord?.data || {}), ...(statusData.payment || {}) };
+      const periodId = String(statusData.weeklyPeriodId || closure.weeklyPeriodId || closure.periodoSemanalId || closure.periodoId || "").trim();
+      const activePeriodId = String(getActiveWeeklyPeriod?.().id || "").trim();
+      const isPeriodClosed = statusData.isPeriodClosed === true || Boolean(periodId && activePeriodId && periodId !== activePeriodId);
+      const amount = Math.max(0, Number(statusData.amount ?? closure.settlementAmount ?? closure.saldoFinal ?? payment.amount ?? 0) || 0);
+      const payer = statusData.payer || (closureDirection(closure,payment)==="chofer_a_david"?"driver":closureDirection(closure,payment)==="david_a_chofer"?"admin":null);
+      const receiptStatus = String(statusData.receiptStatus || closure.driverReceiptStatus || closure.adminReceiptStatus || closure.receiptStatus || closure.estadoComprobante || payment.receiptStatus || "").toLowerCase();
+      const rejected = receiptStatus.includes("reject") || receiptStatus.includes("rechaz");
+      const driverReceiptUrl = String(statusData.driverReceiptUrl || closure.driverReceiptUrl || (payer==="driver" ? statusData.receiptUrl || closure.receiptUrl || "" : "")).trim();
+      const adminReceiptUrl = String(statusData.adminReceiptUrl || closure.adminReceiptUrl || closure.davidReceiptUrl || (payer==="admin" ? statusData.receiptUrl || closure.receiptUrl || "" : "")).trim();
+      const driverReceiptSubmitted = Boolean(driverReceiptUrl || ["uploaded","accepted","review","approved","aprobado"].some(v=>receiptStatus.includes(v)) && payer==="driver");
+      const adminPaymentCompleted = Boolean(closure.adminPaymentCompleted===true || closure.pagoDavidCompletado===true || adminReceiptUrl || (payer==="admin" && ["uploaded","accepted","approved","aprobado","paid","pagado"].some(v=>receiptStatus.includes(v))));
+      const acknowledged = Boolean(closure.driverAcknowledged===true || closure.driverAcknowledgedPeriodId===periodId || driverReceiptSubmitted || adminPaymentCompleted);
+      const balanced = statusData.balanced===true || closure.balanced===true || (!payer && Math.abs(Number(statusData.normalizedBalance ?? closure.saldoFinal ?? 0) || 0) <= 1);
+      const periodLabel = closurePeriodLabel(closure, periodId || "Último cierre");
+      const base = {periodId,periodLabel,amount,payer,isPeriodClosed,requiresDriverAcknowledgement:false,requiresDriverReceipt:false,requiresAdminPayment:false,requiresAdminReceipt:false,isUpToDate:false,canDriverResolve:false,canAdminResolve:false};
+      const done = (code,detail)=>({...base,code,label:"AL DÍA",detail,colorState:"ok",isUpToDate:true});
+      if(!isPeriodClosed) return done(DRIVER_WEEKLY_CLOSURE_STATUS.UP_TO_DATE,"No tenés acciones pendientes de cierre.");
+      if(rejected) return {...base,code:DRIVER_WEEKLY_CLOSURE_STATUS.DRIVER_RECEIPT_REJECTED,label:"COMPROBANTE RECHAZADO",detail:closure.receiptRejectionReason || closure.motivoRechazo || "Tu comprobante fue rechazado. Subí uno nuevo.",colorState:"pending",requiresDriverReceipt:true,canDriverResolve:true};
+      if(payer==="driver" && !driverReceiptSubmitted) return {...base,code:DRIVER_WEEKLY_CLOSURE_STATUS.DRIVER_PAYMENT_PENDING,label:"PAGO PENDIENTE",detail:`Debés pagarle a David ${formatClosureMoney(amount)} y subir el comprobante.`,colorState:"pending",requiresDriverReceipt:true,requiresDriverAcknowledgement:true,canDriverResolve:true};
+      if(payer==="admin" && !adminPaymentCompleted) return {...base,code:DRIVER_WEEKLY_CLOSURE_STATUS.ADMIN_PAYMENT_PENDING,label:"PAGO DE DAVID PENDIENTE",detail:`David debe pagarte ${formatClosureMoney(amount)}. Te avisaremos cuando registre el pago.`,colorState:"david-pending",requiresAdminPayment:true,requiresAdminReceipt:true,canAdminResolve:true};
+      if(balanced && !acknowledged) return {...base,code:DRIVER_WEEKLY_CLOSURE_STATUS.BALANCED_AWAITING_ACKNOWLEDGEMENT,label:"REVISÁ TU CIERRE",detail:"La cuenta está equilibrada. Entrá para revisar y confirmar que lo viste.",colorState:"upcoming",requiresDriverAcknowledgement:true,canDriverResolve:true};
+      if(!balanced && !payer) return {...base,code:DRIVER_WEEKLY_CLOSURE_STATUS.REVIEW_REQUIRED,label:"REVISIÓN NECESARIA",detail:"No pudimos determinar correctamente quién debe pagar. David revisará este cierre.",colorState:"error",canAdminResolve:true};
+      if(driverReceiptSubmitted) return done(DRIVER_WEEKLY_CLOSURE_STATUS.DRIVER_RECEIPT_SUBMITTED,"Comprobante enviado. Tu cierre está al día.");
+      if(adminPaymentCompleted) return done(DRIVER_WEEKLY_CLOSURE_STATUS.ADMIN_PAYMENT_COMPLETED,"David registró el pago. Tu cierre está al día.");
+      if(balanced && acknowledged) return done(DRIVER_WEEKLY_CLOSURE_STATUS.CLOSURE_COMPLETED,"Cierre equilibrado confirmado.");
+      return done(DRIVER_WEEKLY_CLOSURE_STATUS.UP_TO_DATE,"Tu último cierre ya está resuelto.");
+    }
+    window.getDriverWeeklyClosureStatus = getDriverWeeklyClosureStatus;
+
     const closureState = {
       uid: null,
       weeklyPeriodId: null,
@@ -13187,6 +13327,16 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         lastDashboardWeeklyStatusResult = result;
         const rawStatus = result.status || CLOSURE_STATUS.CLOSURE_LOADING;
         const frozenNotice = readDashboardNoticeSnapshot();
+        if (![CLOSURE_STATUS.CLOSURE_LOADING,CLOSURE_STATUS.CLOSURE_ERROR,"CLOSURE_DAY"].includes(rawStatus)) {
+          const canonical=getDriverWeeklyClosureStatus(result,auth.currentUser||{},result);
+          card.dataset.status=canonical.colorState;card.dataset.closureStatus=canonical.code;card.dataset.layout="detail";
+          $("driverStatusIcon").innerHTML=statusIconMarkup(canonical.colorState);
+          $("driverStatusActionIcon").innerHTML=statusIconMarkup(canonical.colorState==="ok"?"ok":"loading");
+          $("driverStatusTitle").textContent=canonical.label;$("driverStatusMessage").textContent=canonical.detail;$("driverStatusDetail").textContent=canonical.periodLabel||"";
+          $("driverStatusActionTitle").textContent="";$("driverStatusActionMessage").textContent="";
+          card.setAttribute("aria-label",`${canonical.label}. ${canonical.detail}`);configureWeeklyStatusInteraction(result);
+          window.ExploraDriverWeeklyClosureCanonicalStatus=canonical;renderPendingClosureCard(canonical.isUpToDate?null:result);return;
+        }
 
         if (rawStatus === CLOSURE_STATUS.CLOSURE_LOADING && frozenNotice) {
           applyDashboardNoticeSnapshot(frozenNotice, result);
@@ -13235,9 +13385,9 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         } else if (rawStatus === CLOSURE_STATUS.BALANCED_CLOSURE) {
           visual = "balanced";
           title = "CUENTA EQUILIBRADA";
-          message = "Pendiente de comprobante.";
-          detail = "Tocá para confirmar el cierre.";
-          aria = "Cuenta equilibrada. Pendiente de comprobante.";
+          message = "Cierre confirmado.";
+          detail = "No se necesita comprobante.";
+          aria = "Cuenta equilibrada. Cierre confirmado. No se necesita comprobante.";
         } else if (rawStatus === CLOSURE_STATUS.BALANCED_RECEIPT_UPLOADED) {
           visual = "paid";
           title = "CIERRE COMPLETADO";
@@ -13978,7 +14128,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       closureState.saving = false;
       const submit = $("weeklyClosureSubmitBtn");
       if (submit) {
-        const activeSummary=closureState.statusData?.normalizedSummary||{};const mayUpload=Boolean(activeSummary.balanced)||(activeSummary.payer==="driver"&&Number(activeSummary.amount||0)>WEEKLY_CLOSURE_BALANCE_TOLERANCE);submit.disabled=!(weeklyDriverReceiptState.file instanceof File)||!mayUpload;
+        const activeSummary=closureState.statusData?.normalizedSummary||{};const mayUpload=activeSummary.payer==="driver"&&Number(activeSummary.amount||0)>WEEKLY_CLOSURE_BALANCE_TOLERANCE;submit.disabled=!(weeklyDriverReceiptState.file instanceof File)||!mayUpload;
         submit.textContent = "CONFIRMAR COMPROBANTE";
         submit.removeAttribute("aria-busy");
       }
@@ -14003,6 +14153,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     window.ExploraResetWeeklyClosureState = resetWeeklyClosureState;
 
     function closeWeeklyClosureModal() {
+      stopWeeklyClosureLiveBinding();
       const overlay = $("weeklyClosureOverlay");
       if (overlay) { overlay.hidden = true; overlay.setAttribute("aria-hidden","true"); }
       const loading = $("weeklyClosureLoading"); if (loading) loading.hidden = true;
@@ -14019,21 +14170,169 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     }
 
     const WEEKLY_CLOSURE_BALANCE_TOLERANCE = 1;
+    function normalizeWeeklyClosureBalance(value) {
+      const number = finiteClosureNumber(value, 0);
+      if (!Number.isFinite(number)) return 0;
+      const rounded = Math.round(number);
+      return Math.abs(rounded) <= WEEKLY_CLOSURE_BALANCE_TOLERANCE ? 0 : rounded;
+    }
     function isWeeklyClosureBalanced(value) {
-      return Math.abs(Number(value || 0)) <= WEEKLY_CLOSURE_BALANCE_TOLERANCE;
+      return normalizeWeeklyClosureBalance(value) === 0;
+    }
+
+    const WEEKLY_CLOSURE_RECEIPT_STATE = Object.freeze({
+      DRIVER_RECEIPT_REQUIRED:"DRIVER_RECEIPT_REQUIRED",
+      ADMIN_PAYMENT_PENDING:"ADMIN_PAYMENT_PENDING",
+      BALANCED_NO_RECEIPT:"BALANCED_NO_RECEIPT",
+      ALREADY_CONFIRMED:"ALREADY_CONFIRMED",
+      INVALID_STATE:"INVALID_STATE"
+    });
+
+    const WEEKLY_LIVE_SUMMARY_SCHEMA_VERSION = 254;
+    let weeklyClosureLiveUnsubscribe = null;
+    let weeklyClosureLiveRequestId = 0;
+    let weeklyClosureLiveSignature = "";
+
+    function weeklyClosurePeriodState(periodId = "", statusData = {}) {
+      const active = getActiveWeeklyPeriod();
+      const normalized = String(periodId || active.id || "").slice(0,10);
+      const currentId = String(active.id || "").slice(0,10);
+      const closure = statusData.closureRecord?.data || statusData.closure || {};
+      const rawStatus = String(closure.status || closure.closureStatus || statusData.status || "").toLowerCase();
+      const explicitClosed = ["closed","completed","confirmed","confirmed_balanced","closed_balanced","paid","frozen"].includes(rawStatus) || closure.isFrozen === true || closure.frozen === true;
+      const belongsToPastPeriod = Boolean(normalized && currentId && normalized !== currentId);
+      return { periodId:normalized, currentId, isClosed:belongsToPastPeriod || (explicitClosed && belongsToPastPeriod), period:closurePeriodObject(normalized || currentId) };
+    }
+
+    function buildLiveWeeklyFinancialSummary(snapshot = {}, session = {}, periodState = {}, statusData = {}) {
+      const normalizedData = normalizeWeeklyClosureData({ ...statusData, weeklySnapshot:snapshot }, statusData.cycleForPeriod || weeklySummaryCycleInfo(periodState.periodId));
+      const summary = calculateFinalBalance(normalizedData);
+      const lastUpdatedAt = snapshot.updatedAt?.toDate?.() || snapshot.actualizadoEn?.toDate?.() || snapshot.calculatedAt || new Date();
+      return Object.freeze({
+        ...summary, uid:String(snapshot.uid || snapshot.driverUid || session.uid || auth.currentUser?.uid || ""),
+        periodId:periodState.periodId || summary.periodId, periodStart:periodState.period?.startMs || null, periodEnd:periodState.period?.endMs || null,
+        isPeriodClosed:Boolean(periodState.isClosed), lastUpdatedAt, billedTotal:summary.grossBilling, expensesTotal:summary.expenses,
+        cashTotal:summary.cash, transferTotal:summary.transfers, cardTotal:summary.cards, qrTotal:summary.qr,
+        otherPaymentTotal:Math.max(0, Number(snapshot.aliasCollectedByAdmin || 0)), basePercentage:summary.basePercent, goalPercentage:summary.goalPercent,
+        totalDriverPercentage:summary.currentDriverPercent, goalBenefit:summary.goalBenefit, referralBonus:summary.derivationBonus,
+        driverShare:summary.driverShareBeforeDiscounts, adminShare:Math.max(0, Number(summary.grossBilling || 0) - Number(summary.driverShareBeforeDiscounts || 0)),
+        driverHeldCash:summary.cash, adminReceivedFunds:summary.totalCollectedByAdmin, adjustments:summary.otherDiscounts, debts:summary.fines, loans:summary.loans + summary.exploreLoanDiscount,
+        normalizedBalance:normalizeWeeklyClosureBalance(summary.netSettlementToDriver), projectedResultType:summary.balanced ? "balanced" : summary.payer === "driver" ? "driver-pays" : "admin-pays",
+        closureStatus:periodState.isClosed ? "closed" : "open", schemaVersion:WEEKLY_LIVE_SUMMARY_SCHEMA_VERSION
+      });
+    }
+    window.buildLiveWeeklyFinancialSummary = buildLiveWeeklyFinancialSummary;
+
+    function renderWeeklyClosureLiveState(summary = {}) {
+      const box=$("weeklyClosureLiveState"), badge=$("weeklyClosureLiveBadge"), title=$("weeklyClosureLiveTitle"), detail=$("weeklyClosureLiveDetail"), updated=$("weeklyClosureLiveUpdated");
+      if(!box)return;
+      const statusData=closureState.statusData||{};
+      const canonical=getDriverWeeklyClosureStatus({...statusData,isPeriodClosed:summary.isPeriodClosed,balanced:summary.balanced,normalizedBalance:summary.normalizedBalance,amount:summary.amount,payer:summary.payer},auth.currentUser||{},statusData);
+      box.dataset.state=summary.isPeriodClosed?canonical.colorState:"open";
+      if(badge)badge.textContent=summary.isPeriodClosed?"ÚLTIMO CIERRE SEMANAL":"SEMANA EN CURSO";
+      if(title)title.textContent=summary.isPeriodClosed?"Este fue tu último cierre de semana.":"RESUMEN EN TIEMPO REAL";
+      if(detail)detail.textContent=summary.isPeriodClosed?`Del ${closurePeriodLabel(summary.closure||{},summary.periodId||"").replace(/\s+al\s+/i," al ")}`:"Estos valores se actualizan durante la semana. El resultado será definitivo al momento del cierre semanal.";
+      if(updated) updated.textContent=summary.isPeriodClosed?canonical.label:`Actualizado: ${(summary.lastUpdatedAt instanceof Date?summary.lastUpdatedAt:new Date(summary.lastUpdatedAt||Date.now())).toLocaleString("es-AR",{dateStyle:"short",timeStyle:"short"})}`;
+      let statusBadge=$("weeklyClosureHumanStatusBadge");
+      if(!statusBadge){statusBadge=document.createElement("div");statusBadge.id="weeklyClosureHumanStatusBadge";statusBadge.className="weekly-closure-human-status";box.appendChild(statusBadge);}
+      statusBadge.dataset.state=canonical.colorState;statusBadge.textContent=canonical.label;statusBadge.hidden=!summary.isPeriodClosed;
+      const finalKicker=$("weeklyFinalTitle"); if(finalKicker)finalKicker.textContent=summary.isPeriodClosed?"SALDO FINAL":"SALDO PARCIAL ACTUAL";
+      renderWeeklyClosureAcknowledgement(statusData,summary,canonical);
+    }
+
+    const weeklyClosureAcknowledgementInFlight=new Map();
+    function ensureWeeklyClosureAcknowledgementUI(){
+      let section=$("weeklyClosureAcknowledgementSection");
+      if(section)return section;
+      const content=$("weeklyClosureContent");if(!content)return null;
+      section=document.createElement("section");section.id="weeklyClosureAcknowledgementSection";section.className="weekly-closure-acknowledgement";section.hidden=true;
+      section.innerHTML='<strong id="weeklyClosureAcknowledgementTitle">REVISÁ TU CIERRE</strong><p id="weeklyClosureAcknowledgementDetail"></p><button id="weeklyClosureAcknowledgementBtn" type="button">CONFIRMAR QUE VI MI CIERRE</button>';
+      const live=$("weeklyClosureLiveState");if(live?.nextSibling)content.insertBefore(section,live.nextSibling);else content.prepend(section);
+      $("weeklyClosureAcknowledgementBtn")?.addEventListener("click",confirmDriverWeeklyClosureAcknowledgement);
+      return section;
+    }
+    function renderWeeklyClosureAcknowledgement(statusData={},summary={},canonical=null){
+      const section=ensureWeeklyClosureAcknowledgementUI();if(!section)return;
+      const state=canonical||getDriverWeeklyClosureStatus({...statusData,isPeriodClosed:summary.isPeriodClosed,balanced:summary.balanced,normalizedBalance:summary.normalizedBalance,amount:summary.amount,payer:summary.payer},auth.currentUser||{},statusData);
+      const show=Boolean(summary.isPeriodClosed&&state.requiresDriverAcknowledgement&&!state.requiresDriverReceipt&&state.code===DRIVER_WEEKLY_CLOSURE_STATUS.BALANCED_AWAITING_ACKNOWLEDGEMENT);
+      section.hidden=!show;section.dataset.state=state.colorState;
+      if(show){$("weeklyClosureAcknowledgementTitle").textContent="REVISÁ TU CIERRE";$("weeklyClosureAcknowledgementDetail").textContent="La cuenta está equilibrada. Confirmá que viste este cierre para volver a estar al día.";const btn=$("weeklyClosureAcknowledgementBtn");if(btn){btn.disabled=false;btn.textContent="CONFIRMAR QUE VI MI CIERRE";}}
+    }
+    async function confirmDriverWeeklyClosureAcknowledgement(){
+      const statusData=closureState.statusData||{};const uid=String(auth.currentUser?.uid||"").trim();const periodId=String(statusData.weeklyPeriodId||statusData.normalizedSummary?.periodId||"").trim();
+      if(!uid||!periodId)return;
+      const key=`${uid}:${periodId}`;if(weeklyClosureAcknowledgementInFlight.has(key))return weeklyClosureAcknowledgementInFlight.get(key);
+      const existing={...(statusData.closureRecord?.data||{}),...(statusData.closure||{})};if(existing.driverAcknowledged===true&&existing.driverAcknowledgedPeriodId===periodId)return true;
+      const btn=$("weeklyClosureAcknowledgementBtn");if(btn){btn.disabled=true;btn.textContent="CONFIRMANDO…";}
+      const task=(async()=>{const closureId=String(statusData.closureRecord?.id||statusData.closureId||`${uid}_${periodId}`);const payload={driverAcknowledged:true,driverAcknowledgedAt:serverTimestamp(),driverAcknowledgedBy:uid,driverAcknowledgedPeriodId:periodId,acknowledgementStatus:"confirmed",statusSchemaVersion:255,updatedAt:serverTimestamp(),actualizadoEn:serverTimestamp()};await setDoc(doc(db,statusData.closureCollection||statusData.closureRecord?.collection||"cierres_semanales",closureId),payload,{merge:true});statusData.closureId=closureId;statusData.closure={...existing,...payload,driverAcknowledged:true,driverAcknowledgedPeriodId:periodId};if(statusData.closureRecord)statusData.closureRecord.data=statusData.closure;window.invalidateWeeklyFinancialEngine?.("weekly-closure-acknowledged");window.refreshAfter?.("weekly-closure-acknowledged");renderDriverStatusCard(statusData);if(statusData.normalizedSummary)renderWeeklyClosureLiveState(statusData.normalizedSummary);renderPendingClosureCard(null);return true;})().catch(error=>{if(btn){btn.disabled=false;btn.textContent="CONFIRMAR QUE VI MI CIERRE";}showWeeklyClosureSummaryDiagnostic("ACKNOWLEDGE_WEEKLY_CLOSURE",error?.code||"WEEKLY_CLOSURE_ACK_FAILED",error,{functionName:"confirmDriverWeeklyClosureAcknowledgement",weeklyPeriodId:periodId,firestorePath:`cierres_semanales/${statusData.closureId||`${uid}_${periodId}`}`});throw error;}).finally(()=>weeklyClosureAcknowledgementInFlight.delete(key));
+      weeklyClosureAcknowledgementInFlight.set(key,task);return task;
+    }
+    window.confirmDriverWeeklyClosureAcknowledgement=confirmDriverWeeklyClosureAcknowledgement;
+
+    function stopWeeklyClosureLiveBinding(){
+      try{weeklyClosureLiveUnsubscribe?.();}catch(_){}
+      weeklyClosureLiveUnsubscribe=null; weeklyClosureLiveRequestId+=1; weeklyClosureLiveSignature="";
+    }
+
+        function getWeeklyClosureReceiptRequirement(summary = {}, statusData = {}) {
+      if (summary.isPeriodClosed === false) return { state:WEEKLY_CLOSURE_RECEIPT_STATE.INVALID_STATE, normalizedBalance:normalizeWeeklyClosureBalance(summary.netSettlementToDriver), payer:summary.payer || null, receiptRequired:false, receiptOwner:null, hasReceipt:false, provisional:true };
+      const merged = { ...(statusData.closure || {}), ...(statusData.payment || {}), ...statusData };
+      const receiptSource = window.ExploraReceiptEngine?.resolveReceiptSource?.(merged) || {};
+      const hasReceipt = Boolean(statusData.receiptUrl || receiptSource.url);
+      const normalizedBalance = summary.balanced ? 0 : normalizeWeeklyClosureBalance(summary.payer === "admin" ? summary.amount : summary.payer === "driver" ? -summary.amount : summary.netSettlementToDriver);
+      const rawStatus = String(merged.status || merged.closureStatus || merged.estado || "").toLowerCase();
+      const alreadyConfirmed = hasReceipt || ["balanced","confirmed_balanced","closed_balanced","completed","closed","paid","confirmed"].includes(rawStatus);
+      if (summary.balanced || normalizedBalance === 0) return { state:alreadyConfirmed ? WEEKLY_CLOSURE_RECEIPT_STATE.ALREADY_CONFIRMED : WEEKLY_CLOSURE_RECEIPT_STATE.BALANCED_NO_RECEIPT, normalizedBalance:0, payer:null, receiptRequired:false, receiptOwner:null, hasReceipt };
+      if (hasReceipt) return { state:WEEKLY_CLOSURE_RECEIPT_STATE.ALREADY_CONFIRMED, normalizedBalance, payer:summary.payer || null, receiptRequired:false, receiptOwner:null, hasReceipt };
+      if (summary.payer === "driver" && Math.abs(normalizedBalance) > WEEKLY_CLOSURE_BALANCE_TOLERANCE) return { state:WEEKLY_CLOSURE_RECEIPT_STATE.DRIVER_RECEIPT_REQUIRED, normalizedBalance, payer:"driver", receiptRequired:true, receiptOwner:"driver", hasReceipt:false };
+      if (summary.payer === "admin" && Math.abs(normalizedBalance) > WEEKLY_CLOSURE_BALANCE_TOLERANCE) return { state:WEEKLY_CLOSURE_RECEIPT_STATE.ADMIN_PAYMENT_PENDING, normalizedBalance, payer:"admin", receiptRequired:false, receiptOwner:"admin", hasReceipt:false };
+      return { state:WEEKLY_CLOSURE_RECEIPT_STATE.INVALID_STATE, normalizedBalance, payer:summary.payer || null, receiptRequired:false, receiptOwner:null, hasReceipt:false };
+    }
+    window.getWeeklyClosureReceiptRequirement = getWeeklyClosureReceiptRequirement;
+
+    const balancedClosureConfirmationInFlight = new Map();
+    async function ensureBalancedClosureConfirmed(statusData = {}, summary = {}) {
+      const requirement = getWeeklyClosureReceiptRequirement(summary, statusData);
+      if (requirement.state !== WEEKLY_CLOSURE_RECEIPT_STATE.BALANCED_NO_RECEIPT) return false;
+      const driverUid = String(auth.currentUser?.uid || closureState.uid || "").trim();
+      const weeklyPeriodId = String(statusData.weeklyPeriodId || summary.periodId || closureState.weeklyPeriodId || "").trim();
+      if (!driverUid || !weeklyPeriodId) return false;
+      const key = `${driverUid}:${weeklyPeriodId}`;
+      if (balancedClosureConfirmationInFlight.has(key)) return balancedClosureConfirmationInFlight.get(key);
+      const existing = statusData.closureRecord?.data || statusData.closure || {};
+      const existingStatus = String(existing.status || existing.closureStatus || existing.estado || "").toLowerCase();
+      if (["balanced","confirmed_balanced","closed_balanced"].includes(existingStatus) && existing.receiptRequired === false) return true;
+      const promise = (async()=>{
+        const closureId = String(statusData.closureRecord?.id || statusData.closureId || `${driverUid}_${weeklyPeriodId}`);
+        const ref = doc(db,"cierres_semanales",closureId);
+        const payload = {
+          closureId,choferUid:driverUid,uid:driverUid,driverUid,weeklyPeriodId,periodoSemanalId:weeklyPeriodId,periodoId:weeklyPeriodId,semanaId:weeklyPeriodId,
+          payerRole:null,payeeRole:null,payer:null,sentido:"sin_diferencia",direccionPago:"sin_diferencia",choferDebe:0,davidDebe:0,settlementAmount:0,saldoFinal:0,balanced:true,
+          receiptRequired:false,receiptOwner:null,receiptStatus:"not_required",estadoComprobante:"no_requerido",status:"confirmed_balanced",closureStatus:"confirmed_balanced",isConfirmed:true,
+          confirmedAutomatically:true,confirmedReason:"balanced_no_receipt",actualizadoEn:serverTimestamp(),updatedAt:serverTimestamp()
+        };
+        await setDoc(ref,payload,{merge:true});
+        statusData.closureId=closureId;
+        statusData.closureRecord={id:closureId,collection:"cierres_semanales",data:{...existing,...payload}};
+        statusData.closure={...existing,...payload};
+        statusData.status=CLOSURE_STATUS.BALANCED_CLOSURE;
+        return true;
+      })().finally(()=>balancedClosureConfirmationInFlight.delete(key));
+      balancedClosureConfirmationInFlight.set(key,promise);
+      return promise;
     }
 
     function renderPendingClosureCard(statusData) {
       const card = $("profilePendingClosureCard");
       if (!card) return;
-      if (!statusData || ![CLOSURE_STATUS.DRIVER_MUST_PAY_PENDING,CLOSURE_STATUS.DRIVER_MUST_PAY_OVERDUE].includes(statusData.status)) {
-        card.hidden = true;
-        return;
-      }
+      if (!statusData) { card.hidden=true; return; }
+      const canonical=getDriverWeeklyClosureStatus(statusData,auth.currentUser||{},statusData);
+      if(canonical.isUpToDate){card.hidden=true;return;}
+      card.hidden=false;card.dataset.status=canonical.colorState;
       const title = $("profilePendingClosureTitle");
       const text = $("profilePendingClosureText");
-      if (title) title.textContent = statusData.status === CLOSURE_STATUS.DRIVER_MUST_PAY_OVERDUE ? "Plazo vencido" : "Comprobante pendiente";
-      if (text) text.textContent = `Monto: ${formatClosureMoney(statusData.amount)} · Toca Ver detalle para abrir el cierre.`;
+      if (title) title.textContent = canonical.label;
+      if (text) text.textContent = `${canonical.detail}${canonical.periodLabel?` · ${canonical.periodLabel}`:""}`;
       card.hidden = false;
     }
 
@@ -14550,32 +14849,68 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
 
     function renderClosureReceiptBlock(statusData = {}, summary = {}) {
       try {
-        const receiptSource = window.ExploraReceiptEngine?.resolveReceiptSource?.({ ...(statusData.closure || {}), ...(statusData.payment || {}), ...statusData }) || {};
-        if (!statusData.receiptUrl && receiptSource.url) statusData.receiptUrl = receiptSource.url;
-        const hasReceipt = Boolean(statusData.receiptUrl || receiptSource.url);
-        const canDriverUpload = !hasReceipt && (summary.balanced || (summary.payer === "driver" && Number(summary.amount || 0) > WEEKLY_CLOSURE_BALANCE_TOLERANCE));
+        const requirement = getWeeklyClosureReceiptRequirement(summary, statusData);
+        if (summary.isPeriodClosed === false) {
+          const form=$("weeklyReceiptForm"),input=$("weeklyDriverReceiptInput"),trigger=$("weeklyDriverReceiptBtn"),submit=$("weeklyClosureSubmitBtn"),uploadSection=$("weeklyClosureUploadSection"),existing=$("weeklyClosureExistingReceipt"),panel=$("weeklyReceiptPanelTitle")?.closest?.(".closure-receipt-panel");
+          if(form)form.hidden=true;if(uploadSection)uploadSection.hidden=true;if(existing)existing.hidden=true;if(input)input.disabled=true;if(trigger)trigger.disabled=true;if(submit)submit.disabled=true;
+          if(panel)panel.hidden=false;
+          setClosureDetail("weeklyClosureAdministrativeTitle","Resumen provisional");
+          setClosureDetail("weeklyClosureAdministrativeDetail","No se solicita comprobante mientras la semana está en curso.");
+          const note=$("weeklyClosureNote");if(note){note.textContent=summary.balanced?"Saldo parcial equilibrado. El cierre todavía no es definitivo.":summary.payer==="driver"?`Si la semana cerrara ahora, deberías pagarle a David ${formatClosureMoney(summary.amount)}.`:`Si la semana cerrara ahora, David debería pagarte ${formatClosureMoney(summary.amount)}.`;note.className="weekly-closure-note is-info";note.hidden=false;}
+          clearWeeklyClosureReceiptError();
+          return requirement;
+        }
         const form=$("weeklyReceiptForm"),input=$("weeklyDriverReceiptInput"),trigger=$("weeklyDriverReceiptBtn"),submit=$("weeklyClosureSubmitBtn"),uploadSection=$("weeklyClosureUploadSection");
-        if (!form || !input || !trigger || !submit || !uploadSection) throw Object.assign(new Error("Falta el motor visible del comprobante de cierre."), { code:"WEEKLY_CLOSURE_RECEIPT_DISABLED_INCORRECTLY" });
-        form.hidden=!canDriverUpload;uploadSection.hidden=!canDriverUpload;input.disabled=!canDriverUpload;trigger.disabled=!canDriverUpload;
-        trigger.setAttribute("aria-disabled",canDriverUpload?"false":"true");submit.disabled=!canDriverUpload||!(weeklyDriverReceiptState.file instanceof File);
+        const panel = $("weeklyReceiptPanelTitle")?.closest?.(".closure-receipt-panel");
+        if (!form || !input || !trigger || !submit || !uploadSection || !panel) throw Object.assign(new Error("Falta el motor visible del comprobante de cierre."), { code:"WEEKLY_CLOSURE_RECEIPT_DISABLED_INCORRECTLY" });
+
+        const canDriverUpload = requirement.state === WEEKLY_CLOSURE_RECEIPT_STATE.DRIVER_RECEIPT_REQUIRED;
+        form.hidden=!canDriverUpload;
+        uploadSection.hidden=!canDriverUpload;
+        input.disabled=!canDriverUpload;
+        trigger.disabled=!canDriverUpload;
+        trigger.setAttribute("aria-disabled",canDriverUpload?"false":"true");
+        submit.disabled=!canDriverUpload||!(weeklyDriverReceiptState.file instanceof File);
 
         const adminStatus=$("weeklyClosureAdministrativeStatus"),adminTitle=$("weeklyClosureAdministrativeTitle"),adminDetail=$("weeklyClosureAdministrativeDetail");
-        const completed=hasReceipt;
-        if(adminStatus)adminStatus.dataset.state=completed?"completed":"pending";
-        if(adminTitle)adminTitle.textContent=completed?"CIERRE COMPLETADO":summary.balanced?"Pendiente de comprobante":"Pago pendiente";
-        if(adminDetail)adminDetail.textContent=completed?(summary.balanced?"Comprobante recibido":"Pago comprobado"):(summary.balanced?"Subí un comprobante para confirmar el cierre.":summary.payer==="driver"?"Subí el comprobante cuando realices el pago.":"David debe adjuntar el comprobante del pago.");
+        const note=$("weeklyClosureNote"), message=$("weeklyClosureMsg");
+        if (message) { message.hidden = true; message.textContent = ""; message.className = "weekly-closure-msg closure-receipt-error"; }
+        panel.dataset.requirement = requirement.state;
+        panel.hidden = false;
 
-        const note=$("weeklyClosureNote");
-        if(note){note.className="weekly-closure-note";
-          if(hasReceipt){note.textContent=summary.balanced?"CIERRE COMPLETADO · Comprobante recibido":"CIERRE COMPLETADO · Pago comprobado";note.classList.add("is-ok");}
-          else if(canDriverUpload){note.textContent=summary.balanced?"Pendiente de comprobante. Subí una imagen para confirmar el cierre.":"Pago pendiente. Subí el comprobante cuando realices el pago.";note.classList.add(summary.balanced?"is-info":"is-danger");}
-          else if(summary.payer==="admin"){note.textContent="Pago pendiente de David.";note.classList.add("is-info");}
-          else {note.textContent="Pago pendiente.";note.classList.add("is-danger");}
+        if (adminStatus) adminStatus.dataset.state = requirement.state === WEEKLY_CLOSURE_RECEIPT_STATE.DRIVER_RECEIPT_REQUIRED ? "pending" : "completed";
+        if (note) note.className="weekly-closure-note";
+
+        if (requirement.state === WEEKLY_CLOSURE_RECEIPT_STATE.BALANCED_NO_RECEIPT || (requirement.state === WEEKLY_CLOSURE_RECEIPT_STATE.ALREADY_CONFIRMED && summary.balanced)) {
+          if(adminTitle) adminTitle.textContent="CIERRE CONFIRMADO";
+          if(adminDetail) adminDetail.textContent="La cuenta está equilibrada. No hay saldo pendiente y no es necesario subir comprobante.";
+          if(note){note.textContent="CIERRE EQUILIBRADO · No se necesita comprobante.";note.classList.add("is-ok");}
+          $("weeklyClosureExistingReceipt")?.setAttribute("hidden","");
+          const existingBox=$("weeklyClosureExistingReceipt"); if(existingBox) existingBox.innerHTML="";
+        } else if (requirement.state === WEEKLY_CLOSURE_RECEIPT_STATE.DRIVER_RECEIPT_REQUIRED) {
+          if(adminTitle) adminTitle.textContent="PAGO PENDIENTE";
+          if(adminDetail) adminDetail.textContent="Subí el comprobante cuando realices el pago a David.";
+          if(note){note.textContent="Pago pendiente. El comprobante es obligatorio para confirmar el cierre.";note.classList.add("is-danger");}
+          renderExistingClosureReceipt(statusData);
+        } else if (requirement.state === WEEKLY_CLOSURE_RECEIPT_STATE.ADMIN_PAYMENT_PENDING) {
+          if(adminTitle) adminTitle.textContent="PAGO PENDIENTE DE DAVID";
+          if(adminDetail) adminDetail.textContent="David debe registrar el comprobante desde el flujo administrativo.";
+          if(note){note.textContent="No tenés que subir comprobante. El pago corresponde a David.";note.classList.add("is-info");}
+          renderExistingClosureReceipt(statusData);
+        } else if (requirement.state === WEEKLY_CLOSURE_RECEIPT_STATE.ALREADY_CONFIRMED) {
+          if(adminTitle) adminTitle.textContent="CIERRE COMPLETADO";
+          if(adminDetail) adminDetail.textContent="El comprobante ya fue registrado.";
+          if(note){note.textContent="CIERRE COMPLETADO · Pago comprobado";note.classList.add("is-ok");}
+          renderExistingClosureReceipt(statusData);
+        } else {
+          if(adminTitle) adminTitle.textContent="NO SE PUDO DETERMINAR EL ESTADO";
+          if(adminDetail) adminDetail.textContent="No pudimos cargar el cierre. Intentá nuevamente.";
+          if(note){note.textContent="No pudimos cargar el cierre. Intentá nuevamente.";note.classList.add("is-danger");}
+          renderExistingClosureReceipt(statusData);
         }
-        renderExistingClosureReceipt(statusData);
         return canDriverUpload;
       } catch (error) {
-        showWeeklyClosureSummaryDiagnostic("RENDER_RECEIPT_UPLOAD", error?.code || "WEEKLY_CLOSURE_RECEIPT_DISABLED_INCORRECTLY", error, {functionName:"renderClosureReceiptBlock",weeklyPeriodId:summary.periodId || statusData.weeklyPeriodId,snapshot:summary.snapshot || statusData.weeklySnapshot,finalAmount:summary.amount,payerRole:summary.payer,firestorePath:"DOM#weeklyReceiptForm",query:"payer + balanced + final amount + existing receipt"});
+        showWeeklyClosureSummaryDiagnostic("RENDER_RECEIPT_UPLOAD", error?.code || "WEEKLY_CLOSURE_RECEIPT_DISABLED_INCORRECTLY", error, {functionName:"renderClosureReceiptBlock",weeklyPeriodId:summary.periodId || statusData.weeklyPeriodId,snapshot:summary.snapshot || statusData.weeklySnapshot,finalAmount:summary.amount,payerRole:summary.payer,firestorePath:"DOM#weeklyReceiptForm",query:"normalized closure state + payer + receipt ownership"});
         throw error;
       }
     }
@@ -14602,6 +14937,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         setClosureDetail("weeklyClosureDriver", summary.driverName || "Chofer");
         setClosureDetail("weeklyClosurePeriod", closurePeriodLabel(summary.closure || {}, summary.periodId || "Período semanal"));
         renderWeeklySummary(summary);
+        renderWeeklyClosureLiveState(summary);
         const resultCard = $("weeklyClosureResultCard");
         if (resultCard) resultCard.dataset.result = summary.balanced ? "balanced" : summary.payer === "driver" ? "driver-pays" : "admin-pays";
         renderClosureReceiptBlock(statusData, summary);
@@ -14617,19 +14953,21 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       }
     }
 
-    async function loadWeeklyClosureSummarySnapshot(statusData) {
+    async function loadWeeklyClosureSummarySnapshot(statusData, options = {}) {
       const uid = String(auth.currentUser?.uid || closureState.uid || "").trim();
       const periodId = String(statusData.weeklyPeriodId || closureState.weeklyPeriodId || getActiveWeeklyPeriod().id).trim();
+      const periodState = weeklyClosurePeriodState(periodId,statusData);
       const existing = statusData.weeklySnapshot;
+      if (periodState.isClosed && existing && String(existing.weeklyPeriodId || periodId) === periodId) return existing;
       try {
         if (!uid) throw Object.assign(new Error("No se pudo identificar al chofer."), { code:"AUTH_USER_MISSING" });
         const loader = window.ExploraWeeklyEngine?.getDriverWeeklyFinancialSnapshot || window.ExploraWeeklyEngine?.getDriverWeeklySnapshot;
         if (typeof loader !== "function") throw Object.assign(new Error("El motor de cierre semanal no está disponible."), { code:"WEEKLY_ENGINE_UNAVAILABLE" });
-        const snapshot = await profileWithTimeout(loader(uid, periodId, { force:false, allowLegacyScan:false, reason:"weekly-closure-summary", refreshInBackground:true }), 15000, "WEEKLY_SUMMARY_TIMEOUT");
+        const snapshot = await profileWithTimeout(loader(uid, periodId, { force:options.force !== false, allowLegacyScan:false, reason:"weekly-closure-live-summary", refreshInBackground:false }), 15000, "WEEKLY_SUMMARY_TIMEOUT");
         if (!snapshot) throw Object.assign(new Error("El cierre semanal no devolvió datos."), { code:"WEEKLY_SNAPSHOT_EMPTY" });
         return snapshot;
       } catch (error) {
-        showWeeklyClosureSummaryDiagnostic("NORMALIZE_WEEKLY_CLOSURE_DATA", "WEEKLY_CLOSURE_MISSING_REQUIRED_DATA", error, { functionName:"loadWeeklyClosureSummarySnapshot", driverUid:uid, weeklyPeriodId:periodId, snapshot:existing, firestorePath:"acumulados_semanales + cobros + gastos", query:"getDriverWeeklySnapshot(uid, weeklyPeriodId, force:true)" });
+        showWeeklyClosureSummaryDiagnostic("NORMALIZE_WEEKLY_CLOSURE_DATA", "WEEKLY_CLOSURE_MISSING_REQUIRED_DATA", error, { functionName:"loadWeeklyClosureSummarySnapshot", driverUid:uid, weeklyPeriodId:periodId, snapshot:existing, firestorePath:"acumulados_semanales", query:"single consolidated weekly snapshot" });
         if (existing && String(existing.weeklyPeriodId || periodId) === periodId) return existing;
         const current = window.ExploraWeeklyEngine?.getSnapshot?.();
         if (current && String(current.weeklyPeriodId || "") === periodId) return current;
@@ -14637,26 +14975,25 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       }
     }
 
-    async function populateWeeklyClosureDetail(statusData) {
+    async function populateWeeklyClosureDetail(statusData, options = {}) {
+      const requestId = options.requestId || ++weeklyClosureLiveRequestId;
       try {
         const periodId = String(statusData.weeklyPeriodId || statusData.weeklySnapshot?.weeklyPeriodId || getActiveWeeklyPeriod().id);
+        const periodState = weeklyClosurePeriodState(periodId,statusData);
         const cycleForPeriod = await getCycleForWeeklyPeriod(periodId);
-        const normalized = normalizeWeeklyClosureData(statusData, cycleForPeriod);
-        const summary = calculateFinalBalance(normalized);
-        statusData.weeklySnapshot = summary.snapshot;
-        statusData.amount = summary.amount;
-        statusData.payer = summary.payer;
-        statusData.isFourthWeek = summary.knownCycleWeek ? summary.isFourthWeek : null;
+        if (requestId !== weeklyClosureLiveRequestId && !options.allowStale) return null;
         statusData.cycleForPeriod = cycleForPeriod;
-        statusData.cycleId = summary.cycleId;
-        statusData.driverName = summary.driverName;
-        statusData.normalizedSummary = summary;
-        closureState.statusData = statusData;
-        closureState.amount = summary.amount;
-        renderWeeklyClosureModal(statusData, summary);
+        const summary = buildLiveWeeklyFinancialSummary(statusData.weeklySnapshot || {}, {uid:auth.currentUser?.uid,role:exploraSession.role}, periodState, statusData);
+        statusData.weeklySnapshot = summary.snapshot; statusData.amount = summary.amount; statusData.payer = summary.payer;
+        statusData.isFourthWeek = summary.knownCycleWeek ? summary.isFourthWeek : null; statusData.cycleId = summary.cycleId; statusData.driverName = summary.driverName; statusData.normalizedSummary = summary;
+        closureState.statusData = statusData; closureState.amount = summary.amount;
+        const signature=[summary.uid,summary.periodId,summary.isPeriodClosed,summary.grossBilling,summary.expenses,summary.cash,summary.transfers,summary.cards,summary.qr,summary.currentDriverPercent,summary.goalBenefit,summary.derivationBonus,summary.amount,summary.payer,summary.balanced].join("|");
+        if(signature!==weeklyClosureLiveSignature){weeklyClosureLiveSignature=signature;renderWeeklyClosureModal(statusData,summary);renderWeeklyClosureLiveState(summary);}
+        const content=$("weeklyClosureContent"); if(content)content.dataset.liveLoading="false";
+        if (summary.isPeriodClosed && summary.balanced) ensureBalancedClosureConfirmed(statusData, summary).catch(error=>{ if (isAdminRole(exploraSession.profile?.role || exploraSession.role || "")) showWeeklyClosureSummaryDiagnostic("SYNC_BALANCED_CLOSURE", "BALANCED_CLOSURE_CONFIRM_FAILED", error, { functionName:"ensureBalancedClosureConfirmed", weeklyPeriodId:summary.periodId, snapshot:summary.snapshot }); });
         return summary;
       } catch (error) {
-        showWeeklyClosureSummaryDiagnostic("RENDER_WEEKLY_CLOSURE_MODAL", error?.code || "WEEKLY_CLOSURE_RENDER_BROKEN", error, { functionName:"populateWeeklyClosureDetail", weeklyPeriodId:statusData?.weeklyPeriodId, snapshot:statusData?.weeklySnapshot, finalAmount:statusData?.amount, payerRole:statusData?.payer, firestorePath:"DOM#weeklyClosureContent", query:"normalize + calculate + render complete closure" });
+        showWeeklyClosureSummaryDiagnostic("RENDER_WEEKLY_CLOSURE_MODAL", error?.code || "WEEKLY_CLOSURE_RENDER_BROKEN", error, { functionName:"populateWeeklyClosureDetail", weeklyPeriodId:statusData?.weeklyPeriodId, snapshot:statusData?.weeklySnapshot });
         throw error;
       }
     }
@@ -14674,23 +15011,32 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     async function openWeeklyClosureModal() {
       const statusData = closureState.statusData;
       if (!statusData || !closureState.clickable) return;
-      const overlay = $("weeklyClosureOverlay");
-      if (!overlay) return;
+      const overlay = $("weeklyClosureOverlay"); if (!overlay) return;
+      stopWeeklyClosureLiveBinding();
+      const requestId=++weeklyClosureLiveRequestId;
       try {
-        resetWeeklyDriverReceiptSelection({ clearInput:true, clearMessage:true });
-        clearWeeklyClosureReceiptError();
-        overlay.hidden = false; overlay.setAttribute("aria-hidden","false");
-        document.body.classList.add("weekly-closure-open"); window.lockPageScroll?.("weekly-closure");
-        const loading = $("weeklyClosureLoading"); if (loading) loading.hidden = false;
-        const initialSnapshot = statusData.weeklySnapshot && typeof statusData.weeklySnapshot === "object" ? statusData.weeklySnapshot : {};
-        statusData.weeklySnapshot = initialSnapshot;
-        const snapshot = await loadWeeklyClosureSummarySnapshot(statusData);
-        statusData.weeklySnapshot = window.normalizeDriverWeeklyFinancialSnapshot?.(snapshot||initialSnapshot,{driverUid:auth.currentUser?.uid,weeklyPeriodId:statusData.weeklyPeriodId,source:"weekly-closure",cacheHit:Boolean(snapshot?.cacheHit)}) || snapshot || initialSnapshot;
-        await populateWeeklyClosureDetail(statusData);
-        if (loading) loading.hidden = true;
+        resetWeeklyDriverReceiptSelection({ clearInput:true, clearMessage:true }); clearWeeklyClosureReceiptError();
+        overlay.hidden=false; overlay.setAttribute("aria-hidden","false"); document.body.classList.add("weekly-closure-open"); window.lockPageScroll?.("weekly-closure");
+        const loading=$("weeklyClosureLoading"),content=$("weeklyClosureContent"); if(loading)loading.hidden=false; if(content)content.dataset.liveLoading="true";
+        const initialSnapshot=statusData.weeklySnapshot&&typeof statusData.weeklySnapshot==="object"?statusData.weeklySnapshot:{}; statusData.weeklySnapshot=initialSnapshot;
+        const snapshot=await loadWeeklyClosureSummarySnapshot(statusData,{force:true});
+        if(requestId!==weeklyClosureLiveRequestId)return;
+        statusData.weeklySnapshot=window.normalizeDriverWeeklyFinancialSnapshot?.(snapshot||initialSnapshot,{driverUid:auth.currentUser?.uid,weeklyPeriodId:statusData.weeklyPeriodId,source:"weekly-closure-live",cacheHit:false})||snapshot||initialSnapshot;
+        await populateWeeklyClosureDetail(statusData,{requestId}); if(loading)loading.hidden=true;
+        const periodState=weeklyClosurePeriodState(statusData.weeklyPeriodId,statusData);
+        if(!periodState.isClosed && window.ExploraWeeklyEngine?.subscribe){
+          weeklyClosureLiveUnsubscribe=window.ExploraWeeklyEngine.subscribe(async state=>{
+            if($("weeklyClosureOverlay")?.hidden)return;
+            const currentPeriod=weeklyClosurePeriodState(statusData.weeklyPeriodId,statusData); if(currentPeriod.isClosed)return;
+            const next=state?.snapshot||window.ExploraWeeklyEngine.getSnapshot?.();
+            if(!next||String(next.weeklyPeriodId||"")!==String(statusData.weeklyPeriodId||""))return;
+            const liveRequest=++weeklyClosureLiveRequestId; statusData.weeklySnapshot=next;
+            try{await populateWeeklyClosureDetail(statusData,{requestId:liveRequest});}catch(_){}
+          });
+        }
       } catch (error) {
-        const loading = $("weeklyClosureLoading"); if (loading) loading.hidden = true;
-        showWeeklyClosureSummaryDiagnostic("RENDER_WEEKLY_CLOSURE_MODAL", "WEEKLY_CLOSURE_RENDER_BROKEN", error, { functionName:"openWeeklyClosureModal", weeklyPeriodId:statusData.weeklyPeriodId, snapshot:statusData.weeklySnapshot, firestorePath:"acumulados_semanales + cierres_semanales", query:"load and render weekly closure" });
+        const loading=$("weeklyClosureLoading"),content=$("weeklyClosureContent"); if(loading)loading.hidden=true; if(content)content.dataset.liveLoading="false";
+        showWeeklyClosureSummaryDiagnostic("RENDER_WEEKLY_CLOSURE_MODAL", "WEEKLY_CLOSURE_RENDER_BROKEN", error, { functionName:"openWeeklyClosureModal", weeklyPeriodId:statusData.weeklyPeriodId, snapshot:statusData.weeklySnapshot });
       }
     }
 
@@ -14701,7 +15047,9 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       const weeklyPeriodId=String(statusData.weeklyPeriodId||summary.periodId||closureState.weeklyPeriodId||"").trim();
       if(!driverUid||!weeklyPeriodId)throw createClosureReceiptError("SYNC_CLOSURE_RECEIPT","CLOSURE_RECEIPT_SYNC_FAILED","Faltan UID o semana para crear el cierre semanal.");
       const closureId=`${driverUid}_${weeklyPeriodId}`,driverName=safeClosureText(statusData.driverName||summary.driverName||getProfileName(exploraSession.profile||{},user),"Chofer");
-      const balanced=Boolean(summary.balanced),amount=balanced?0:safeClosureAmount(summary.amount||statusData.amount),payerRole=balanced?null:"driver",payeeRole=balanced?null:"admin",direction=balanced?"sin_diferencia":"chofer_a_david";
+      const balanced=Boolean(summary.balanced);
+      if (balanced) throw createClosureReceiptError("SYNC_CLOSURE_RECEIPT","CLOSURE_RECEIPT_NOT_REQUIRED","La cuenta está equilibrada y no requiere comprobante.");
+      const amount=safeClosureAmount(summary.amount||statusData.amount),payerRole="driver",payeeRole="admin",direction="chofer_a_david";
       const period=closurePeriodObject(weeklyPeriodId);
       const payload={
         closureId,choferUid:driverUid,uid:driverUid,driverUid,choferId:exploraSession.profileDocumentId||exploraSession.driverId||driverUid,driverName,
@@ -14750,8 +15098,9 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         const mime = String(file.type || "").toLowerCase();
         if (!["image/jpeg","image/png","image/webp"].includes(mime)) throw createClosureReceiptError(currentStage,"CLOSURE_RECEIPT_INVALID_MIME","Formato no permitido. Usá JPG, PNG o WebP.");
         const summary = statusData.normalizedSummary || calculateFinalBalance(normalizeWeeklyClosureData(statusData, statusData.cycleForPeriod || {}));
-        const driverMayConfirm = Boolean(summary.balanced) || (summary.payer === "driver" && Number(summary.amount || 0) > WEEKLY_CLOSURE_BALANCE_TOLERANCE);
-        if (!driverMayConfirm) throw createClosureReceiptError(currentStage,"WEEKLY_CLOSURE_RECEIPT_DISABLED_INCORRECTLY","Este cierre no requiere un comprobante del chofer.");
+        const receiptRequirement = getWeeklyClosureReceiptRequirement(summary, statusData);
+        const driverMayConfirm = receiptRequirement.state === WEEKLY_CLOSURE_RECEIPT_STATE.DRIVER_RECEIPT_REQUIRED;
+        if (!driverMayConfirm) throw createClosureReceiptError(currentStage,"CLOSURE_RECEIPT_NOT_REQUIRED","Este cierre no requiere un comprobante del chofer.");
         currentStage = "SYNC_CLOSURE_RECEIPT"; diagnosticContext.stage = currentStage; diagnosticContext.functionName = "ensureWeeklyClosureDocumentForReceipt";
         const existingRecord = await ensureWeeklyClosureDocumentForReceipt(statusData, summary, user);
         closureId = String(existingRecord.id || closureId).trim();
@@ -14797,7 +15146,8 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
           ...commonReceipt,
           driverReceiptUrl:uploaded.receiptUrl, driverReceiptPath:uploaded.receiptPath, driverReceiptMimeType:uploaded.receiptMimeType, driverReceiptFileName:uploaded.receiptFileName, driverReceiptSize:uploaded.receiptSize,
           driverReceiptUploadedAt:uploaded.receiptUploadedAt, driverReceiptUploadedByUid:driverUid, driverReceiptUploadedByRole:"driver", driverReceiptStatus:"uploaded",
-          estadoComprobante:"cargado", pagoConfirmado:true, actualizadoEn:serverTimestamp(), updatedAt:serverTimestamp()
+          estadoComprobante:"cargado", pagoConfirmado:true, driverAcknowledged:true, driverAcknowledgedAt:serverTimestamp(), driverAcknowledgedBy:driverUid, driverAcknowledgedPeriodId:weeklyPeriodId,
+          acknowledgementStatus:"confirmed_by_receipt", isResolved:true, closureStatus:"completed", status:"completed", statusSchemaVersion:255, actualizadoEn:serverTimestamp(), updatedAt:serverTimestamp()
         };
         const indexPayload = window.ExploraReceiptEngine.buildReceiptIndexPayload({ category:"weekly_closure", recordId:closureId, suffix:"driver", driverUid, ownerUid:driverUid, uploadedByUid:driverUid, uploadedByRole:"driver", weeklyPeriodId, amount:Number(statusData.amount||0), receipt:uploaded, status:"uploaded" });
         Object.assign(indexPayload, commonReceipt, { receiptId:indexPayload.receiptId, createdAt:serverTimestamp(), updatedAt:serverTimestamp(), detail:`Semana ${weeklyPeriodId} · Subido por el chofer · ${resultLabel}` });
@@ -14859,7 +15209,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         });
       } finally {
         driverClosureReceiptInProgress = false; closureState.saving = false; weeklyDriverReceiptState.uploading = false;
-        if (btn && !statusData.receiptUrl) { const currentSummary=statusData.normalizedSummary||{};const mayUpload=Boolean(currentSummary.balanced)||(currentSummary.payer==="driver"&&Number(currentSummary.amount||0)>WEEKLY_CLOSURE_BALANCE_TOLERANCE);btn.disabled=!(weeklyDriverReceiptState.file instanceof File)||!mayUpload;btn.removeAttribute("aria-busy");btn.textContent="CONFIRMAR COMPROBANTE"; }
+        if (btn && !statusData.receiptUrl) { const currentSummary=statusData.normalizedSummary||{};const mayUpload=currentSummary.payer==="driver"&&Number(currentSummary.amount||0)>WEEKLY_CLOSURE_BALANCE_TOLERANCE;btn.disabled=!(weeklyDriverReceiptState.file instanceof File)||!mayUpload;btn.removeAttribute("aria-busy");btn.textContent="CONFIRMAR COMPROBANTE"; }
         else btn?.removeAttribute("aria-busy");
         window.unlockPageScroll?.("weekly-closure-saving"); document.body.classList.remove("weekly-closure-saving","is-loading");
       }
@@ -16473,6 +16823,7 @@ async function rollbackReceipt(receipt) {
   if (receipt?.receiptPath) await deleteUploadedFile(receipt.receiptPath).catch(() => {});
 }
 function refreshAfter(reason, category) {
+  try { window.ExploraWeeklyEngine?.invalidate?.(reason || "operation-changed", { refresh:true }); } catch (_) {}
   window.invalidateWeeklyFinancialEngine?.(reason);
   window.ExploraInvalidateWeeklyClosure?.(reason, { refresh:false });
   window.invalidateReceiptCache?.(category);
@@ -18600,12 +18951,13 @@ document.addEventListener("change",event=>{if(event.target?.id==="adminDebtDrive
 document.addEventListener("submit",event=>{if(event.target?.id==="adminDebtForm")submitDriverDebt(event);});
 </script>
 
+<!-- EXPLORA v256 · derivaciones recibidas primero, pestañas separadas y flujo operativo estable -->
 <script type="module" id="exploraDerivationsModule">
 import { collection, doc, getDoc, getDocs, query, where, setDoc, updateDoc, onSnapshot, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 const F=window.ExploraFirebase||{},db=F.db,auth=F.auth,$=id=>document.getElementById(id);
 const COLLABORATION_RATE=.10;
 const STATUS=Object.freeze({PENDING:"PENDIENTE",ACCEPTED:"ACEPTADA",REJECTED:"RECHAZADA",PENDING_INVOICE:"PENDIENTE_FACTURACION",INVOICED:"FACTURADA",CLOSED_REJECTED:"CERRADA_RECHAZADA"});
-const state={drivers:[],driverMap:new Map(),selectedReceiverUid:"",pendingResponse:[],pendingCompletion:[],selectedFinalizeId:"",selectedPayment:"",busy:new Set(),unsubscribe:null,originalBillingAction:null,opened:false,previousScrollY:0};
+const state={drivers:[],driverMap:new Map(),selectedReceiverUid:"",pendingResponse:[],pendingCompletion:[],allReceived:[],activeTab:"received",renderSignature:"",selectedFinalizeId:"",selectedPayment:"",busy:new Set(),unsubscribe:null,originalBillingAction:null,opened:false,previousScrollY:0};
 let derivationSaveInProgress=false;
 const normalize=value=>String(value||"").trim().toLowerCase();
 const money=value=>new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(Number(value)||0).replace(/\s/g,"");
@@ -18649,22 +19001,30 @@ async function sendDerivation(event){
     const id=stableId(),sender=window.ExploraSession?.profile||{},period=currentPeriod(),cycleId=cycleIdForPeriod(period);
     await setDoc(doc(db,"derivaciones",id),{derivationId:id,cycleId,weeklyPeriodId:period,emisorUid:user.uid,emisorName:getName(sender),emisorPhotoUrl:getAvatar(sender),receptorUid:receiverUid,receptorName:getName(receiver),receptorPhotoUrl:getAvatar(receiver),senderUid:user.uid,senderName:getName(sender),senderPhotoUrl:getAvatar(sender),receiverUid,receiverName:getName(receiver),receiverPhotoUrl:getAvatar(receiver),concept,description:concept,descripcion:concept,suggestedAmount,amount:suggestedAmount,monto:suggestedAmount,finalAmount:0,paymentMethod:null,status:STATUS.PENDING,estado:STATUS.PENDING,collaborationRate:COLLABORATION_RATE,collaborationAmount:0,derivedAmountForEmitter:0,createdByUid:user.uid,createdAt:serverTimestamp(),sentAt:serverTimestamp(),acceptedAt:null,rejectedAt:null,invoicedAt:null,updatedAt:serverTimestamp()},{merge:false});
     runtime={...runtime,derivationId:id,cycleId,firestoreConfirmed:true,firestorePath:`derivaciones/${id}`};
-    window.showExploraSuccess?.({title:"DERIVACIÓN EXITOSA",message:"Derivación enviada correctamente.",onAccept:()=>{resetForm();close();window.ExploraMainNav?.setActive?.("inicio");window.scrollTo({top:0,behavior:"smooth"});}});
+    window.showExploraSuccess?.({title:"DERIVACIÓN EXITOSA",message:"Derivación enviada correctamente.",onAccept:()=>{resetForm();setDerivationTab("received");loadPendingCompletion().catch(()=>{});$("derivationScreen")?.scrollTo?.({top:0,behavior:"smooth"});}});
   }catch(error){const code=String(error?.code||error?.message||"DERIVATION_CREATE_FAILED");reportDerivationError(code.includes("REQUIRED")||code.includes("INVALID")||code.includes("SAME_")?"VALIDATE_DERIVATION_FORM":"CREATE_DERIVATION",code,error,runtime);setMessage(error?.message||"No se pudo enviar la derivación.","err");}
   finally{derivationSaveInProgress=false;if(button){button.disabled=false;button.textContent="ENVIAR";button.removeAttribute("aria-busy");}updateCompose();}
 }
 function notificationAvatar(row){const photo=String(row.emisorPhotoUrl||row.senderPhotoUrl||"").trim(),name=String(row.emisorName||row.senderName||"Chofer");return photo?`<span class="derivation-notification-photo"><img src="${escapeHtml(photo)}" alt="Foto de ${escapeHtml(name)}"></span>`:`<span class="derivation-notification-photo">${escapeHtml(name.slice(0,2).toUpperCase())}</span>`;}
 function syncPendingDerivationButton(){const pulsingStatuses=new Set([STATUS.PENDING,STATUS.ACCEPTED,STATUS.PENDING_INVOICE]);const active=[...state.pendingResponse,...state.pendingCompletion].some(row=>pulsingStatuses.has(canonicalStatus(row)));document.querySelectorAll('[data-action="derivar-servicio"]').forEach(button=>{button.classList.toggle("has-pending-derivation",active);button.setAttribute("aria-live","polite");button.setAttribute("aria-label",active?"Derivar servicio. Hay una derivación pendiente de respuesta o facturación.":"Derivar servicio");});}
 function removeLegacyDerivationCounters(){document.querySelectorAll("#derivationNotificationBadge,.derivation-notification-badge,.derivation-counter-badge,[data-derivation-counter]").forEach(node=>node.remove());}
+function derivationTimestamp(row={}){const value=row.serviceDate||row.fechaServicio||row.createdAt||row.sentAt||row.updatedAt;try{return value?.toMillis?.()||value?.seconds*1000||new Date(value||0).getTime()||0;}catch(_){return 0;}}
+function getDerivationOperationalState(row={}){const status=canonicalStatus(row),method=String(row.paymentMethod||row.metodoPago||"").trim(),finalAmount=Number(row.finalAmount||row.montoFinal||0),isFinalized=status===STATUS.INVOICED,isRejected=[STATUS.REJECTED,STATUS.CLOSED_REJECTED].includes(status);let code="REVIEW_REQUIRED",label="REVISAR",detail="Revisá la información de esta derivación.",priority=60,section="pending",primaryAction="";if(status===STATUS.PENDING){code="RECEIVED_PENDING_ACCEPTANCE";label="NUEVA";detail="Aceptá o rechazá esta derivación.";priority=50;primaryAction="accept";}else if([STATUS.ACCEPTED,STATUS.PENDING_INVOICE].includes(status)&&!(finalAmount>0)){code="PENDING_COMPLETION";label="PENDIENTE DE CARGA";detail="Ingresá el monto final y seleccioná el medio de pago.";priority=10;primaryAction="complete";}else if([STATUS.ACCEPTED,STATUS.PENDING_INVOICE].includes(status)&&!method){code="PENDING_PAYMENT_METHOD";label="FALTA MEDIO DE PAGO";detail="Seleccioná un medio de pago para completar la derivación.";priority=20;primaryAction="complete";}else if([STATUS.ACCEPTED,STATUS.PENDING_INVOICE].includes(status)){code="PENDING_BILLING";label="PENDIENTE DE FACTURACIÓN";detail="Registrá el cobro para finalizar.";priority=30;primaryAction="complete";}else if(isFinalized){code="COMPLETED";label="FINALIZADA";detail="Facturación registrada.";priority=100;section="finalized";}else if(isRejected){code=status===STATUS.REJECTED?"REJECTED":"CANCELLED";label=status===STATUS.REJECTED?"RECHAZADA":"CANCELADA";detail="La derivación fue cerrada.";priority=110;section="finalized";}return{code,label,detail,priority,section,primaryAction,canAccept:status===STATUS.PENDING,canComplete:[STATUS.ACCEPTED,STATUS.PENDING_INVOICE].includes(status),canReject:![STATUS.INVOICED,STATUS.REJECTED,STATUS.CLOSED_REJECTED].includes(status),isActive:![STATUS.INVOICED,STATUS.REJECTED,STATUS.CLOSED_REJECTED].includes(status),isFinalized};}
+function stableDerivationSort(a,b){const sa=getDerivationOperationalState(a),sb=getDerivationOperationalState(b);if(sa.priority!==sb.priority)return sa.priority-sb.priority;const ta=derivationTimestamp(a),tb=derivationTimestamp(b);if(sa.priority<=50&&ta!==tb)return ta-tb;if(ta!==tb)return tb-ta;return String(a.id||a.derivationId||"").localeCompare(String(b.id||b.derivationId||""));}
+function isCurrentWeekDerivation(row){const period=currentPeriod(),rowPeriod=String(row.weeklyPeriodIdCompleted||row.weeklyPeriodId||row.periodoSemanalId||row.periodoId||"");return !rowPeriod||rowPeriod===period;}
+function operationalCard(row,isCurrent=false){const st=getDerivationOperationalState(row),sender=row.emisorName||row.senderName||"Chofer",photo=row.emisorPhotoUrl||row.senderPhotoUrl||"",initials=String(sender).slice(0,2).toUpperCase(),amount=Number(row.finalAmount||row.suggestedAmount||row.amount||row.monto||0);let actions="";if(st.canAccept)actions=`<div class="derivation-operational-actions"><button class="accept" data-derivation-action="accept" data-derivation-id="${escapeHtml(row.id)}">ACEPTAR DERIVACIÓN</button><button class="danger" data-derivation-action="reject" data-derivation-id="${escapeHtml(row.id)}">RECHAZAR</button></div>`;else if(st.canComplete)actions=`<div class="derivation-operational-actions"><button class="danger" data-derivation-final-reject="${escapeHtml(row.id)}">RECHAZAR DEFINITIVAMENTE</button><button class="primary" data-reminder-finalize="${escapeHtml(row.id)}">COMPLETAR CARGA</button></div>`;return`<article class="derivation-operational-card${isCurrent?" is-current":""}"><div class="derivation-operational-head"><span class="derivation-avatar">${photo?`<img src="${escapeHtml(photo)}" alt="">`:escapeHtml(initials)}</span><span class="derivation-operational-copy"><strong>${escapeHtml(row.concept||row.description||row.descripcion||"Servicio")}</strong><small>Derivada por ${escapeHtml(sender)} · ${new Date(derivationTimestamp(row)||Date.now()).toLocaleString("es-AR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</small></span><span class="derivation-operational-amount">${money(amount)}</span></div><div class="derivation-operational-status"><span>${escapeHtml(st.label)}</span><small>${escapeHtml(st.detail)}</small></div>${actions}</article>`;}
+function finalizedCard(row){const sender=row.emisorName||row.senderName||"Chofer",amount=Number(row.finalAmount||row.suggestedAmount||row.amount||0),method=String(row.paymentMethod||row.metodoPago||"—").toUpperCase(),collab=Number(row.collaborationAmount||0);return`<article class="derivation-final-card"><div class="derivation-final-card-head"><strong>${escapeHtml(row.concept||row.description||"Servicio")}</strong><b>${money(amount)}</b></div><small>Derivada por ${escapeHtml(sender)} · ${escapeHtml(method)}${collab?` · Colaboración ${money(collab)}`:""}</small><small>FINALIZADA · Facturación confirmada</small></article>`;}
+function setDerivationTab(tab="received"){state.activeTab=tab==="create"?"create":"received";const screen=$("derivationScreen");if(screen)screen.dataset.derivationView=state.activeTab;document.querySelectorAll("[data-derivation-tab]").forEach(btn=>btn.classList.toggle("is-active",btn.dataset.derivationTab===state.activeTab));document.querySelectorAll("[data-derivation-panel]").forEach(panel=>panel.classList.toggle("is-active",panel.dataset.derivationPanel===state.activeTab));if(state.activeTab==="received")renderReceivedWorkflow();else{renderDrivers();updateCompose();}}
+function renderReceivedWorkflow(){const consolidated=Array.from(new Map((state.allReceived||[]).map(row=>[String(row.id||row.derivationId),row])).values()).sort(stableDerivationSort),active=consolidated.filter(row=>getDerivationOperationalState(row).isActive),finalized=consolidated.filter(row=>getDerivationOperationalState(row).isFinalized&&isCurrentWeekDerivation(row)),current=active.slice(0,1),pending=active.slice(1);const signature=JSON.stringify(consolidated.map(row=>[row.id,canonicalStatus(row),row.finalAmount||0,row.paymentMethod||"",getDerivationOperationalState(row).priority]));if(signature===state.renderSignature&&state.opened)return;state.renderSignature=signature;const set=(id,rows,html)=>{const section=$(id),list=$(id.replace("Section","List"));if(section)section.hidden=!rows.length;if(list)list.innerHTML=rows.map(html).join("");};set("derivationCurrentSection",current,row=>operationalCard(row,true));set("derivationPendingSection",pending,row=>operationalCard(row,false));set("derivationFinalizedSection",finalized,finalizedCard);$("derivationCurrentCount")&&($("derivationCurrentCount").textContent=String(current.length));$("derivationPendingCount")&&($("derivationPendingCount").textContent=String(pending.length));$("derivationFinalizedCount")&&($("derivationFinalizedCount").textContent=String(finalized.length));$("derivationReceivedCount")&&($("derivationReceivedCount").textContent=String(active.length));const empty=$("derivationReceivedEmpty");if(empty)empty.hidden=Boolean(active.length||finalized.length);syncPendingDerivationButton();}
 function renderPendingNotifications(){removeLegacyDerivationCounters();const box=$("derivationNotificationStack");if(!box)return;box.hidden=!state.pendingResponse.length;box.innerHTML=state.pendingResponse.map(row=>`<article class="derivation-notification-card"><div class="derivation-notification-head">${notificationAvatar(row)}<span class="derivation-notification-copy"><strong>NUEVA DERIVACIÓN RECIBIDA</strong><b>${escapeHtml(row.emisorName||row.senderName||"Chofer")}</b><small>${escapeHtml(row.concept||row.description||row.descripcion||"Servicio")} · ${money(row.suggestedAmount||row.amount||row.monto)}</small></span></div><div class="derivation-notification-actions"><button class="accept" data-derivation-action="accept" data-derivation-id="${escapeHtml(row.id)}">ACEPTAR</button><button data-derivation-action="reject" data-derivation-id="${escapeHtml(row.id)}">RECHAZAR</button></div></article>`).join("");syncPendingDerivationButton();}
 function pendingCard(row){const sender=row.emisorName||row.senderName||"Chofer",photo=row.emisorPhotoUrl||row.senderPhotoUrl||"",initials=String(sender).slice(0,2).toUpperCase();return`<article class="derivation-pending-card"><div class="derivation-pending-card-head"><span class="derivation-avatar">${photo?`<img src="${escapeHtml(photo)}" alt="">`:escapeHtml(initials)}</span><span><strong>${escapeHtml(row.concept||row.description||"Servicio")}</strong><small>Derivada por ${escapeHtml(sender)}</small></span><span class="derivation-pending-card-amount">${money(row.suggestedAmount||row.amount||0)}</span></div><div class="derivation-pending-card-actions"><button class="danger" data-derivation-final-reject="${escapeHtml(row.id)}">RECHAZAR DEFINITIVAMENTE</button><button class="primary" data-reminder-finalize="${escapeHtml(row.id)}">COMPLETAR CARGA</button></div></article>`;}
 function renderPendingCompletion(){const section=$("derivationReceiverPendingSection"),list=$("derivationReceiverPendingList");if(section)section.hidden=!state.pendingCompletion.length;if(list)list.innerHTML=state.pendingCompletion.map(pendingCard).join("")||'<div class="derivation-empty">No hay derivaciones pendientes.</div>';syncPendingDerivationButton();}
-function startPendingListener(){try{state.unsubscribe?.();}catch(_){}if(!uid())return;const q=query(collection(db,"derivaciones"),where("receptorUid","==",uid()));state.unsubscribe=onSnapshot(q,snapshot=>{const rows=snapshot.docs.map(item=>({id:item.id,...item.data()}));state.pendingResponse=rows.filter(row=>canonicalStatus(row)===STATUS.PENDING);state.pendingCompletion=rows.filter(row=>[STATUS.ACCEPTED,STATUS.PENDING_INVOICE].includes(canonicalStatus(row)));renderPendingNotifications();renderPendingCompletion();},error=>reportDerivationError("READ_INCOMING_DERIVATIONS","DERIVATION_LISTENER_FAILED",error,{functionName:"startPendingListener",receptorUid:uid(),firestorePath:"derivaciones"}));}
-async function loadPendingCompletion(){await ensureSession();const snapshot=await getDocs(query(collection(db,"derivaciones"),where("receptorUid","==",uid())));const rows=snapshot.docs.map(item=>({id:item.id,...item.data()}));state.pendingCompletion=rows.filter(row=>[STATUS.ACCEPTED,STATUS.PENDING_INVOICE].includes(canonicalStatus(row)));renderPendingCompletion();return state.pendingCompletion;}
+function startPendingListener(){try{state.unsubscribe?.();}catch(_){}if(!uid())return;const q=query(collection(db,"derivaciones"),where("receptorUid","==",uid()));state.unsubscribe=onSnapshot(q,snapshot=>{const rows=snapshot.docs.map(item=>({id:item.id,...item.data()}));state.allReceived=Array.from(new Map(rows.map(row=>[String(row.id||row.derivationId),row])).values());state.pendingResponse=state.allReceived.filter(row=>canonicalStatus(row)===STATUS.PENDING);state.pendingCompletion=state.allReceived.filter(row=>[STATUS.ACCEPTED,STATUS.PENDING_INVOICE].includes(canonicalStatus(row)));renderPendingNotifications();renderPendingCompletion();renderReceivedWorkflow();},error=>reportDerivationError("READ_INCOMING_DERIVATIONS","DERIVATION_LISTENER_FAILED",error,{functionName:"startPendingListener",receptorUid:uid(),firestorePath:"derivaciones"}));}
+async function loadPendingCompletion(){await ensureSession();const snapshot=await getDocs(query(collection(db,"derivaciones"),where("receptorUid","==",uid())));const rows=snapshot.docs.map(item=>({id:item.id,...item.data()}));state.allReceived=Array.from(new Map(rows.map(row=>[String(row.id||row.derivationId),row])).values());state.pendingResponse=state.allReceived.filter(row=>canonicalStatus(row)===STATUS.PENDING);state.pendingCompletion=state.allReceived.filter(row=>[STATUS.ACCEPTED,STATUS.PENDING_INVOICE].includes(canonicalStatus(row)));renderPendingCompletion();renderReceivedWorkflow();return state.pendingCompletion;}
 async function transition(id,action,button){if(state.busy.has(id))return;state.busy.add(id);const accept=action==="accept",stage=accept?"ACCEPT_DERIVATION":"REJECT_DERIVATION",idle=accept?"ACEPTAR":"RECHAZAR";button.disabled=true;button.textContent=accept?"ACEPTANDO…":"RECHAZANDO…";try{const me=await ensureSession(),reference=doc(db,"derivaciones",id);await runTransaction(db,async tx=>{const snapshot=await tx.get(reference);if(!snapshot.exists())throw Object.assign(new Error("La derivación ya no existe."),{code:"DERIVATION_NOT_FOUND"});const row=snapshot.data();if(String(row.receptorUid||row.receiverUid)!==me.uid||canonicalStatus(row)!==STATUS.PENDING)throw Object.assign(new Error("La derivación cambió de estado."),{code:"TRANSITION_DENIED"});tx.update(reference,accept?{status:STATUS.PENDING_INVOICE,estado:STATUS.ACCEPTED,acceptedAt:serverTimestamp(),acceptedByUid:me.uid,updatedAt:serverTimestamp()}:{status:STATUS.REJECTED,estado:STATUS.REJECTED,rejectedAt:serverTimestamp(),rejectedByUid:me.uid,updatedAt:serverTimestamp()});});window.ExploraUnifiedSnapshot?.invalidate?.(accept?"derivation-accepted":"derivation-rejected");await loadPendingCompletion();window.showExploraSuccess?.({title:accept?"DERIVACIÓN ACEPTADA":"DERIVACIÓN RECHAZADA",message:accept?"Quedó pendiente de carga en el menú Derivaciones.":"La derivación se cerró sin beneficios."});}catch(error){reportDerivationError(stage,"DERIVATION_TRANSITION_FAILED",error,{functionName:"transition",derivationId:id,status:accept?STATUS.ACCEPTED:STATUS.REJECTED,receptorUid:uid()});}finally{state.busy.delete(id);button.disabled=false;button.textContent=idle;}}
-function openFinalize(id){const row=state.pendingCompletion.find(item=>item.id===id);if(!row)return;state.selectedFinalizeId=id;state.selectedPayment="";const suggested=Math.round(Number(row.suggestedAmount||row.amount||row.monto||0));$("derivationFinalizeSummary").innerHTML=`<div><span>Concepto</span><strong>${escapeHtml(row.concept||row.description||"Servicio")}</strong></div><div><span>Monto sugerido</span><strong>${money(suggested)}</strong></div><div><span>Emisor</span><strong>${escapeHtml(row.emisorName||row.senderName||"Chofer")}</strong></div>`;$("derivationFinalAmount").value=formatCurrencyInput(suggested);document.querySelectorAll("[data-derivation-payment]").forEach(item=>item.classList.remove("is-selected"));$("derivationFinalizeConfirmBtn").disabled=true;$("derivationFinalizeMessage").textContent="";$("derivationFinalizeBackdrop").classList.add("is-open");$("derivationFinalizeBackdrop").setAttribute("aria-hidden","false");window.lockPageScroll?.("derivation-finalize");}
+function openFinalize(id){const row=state.pendingCompletion.find(item=>item.id===id);if(!row)return;state.selectedFinalizeId=id;state.selectedPayment="";const suggested=Math.round(Number(row.suggestedAmount||row.amount||row.monto||0));$("derivationFinalizeSummary").innerHTML=`<div><span>Concepto</span><strong>${escapeHtml(row.concept||row.description||"Servicio")}</strong></div><div><span>Monto sugerido</span><strong>${money(suggested)}</strong></div><div><span>Emisor</span><strong>${escapeHtml(row.emisorName||row.senderName||"Chofer")}</strong></div>`;$("derivationFinalAmount").value=formatCurrencyInput(suggested);document.querySelectorAll("[data-derivation-payment]").forEach(item=>item.classList.remove("is-selected"));$("derivationFinalizeConfirmBtn").disabled=true;$("derivationFinalizeMessage").textContent="Seleccioná el medio de pago para completar la derivación.";$("derivationFinalizeMessage").classList.add("derivation-payment-required");$("derivationFinalizeBackdrop").classList.add("is-open");$("derivationFinalizeBackdrop").setAttribute("aria-hidden","false");window.lockPageScroll?.("derivation-finalize");}
 function closeFinalize(){$("derivationFinalizeBackdrop")?.classList.remove("is-open");$("derivationFinalizeBackdrop")?.setAttribute("aria-hidden","true");window.unlockPageScroll?.("derivation-finalize");state.selectedFinalizeId="";state.selectedPayment="";}
-function updateFinalizeButton(){const amount=parseCurrencyInput($("derivationFinalAmount")?.value),button=$("derivationFinalizeConfirmBtn");if(button)button.disabled=!(amount>0&&["cash","transfer","card","other"].includes(state.selectedPayment));}
+function updateFinalizeButton(){const amount=parseCurrencyInput($("derivationFinalAmount")?.value),button=$("derivationFinalizeConfirmBtn"),message=$("derivationFinalizeMessage"),validPayment=["cash","transfer","card","other"].includes(state.selectedPayment);if(button)button.disabled=!(amount>0&&validPayment);if(message){message.textContent=!amount?"Ingresá un monto real mayor a cero.":!validPayment?"Seleccioná el medio de pago para completar la derivación.":"Listo para confirmar la carga.";message.classList.toggle("derivation-payment-required",!validPayment);}}
 async function rejectDefinitively(id,button){if(!id||state.busy.has(`reject:${id}`))return;state.busy.add(`reject:${id}`);if(button){button.disabled=true;button.textContent="CERRANDO…";}try{const me=await ensureSession(),reference=doc(db,"derivaciones",id);await runTransaction(db,async tx=>{const snap=await tx.get(reference);if(!snap.exists())throw Object.assign(new Error("La derivación ya no existe."),{code:"DERIVATION_NOT_FOUND"});const row=snap.data();if(String(row.receptorUid||row.receiverUid)!==me.uid||![STATUS.ACCEPTED,STATUS.PENDING_INVOICE].includes(canonicalStatus(row)))throw Object.assign(new Error("No se puede cerrar esta derivación."),{code:"FINAL_REJECT_DENIED"});tx.update(reference,{status:STATUS.CLOSED_REJECTED,estado:STATUS.CLOSED_REJECTED,closedRejectedAt:serverTimestamp(),closedRejectedByUid:me.uid,collaborationAmount:0,derivedAmountForEmitter:0,updatedAt:serverTimestamp()});});closeFinalize();await loadPendingCompletion();window.showExploraSuccess?.({title:"DERIVACIÓN CERRADA",message:"Se cerró sin dinero derivado, colaboración para bono, bono ni facturación."});}catch(error){reportDerivationError("REJECT_DERIVATION","FINAL_REJECTION_FAILED",error,{functionName:"rejectDefinitively",derivationId:id,status:STATUS.CLOSED_REJECTED,receptorUid:uid()});}finally{state.busy.delete(`reject:${id}`);if(button){button.disabled=false;button.textContent="RECHAZAR DEFINITIVAMENTE";}}}
 async function complete(button){
   const id=state.selectedFinalizeId,method=state.selectedPayment,finalAmount=parseCurrencyInput($("derivationFinalAmount")?.value);
@@ -18717,22 +19077,22 @@ async function complete(button){
     const message=$("derivationFinalizeMessage");if(message)message.textContent=error?.message||"No se pudo confirmar la derivación.";
   }finally{state.busy.delete(`complete:${id}`);button.disabled=false;button.textContent="CONFIRMAR CARGA";updateFinalizeButton();}
 }
-function open(){try{state.opened=true;state.previousScrollY=window.scrollY||0;$("derivationScreen")?.classList.add("is-open");$("derivationScreen")?.setAttribute("aria-hidden","false");window.lockPageScroll?.("derivation-screen");window.ExploraMainNav?.setActive?.("inicio");loadDrivers().then(()=>{renderDrivers();updateCompose();setTimeout(()=>window.ExploraUIRankingGoalsDerivationsRepair?.audit?.("derivar-servicio"),120);}).catch(()=>{});loadPendingCompletion().catch(()=>{});}catch(error){reportDerivationError("OPEN_DERIVATION_MENU","DERIVATION_MENU_OPEN_FAILED",error,{functionName:"open"});}}
+function open(options={}){try{state.opened=true;setDerivationTab(options?.tab==="create"?"create":"received");state.previousScrollY=window.scrollY||0;$("derivationScreen")?.classList.add("is-open");$("derivationScreen")?.setAttribute("aria-hidden","false");window.lockPageScroll?.("derivation-screen");window.ExploraMainNav?.setActive?.("inicio");loadDrivers().then(()=>{renderDrivers();updateCompose();setTimeout(()=>window.ExploraUIRankingGoalsDerivationsRepair?.audit?.("derivar-servicio"),120);}).catch(()=>{});loadPendingCompletion().catch(()=>{});}catch(error){reportDerivationError("OPEN_DERIVATION_MENU","DERIVATION_MENU_OPEN_FAILED",error,{functionName:"open"});}}
 function close(){state.opened=false;$("derivationScreen")?.classList.remove("is-open");$("derivationScreen")?.setAttribute("aria-hidden","true");window.unlockPageScroll?.("derivation-screen");window.ExploraMainNav?.setActive?.("inicio");requestAnimationFrame(()=>window.scrollTo(0,state.previousScrollY||0));}
 function showReminder(){const list=$("derivationReminderList");if(list)list.innerHTML=state.pendingCompletion.map(row=>`<button type="button" data-reminder-finalize="${escapeHtml(row.id)}"><strong>${escapeHtml(row.concept||row.description||"Servicio")}</strong><span>${money(row.suggestedAmount||row.amount||0)}</span><small>${escapeHtml(row.emisorName||row.senderName||"Chofer")}</small></button>`).join("");$("derivationReminderBackdrop")?.classList.add("is-open");$("derivationReminderBackdrop")?.setAttribute("aria-hidden","false");window.lockPageScroll?.("derivation-reminder");}
 function closeReminder(){$("derivationReminderBackdrop")?.classList.remove("is-open");$("derivationReminderBackdrop")?.setAttribute("aria-hidden","true");window.unlockPageScroll?.("derivation-reminder");}
 async function billingGuard(){await loadPendingCompletion().catch(()=>{});if(state.pendingCompletion.length){showReminder();return;}state.originalBillingAction?.();}
 function installGuard(){const original=window.ExploraActions?.["nuevo-servicio"];if(typeof original==="function"&&original!==billingGuard&&!state.originalBillingAction){state.originalBillingAction=original;window.ExploraActions["nuevo-servicio"]=billingGuard;}}
-function stop(){try{state.unsubscribe?.();}catch(_){}state.unsubscribe=null;state.pendingResponse=[];state.pendingCompletion=[];state.drivers=[];state.driverMap.clear();window.ExploraDashboardNoticeController?.clearDerivationPending?.();resetForm();renderPendingNotifications();renderPendingCompletion();close();closeFinalize();closeReminder();}
-window.ExploraActions=window.ExploraActions||{};window.ExploraActions["derivar-servicio"]=open;
+function stop(){try{state.unsubscribe?.();}catch(_){}state.unsubscribe=null;state.pendingResponse=[];state.pendingCompletion=[];state.allReceived=[];state.renderSignature="";state.drivers=[];state.driverMap.clear();window.ExploraDashboardNoticeController?.clearDerivationPending?.();resetForm();renderPendingNotifications();renderPendingCompletion();close();closeFinalize();closeReminder();}
+window.ExploraActions=window.ExploraActions||{};window.ExploraActions["derivar-servicio"]=()=>open({tab:"received"});window.ExploraOpenNewDerivation=()=>open({tab:"create"});
 window.ExploraDerivations={open,close,startForCurrentSession:async()=>{await loadDrivers().catch(()=>{});renderDrivers();startPendingListener();await loadPendingCompletion().catch(()=>{});installGuard();},stopSession:stop,refresh:async()=>{await loadDrivers(true);renderDrivers();await loadPendingCompletion();},getState:()=>state};
-document.addEventListener("DOMContentLoaded",()=>{installGuard();renderDrivers();updateCompose();renderPendingCompletion();$("derivationBackBtn")?.addEventListener("click",close);$("derivationCancelBtn")?.addEventListener("click",close);$("derivationRefreshBtn")?.addEventListener("click",()=>window.ExploraDerivations.refresh().catch(error=>reportDerivationError("READ_INCOMING_DERIVATIONS","DERIVATION_REFRESH_FAILED",error,{functionName:"refresh"})));$("derivationForm")?.addEventListener("submit",sendDerivation);$("derivationDescription")?.addEventListener("input",updateCompose);$("derivationAmount")?.addEventListener("input",event=>{event.target.value=formatCurrencyInput(event.target.value);updateCompose();});$("derivationFinalAmount")?.addEventListener("input",event=>{event.target.value=formatCurrencyInput(event.target.value);updateFinalizeButton();});document.addEventListener("click",event=>{const driver=event.target.closest?.("[data-select-derivation-driver]");if(driver){state.selectedReceiverUid=driver.dataset.selectDerivationDriver;renderDrivers();updateCompose();return;}const action=event.target.closest?.("[data-derivation-action]");if(action){transition(action.dataset.derivationId,action.dataset.derivationAction,action);return;}const reminder=event.target.closest?.("[data-reminder-finalize]");if(reminder){closeReminder();openFinalize(reminder.dataset.reminderFinalize);return;}const reject=event.target.closest?.("[data-derivation-final-reject]");if(reject){rejectDefinitively(reject.dataset.derivationFinalReject,reject);}});$("derivationFinalizeCancelBtn")?.addEventListener("click",closeFinalize);$("derivationFinalizeRejectBtn")?.addEventListener("click",event=>rejectDefinitively(state.selectedFinalizeId,event.currentTarget));$("derivationFinalizeConfirmBtn")?.addEventListener("click",event=>complete(event.currentTarget));document.querySelectorAll("[data-derivation-payment]").forEach(paymentButton=>paymentButton.addEventListener("click",()=>{state.selectedPayment=paymentButton.dataset.derivationPayment;document.querySelectorAll("[data-derivation-payment]").forEach(item=>item.classList.toggle("is-selected",item===paymentButton));updateFinalizeButton();}));$("derivationReminderLaterBtn")?.addEventListener("click",()=>{closeReminder();state.originalBillingAction?.();});});
+document.addEventListener("DOMContentLoaded",()=>{installGuard();renderDrivers();updateCompose();renderPendingCompletion();$("derivationBackBtn")?.addEventListener("click",close);$("derivationCancelBtn")?.addEventListener("click",()=>setDerivationTab("received"));$("derivationRefreshBtn")?.addEventListener("click",()=>window.ExploraDerivations.refresh().catch(error=>reportDerivationError("READ_INCOMING_DERIVATIONS","DERIVATION_REFRESH_FAILED",error,{functionName:"refresh"})));$("derivationForm")?.addEventListener("submit",sendDerivation);$("derivationDescription")?.addEventListener("input",updateCompose);$("derivationAmount")?.addEventListener("input",event=>{event.target.value=formatCurrencyInput(event.target.value);updateCompose();});$("derivationFinalAmount")?.addEventListener("input",event=>{event.target.value=formatCurrencyInput(event.target.value);updateFinalizeButton();});document.addEventListener("click",event=>{const tab=event.target.closest?.("[data-derivation-tab]");if(tab){setDerivationTab(tab.dataset.derivationTab);return;}const driver=event.target.closest?.("[data-select-derivation-driver]");if(driver){state.selectedReceiverUid=driver.dataset.selectDerivationDriver;renderDrivers();updateCompose();return;}const action=event.target.closest?.("[data-derivation-action]");if(action){transition(action.dataset.derivationId,action.dataset.derivationAction,action);return;}const reminder=event.target.closest?.("[data-reminder-finalize]");if(reminder){closeReminder();openFinalize(reminder.dataset.reminderFinalize);return;}const reject=event.target.closest?.("[data-derivation-final-reject]");if(reject){rejectDefinitively(reject.dataset.derivationFinalReject,reject);}});$("derivationFinalizeCancelBtn")?.addEventListener("click",closeFinalize);$("derivationFinalizeRejectBtn")?.addEventListener("click",event=>rejectDefinitively(state.selectedFinalizeId,event.currentTarget));$("derivationFinalizeConfirmBtn")?.addEventListener("click",event=>complete(event.currentTarget));document.querySelectorAll("[data-derivation-payment]").forEach(paymentButton=>paymentButton.addEventListener("click",()=>{state.selectedPayment=paymentButton.dataset.derivationPayment;document.querySelectorAll("[data-derivation-payment]").forEach(item=>item.classList.toggle("is-selected",item===paymentButton));updateFinalizeButton();}));$("derivationReminderLaterBtn")?.addEventListener("click",()=>{closeReminder();state.originalBillingAction?.();});});
 window.addEventListener("explora:session-opened",event=>{if(!normalize(event.detail?.role).includes("admin"))window.ExploraDerivations.startForCurrentSession().catch(error=>reportDerivationError("INIT","DERIVATION_START_FAILED",error,{functionName:"startForCurrentSession"}));});
 window.addEventListener("explora:auth-cleared",stop);
 </script>
 
 
-<script type="module" id="exploraPerformanceEngineV239">
+<script type="module" id="exploraPerformanceEngineV252">
 import { getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import { getFirestore, collection, getDocs, query, where, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
@@ -18761,7 +19121,7 @@ const MAX_BILLING=2000000;
 const DERIVATION_PERCENT=10;
 const INVALID_STATES=["cancel","rechaz","elimin","borrador","test","prueba"];
 const COMPLETE_STATES=["completed","complet","finaliz","factur","cerrad","realiz"];
-const RANKING_CACHE_SCHEMA=250;
+const RANKING_CACHE_SCHEMA=252;
 
 const state={
   loading:false,loaded:false,open:false,tab:"goals",highlightGoal:0,uid:"",role:"",cycle:null,
@@ -19234,12 +19594,46 @@ function normalizeBillingRankingRow(row={}){
   const metrics=canonicalGoalMetrics(row.grossBilling??row.facturacion??row.totalBilling??0),uid=String(row.uid||row.driverUid||row.choferUid||row.simulationDriverUid||"").trim();
   return{...row,uid:uid||String(row.profileId||"").trim(),name:String(row.name||row.driverName||row.nombre||"Chofer").trim()||"Chofer",grossBilling:metrics.grossBilling,reachedGoal:metrics.reachedGoal,nextGoal:metrics.nextGoal,rewardPercent:metrics.rewardPercent,activeGoalPercent:metrics.rewardPercent,goalPercent:metrics.rewardPercent,missing:metrics.missing,equivalent:metrics.benefitAmount,benefitAmount:metrics.benefitAmount,goalBenefit:metrics.benefitAmount,accruedGoalBenefit:metrics.benefitAmount,progress:metrics.progress};
 }
-function isActiveDriverProfile(profile={}){
-  const normalizedRole=normalize(profile.role||profile.rol||profile.tipoUsuario||"chofer"),status=normalize(profile.status||profile.estado||"");
-  if(profile.isDeleted===true||profile.deleted===true||["deleted","eliminado","disabled","deshabilitado","inactive","inactivo"].includes(status))return false;
+function canonicalProfileUid(profile={}){
+  return String(profile.uid||profile.authUid||profile.firebaseUid||profile.userId||profile.driverUid||profile.choferUid||profile.id||"").trim();
+}
+function normalizedProfileRole(profile={}){
+  const raw=profile.role??profile.rol??profile.userRole??profile.tipo??profile.profileType??profile.tipoUsuario??"";
+  return normalize(raw).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[\s_-]+/g,"");
+}
+function isEligibleDriverProfile(profile={}){
+  const uid=canonicalProfileUid(profile),normalizedRole=normalizedProfileRole(profile),status=normalize(profile.status||profile.estado||profile.accountStatus||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+  if(!uid)return false;
+  if(profile.isAdmin===true||profile.admin===true||profile.superadmin===true||profile.owner===true)return false;
+  if(profile.isDeleted===true||profile.deleted===true||profile.disabled===true||profile.isDisabled===true)return false;
   if(profile.activo===false||profile.active===false||profile.isActive===false||profile.enabled===false)return false;
-  if(normalizedRole.includes("admin")||["owner","superadmin","administrador"].includes(normalizedRole))return false;
-  return !normalizedRole||normalizedRole.includes("chofer")||normalizedRole.includes("driver")||profile.isSimulated===true;
+  if(["deleted","eliminado","disabled","deshabilitado","inactive","inactivo","blocked","bloqueado"].some(token=>status.includes(token)))return false;
+  if(["admin","administrador","owner","superadmin","system","sistema"].some(token=>normalizedRole===token||normalizedRole.includes(token)))return false;
+  if(profile.isSimulated===true)return true;
+  return normalizedRole==="chofer"||normalizedRole==="driver";
+}
+const isActiveDriverProfile=isEligibleDriverProfile;
+function buildEligibleRankingParticipants(rows=[],profilesData={},meta={}){
+  const eligibleProfiles=(profilesData?.profiles||[]).filter(isEligibleDriverProfile);
+  const profileByUid=new Map();
+  eligibleProfiles.forEach(profile=>{const uid=canonicalProfileUid(profile);if(uid&&!profileByUid.has(uid))profileByUid.set(uid,profile);});
+  const merged=new Map();
+  (Array.isArray(rows)?rows:[]).filter(Boolean).forEach(source=>{
+    const uid=String(source.uid||source.driverUid||source.choferUid||source.simulationDriverUid||"").trim();
+    if(!uid||!profileByUid.has(uid))return;
+    const normalized=normalizeBillingRankingRow({...source,uid});
+    const previous=merged.get(uid);
+    if(!previous||Number(normalized.grossBilling||0)>Number(previous.grossBilling||0)||(Number(normalized.grossBilling||0)===Number(previous.grossBilling||0)&&Number(normalized.updatedAtMs||0)>Number(previous.updatedAtMs||0)))merged.set(uid,normalized);
+  });
+  profileByUid.forEach((profile,uid)=>{
+    const existing=merged.get(uid);
+    if(!existing){const zero=zeroBillingRowFromProfile(profile);if(zero)merged.set(uid,zero);return;}
+    existing.name=profileName(profile,uid);existing.avatar=profileAvatar(profile)||existing.avatar||"";existing.profileId=profile.id||uid;existing.isSimulated=existing.isSimulated===true||profile.isSimulated===true;existing.aliases=new Set(aliasesForProfile(profile,profile.id||uid));
+  });
+  const result=[...merged.values()].map(normalizeBillingRankingRow);
+  result.sort((a,b)=>Number(b.grossBilling||0)-Number(a.grossBilling||0)||Number(b.rewardPercent||0)-Number(a.rewardPercent||0)||String(a.name||"").localeCompare(String(b.name||""),"es",{sensitivity:"base"})||String(a.uid||"").localeCompare(String(b.uid||"")));
+  result.forEach((row,index)=>row.position=index+1);
+  return attachRankingMeta(result,{...meta,activeDriverCount:eligibleProfiles.length,expectedDriverCount:eligibleProfiles.length,publicSummaryComplete:result.length===eligibleProfiles.length,source:String(meta.source||"eligible-uid")});
 }
 function zeroBillingRowFromProfile(profile={}){
   const uid=String(profile.uid||profile.authUid||profile.firebaseUid||profile.userId||profile.id||"").trim();
@@ -19257,17 +19651,7 @@ function attachRankingMeta(rows=[],meta={}){
   return rows;
 }
 function mergeDriversWithBilling(rows=[],profilesData={},meta={}){
-  const result=(Array.isArray(rows)?rows:[]).filter(Boolean).map(normalizeBillingRankingRow),profiles=(profilesData?.profiles||[]).filter(isActiveDriverProfile);
-  for(const profile of profiles){
-    const aliases=new Set(aliasesForProfile(profile,profile.id));
-    let existing=result.find(row=>aliases.has(normalize(row.uid))||[...(row.aliases||[])].some(alias=>aliases.has(normalize(alias))));
-    if(!existing){const zero=zeroBillingRowFromProfile(profile);if(zero)result.push(zero);continue;}
-    existing.name=profileName(profile,existing.name||existing.uid);existing.avatar=profileAvatar(profile)||existing.avatar||"";existing.profileId=profile.id||existing.profileId||existing.uid;existing.isSimulated=existing.isSimulated===true||profile.isSimulated===true;existing.aliases=new Set([...(existing.aliases||[]),...aliases]);
-  }
-  const dedup=mergePublicRows(result,"uid","grossBilling").map(normalizeBillingRankingRow);
-  dedup.sort((a,b)=>Number(b.grossBilling||0)-Number(a.grossBilling||0)||Number(b.rewardPercent||0)-Number(a.rewardPercent||0)||Number(b.serviceCount||0)-Number(a.serviceCount||0)||String(a.name||"").localeCompare(String(b.name||""),"es"));
-  dedup.forEach((row,index)=>row.position=index+1);
-  return attachRankingMeta(dedup,{...meta,activeDriverCount:Math.max(profiles.length,Number(meta.activeDriverCount||0),dedup.length),expectedDriverCount:Math.max(profiles.length,Number(meta.expectedDriverCount||0),dedup.length)});
+  return buildEligibleRankingParticipants(rows,profilesData,meta);
 }
 function cachePayloadValidation(moduleName,payload,ctx){
   if(!payload||typeof payload!=="object")return{valid:false,reason:"PAYLOAD_MISSING"};
@@ -19333,8 +19717,8 @@ function restorePerformanceFastCache(cycle=cycleForPeriod(activeWeeklyPeriod()),
 }
 function persistPerformanceFastCache(period=activeWeeklyPeriod(),cycle=state.cycle||cycleForPeriod(period)){
   if(!auth?.currentUser?.uid||role().includes("admin"))return;
-  const ctx=fastContext(cycle,period),rows=state.rows.map(row=>serializableRow(normalizeBillingRankingRow(row))),current=state.current?serializableRow(normalizeBillingRankingRow(state.current)):serializableRow(freshCurrentUserRow()),view=state.goalView||safeGoalView(current?.grossBilling||0),base={schemaVersion:RANKING_CACHE_SCHEMA,cycleId:cycle.id,weeklyPeriodId:period.id,resetAtMs:Number(state.operationalResetAtMs||0),updatedAt:Date.now()};
-  window.ExploraFastCache?.set?.("billing_ranking",{...base,rows,current,totalGrossBilling:totalGrossBilling(rows),activeDriverCount:Math.max(Number(state.activeDriverCount||0),rows.length),expectedDriverCount:Math.max(Number(state.activeDriverCount||0),rows.length),publicSummaryComplete:Boolean(state.rankingSummaryComplete||rows.length>=Math.max(Number(state.activeDriverCount||0),rows.length)),rankingSource:state.rankingSource||"merged"},ctx,{ttl:600000});
+  const ctx=fastContext(cycle,period),rows=state.rows.map(row=>serializableRow(normalizeBillingRankingRow(row))),eligibleDriverUids=rows.map(row=>String(row.uid||"")),current=state.current?serializableRow(normalizeBillingRankingRow(state.current)):serializableRow(freshCurrentUserRow()),view=state.goalView||safeGoalView(current?.grossBilling||0),base={schemaVersion:RANKING_CACHE_SCHEMA,cycleId:cycle.id,weeklyPeriodId:period.id,resetAtMs:Number(state.operationalResetAtMs||0),updatedAt:Date.now()};
+  window.ExploraFastCache?.set?.("billing_ranking",{...base,rows,eligibleDriverUids,current,totalGrossBilling:totalGrossBilling(rows),activeDriverCount:Math.max(Number(state.activeDriverCount||0),rows.length),expectedDriverCount:Math.max(Number(state.activeDriverCount||0),rows.length),publicSummaryComplete:Boolean(state.rankingSummaryComplete||rows.length>=Math.max(Number(state.activeDriverCount||0),rows.length)),rankingSource:state.rankingSource||"merged"},ctx,{ttl:600000});
   window.ExploraFastCache?.set?.("derivation_ranking",{...base,rows:state.derivations,leader:state.currentDerivationLeader,totalDerivedMoney:totalDerivedMoney(state.derivations),derivationPercent:DERIVATION_PERCENT},ctx,{ttl:600000});
   window.ExploraFastCache?.set?.("goal_bubbles",{...base,current,goalView:view,activeGoalIndex:view.activeIndex,visibleGoalWindow:view.visibleGoals,grossBilling:Number(current?.grossBilling||0),activePercent:Number(view.activePercent||0)},ctx,{ttl:300000});
   writePersistentRankingCache(rows,current,cycle,period);
@@ -19719,7 +20103,7 @@ async function persistClosedPerformance(previous,profilesData){
   if(isAdmin()){try{await setDoc(doc(db,"performance_cycles",previousCycle.id),{cycleId:previousCycle.id,startPeriodId:previousCycle.startPeriodId,endPeriodId:previousCycle.endPeriodId,status:"closed",goalCeiling:MAX_BILLING,goalCount:GOALS.length,derivationPercent:DERIVATION_PERCENT,driverCount:rows.length,goalRanking,derivationRanking,derivationWinnerUid:finalWinner?.uid||"",derivationWinnerName:finalWinner?.name||"",derivationWinnerAvatar:finalWinner?.avatar||"",derivationWinnerCount:finalWinner?.count||0,derivationWinnerAmount:finalWinner?.derivedAmount||0,derivationWinnerBonus:finalWinner?Math.round(finalWinner.derivedAmount*DERIVATION_PERCENT/100):0,closedAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});await Promise.all(rows.map(row=>{const derivationRow=derivations.find(item=>normalize(item.uid)===normalize(row.uid)),isWinner=Boolean(finalWinner&&normalize(finalWinner.uid)===normalize(row.uid)),derivationBonus=isWinner?Math.round(Number(finalWinner.derivedAmount||0)*DERIVATION_PERCENT/100):0;return setDoc(doc(db,"performance_awards",`${previousCycle.id}_${row.uid}`),{cycleId:previousCycle.id,startPeriodId:previousCycle.startPeriodId,endPeriodId:previousCycle.endPeriodId,driverUid:row.uid,driverName:row.name,grossBilling:row.grossBilling,goalId:row.reachedGoal?.id||0,goalPercent:row.rewardPercent,derivationPercent:isWinner?DERIVATION_PERCENT:0,equivalentAmount:row.equivalent,derivationEquivalentAmount:derivationBonus,totalEquivalentAmount:row.equivalent+derivationBonus,derivationCount:derivationRow?.count||0,derivedAmountForEmitter:derivationRow?.derivedAmount||0,status:"closed",createdAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});}));}catch(error){diagnostic("CYCLE_CLOSE","FIRESTORE_CYCLE_WRITE_FAILED",error,{cycleId:previousCycle.id,leaderBonus:finalWinner?Math.round(finalWinner.derivedAmount*DERIVATION_PERCENT/100):0,firestorePath:`performance_cycles/${previousCycle.id}`});}}
   return finalWinner?{...finalWinner,weeklyPeriodId:previous.id,rewardAmount:Math.round(Number(finalWinner.derivedAmount||0)*DERIVATION_PERCENT/100)}:null;
 }
-function currentRowForUid(rows,uid){const key=normalize(uid);return rows.find(row=>normalize(row.uid)===key||row.aliases?.has?.(key))||null;}
+function currentRowForUid(rows,uid){const key=String(uid||"").trim();return rows.find(row=>String(row.uid||"").trim()===key)||null;}
 
 function renderBubbles({animate=false,reason="RENDER_GOAL_CAROUSEL"}={}){
   const track=$("performanceGoalTrack"),viewport=$("performanceGoalViewport"),current=state.current||{grossBilling:0};
@@ -19805,13 +20189,14 @@ function buildRankingSnapshot(){
 function renderRanking(){
   const list=$("performanceRankingList");if(!list)return;
   const rankingSnapshot=buildRankingSnapshot(),rows=rankingSnapshot.rows;
-  list.dataset.requestId=String(rankingSnapshot.requestId||0);list.replaceChildren();
-  if(!rows.length){list.innerHTML='<div class="performance-history-empty">Sin facturación registrada esta semana.</div>';return;}
+  const signature=rows.map(row=>[row.uid,row.position,row.grossBilling,row.reachedGoal?.id||0,row.rewardPercent,row.equivalent].join(":" )).join("|")||"empty";
+  if(list.dataset.rankingSignature===signature)return;
   const fragment=document.createDocumentFragment();
+  if(!rows.length){const empty=document.createElement("div");empty.className="performance-history-empty";empty.textContent="Sin facturación registrada esta semana.";fragment.appendChild(empty);list.replaceChildren(fragment);list.dataset.rankingSignature=signature;list.dataset.requestId=String(rankingSnapshot.requestId||0);return;}
   rows.forEach((row,index)=>{const goalId=Number(row.reachedGoal?.id||0),benefit=Math.max(0,Number(row.equivalent||0)),position=row.position||index+1,article=document.createElement("article");article.className="performance-ranking-row";article.dataset.rankingPosition=String(position);article.dataset.rankingUid=row.uid;article.innerHTML=`<div class="performance-ranking-percent" aria-label="Meta ${goalId}, ${Number(row.rewardPercent||0)} por ciento"><small>META ${goalId}</small>${Number(row.rewardPercent||0)}%</div><div class="performance-ranking-copy"><strong>${escapeHtml(row.name)}</strong><span>Puesto ${position} · ${money(row.grossBilling)} facturados · Meta ${goalId}</span></div><button type="button" class="performance-ranking-money" data-goal-benefit-uid="${escapeHtml(row.uid)}" aria-label="Ganaste ${money(benefit)} por meta"><small>GANASTE</small>+${money(benefit)}</button>`;fragment.appendChild(article);});
-  list.appendChild(fragment);
+  list.replaceChildren(fragment);list.dataset.rankingSignature=signature;list.dataset.requestId=String(rankingSnapshot.requestId||0);
 }
-function findRankingRow(uid){const key=normalize(uid);return state.rows.find(row=>normalize(row.uid)===key||row.aliases?.has?.(key))||null;}
+function findRankingRow(uid){const key=String(uid||"").trim();return state.rows.find(row=>String(row.uid||"").trim()===key)||null;}
 function openGoalBenefitDetail(uid){
   try{
     const source=findRankingRow(uid);if(!source)throw Object.assign(new Error("No se encontró el chofer seleccionado en el ranking."),{code:"BENEFIT_DETAIL_OPEN_FAILED"});
@@ -19915,12 +20300,8 @@ async function refresh({force=false,reason="manual"}={}){
     const rankingStarted=performance.now();
     // Perfiles, marcador de reset y resumen público se solicitan en paralelo.
     const resetPromise=loadOperationalResetMarker(),profilesPromise=loadProfiles();
-    let profilesData=isAdmin()?await profilesPromise:currentAuthProfileFallback();
+    let profilesData=await profilesPromise;
     let rows=await loadCycleRows(cycle,profilesData,currentPeriod.id,{preferOperational});
-    if(!isAdmin()){
-      profilesData=await profilesPromise.catch(()=>profilesData);
-      rows=mergeDriversWithBilling(rows,profilesData,{documentsRead:Number(rows?.documentsRead||0),documentsValid:Number(rows?.documentsValid||0),billingDocumentsRead:Number(rows?.billingDocumentsRead||0),activeDriverCount:Math.max(Number(rows?.activeDriverCount||0),(profilesData?.profiles||[]).filter(isActiveDriverProfile).length),expectedDriverCount:Math.max(Number(rows?.expectedDriverCount||0),(profilesData?.profiles||[]).filter(isActiveDriverProfile).length),publicSummaryComplete:Boolean(rows?.publicSummaryComplete),source:String(rows?.source||"public+profiles")});
-    }
     await resetPromise;
     if(requestId!==state.refreshRequestId){diagnostic("RENDER_GOALS_RANKING_TAB","RANKING_OLD_REQUEST_DISCARDED",new Error("Se descartó una respuesta anterior del ranking para no sobrescribir datos nuevos."),{moduleName:"BILLING_RANKING_RESTORE",eventType:"WARNING",silent:true,functionName:"refresh",cycleId:cycle.id,weeklyPeriodId:currentPeriod.id,requestId,currentRequestId:state.refreshRequestId,cacheHit:Boolean(billingCache),cacheMiss:!billingCache,firestorePath:`performance_public/${cycle.id}/drivers`,query:"requestId guard"});return getState();}
     state.rows=(rows||[]).map(normalizeBillingRankingRow);state.rows.forEach((row,index)=>row.position=index+1);state.current=currentRowForUid(state.rows,user.uid)||freshCurrentUserRow(user);
