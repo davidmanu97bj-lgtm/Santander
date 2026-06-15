@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="explora-version" content="v284-chromium-audit-repair">
+  <meta name="explora-version" content="v285-cycle-hard-reload-button">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -4696,6 +4696,14 @@
     .performance-open-pill{min-height:34px;border:1px solid rgba(245,185,66,.42);border-radius:999px;background:rgba(245,185,66,.08);color:#f5c75d;padding:0 13px;font:inherit;font-size:12px;font-weight:900;touch-action:manipulation}
     .performance-dashboard-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);gap:12px}
     .performance-dashboard-card{min-width:0;min-height:198px;border:1px solid var(--ex-border);border-radius:var(--ex-card-radius);background:var(--ex-panel);color:#fff;padding:14px;text-align:left;overflow:hidden;box-shadow:var(--ex-shadow);touch-action:manipulation}
+    .performance-ranking-card-wrap{position:relative;min-width:0;display:flex}
+    .performance-ranking-card-wrap .performance-ranking-card{width:100%;height:100%}
+    .performance-ranking-card .performance-card-kicker{padding-right:48px}
+    .cycle-hard-reload-btn{position:absolute;z-index:7;top:11px;right:11px;width:38px;height:38px;border-radius:50%;border:1px solid rgba(245,185,66,.62);background:radial-gradient(circle at 32% 24%,rgba(255,255,255,.16),rgba(245,185,66,.16) 48%,rgba(30,21,5,.96));color:#f7ca5f;display:grid;place-items:center;padding:0;box-shadow:0 0 18px rgba(245,185,66,.14),inset 0 1px 0 rgba(255,255,255,.08);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+    .cycle-hard-reload-btn svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+    .cycle-hard-reload-btn:active{opacity:.72}
+    .cycle-hard-reload-btn:focus-visible{outline:2px solid rgba(255,213,106,.88);outline-offset:2px}
+    @media(max-width:360px){.cycle-hard-reload-btn{width:34px;height:34px;top:10px;right:10px}.cycle-hard-reload-btn svg{width:19px;height:19px}.performance-ranking-card .performance-card-kicker{padding-right:42px}}
     .performance-card-kicker{color:#f3c45d;font-size:11px;font-weight:950;letter-spacing:.11em;text-transform:uppercase;margin-bottom:12px}
     .performance-podium{min-height:154px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:end;gap:6px}
     .performance-podium-person{position:relative;min-width:0;display:grid;justify-items:center;align-content:end;gap:6px;text-align:center}
@@ -6034,6 +6042,33 @@
     #weeklyClosureAcknowledgementBtn:disabled,#weeklyClosureSubmitBtn:disabled{pointer-events:none}
     @media(max-width:390px){.weekly-closure-modal{max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 14px)!important}.weekly-closure-content{padding-left:11px!important;padding-right:11px!important}}
   </style>
+
+<style id="explora-stable-dashboard-card-dimensions-v1">
+  #performanceDerivatorCard[data-stable-derivation-card="true"],
+  .performance-ranking-card{
+    min-height:100%!important;
+    height:100%!important;
+    align-self:stretch!important;
+  }
+  .performance-dashboard-grid{align-items:stretch!important}
+  #performanceDerivatorBody{
+    min-height:190px!important;
+    height:190px!important;
+    display:grid!important;
+    place-items:center!important;
+    overflow:hidden!important;
+  }
+  .performance-derivator-winner{
+    min-height:190px!important;
+    height:190px!important;
+    grid-template-rows:auto minmax(0,1fr)!important;
+    align-content:center!important;
+    overflow:hidden!important;
+  }
+  .performance-derivator-visual{min-height:82px!important;height:82px!important}
+  .performance-derivator-copy{min-height:92px!important;height:92px!important;display:grid!important;align-content:center!important}
+  #performanceDerivatorEmpty{display:none!important}
+</style>
 </head>
 
 <body class="explora-auth-checking">
@@ -6231,12 +6266,17 @@
         </header>
 
         <div class="performance-dashboard-grid">
-          <button id="performanceRankingCard" class="performance-dashboard-card performance-ranking-card" type="button" aria-label="Abrir ranking de metas">
-            <div class="performance-card-kicker">CICLO ACTUAL</div>
-            <div id="performancePodium" class="performance-podium" aria-live="polite">
-              <div class="performance-loading">Calculando metas…</div>
-            </div>
-          </button>
+          <div class="performance-ranking-card-wrap">
+            <button id="performanceRankingCard" class="performance-dashboard-card performance-ranking-card" type="button" aria-label="Abrir ranking de metas">
+              <div class="performance-card-kicker">CICLO ACTUAL</div>
+              <div id="performancePodium" class="performance-podium" aria-live="polite">
+                <div class="performance-loading">Calculando metas…</div>
+              </div>
+            </button>
+            <button id="cycleHardReloadBtn" class="cycle-hard-reload-btn" type="button" aria-label="Recargar toda la información" title="Recargar información">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0 2 5.3"/><path d="M20 4v7h-7"/></svg>
+            </button>
+          </div>
 
           <button id="performanceDerivatorCard" class="performance-dashboard-card performance-derivator-card" type="button" aria-label="Abrir ranking de derivaciones" data-stable-derivation-card="true">
             <div class="performance-card-kicker">RANKING DE DERIVACIONES</div>
@@ -6258,7 +6298,7 @@
                   </span>
                 </div>
               </div>
-              <div id="performanceDerivatorEmpty" class="performance-current-empty">
+              <div id="performanceDerivatorEmpty" class="performance-current-empty" hidden aria-hidden="true">
                 <b>SIN DERIVACIONES COMPLETADAS</b>
                 <small>Todavía no hay dinero derivado en este ciclo.</small>
               </div>
@@ -8992,6 +9032,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
 
     function getDocTimeMs(data = {}) {
       const candidates = [
+        data.operationalDate, data.operationalAt, data.fechaOperativa, data.simulatedOperationalDate,
         data.paymentDate, data.expenseDate, data.serviceDate, data.simulatedAt, data.sourceCreatedAt,
         data.creadoEn, data.creado, data.createdAt, data.fechaTimestamp,
         data.fechaCreacion, data.fechaServidor, data.updatedAt, data.actualizadoEn
@@ -14463,7 +14504,23 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     async function resolveWeeklyClosureStatus(uid, currentWeeklyPeriodId = "") {
       if (!uid) throw new Error("AUTH_SESSION_MISSING");
       const loaded=await loadClosureAndPaymentForProfile(currentWeeklyPeriodId),closureRecord=loaded.closureRecord,paymentRecord=loaded.paymentRecord;
-      if(!closureRecord&&!paymentRecord){const engineState=window.ExploraWeeklyEngine?.getState?.()||{},weeklySnapshot=engineState.weeklyPeriodId===currentWeeklyPeriodId?(engineState.snapshot||engineState):null;return{status:CLOSURE_STATUS.NO_CLOSURE,clickable:false,closureId:null,weeklyPeriodId:currentWeeklyPeriodId,payer:null,payee:null,amount:0,closedAt:null,receiptDeadline:null,receiptStatus:null,receiptUrl:null,receiptPath:null,performanceEligibility:true,reason:"no_closed_period",weeklySnapshot};}
+      if(!closureRecord&&!paymentRecord){
+        const active=getActiveWeeklyPeriod();
+        const previous=getPreviousWeeklyPeriod(active);
+        const targetPeriod=String(currentWeeklyPeriodId||"")===String(active.id||"")?previous:{id:String(currentWeeklyPeriodId||previous.id)};
+        if(window.ExploraCanonicalWeeklyClosure?.materializeWeeklyClosure&&targetPeriod?.id){
+          try{
+            await window.ExploraCanonicalWeeklyClosure.materializeWeeklyClosure(uid,targetPeriod.id,{autoGenerated:true,createdByOperationId:`status_rebuild_${uid}_${targetPeriod.id}`});
+            const retried=await loadClosureAndPaymentForProfile(targetPeriod.id);
+            if(retried.closureRecord||retried.paymentRecord)return resolveWeeklyClosureStatus(uid,targetPeriod.id);
+          }catch(error){
+            console.error("WEEKLY_CLOSURE_STATUS_REBUILD",error?.code||error?.message||error);
+            return{status:CLOSURE_STATUS.CLOSURE_ERROR,clickable:true,closureId:null,weeklyPeriodId:targetPeriod.id,payer:null,payee:null,amount:0,closedAt:null,receiptDeadline:null,receiptStatus:null,receiptUrl:null,receiptPath:null,performanceEligibility:true,reason:"closure_rebuild_failed",calculationError:true,error};
+          }
+        }
+        const engineState=window.ExploraWeeklyEngine?.getState?.()||{},weeklySnapshot=engineState.weeklyPeriodId===currentWeeklyPeriodId?(engineState.snapshot||engineState):null;
+        return{status:CLOSURE_STATUS.NO_CLOSURE,clickable:false,closureId:null,weeklyPeriodId:currentWeeklyPeriodId,payer:null,payee:null,amount:0,closedAt:null,receiptDeadline:null,receiptStatus:null,receiptUrl:null,receiptPath:null,performanceEligibility:true,reason:"no_closed_period",weeklySnapshot};
+      }
       const closure=closureRecord?.data||{},payment={...(closure.pagoSemanal||{}),...(paymentRecord?.data||{})},storedDirection=closureDirection(closure,payment),storedAmount=closureAmount(closure,payment,storedDirection),closedAt=closureClosedAtMs(closure,payment),eligibility=resolvePerformanceEligibility(closure,payment,(window.ExploraFirestoreClock?.isTrusted?.()?window.ExploraFirestoreClock.getNowMs():NaN)),receiptStatus=closureReceiptStatus(closure,payment),receiptUrl=closureReceiptUrl(closure,payment),receiptPresent=Boolean(receiptUrl||["accepted","review","uploaded"].includes(receiptStatus)),paymentResolved=receiptPresent,periodId=closurePeriodId(closure)||closurePeriodId(payment)||loaded.targetPeriod||currentWeeklyPeriodId;
       const engineState=window.ExploraWeeklyEngine?.getState?.()||{},weeklySnapshot=engineState.weeklyPeriodId===periodId?(engineState.snapshot||engineState):null;
       const preferredSnapshot=weeklySnapshot||closure.weeklySnapshot||closure;
@@ -20075,6 +20132,19 @@ window.addEventListener("explora:auth-cleared",stop);
   "use strict";
   if(window.ExploraStableDerivationCard)return;
   const state={uid:"",cycleId:"",lastValid:null,authoritativeReady:false,renderVersion:0};
+  const STORAGE_PREFIX="explora:last-valid-derivation-card:v1:";
+  const storageKey=(uid,cycleId)=>`${STORAGE_PREFIX}${String(uid||"anonymous")}::${String(cycleId||"active")}`;
+  function loadPersisted(uid,cycleId){
+    try{
+      const raw=localStorage.getItem(storageKey(uid,cycleId));
+      if(!raw)return null;
+      const parsed=JSON.parse(raw);
+      return parsed&&Number(parsed.derivedAmount)>0&&String(parsed.name||"").trim()?parsed:null;
+    }catch(_){return null}
+  }
+  function persistValid(payload){
+    try{localStorage.setItem(storageKey(state.uid,state.cycleId),JSON.stringify({...payload,savedAt:Date.now()}));}catch(_){}
+  }
   const byId=id=>document.getElementById(id);
   const normalizeDerivedAmount=value=>{
     if(typeof value==="number")return Math.max(0,value);
@@ -20091,8 +20161,8 @@ window.addEventListener("explora:auth-cleared",stop);
   function beginSession(uid="",cycleId=""){
     const nextUid=String(uid||""),nextCycle=String(cycleId||"");
     if(state.uid===nextUid&&state.cycleId===nextCycle)return state.renderVersion;
-    state.uid=nextUid;state.cycleId=nextCycle;state.lastValid=null;state.authoritativeReady=false;state.renderVersion+=1;
-    renderEmpty({force:true,source:"session"});
+    state.uid=nextUid;state.cycleId=nextCycle;state.lastValid=loadPersisted(nextUid,nextCycle);state.authoritativeReady=false;state.renderVersion+=1;
+    if(state.lastValid)renderWinner(state.lastValid);else renderEmpty({force:true,source:"session"});
     return state.renderVersion;
   }
   function validPayload(payload){return payload&&Number(payload.derivedAmount)>0&&String(payload.name||"").trim()}
@@ -20111,9 +20181,9 @@ window.addEventListener("explora:auth-cleared",stop);
     setHidden(n.empty,true);setHidden(n.winner,false);n.card.dataset.stableState="winner";return true;
   }
   function renderEmpty({force=false}={}){
-    if(state.lastValid&&!force)return true;
     const n=nodes();if(!n.card||!n.winner||!n.empty)return false;
-    setHidden(n.winner,true);setHidden(n.empty,false);n.card.dataset.stableState="empty";return true;
+    if(state.lastValid){setHidden(n.empty,true);setHidden(n.winner,false);n.card.dataset.stableState="winner";return renderWinner(state.lastValid)}
+    setHidden(n.empty,true);setHidden(n.winner,true);n.card.dataset.stableState="preserved-empty";return true;
   }
   function render(payload,options={}){
     const source=String(options.source||"unknown"),uid=String(options.uid??state.uid),cycleId=String(options.cycleId??state.cycleId);
@@ -20122,13 +20192,14 @@ window.addEventListener("explora:auth-cleared",stop);
     if(options.loading)return state.lastValid?true:renderEmpty();
     if(validPayload(payload)){
       state.lastValid={name:String(payload.name),avatar:String(payload.avatar||""),derivedAmount:Number(payload.derivedAmount),bonusAmount:Number(payload.bonusAmount??Number(payload.derivedAmount)*.10)};
+      persistValid(state.lastValid);
       if(options.authoritative)state.authoritativeReady=true;
       return renderWinner(state.lastValid);
     }
     if(options.authoritative&&options.settled)state.authoritativeReady=true;
     return renderEmpty({force:Boolean(options.forceEmpty)});
   }
-  function clear(){state.lastValid=null;state.authoritativeReady=false;state.uid="";state.cycleId="";state.renderVersion+=1;renderEmpty({force:true})}
+  function clear(){state.lastValid=null;state.authoritativeReady=false;state.uid="";state.cycleId="";state.renderVersion+=1;const n=nodes();if(n.empty)setHidden(n.empty,true);if(n.winner)setHidden(n.winner,true)}
   window.ExploraStableDerivationCard={version:"v273-derivation-ranking-stable-bonus-only",beginSession,render,clear,getState:()=>({...state,lastValid:state.lastValid?{...state.lastValid}:null})};
 })();
 </script>
@@ -22178,6 +22249,8 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
       if(completedAutoClosures.has(checkKey)||now-lastCheck<300000)return;
       autoClosureChecks.set(checkKey,now);
       const result=await window.ExploraCanonicalWeeklyClosure.materializeWeeklyClosure(auth.currentUser.uid,previousId,{autoGenerated:true,createdByOperationId:`auto_${auth.currentUser.uid}_${previousId}`});
+      const closed=result?.snapshot||result?.data||{};
+      if(closed.snapshotComplete!==true||closed.snapshotValidated!==true)throw Object.assign(new Error("El cierre automático no devolvió un snapshot completo y validado."),{code:"AUTO_WEEKLY_CLOSURE_INCOMPLETE"});
       completedAutoClosures.add(checkKey);
       window.dispatchEvent(new CustomEvent("explora:weekly-period-changed",{detail:{closedWeeklyPeriodId:previousId,newWeeklyPeriodId:active.id,closureId:result.closureId}}));
     }catch(error){report("WEEKLY_UNIFIED_ENGINE","GENERATE_WEEKLY_CLOSURE",error?.code||"AUTO_WEEKLY_CLOSURE_FAILED",error,{weeklyPeriodId:activePeriod().id,functionName:"maybeAutoClose",firestorePath:"cierres_semanales",query:"canonical transactional weekly closure"});window.ExploraCanonicalWeeklyClosure?.showDiagnostic?.(error,{stage:"AUTO_CLOSE",driverUid:auth?.currentUser?.uid,periodId:activePeriod().id,firestorePath:"cierres_semanales"});}
@@ -24750,7 +24823,12 @@ import { getFirestore, doc, getDoc, getDocFromServer, setDoc, updateDoc, runTran
       const existingSnap=await tx.get(reference),existing=existingSnap.exists()?existingSnap.data()||{}:null;
       if(existing&&existing.status==="final"&&existing.snapshotComplete===true&&existing.snapshotValidated===true){
         if(existing.calculationHash===snapshot.calculationHash)return{created:false,reused:true,closureId,data:existing};
-        return{created:false,reused:true,immutableConflict:true,closureId,data:existing};
+        const existingGross=Number(existing.grossBilling??existing.facturacion??existing.weeklySnapshot?.grossBilling??0)||0;
+        const existingOps=Number(existing.sourceOperationCount??existing.weeklySnapshot?.sourceOperationCount??0)||0;
+        const existingNet=Number(existing.netSettlementToDriver??existing.finalBalance??existing.saldoFinal??existing.weeklySnapshot?.netSettlementToDriver);
+        const looksLikeFalseZero=(existingGross===0&&snapshot.grossBilling>0)||(existingOps===0&&snapshot.sourceOperationCount>0)||(Number.isFinite(existingNet)&&existingNet===0&&snapshot.netSettlementToDriver!==0);
+        const repairable=existing.autoGenerated===true||existing.requiresRebuild===true||existing.snapshotConflict===true||looksLikeFalseZero;
+        if(!repairable)return{created:false,reused:true,immutableConflict:true,closureId,data:existing};
       }
       const preserved=adminFields(existing||{}),compact=compactSnapshotForStorage(snapshot),payload={...compact,...preserved,closureId,status:"final",estado:"final",state:"final",weeklySnapshot:compact,
         grossBilling:snapshot.grossBilling,totalExpenses:snapshot.driverPaidExpenses+snapshot.adminPaidExpenses,goalRewardAmount:snapshot.goalRewardAmount,derivationBonusAmount:snapshot.derivationBonusAmount,
@@ -24933,5 +25011,199 @@ import { getFirestore, doc, getDoc, getDocFromServer, setDoc, updateDoc, runTran
 })();
 </script>
 
+
+
+<script id="exploraIdleDashboardRestartV1">
+(()=>{
+  "use strict";
+  if(window.__exploraIdleDashboardRestartV1)return;
+  window.__exploraIdleDashboardRestartV1=true;
+
+  const IDLE_MS=120000;
+  const CHECK_MS=5000;
+  const STORAGE_KEY="explora:dashboard:last-valid:v1";
+  const RELOAD_GUARD_KEY="explora:dashboard:auto-reload-guard:v1";
+  const MAX_SNAPSHOT_AGE_MS=6*60*60*1000;
+  const TARGETS={
+    performancePodium:"html",
+    performanceDerivatorBody:"html",
+    performanceGoalTrack:"html",
+    dashboardWeeklyRevenue:"text",
+    dashboardWeeklyRevenueMeta:"text",
+    dashboardWeeklyExpenses:"text",
+    dashboardWeeklyExpensesMeta:"text",
+    dashboardReceiptsMeta:"text",
+    dashboardExploreLoanMeta:"text",
+    driverStatusCard:"html"
+  };
+  const TRANSIENT_RE=/calculando|cargando|sincronizando|actualizando|comprobando|espera un momento|todav[ií]a no hay choferes disponibles/i;
+  const activityEvents=["pointerdown","touchstart","keydown","input","change","scroll","wheel"];
+  let lastActivity=Date.now();
+  let intervalId=0;
+  let reloadScheduled=false;
+  let observer=null;
+  let saveTimer=0;
+
+  function node(id){return document.getElementById(id)}
+  function isDashboardVisible(){
+    const main=node("driverDashboardReal");
+    if(main&&main.hidden)return false;
+    if(document.body.classList.contains("explora-internal-screen-open"))return false;
+    const blockers=[
+      ".is-open:not(#dialogBackdrop)",
+      "[aria-hidden='false'].vehicle-detail-screen",
+      ".billing-form-backdrop.is-open",
+      ".weekly-closure-overlay:not([hidden])",
+      ".dialog-backdrop.open",
+      ".admin-shared-screen[aria-hidden='false']"
+    ];
+    return !blockers.some(sel=>{try{return Boolean(document.querySelector(sel))}catch(_){return false}});
+  }
+  function hasUnsavedInteraction(){
+    const active=document.activeElement;
+    if(active&&/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName))return true;
+    return Boolean(document.querySelector("form input:not([type='hidden']):not(:disabled), form textarea:not(:disabled), .billing-form-backdrop.is-open, .expense-screen.is-open, .new-service-screen.is-open"));
+  }
+  function isValidValue(value){
+    const clean=String(value||"").replace(/\s+/g," ").trim();
+    return clean.length>0&&!TRANSIENT_RE.test(clean);
+  }
+  function collectSnapshot(){
+    const data={savedAt:Date.now(),path:location.pathname,values:{}};
+    let validPrimary=0;
+    for(const [id,mode] of Object.entries(TARGETS)){
+      const el=node(id);if(!el)continue;
+      const value=mode==="text"?el.textContent:el.innerHTML;
+      if(!isValidValue(value))continue;
+      data.values[id]={mode,value};
+      if(["performancePodium","performanceDerivatorBody","performanceGoalTrack"].includes(id))validPrimary++;
+    }
+    return validPrimary>=2?data:null;
+  }
+  function saveSnapshot(){
+    clearTimeout(saveTimer);
+    saveTimer=setTimeout(()=>{
+      try{
+        const data=collectSnapshot();
+        if(data)sessionStorage.setItem(STORAGE_KEY,JSON.stringify(data));
+      }catch(_){}
+    },180);
+  }
+  function restoreSnapshot(){
+    try{
+      const raw=sessionStorage.getItem(STORAGE_KEY);if(!raw)return false;
+      const data=JSON.parse(raw);
+      if(!data||Date.now()-Number(data.savedAt||0)>MAX_SNAPSHOT_AGE_MS)return false;
+      if(data.path&&data.path!==location.pathname)return false;
+      let restored=0;
+      for(const [id,payload] of Object.entries(data.values||{})){
+        const el=node(id);if(!el||!payload)continue;
+        if(payload.mode==="text")el.textContent=String(payload.value||"");
+        else el.innerHTML=String(payload.value||"");
+        el.dataset.exploraRestoredSnapshot="true";
+        restored++;
+      }
+      return restored>0;
+    }catch(_){return false}
+  }
+  function noteActivity(){lastActivity=Date.now()}
+  function canAutoReload(){
+    if(reloadScheduled||!isDashboardVisible()||hasUnsavedInteraction())return false;
+    if(document.body.classList.contains("is-scroll-locked"))return false;
+    const session=window.ExploraSession||{};
+    if(session.closing)return false;
+    return true;
+  }
+  function autoReload(reason){
+    if(!canAutoReload())return false;
+    try{
+      const last=Number(sessionStorage.getItem(RELOAD_GUARD_KEY)||0);
+      if(Date.now()-last<45000)return false;
+      saveSnapshot();
+      const data=collectSnapshot();
+      if(data)sessionStorage.setItem(STORAGE_KEY,JSON.stringify(data));
+      sessionStorage.setItem(RELOAD_GUARD_KEY,String(Date.now()));
+      sessionStorage.setItem("explora:dashboard:auto-reload-reason",String(reason||"idle"));
+    }catch(_){}
+    reloadScheduled=true;
+    setTimeout(()=>location.reload(),120);
+    return true;
+  }
+  function checkIdle(){
+    if(Date.now()-lastActivity<IDLE_MS)return;
+    if(autoReload(document.visibilityState==="hidden"?"idle-hidden":"idle-visible"))return;
+    lastActivity=Date.now()-IDLE_MS+15000;
+  }
+  function onVisibilityChange(){
+    if(document.visibilityState==="hidden"){
+      saveSnapshot();
+      return;
+    }
+    const hiddenAt=Number(sessionStorage.getItem("explora:dashboard:hidden-at")||0);
+    if(hiddenAt&&Date.now()-hiddenAt>=IDLE_MS){autoReload("resume-after-idle");return;}
+    noteActivity();
+  }
+  function onPageHide(){
+    saveSnapshot();
+    try{sessionStorage.setItem("explora:dashboard:hidden-at",String(Date.now()))}catch(_){}
+  }
+  function startObserver(){
+    const roots=[node("weeklyRankingLive"),node("performanceGoalViewport"),node("driverStatusCard")].filter(Boolean);
+    if(!roots.length)return;
+    observer=new MutationObserver(()=>saveSnapshot());
+    roots.forEach(root=>observer.observe(root,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:["hidden","class","data-status"]}));
+  }
+  function init(){
+    restoreSnapshot();
+    activityEvents.forEach(name=>window.addEventListener(name,noteActivity,{passive:true,capture:true}));
+    document.addEventListener("visibilitychange",()=>{
+      if(document.visibilityState==="hidden"){
+        try{sessionStorage.setItem("explora:dashboard:hidden-at",String(Date.now()))}catch(_){}
+      }
+      onVisibilityChange();
+    },true);
+    window.addEventListener("pagehide",onPageHide,{capture:true});
+    window.addEventListener("beforeunload",saveSnapshot,{capture:true});
+    window.addEventListener("pageshow",event=>{
+      restoreSnapshot();
+      if(event.persisted)checkIdle();
+    });
+    startObserver();
+    intervalId=window.setInterval(checkIdle,CHECK_MS);
+    window.ExploraIdleDashboardRestart={
+      version:"1.0.0",
+      idleMs:IDLE_MS,
+      save:saveSnapshot,
+      restore:restoreSnapshot,
+      restart:()=>autoReload("manual-api"),
+      resetActivity:noteActivity,
+      stop:()=>{clearInterval(intervalId);observer?.disconnect?.();}
+    };
+    saveSnapshot();
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});
+  else init();
+})();
+</script>
+
+
+<script id="exploraCycleHardReloadButtonV1">
+(()=>{
+  "use strict";
+  if(window.__exploraCycleHardReloadButtonV1)return;
+  window.__exploraCycleHardReloadButtonV1=true;
+  function hardReload(){
+    try{window.ExploraIdleDashboardRestart?.save?.();}catch(_){}
+    try{if(window.ExploraIdleDashboardRestart?.restart?.())return;}catch(_){}
+    window.setTimeout(()=>window.location.reload(),80);
+  }
+  function init(){
+    const button=document.getElementById("cycleHardReloadBtn");
+    if(!button)return;
+    button.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();hardReload();});
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
+})();
+</script>
 </body>
 </html>
