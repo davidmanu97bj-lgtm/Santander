@@ -23842,13 +23842,14 @@ window.ExploraActions["admin-launch"] = openLaunch;
 
 <!-- EXPLORA v260 · performance snapshot monotónico, UID canónico y caché schema 260 -->
 
-<script type="module" id="exploraGlobalRankingIndependentAuthV269">
+<script type="module" id="exploraGlobalRankingIndependentAuthV275">
 (()=>{
   "use strict";
-  if(window.__exploraGlobalRankingIndependentAuthV269)return;
-  window.__exploraGlobalRankingIndependentAuthV269=true;
+  if(window.__exploraGlobalRankingIndependentAuthV275)return;
+  window.__exploraGlobalRankingIndependentAuthV275=true;
+  const VERSION="v275-current-cycle-partial-snapshot-safe";
   const normalize=value=>String(value||"").trim().toLowerCase();
-  let generation=0,renderRevision=0,sourceRevision=0,profilesReady=false,rankingReady=false,periodReady=false;
+  let generation=0,renderRevision=0,sourceRevision=0,periodReady=false;
   let activePeriodId="",profiles=[],weeklyRows=[];
   const profileUid=row=>String(row?.uid||row?.authUid||row?.firebaseUid||row?.userId||row?.driverUid||row?.choferUid||row?.id||"").trim();
   const profileName=row=>String(row?.nombreCompleto||row?.displayName||row?.nombre||row?.name||row?.driverName||"Chofer").trim()||"Chofer";
@@ -23858,24 +23859,46 @@ window.ExploraActions["admin-launch"] = openLaunch;
   const rowUid=row=>String(row?.driverUid||row?.choferUid||row?.uid||row?.userId||row?.ownerUid||row?.id||"").trim();
   const rowBilling=row=>Math.max(0,Number(row?.grossBilling??row?.totalFacturado??row?.facturacionBruta??row?.facturacion??row?.totalBilling??0)||0);
   const rowCount=row=>Math.max(0,Number(row?.serviceCount??row?.cantidadCobros??row?.billingCount??row?.cantidadServicios??0)||0);
-  function reset(){generation+=1;renderRevision+=1;sourceRevision=0;profilesReady=false;rankingReady=false;periodReady=false;activePeriodId="";profiles=[];weeklyRows=[];}
+  const currentRows=()=>Array.isArray(window.ExploraPerformanceEngine?.getState?.()?.rows)?window.ExploraPerformanceEngine.getState().rows:[];
+  function reset(){generation+=1;renderRevision+=1;sourceRevision=0;periodReady=false;activePeriodId="";profiles=[];weeklyRows=[];}
+  function mergeIncomingRows(...groups){const map=new Map();for(const group of groups){for(const row of Array.isArray(group)?group:[]){const uid=rowUid(row);if(!uid)continue;const prior=map.get(uid);if(!prior||rowBilling(row)>=rowBilling(prior))map.set(uid,row);}}return [...map.values()];}
   function rebuild(){
-    if(!profilesReady||!rankingReady||!periodReady)return;
+    if(!periodReady||weeklyRows.length===0)return;
     const localGeneration=generation;
-    // Usa la revisión real emitida por el coordinador global. Antes comenzaba en 1 y
-    // applyRealtimeOperationalRows descartaba el cambio como una respuesta vieja.
     const revision=Math.max(++renderRevision,sourceRevision);
-    const profileList=profiles.filter(isEligible),aliasMap=new Map();
-    profileList.forEach(profile=>aliases(profile).forEach(key=>aliasMap.set(key,profile)));
+    const existing=currentRows();
+    const profileSource=profiles.filter(isEligible).length?profiles.filter(isEligible):existing.filter(isEligible);
+    const aliasMap=new Map();
+    profileSource.forEach(profile=>aliases(profile).forEach(key=>aliasMap.set(key,profile)));
     const byUid=new Map();
-    profileList.forEach(profile=>{const uid=profileUid(profile);byUid.set(uid,{uid,driverUid:uid,role:"chofer",eligibilityConfirmed:true,driverName:profileName(profile),name:profileName(profile),avatar:profileAvatar(profile),grossBilling:0,totalFacturado:0,serviceCount:0,updatedAt:profile.updatedAt||profile.createdAt||null});});
-    weeklyRows.forEach(raw=>{const rawUid=rowUid(raw),profile=aliasMap.get(normalize(rawUid)),uid=profileUid(profile)||rawUid;if(!uid)return;const previous=byUid.get(uid)||{uid,driverUid:uid,role:"chofer",eligibilityConfirmed:true,driverName:profileName(profile)||String(raw.driverName||raw.choferName||raw.nombre||"Chofer"),name:profileName(profile)||String(raw.driverName||raw.choferName||raw.nombre||"Chofer"),avatar:profileAvatar(profile)||String(raw.avatar||raw.photoURL||""),grossBilling:0,totalFacturado:0,serviceCount:0};const amount=rowBilling(raw);previous.grossBilling=Math.max(Number(previous.grossBilling||0),amount);previous.totalFacturado=previous.grossBilling;previous.serviceCount=Math.max(Number(previous.serviceCount||0),rowCount(raw));previous.updatedAt=raw.updatedAt||raw.calculatedAt||raw.createdAt||previous.updatedAt;byUid.set(uid,previous);});
-    const rows=[...byUid.values()];
-    queueMicrotask(()=>{if(localGeneration!==generation||revision<sourceRevision)return;window.ExploraPerformanceEngine?.applyRealtimeOperationalRows?.({rows,uid:window.ExploraFirebase?.auth?.currentUser?.uid||"",driverUid:window.ExploraFirebase?.auth?.currentUser?.uid||"",weeklyPeriodId:activePeriodId,snapshotRevision:revision,requestId:revision,activeDriverCount:profileList.length,reason:"global-ranking-independent-auth-v269",operationalUpdatedAt:Date.now(),isConfirmed:true,realtimeCommitted:true});});
+    // Se conserva el último podio confirmado. Un snapshot parcial sólo reemplaza
+    // los choferes que realmente llegaron desde Firestore.
+    existing.filter(isEligible).forEach(row=>{const uid=profileUid(row);if(!uid)return;byUid.set(uid,{...row,uid,driverUid:uid,role:"chofer",eligibilityConfirmed:true,driverName:profileName(row),name:profileName(row),avatar:profileAvatar(row),grossBilling:rowBilling(row),totalFacturado:rowBilling(row),serviceCount:rowCount(row)});});
+    profileSource.forEach(profile=>{const uid=profileUid(profile);if(!uid)return;const previous=byUid.get(uid)||{};byUid.set(uid,{...previous,uid,driverUid:uid,role:"chofer",eligibilityConfirmed:true,driverName:profileName(profile),name:profileName(profile),avatar:profileAvatar(profile)||profileAvatar(previous),grossBilling:rowBilling(previous),totalFacturado:rowBilling(previous),serviceCount:rowCount(previous),updatedAt:profile.updatedAt||profile.createdAt||previous.updatedAt||null});});
+    weeklyRows.forEach(raw=>{const rawUid=rowUid(raw),profile=aliasMap.get(normalize(rawUid)),uid=profileUid(profile)||rawUid;if(!uid)return;const previous=byUid.get(uid)||{uid,driverUid:uid,role:"chofer",eligibilityConfirmed:true,driverName:profileName(profile)||String(raw.driverName||raw.choferName||raw.nombre||"Chofer"),name:profileName(profile)||String(raw.driverName||raw.choferName||raw.nombre||"Chofer"),avatar:profileAvatar(profile)||String(raw.avatar||raw.photoURL||""),grossBilling:0,totalFacturado:0,serviceCount:0};const amount=rowBilling(raw);previous.grossBilling=amount;previous.totalFacturado=amount;previous.serviceCount=rowCount(raw);previous.updatedAt=raw.updatedAt||raw.calculatedAt||raw.createdAt||previous.updatedAt;byUid.set(uid,previous);});
+    const rows=[...byUid.values()].filter(isEligible);
+    if(rows.length===0)return;
+    queueMicrotask(()=>{if(localGeneration!==generation||revision<sourceRevision)return;window.ExploraPerformanceEngine?.applyRealtimeOperationalRows?.({rows,uid:window.ExploraFirebase?.auth?.currentUser?.uid||"",driverUid:window.ExploraFirebase?.auth?.currentUser?.uid||"",weeklyPeriodId:activePeriodId,snapshotRevision:revision,requestId:revision,activeDriverCount:Math.max(profileSource.length,rows.length),reason:VERSION,operationalUpdatedAt:Date.now(),isConfirmed:true,realtimeCommitted:true,partialSnapshot:weeklyRows.length<rows.length});});
   }
-  window.addEventListener("explora:firestore-global-state",event=>{const detail=event.detail||{},entities=detail.entities||{},periodId=String(detail.weeklyPeriodId||detail.periodId||window.ExploraPeriods?.getActivePeriods?.().weeklyPeriodId||window.ExploraWeeklyEngine?.getActiveWeeklyPeriod?.().id||"").trim();if(!periodId)return;if(activePeriodId&&activePeriodId!==periodId)reset();activePeriodId=periodId;periodReady=true;sourceRevision=Math.max(sourceRevision+1,Number(detail.revision||0));profiles=Array.isArray(entities["profiles:public"])?entities["profiles:public"]:profiles;weeklyRows=Array.isArray(entities["weekly:ranking"])?entities["weekly:ranking"].filter(row=>String(row.weeklyPeriodId||row.periodoSemanalId||row.periodoId||periodId)===periodId):weeklyRows;profilesReady=Array.isArray(profiles);rankingReady=Array.isArray(weeklyRows);rebuild();});
+  window.addEventListener("explora:firestore-global-state",event=>{
+    const detail=event.detail||{},entities=detail.entities||{},periodId=String(detail.weeklyPeriodId||detail.periodId||window.ExploraPeriods?.getActivePeriods?.().weeklyPeriodId||window.ExploraWeeklyEngine?.getActiveWeeklyPeriod?.().id||"").trim();
+    if(!periodId)return;
+    if(activePeriodId&&activePeriodId!==periodId)reset();
+    activePeriodId=periodId;periodReady=true;sourceRevision=Math.max(sourceRevision+1,Number(detail.revision||0));
+    const incomingProfiles=Array.isArray(entities["profiles:public"])?entities["profiles:public"]:[];
+    if(incomingProfiles.some(isEligible))profiles=incomingProfiles;
+    const ranking=Array.isArray(entities["weekly:ranking"])?entities["weekly:ranking"].filter(row=>String(row.weeklyPeriodId||row.periodoSemanalId||row.periodoId||periodId)===periodId):[];
+    const own=Array.isArray(entities["weekly:own"])?entities["weekly:own"].filter(row=>String(row.weeklyPeriodId||row.periodoSemanalId||row.periodoId||periodId)===periodId):[];
+    const incoming=mergeIncomingRows(ranking,own);
+    // Nunca se reemplaza un ranking válido por una respuesta vacía. Si la consulta
+    // global no tiene permisos, weekly:own actualiza sólo al usuario conectado.
+    if(incoming.length)weeklyRows=mergeIncomingRows(weeklyRows,incoming);
+    rebuild();
+  });
+  window.addEventListener("explora:firestore-listener-error",event=>{const name=String(event.detail?.name||"");if(name==="weekly:ranking")rebuild();});
   window.addEventListener("explora:auth-cleared",reset);
   window.addEventListener("explora:operational-period-changed",reset);
+  window.ExploraCurrentCycleRealtimeGuard={version:VERSION,getState:()=>({activePeriodId,profiles:profiles.length,weeklyRows:weeklyRows.length,sourceRevision,renderRevision})};
 })();
 </script>
 <script id="explora-v270-derivation-financial-repair">(()=>{"use strict";const RATE=.10,text=v=>String(v??"").trim(),num=v=>{const n=Number(v);return Number.isFinite(n)?n:0},pick=(r,f)=>{for(const k of f){const v=text(r?.[k]);if(v)return v}return""},senderUid=r=>pick(r,["senderUid","sentByUid","derivadorUid","driverSenderUid","createdByUid","originDriverUid","fromUid","emisorUid","choferOrigenUid","choferOrigenId","derivadorId"]),receiverUid=r=>pick(r,["receiverUid","receivedByUid","receptorUid","assignedDriverUid","acceptedByUid","toUid","choferReceptorUid","choferReceptorId","receptorChoferId"]),grossAmount=r=>{for(const k of ["linkedBillingGrossAmount","billingGrossAmount","confirmedBillingAmount","grossAmount","totalAmount","confirmedAmount","billedAmount","serviceAmount","valorServicio","total","importe","monto","amount","finalAmount","suggestedAmount"]){const v=Math.round(num(r?.[k]));if(v>0)return v}return 0},derivationId=r=>text(r?.derivationId||r?.documentId||r?.id||r?.billingServiceId||r?.operationId||r?.operacionId),contribution=r=>Math.round(grossAmount(r)*RATE),ledgerId=r=>`derivation_contribution_${derivationId(r)}`,normalizeState=v=>text(v).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[\s_-]+/g," "),qualifies=r=>{const st=[r?.status,r?.estado,r?.estadoDerivacion,r?.acceptanceStatus,r?.completionStatus,r?.billingStatus,r?.paymentStatus].map(normalizeState).filter(Boolean),j=st.join(" | ");if(["pendiente","rechazada","rejected","cancelada","canceled","cancelled","vencida","expired","eliminada","deleted"].some(t=>j.includes(t)))return false;const a=r?.accepted===true||r?.aceptada===true||r?.aceptado===true||Boolean(r?.acceptedAt||r?.fechaAceptacion||r?.acceptedByUid)||st.some(v=>v==="aceptada"||v==="aceptado"||v==="accepted"),c=r?.completed===true||r?.completada===true||r?.completado===true||r?.realizada===true||r?.realizado===true||Boolean(r?.completedAt||r?.finishedAt||r?.fechaFinalizacion)||st.some(v=>v.includes("complet")||v.includes("realiz")||v==="completed"),b=r?.billed===true||r?.facturada===true||r?.facturado===true||r?.paid===true||r?.cobrada===true||r?.cobrado===true||r?.paymentConfirmed===true||r?.billingConfirmed===true||Boolean(r?.billedAt||r?.invoicedAt||r?.paidAt||r?.fechaFacturacion||r?.billingRecordId||r?.paymentId||r?.cobroId)||st.some(v=>v.includes("factur")||v.includes("paid")||v.includes("cobrad"));return a&&c&&b&&Boolean(derivationId(r))&&Boolean(senderUid(r))&&Boolean(receiverUid(r))&&senderUid(r)!==receiverUid(r)&&grossAmount(r)>0},normalize=r=>({derivationId:derivationId(r),senderUid:senderUid(r),receiverUid:receiverUid(r),grossAmount:grossAmount(r),collaborationRate:RATE,collaborationAmount:contribution(r),bonusPotential:contribution(r),ledgerId:ledgerId(r),qualifies:qualifies(r),weeklyPeriodId:text(r?.weeklyPeriodIdCompleted||r?.weeklyPeriodId||r?.periodoSemanalId||r?.periodoId),cycleId:text(r?.cycleId||r?.performanceCycleId),paymentMethod:text(r?.paymentMethod||r?.metodoPago||r?.paymentType),acceptedAt:r?.acceptedAt||r?.fechaAceptacion||null,completedAt:r?.completedAt||r?.finishedAt||r?.fechaFinalizacion||null,billedAt:r?.billedAt||r?.invoicedAt||r?.paidAt||r?.fechaFacturacion||null}),aggregate=rows=>{const seen=new Set,map=new Map;for(const source of Array.isArray(rows)?rows:[]){const r=normalize(source);if(!r.qualifies||seen.has(r.derivationId))continue;seen.add(r.derivationId);const ts=Date.parse(r.completedAt||r.billedAt||r.acceptedAt||0)||Number.MAX_SAFE_INTEGER,current=map.get(r.senderUid)||{uid:r.senderUid,grossAmount:0,count:0,bonusPotential:0,firstAt:ts};current.grossAmount+=r.grossAmount;current.count++;current.bonusPotential+=r.bonusPotential;current.firstAt=Math.min(current.firstAt,ts);map.set(r.senderUid,current)}return[...map.values()].sort((a,b)=>b.grossAmount-a.grossAmount||b.count-a.count||(a.firstAt||Number.MAX_SAFE_INTEGER)-(b.firstAt||Number.MAX_SAFE_INTEGER)||a.uid.localeCompare(b.uid)).map((r,i)=>({...r,position:i+1}))},adjustBalance=(normalNetToDriver,collaborationAmount)=>{const net=num(normalNetToDriver)-Math.max(0,num(collaborationAmount));return{netToDriver:net,balanced:Math.abs(net)<1,payerRole:Math.abs(net)<1?null:net>0?"admin":"driver",settlementAmount:Math.abs(Math.round(net))}};window.ExploraDerivationFinancialRepair={version:"v270",rate:RATE,senderUid,receiverUid,grossAmount,contribution,derivationId,ledgerId,qualifies,normalize,aggregate,adjustBalance}})();</script><script type="module" id="explora-v272-derivation-ranking-definitive-repair">
