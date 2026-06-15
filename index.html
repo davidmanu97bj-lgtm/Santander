@@ -22492,7 +22492,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
 <script type="module" id="exploraOperationalResetV259">
 import {
   collection, query, orderBy, documentId, limit, startAfter, where,
-  getDocs, getCountFromServer, doc, getDoc, setDoc, writeBatch,
+  getDocs, getCountFromServer, doc, getDoc, setDoc, writeBatch, runTransaction,
   serverTimestamp, deleteField
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import {
@@ -23064,35 +23064,78 @@ function setProgress(phase, current, total) {
   if ($("launchResetProgressBar")) $("launchResetProgressBar").style.width = `${percent}%`;
 }
 
+const RESET_LOCK_TTL_MS = 5 * 60 * 1000;
+
+function lockTimestampMs(data = {}) {
+  const candidates = [
+    data.heartbeatAtMs,
+    data.updatedAtMs,
+    data.startedAtMs,
+    typeof data.heartbeatAt?.toMillis === "function" ? data.heartbeatAt.toMillis() : 0,
+    typeof data.updatedAt?.toMillis === "function" ? data.updatedAt.toMillis() : 0,
+    typeof data.startedAt?.toMillis === "function" ? data.startedAt.toMillis() : 0
+  ].map(Number).filter(Number.isFinite);
+  return candidates.length ? Math.max(...candidates) : 0;
+}
+
+function isRecoverableResetLock(data = {}, now = Date.now()) {
+  if (data.inProgress !== true) return true;
+  const phase = String(data.phase || "").toUpperCase();
+  if (/COMPLETED|FAILED|REANUDABLE|ABANDONED|CANCELLED/.test(phase)) return true;
+  const lastBeat = lockTimestampMs(data);
+  return !lastBeat || (now - lastBeat) > RESET_LOCK_TTL_MS;
+}
+
 async function acquireLock(adminUid, {mode="full-reset", targetResetId=""} = {}) {
   const lockRef = doc(db, "system", "operational_reset");
-  const snap = await getDoc(lockRef);
-  const data = snap.exists() ? snap.data() || {} : {};
-  if (data.inProgress === true) throw resetError("LOCK_OPERATION", "RESET_ALREADY_RUNNING", "Ya existe un reinicio operativo en curso.", null, {resetId:data.resetId || ""});
-  state.operationId = mode === "full-reset" ? `reset_${Date.now()}_${adminUid.slice(0, 8)}` : `storage_retry_${Date.now()}_${adminUid.slice(0, 8)}`;
+  const now = Date.now();
+  state.operationId = mode === "full-reset" ? `reset_${now}_${adminUid.slice(0, 8)}` : `storage_retry_${now}_${adminUid.slice(0, 8)}`;
   state.resetId = mode === "full-reset" ? state.operationId : String(targetResetId || LEGACY_RESET_ID);
   state.targetResetId = String(targetResetId || state.resetId);
-  await setDoc(lockRef, {
-    inProgress:true,
-    resetId:state.operationId,
-    targetResetId:state.targetResetId,
-    mode,
-    startedAt:serverTimestamp(),
-    startedAtMs:Date.now(),
-    startedBy:adminUid,
-    schemaVersion:VERSION,
-    phase:"LOCK_OPERATION",
-    processed:0,
-    total:OPERATIONAL.length,
-    errorCount:0
-  }, {merge:true});
+
+  await runTransaction(db, async transaction => {
+    const snap = await transaction.get(lockRef);
+    const data = snap.exists() ? snap.data() || {} : {};
+    if (data.inProgress === true && !isRecoverableResetLock(data, now)) {
+      throw resetError("LOCK_OPERATION", "RESET_ALREADY_RUNNING", "Ya existe un reinicio operativo activo. Esperá unos minutos y volvé a intentar.", null, {resetId:data.resetId || "", phase:data.phase || "", startedBy:data.startedBy || ""});
+    }
+    transaction.set(lockRef, {
+      inProgress:true,
+      resetId:state.operationId,
+      targetResetId:state.targetResetId,
+      mode,
+      startedAt:serverTimestamp(),
+      startedAtMs:now,
+      heartbeatAt:serverTimestamp(),
+      heartbeatAtMs:now,
+      updatedAt:serverTimestamp(),
+      updatedAtMs:now,
+      startedBy:adminUid,
+      schemaVersion:VERSION,
+      phase:"LOCK_OPERATION",
+      processed:0,
+      total:OPERATIONAL.length,
+      errorCount:0,
+      recoveredPreviousLock:data.inProgress === true,
+      previousResetId:data.inProgress === true ? String(data.resetId || "") : ""
+    }, {merge:true});
+  });
   window.__exploraOperationalResetInProgress = true;
   window.dispatchEvent(new CustomEvent("explora:operational-reset-lock", {detail:{inProgress:true, resetId:state.operationId, targetResetId:state.targetResetId, mode}}));
 }
 
 async function updateLock(patch) {
   try {
-    await setDoc(doc(db, "system", "operational_reset"), {...patch, resetId:state.operationId || state.resetId, targetResetId:state.targetResetId || state.resetId, updatedAt:serverTimestamp()}, {merge:true});
+    const now = Date.now();
+    await setDoc(doc(db, "system", "operational_reset"), {
+      ...patch,
+      resetId:state.operationId || state.resetId,
+      targetResetId:state.targetResetId || state.resetId,
+      heartbeatAt:serverTimestamp(),
+      heartbeatAtMs:now,
+      updatedAt:serverTimestamp(),
+      updatedAtMs:now
+    }, {merge:true});
   } catch (_) {}
 }
 
