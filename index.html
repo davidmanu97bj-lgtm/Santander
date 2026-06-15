@@ -21342,10 +21342,42 @@ function renderBubbles({animate=false,reason="RENDER_GOAL_CAROUSEL"}={}){
   });
   return view;
 }
+function podiumSafetyKey(){
+  const period=activeWeeklyPeriod(),cycle=state.cycle||cycleForPeriod(period);
+  return `explora_last_good_podium_${String(cycle?.id||"cycle")}_${String(period?.id||"period")}`;
+}
+function saveLastGoodPodium(rows){
+  const safe=canonicalizeBillingRanking((rows||[]).filter(isEligibleRankingParticipant)).slice(0,3);
+  if(!safe.length)return;
+  try{localStorage.setItem(podiumSafetyKey(),JSON.stringify({savedAt:Date.now(),rows:safe}));}catch(_){}
+}
+function readLastGoodPodium(){
+  try{
+    const payload=JSON.parse(localStorage.getItem(podiumSafetyKey())||"null");
+    if(!payload||!Array.isArray(payload.rows)||!payload.rows.length)return [];
+    const age=Date.now()-Number(payload.savedAt||0);
+    if(age>1000*60*60*24*35)return [];
+    return canonicalizeBillingRanking(payload.rows.map(row=>normalizeBillingRankingRow({...row,role:"chofer",eligibilityConfirmed:true})).filter(isEligibleRankingParticipant));
+  }catch(_){return [];}
+}
 function renderPodium(){
   const podium=$("performancePodium");if(!podium)return;
-  const ordered=canonicalizeBillingRanking(state.rows),top=ordered.slice(0,3);
-  if(!top.length){podium.innerHTML=state.loading?'<div class="podium-skeleton" aria-label="Cargando ranking"><span></span><span></span><span></span></div>':'<div class="performance-loading">Todavía no hay choferes disponibles para el ranking.</div>';return;}
+  let ordered=canonicalizeBillingRanking(state.rows);
+  if(ordered.length)saveLastGoodPodium(ordered);
+  if(!ordered.length){
+    const fallback=readLastGoodPodium();
+    if(fallback.length){
+      state.rows=fallback;
+      ordered=fallback;
+      const uid=auth?.currentUser?.uid||state.uid||"";
+      state.current=currentRowForUid(fallback,uid)||state.current||freshCurrentUserRow({uid});
+      state.goalView=safeGoalView(state.current?.grossBilling||0);
+      state.loaded=true;
+      state.loading=false;
+    }
+  }
+  const top=ordered.slice(0,3);
+  if(!top.length){podium.innerHTML=state.loading?'<div class="podium-skeleton" aria-label="Cargando ranking"><span></span><span></span><span></span></div>':'<div class="performance-loading">Sincronizando ciclo actual…</div>';return;}
   const classes=["is-first","is-second","is-third"],medals=["🥇","🥈","🥉"];
   podium.innerHTML=top.map((row,index)=>`<div class="performance-podium-person ${classes[index]}" data-podium-position="${index+1}"><div class="performance-podium-circle"><span class="performance-podium-medal" aria-label="Puesto ${index+1}">${medals[index]}</span>${row.rewardPercent}%</div><strong>${escapeHtml(row.name)}</strong><small>+${money(row.equivalent)}</small></div>`).join("");
   const expected=Math.min(3,Math.max(Number(state.activeDriverCount||0),ordered.length));
@@ -21497,7 +21529,17 @@ async function refresh({force=false,reason="manual"}={}){
   if(!db||!auth)return Promise.reject(new Error("FIREBASE_NOT_INITIALIZED"));
   const user=auth.currentUser;if(!user)return Promise.reject(new Error("AUTH_USER_MISSING"));
   const currentPeriod=activeWeeklyPeriod(),cycle=cycleForPeriod(currentPeriod),ctx=fastContext(cycle,currentPeriod),contextKey=rankingContextKey(ctx),contextChanged=Boolean(state.lastRankingContextKey&&state.lastRankingContextKey!==contextKey);
-  if(contextChanged){invalidatePerformanceCaches(ctx,"context-changed");state.rows=[];state.derivations=[];state.current=freshCurrentUserRow(user);state.currentDerivationLeader=null;state.loaded=false;state.forceOperationalRead=isAdmin();}
+  if(contextChanged){
+    invalidatePerformanceCaches(ctx,"context-changed");
+    // No vaciar el último ranking válido de inmediato. Durante el arranque el período
+    // puede resolverse en dos pasos y una lectura pública temporalmente vacía no debe
+    // borrar el podio visible. Las filas se reemplazan únicamente cuando llega un
+    // conjunto confirmado para el nuevo contexto.
+    state.derivations=[];
+    state.current=state.current||freshCurrentUserRow(user);
+    state.currentDerivationLeader=null;
+    state.forceOperationalRead=isAdmin();
+  }
   const billingCache=readValidatedPerformanceCache("billing_ranking",ctx,{allowStale:true}),derivationCache=readValidatedPerformanceCache("derivation_ranking",ctx,{allowStale:true}),goalCache=readValidatedPerformanceCache("goal_bubbles",ctx,{allowStale:true});
   if(!state.loaded)restorePerformanceFastCache(cycle,currentPeriod);
   if(!force&&!state.forceOperationalRead&&state.loaded&&billingCache&&!billingCache.expired&&derivationCache&&!derivationCache.expired&&goalCache&&!goalCache.expired){setTimeout(()=>refresh({force:true,reason:"fresh-cache-background"}).catch(()=>{}),0);return Promise.resolve(getState());}
@@ -21513,11 +21555,24 @@ async function refresh({force=false,reason="manual"}={}){
     let rows=await loadCycleRows(cycle,profilesData,currentPeriod.id,{preferOperational});
     await resetPromise;
     if(requestId!==state.refreshRequestId){diagnostic("RENDER_GOALS_RANKING_TAB","RANKING_OLD_REQUEST_DISCARDED",new Error("Se descartó una respuesta anterior del ranking para no sobrescribir datos nuevos."),{moduleName:"BILLING_RANKING_RESTORE",eventType:"WARNING",silent:true,functionName:"refresh",cycleId:cycle.id,weeklyPeriodId:currentPeriod.id,requestId,currentRequestId:state.refreshRequestId,cacheHit:Boolean(billingCache),cacheMiss:!billingCache,firestorePath:`performance_public/${cycle.id}/drivers`,query:"requestId guard"});return getState();}
-    const candidateRows=(rows||[]).map(row=>normalizeBillingRankingRow({...row,role:"chofer",eligibilityConfirmed:true})).filter(isEligibleRankingParticipant);candidateRows.forEach((row,index)=>row.position=index+1);
-    const candidateCurrent=currentRowForUid(candidateRows,user.uid)||freshCurrentUserRow(user);
+    const candidateRows=(rows||[]).map(row=>normalizeBillingRankingRow({...row,role:"chofer",eligibilityConfirmed:true})).filter(isEligibleRankingParticipant);
+    candidateRows.forEach((row,index)=>row.position=index+1);
+    const previousRows=canonicalizeBillingRanking((state.rows||[]).filter(isEligibleRankingParticipant));
+    const previousByUid=new Map(previousRows.map(row=>[normalize(row.uid),row]));
+    const candidateByUid=new Map(candidateRows.map(row=>[normalize(row.uid),row]));
+    let effectiveRows=candidateRows;
+    const expectedDrivers=Math.max(Number(rows?.activeDriverCount||rows?.expectedDriverCount||0),Number(state.activeDriverCount||0),previousRows.length);
+    const responseLooksPartial=candidateRows.length>0&&previousRows.length>candidateRows.length&&candidateRows.length<Math.min(3,Math.max(1,expectedDrivers));
+    if(candidateRows.length===0&&previousRows.length){
+      effectiveRows=previousRows;
+    }else if(responseLooksPartial){
+      effectiveRows=canonicalizeBillingRanking(previousRows.map(oldRow=>candidateByUid.get(normalize(oldRow.uid))||oldRow).concat(candidateRows.filter(row=>!previousByUid.has(normalize(row.uid)))));
+    }
+    effectiveRows.forEach((row,index)=>row.position=index+1);
+    const candidateCurrent=currentRowForUid(effectiveRows,user.uid)||currentRowForUid(previousRows,user.uid)||state.current||freshCurrentUserRow(user);
     const candidateSnapshot=performanceSnapshotFromRow(candidateCurrent,{weeklyPeriodId:currentPeriod.id,cycleId:cycle.id,updatedAtMs:Date.now(),generationId:state.performanceGeneration,requestId,source:rows?.source||"firestore",sourcePriority:sourcePriority(rows?.source||"firestore"),completeness:profilesData?.complete===true,isConfirmed:true});
     if(!commitConfirmedPerformanceSnapshot(candidateSnapshot,{functionName:"refresh",trigger:reason,cacheKey:performanceRankingCacheKey(cycle,currentPeriod)}))return getState();
-    state.rows=candidateRows;state.current=candidateCurrent;
+    state.rows=effectiveRows;state.current=candidateCurrent;
     state.activeDriverCount=Math.max(Number(rows?.activeDriverCount||rows?.expectedDriverCount||0),state.rows.length,(profilesData?.profiles||[]).filter(isActiveDriverProfile).length);state.rankingDocumentsRead=Number(rows?.documentsRead||0);state.billingDocumentsRead=Number(rows?.billingDocumentsRead||0);state.rankingSource=String(rows?.source||"merged");state.rankingSummaryComplete=rows?.publicSummaryComplete===true||state.rows.length>=state.activeDriverCount;state.rankingRefreshMs=Math.round(performance.now()-rankingStarted);state.rankingCacheAge=0;
     const newGoalId=state.current?.reachedGoal?.id||0;if(newGoalId>0&&(!wasLoaded||newGoalId!==previousGoalId)){state.dashboardAnimationPending=true;if($("profileScreen")?.classList.contains("is-open"))state.profileAnimationPending=true;}state.lastActiveGoalId=newGoalId;
     state.loaded=true;state.loading=false;state.lastRefresh=Date.now();state.error=null;state.goalView=safeGoalView(state.current?.grossBilling||0);state.forceOperationalRead=false;state.lastRankingContextKey=contextKey;persistPerformanceFastCache(currentPeriod,cycle);renderAll();
@@ -21572,7 +21627,15 @@ function applyUnifiedWeeklySnapshot(snapshot={}){
 function applyRealtimeOperationalRows(payload={}){
   const periodId=String(payload.weeklyPeriodId||"").trim(),active=activeWeeklyPeriod(),revision=Math.max(0,Number(payload.snapshotRevision||payload.requestId||0));
   if(!periodId||periodId!==active.id||revision<Number(state.lastAppliedUnifiedSnapshotId||0))return getState();
-  const rawRows=Array.isArray(payload.rows)?payload.rows:[],previousByUid=new Map((state.rows||[]).filter(isEligibleRankingParticipant).map(row=>[normalize(row.uid),row]));
+  const rawRows=Array.isArray(payload.rows)?payload.rows:[];
+  if(!rawRows.length){
+    const fallback=readLastGoodPodium();
+    if(!(state.rows||[]).length&&fallback.length)state.rows=fallback;
+    state.loading=false;
+    if((state.rows||[]).length)renderAll();
+    return getState();
+  }
+  const previousByUid=new Map((state.rows||[]).filter(isEligibleRankingParticipant).map(row=>[normalize(row.uid),row]));
   const operational=rawRows.map((raw,index)=>{
     const row=publicPerformanceRow(raw,raw?.id||raw?.driverUid||String(index));if(!row)return null;const previous=previousByUid.get(normalize(row.uid));
     if(previous?.avatar)row.avatar=previous.avatar;if(previous?.name&&previous.name!=="Chofer")row.name=previous.name;
