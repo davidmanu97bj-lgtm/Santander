@@ -23,12 +23,13 @@ jobs:
       - name: Instalar unzip
         run: sudo apt-get update && sudo apt-get install -y unzip
 
-      - name: Descomprimir proyecto Android
+      -       - name: Descomprimir proyecto Android
         run: |
+          rm -rf extracted
           mkdir extracted
-          unzip "*.zip" -d extracted
+          unzip -o EXPLORA-Android-WebView-project.zip -d extracted
           echo "Contenido descomprimido:"
-          find extracted -maxdepth 3 -type f | head -100
+          find extracted -maxdepth 4 -type f | head -100
 
       - name: Buscar carpeta del proyecto
         run: |
