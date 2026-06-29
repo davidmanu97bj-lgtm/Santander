@@ -2156,7 +2156,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       if (!snapshot?.eligibility?.noActiveLoan) throw Object.assign(new Error("Ya tenés un Préstamo EXPLORA activo o pendiente de aprobación."), { code:"LOAN_ACTIVE_STATE_FAILED" });
       if (!snapshot?.eligibility?.validBilling8Weeks) throw Object.assign(new Error("Todavía no tenés facturación válida en las últimas 8 semanas."), { code:"LOAN_BILLING_8W_INCOMPLETE" });
       if (!snapshot?.eligibility?.rhythmReal) throw Object.assign(new Error("Todavía no cumplís Ritmo Real: 52 de 56 días con movimiento."), { code:"LOAN_RHYTHM_REAL_INCOMPLETE" });
-      if (!snapshot?.eligibility?.closureUpToDate) throw Object.assign(new Error("Tenés cierres pendientes."), { code:"LOAN_CLOSURES_PENDING" });
+      if (!snapshot?.eligibility?.closureUpToDate) throw Object.assign(new Error("Tenés cierres abiertos."), { code:"LOAN_CLOSURES_PENDING" });
       if (!snapshot?.eligibility?.collaborationOk) throw Object.assign(new Error("Todavía falta colaboración EXPLORA."), { code:"LOAN_COLLABORATION_REQUIRED" });
       const maxAmount = Math.round(Number(snapshot.availableBenefit || 0));
       const requestedAmount = Math.round(Number(options.amount || options.monto || maxAmount));
@@ -2204,7 +2204,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       const currentEligibility = currentSnapshot?.eligibility || {};
       if (!currentEligibility.validBilling8Weeks) throw Object.assign(new Error("No se puede aprobar: el chofer ya no cumple facturación válida 8 semanas."), { code:"LOAN_BILLING_8W_INCOMPLETE" });
       if (!currentEligibility.rhythmReal) throw Object.assign(new Error("No se puede aprobar: el chofer ya no cumple Ritmo Real."), { code:"LOAN_RHYTHM_REAL_INCOMPLETE" });
-      if (!currentEligibility.closureUpToDate) throw Object.assign(new Error("No se puede aprobar: el chofer tiene cierres pendientes."), { code:"LOAN_CLOSURES_PENDING" });
+      if (!currentEligibility.closureUpToDate) throw Object.assign(new Error("No se puede aprobar: el chofer tiene cierres abiertos."), { code:"LOAN_CLOSURES_PENDING" });
       if (!currentEligibility.collaborationOk) throw Object.assign(new Error("No se puede aprobar: falta colaboración EXPLORA."), { code:"LOAN_COLLABORATION_REQUIRED" });
       const loanRef = doc(db, EXPLORE_LOAN_COLLECTION, uid);
       return runTransaction(db, async transaction => {
@@ -4727,7 +4727,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       const order={missing:0,rejected:1,received:2,live:3,confirmed:4,balanced:5};
       const rows=overview.drivers.map(item=>{const summary=adminClosureSummary(item);const presentation=adminClosurePresentation(item,summary);return{item,summary,presentation};}).sort((a,b)=>(order[a.presentation.key]??9)-(order[b.presentation.key]??9)||getProfileName(a.item.driver).localeCompare(getProfileName(b.item.driver),"es"));
       const counters={missing:0,received:0,confirmed:0,rejected:0,live:0,balanced:0};rows.forEach(row=>{counters[row.presentation.key]=(counters[row.presentation.key]||0)+1;});
-      const overviewHtml=`<section class="admin-closure-overview-v247"><div><span>SEMANA ACTUAL</span><strong>${escapeAdminHtml(closurePeriodLabel({},overview.weeklyPeriodId))}</strong><small>Resultados provisionales y comprobantes definitivos en un solo lugar.</small></div><div class="admin-closure-counter-grid"><article class="is-missing"><span>Falta comprobante</span><b>${counters.missing}</b></article><article class="is-received"><span>Comprobante recibido</span><b>${counters.received}</b></article><article class="is-confirmed"><span>Pago confirmado</span><b>${counters.confirmed}</b></article><article class="is-live"><span>Semana en curso</span><b>${counters.live}</b></article></div></section>`;
+      const overviewHtml=`<section class="admin-closure-overview-v247"><div><span>SEMANA ACTUAL</span><strong>${escapeAdminHtml(closurePeriodLabel({},overview.weeklyPeriodId))}</strong><small>Resultados provisionales y comprobantes definitivos en un solo lugar.</small></div><div class="admin-closure-counter-grid"><article class="is-missing"><span>Por liquidar</span><b>${counters.missing}</b></article><article class="is-received"><span>Comprobante recibido</span><b>${counters.received}</b></article><article class="is-confirmed"><span>Pago confirmado</span><b>${counters.confirmed}</b></article><article class="is-live"><span>Semana en curso</span><b>${counters.live}</b></article></div></section>`;
       const groups=[["missing","FALTA COMPROBANTE"],["rejected","COMPROBANTE RECHAZADO"],["received","COMPROBANTE RECIBIDO"],["live","SEMANA EN CURSO"],["confirmed","PAGO CONFIRMADO"],["balanced","CUENTA EQUILIBRADA"]].map(([key,label])=>{
         const group=rows.filter(row=>row.presentation.key===key);if(!group.length)return"";
         const cards=group.map(({item,summary,presentation})=>{
@@ -6675,7 +6675,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
           title = "DEBÉS PAGARLE A DAVID";
           message = "Tocá para subir el comprobante.";
           detail = result.amount > 0 ? formatClosureMoney(result.amount) : "";
-          aria = "Cierre pendiente. Abrir detalle.";
+          aria = "Cierre abierto. Abrir detalle.";
         } else if (rawStatus === CLOSURE_STATUS.DRIVER_RECEIPT_UPLOADED) {
           visual = result.receiptStatus === "review" ? "review" : "paid";
           title = "CIERRE COMPLETADO";

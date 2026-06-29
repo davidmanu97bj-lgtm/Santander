@@ -152,7 +152,7 @@
     const map=Object.fromEntries([...document.querySelectorAll("[data-receipt-filter]")].map(button=>[button.dataset.receiptFilter,button]));
     const closure=isClosureAdmin();
     if(map.todos)map.todos.textContent="Todos";
-    if(map.pendiente)map.pendiente.textContent=closure?"Falta comprobante":"Pendientes";
+    if(map.pendiente)map.pendiente.textContent=closure?"Por liquidar":"Pendientes";
     if(map.recibido){map.recibido.hidden=!closure;map.recibido.textContent="Comprobante recibido";}
     if(map.aprobado)map.aprobado.textContent=closure?"Pago confirmado":"Aprobados";
     if(map.rechazado)map.rechazado.textContent=closure?"Rechazado":"Rechazados";

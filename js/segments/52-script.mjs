@@ -5,7 +5,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 (() => {
   "use strict";
 
-  const VERSION = "explora-pago-home-v27-actualizar-sin-pull";
+  const VERSION = "explora-pago-home-v27-cartel-amarillo-dinamico";
   const AR_TZ = "America/Argentina/Cordoba";
   const $ = id => document.getElementById(id);
   const state = {
@@ -255,7 +255,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
           </div>
           <div class="pay-liquid-pill"><span id="payPillLabel" class="closure-liquidation-label">Dinero a liquidar</span><strong id="payPillAmount">—</strong></div>
           <div class="pay-extra-lines" id="payExtraLines"></div>
-          <div class="pay-status-pill" id="payClosureStatus" hidden><span><b>Cierre pendiente</b><br><small id="payClosureStatusText">—</small></span><button id="payClosureStatusBtn" type="button">Ver</button></div>
+          <div class="pay-status-pill" id="payClosureStatus" hidden><span><b>—</b><br><small id="payClosureStatusText">—</small></span><button id="payClosureStatusBtn" type="button">Ver</button></div>
         </section>
         <section class="pay-section" aria-labelledby="payActivityTitle">
           <div class="pay-section-head"><h2 id="payActivityTitle">Última actividad</h2><button id="payRefreshBtn" type="button">Actualizar →</button></div>
@@ -295,7 +295,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
         </header>
         <h1 class="pay-notification-title">Notificaciones</h1>
         <div class="pay-notification-list" id="payNotificationList">
-          <div class="pay-notification-empty">No tenés cierres pendientes.</div>
+          <div class="pay-notification-empty">No tenés cierres abiertos.</div>
         </div>
       </section>
       <button class="pay-floating-spark" id="payQuickClosureBtn" type="button" aria-label="Pedir cierre" hidden><svg viewBox="0 0 24 24"><path d="M12 2 14.8 9.2 22 12l-7.2 2.8L12 22l-2.8-7.2L2 12l7.2-2.8Z"></path></svg></button>
@@ -813,14 +813,14 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 
   function closureStatusText(closure = {}) {
     const status = safe(closure.status || closure.estado || closure.statusLabel).toLowerCase();
-    const due = number(closure.amountDueFromDriver || 0);
-    const toDriver = number(closure.amountDueToDriver || 0);
+    const due = number(closure.amountDueFromDriver || closure.amountFromDriver || 0);
+    const toDriver = number(closure.amountDueToDriver || closure.amountToDriver || 0);
     const proof = closureHasProof(closure);
     if (/confirmed|confirmado|completed|closed|cerrado|al_dia|al día|pagado/.test(status)) return "Cierre completo";
-    if (proof && due > 0) return "Comprobante recibido";
-    if (proof && toDriver > 0) return "Comprobante enviado";
-    if (due > 0) return "Falta comprobante del chofer";
-    if (toDriver > 0) return "Falta comprobante de Explora";
+    if (due > 0 && proof) return "El chofer ya liquidó, chequea el comprobante en tus notificaciones.";
+    if (toDriver > 0 && proof) return "Explora ya liquidó, chequea el comprobante en tus notificaciones.";
+    if (due > 0) return "Falta que el chofer liquide y envíe comprobante";
+    if (toDriver > 0) return "Falta que Explora liquide y envíe comprobante";
     return "Cierre solicitado";
   }
 
@@ -868,6 +868,26 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     return "view";
   }
 
+  function closureYellowBannerMessage(closure = {}) {
+    if (!closure || closureIsCompleted(closure)) return null;
+    const action = closureActionForViewer(closure);
+    if (action === "none" || action === "view") return null;
+    const due = number(closure.amountDueFromDriver || closure.amountFromDriver || 0);
+    const toDriver = number(closure.amountDueToDriver || closure.amountToDriver || 0);
+    const proof = closureHasProof(closure);
+    if (toDriver > 0) {
+      return proof
+        ? "Explora ya liquidó, chequea el comprobante en tus notificaciones."
+        : "Falta que Explora liquide y envíe comprobante";
+    }
+    if (due > 0) {
+      return proof
+        ? "El chofer ya liquidó, chequea el comprobante en tus notificaciones."
+        : "Falta que el chofer liquide y envíe comprobante";
+    }
+    return null;
+  }
+
   function renderBellBadge() {
     const badge = $("payBellBadge");
     if (!badge) return;
@@ -875,9 +895,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     badge.hidden = count < 1;
     badge.textContent = count > 9 ? "9+" : String(count);
     const bell = $("payBellBtn");
-    if (bell) bell.setAttribute("aria-label", count ? `Notificaciones de cierres: ${count} pendiente${count === 1 ? "" : "s"}` : "Notificaciones de cierres");
-    // CAMBIO 2: Botón inferior "Cierre" en rojo cuando haya cierres abiertos/sin resolver.
-    // Usa pendingClosureRows porque ya filtra por estados no finales y por acción != "none".
+    if (bell) bell.setAttribute("aria-label", count ? `Notificaciones de cierres: ${count} abierto${count === 1 ? "" : "s"}` : "Notificaciones de cierres");
     const navClosure = $("payNavClosure");
     if (navClosure) navClosure.classList.toggle("is-pending-closure", count > 0);
   }
@@ -887,12 +905,12 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     if (!list) return;
     const targetUid = notificationDriverUid();
     if (isAdmin() && !targetUid) {
-      list.innerHTML = `<div class="pay-notification-empty">Seleccioná un chofer para ver sus cierres pendientes.</div>`;
+      list.innerHTML = `<div class="pay-notification-empty">Seleccioná un chofer para ver sus cierres abiertos.</div>`;
       return;
     }
     const rows = pendingClosureRows(targetUid);
     if (!rows.length) {
-      list.innerHTML = `<div class="pay-notification-empty">No tenés cierres pendientes.</div>`;
+      list.innerHTML = `<div class="pay-notification-empty">No tenés cierres abiertos.</div>`;
       return;
     }
     list.innerHTML = rows.map(row => {
@@ -902,7 +920,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       const requestedByRole = safe(row.requestedByRole || row.solicitadoPorRol || row.requestedRole).toLowerCase();
       let title = isAdmin()
         ? (requestedByRole === "driver" || requestedByRole === "chofer" ? `${driver} pidió cierre` : `Cierre de ${driver}`)
-        : (requestedByRole === "admin" || requestedByRole === "explora" ? "Explora pidió el cierre" : "Tu cierre pendiente");
+        : (requestedByRole === "admin" || requestedByRole === "explora" ? "Explora pidió el cierre" : "Tu cierre solicitado");
       if (action === "admin_review") title = `${driver} envió comprobante`;
       if (action === "admin_waiting_driver") title = `Esperando comprobante de ${driver}`;
       if (action === "driver_review") title = "Explora envió comprobante";
@@ -1488,27 +1506,16 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     if (!box || !text) return;
     const pending = stateForButton.visible ? pendingClosureFor(getDriverUid(), kind) : null;
     state.pendingClosure = pending;
-    const pendingAction = pending ? closureActionForViewer(pending) : "none";
-    // Mostrar tarjeta amarilla SOLO cuando el usuario actual tiene acción concreta pendiente:
-    // - driver_upload: el chofer debe subir comprobante (chofer paga, no hay comprobante aún)
-    // - admin_upload: admin debe subir comprobante (Explora debe liquidar, no hay comprobante aún)
-    // - admin_review: admin debe revisar/confirmar el comprobante que subió el chofer
-    // NO mostrar si:
-    // - driver_waiting_admin: el chofer solo espera que admin actúe (no hay acción para el chofer)
-    // - driver_review: no hay acción urgente para el chofer (solo confirmar recibido, ya está pago)
-    // - view / none: sin acción relevante
-    // - cierre completado o con comprobante ya cargado sin confirmación pendiente del usuario actual
-    const showPendingCard = !!pending
-      && !closureIsCompleted(pending)
-      && ["driver_upload", "admin_upload", "admin_review"].includes(pendingAction);
+    const bannerMessage = pending ? closureYellowBannerMessage(pending) : null;
+    const showPendingCard = !!bannerMessage;
     box.hidden = !showPendingCard;
     if (showPendingCard) {
       const labelEl = box.querySelector("b");
-      if (labelEl) labelEl.textContent = closureStatusText(pending);
-      const due = number(pending.amountDueFromDriver || 0);
-      const toDriver = number(pending.amountDueToDriver || 0);
-      const pk = activeClosureKind(closureKindOf(pending));
-      text.textContent = `${closureTitle(closureKindOf(pending))} · ${due > 0 ? (pk === "caja_chica" ? `caja chica por ${currency(due)}` : `transferencia por ${currency(due)}`) : toDriver > 0 ? `Explora debe liquidar a chofer ${currency(toDriver)}` : "Nadie debe liquidar"}`;
+      if (labelEl) labelEl.textContent = bannerMessage;
+      const due = number(pending.amountDueFromDriver || pending.amountFromDriver || 0);
+      const toDriver = number(pending.amountDueToDriver || pending.amountToDriver || 0);
+      const amount = Math.max(due, toDriver);
+      text.textContent = `${closureTitle(closureKindOf(pending))}${amount > 0 ? ` · ${currency(amount)}` : ""}`;
     }
   }
 
@@ -1553,7 +1560,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     }
     state.modalMode = mode;
     state.modalKind = resolvedKind;
-    // En modo request no pre-cargar cierres pendientes anteriores.
+    // En modo request no pre-cargar cierres abiertos anteriores.
     // "Pedir cierre" debe trabajar únicamente con el período abierto actual.
     state.modalClosure = mode === "request" ? null : (closure || pendingClosureFor(getDriverUid(), resolvedKind) || null);
     state.modalFile = null;
