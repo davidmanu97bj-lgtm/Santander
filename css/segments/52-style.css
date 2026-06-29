@@ -339,3 +339,63 @@ body.explora-pay-mode.pay-more-open #payMoreScreen:not([hidden]){display:block!i
   .pay-more-row-icon{width:43px;height:43px;border-radius:16px;}
 }
 body.explora-pay-mode.pay-more-open .pay-floating-spark{display:none!important;}
+
+/* EXPLORA · Notificaciones de cierre a demanda */
+.pay-bell-btn{position:relative;}
+.pay-bell-badge{
+  position:absolute;
+  top:7px;
+  right:7px;
+  min-width:18px;
+  height:18px;
+  padding:0 5px;
+  border-radius:999px;
+  background:#ef2f3d;
+  color:#fff;
+  border:2px solid #fff;
+  display:grid;
+  place-items:center;
+  font-size:10px;
+  line-height:1;
+  font-weight:900;
+  box-shadow:0 4px 10px rgba(239,47,61,.28);
+}
+.pay-bell-badge[hidden]{display:none!important;}
+body.explora-pay-mode.pay-notifications-open #app.driver-dashboard{background:#fff!important;}
+body.explora-pay-mode.pay-notifications-open #exploraPagoDashboard{display:none!important;}
+body.explora-pay-mode.pay-notifications-open #payNotificationsScreen:not([hidden]){display:block!important;}
+.explora-pay-notifications[hidden]{display:none!important;}
+.explora-pay-notifications{
+  min-height:calc(100dvh - 88px);
+  padding:calc(18px + env(safe-area-inset-top)) 0 118px;
+  background:#fff;
+  color:var(--pay-ink);
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+.pay-notification-head{display:flex;align-items:center;justify-content:space-between;padding:6px 0 30px;}
+.pay-notification-back,.pay-notification-settings{
+  width:50px;height:50px;border:0;border-radius:17px;background:#edf3ff;color:var(--pay-blue);display:grid;place-items:center;
+}
+.pay-notification-back svg,.pay-notification-settings svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+.pay-notification-title{margin:0 0 24px;color:#222433;font-size:34px;font-weight:900;letter-spacing:-.055em;line-height:1;}
+.pay-notification-list{display:grid;gap:22px;}
+.pay-notification-row{
+  width:100%;border:0;background:#fff;color:var(--pay-ink);display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:start;text-align:left;padding:0;
+}
+.pay-notification-icon{width:58px;height:58px;border-radius:15px;border:1px solid #d4d9ec;background:#fff;display:grid;place-items:center;color:var(--pay-blue);flex:0 0 auto;}
+.pay-notification-icon svg{width:31px;height:31px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.pay-notification-copy{display:block;min-width:0;padding-top:3px;}
+.pay-notification-copy strong{display:block;font-size:17px;font-weight:900;line-height:1.2;color:#242636;margin:0 0 3px;}
+.pay-notification-copy small{display:block;font-size:16px;line-height:1.28;color:#242636;font-weight:520;margin-bottom:4px;}
+.pay-notification-copy em{display:block;font-style:normal;font-size:13px;line-height:1.35;color:#73788e;font-weight:700;}
+.pay-notification-side{display:grid;gap:7px;justify-items:end;align-items:start;min-width:54px;color:#686d88;padding-top:6px;}
+.pay-notification-side time{font-size:14px;font-weight:620;white-space:nowrap;}
+.pay-notification-side b{font-size:11px;font-weight:900;color:var(--pay-blue);white-space:nowrap;}
+.pay-notification-empty{border:1px solid #e5e8f2;border-radius:24px;background:#f8f9fd;padding:24px;text-align:center;color:#74798c;font-weight:750;}
+.pay-closure-alert{border:1px solid rgba(239,47,61,.18);background:#fff1f2;color:#9b1c29;border-radius:16px;padding:12px 13px;font-size:13px;font-weight:800;line-height:1.35;}
+@media (max-width:390px){
+  .pay-notification-title{font-size:31px}.pay-notification-row{gap:13px}.pay-notification-icon{width:54px;height:54px}.pay-notification-copy strong{font-size:16px}.pay-notification-copy small{font-size:15px}.pay-notification-side b{display:none;}
+}
+body.explora-pay-mode.pay-notifications-open #payBottomNav,
+body.explora-pay-mode.pay-notifications-open #payQuickClosureBtn{display:none!important;}
+body.explora-pay-mode.pay-notifications-open .dashboard-shell-real{padding-bottom:24px!important;}
