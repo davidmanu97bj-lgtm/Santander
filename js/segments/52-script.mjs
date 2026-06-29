@@ -253,7 +253,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
             <button class="pay-action" data-pay-run="cargar-gastos" type="button"><svg viewBox="0 0 24 24"><path d="M4 7.5h14.5A1.5 1.5 0 0 1 20 9v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11"></path><path d="M16 12h5v4h-5a2 2 0 0 1 0-4Z"></path></svg><span>Cargar<br/>gasto</span></button>
             <button class="pay-action" id="payClosureActionBtn" type="button" hidden disabled><svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"></path><path d="M14 3v5h5"></path><path d="M9 14h6M9 17h4"></path></svg><span>Pedir<br/>cierre</span></button>
           </div>
-          <div class="pay-liquid-pill"><span id="payPillLabel">Dinero a liquidar</span><strong id="payPillAmount">—</strong></div>
+          <div class="pay-liquid-pill"><span id="payPillLabel" class="closure-liquidation-label">Dinero a liquidar</span><strong id="payPillAmount">—</strong></div>
           <div class="pay-extra-lines" id="payExtraLines"></div>
           <div class="pay-status-pill" id="payClosureStatus" hidden><span><b>Cierre pendiente</b><br><small id="payClosureStatusText">—</small></span><button id="payClosureStatusBtn" type="button">Ver</button></div>
         </section>
@@ -302,7 +302,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       <nav class="pay-bottom-nav" id="payBottomNav" aria-label="Navegación principal Explora">
         <button class="pay-nav-btn is-active" data-pay-nav="inicio" type="button"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 10v10h14V10"></path></svg><span>Inicio</span></button>
         <button class="pay-nav-btn" data-pay-nav="actividad" type="button"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"></path></svg><span>Actividad</span></button>
-        <button class="pay-nav-btn pay-nav-main" data-pay-run="nuevo-servicio" type="button"><span class="pay-nav-money-icon" aria-hidden="true">💵</span><span>Cobrar</span></button>
+        <button class="pay-nav-btn pay-nav-main" data-pay-run="nuevo-servicio" type="button"><span class="pay-nav-plus-icon" aria-hidden="true">+</span><span>Cobrar</span></button>
         <button class="pay-nav-btn" id="payNavClosure" type="button"><svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"></path><path d="M14 3v5h5"></path><path d="M9 14h6M9 17h4"></path></svg><span>Cierre</span></button>
         <button class="pay-nav-btn" data-pay-nav="mas" type="button"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"></path><path d="M18 17h2M19 16v2"></path></svg><span>Más</span></button>
       </nav>
@@ -742,9 +742,9 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const due = number(closure.amountDueFromDriver || closure.amountFromDriver || 0);
     const toDriver = number(closure.amountDueToDriver || closure.amountToDriver || 0);
     const kind = activeClosureKind(closureKindOf(closure));
-    if (due > 0) return kind === "caja_chica" ? `Chofer pasa caja chica a Explora ${currency(due)}` : `Chofer paga a Explora ${currency(due)}`;
-    if (toDriver > 0) return kind === "gastos" ? `Explora reintegra al chofer ${currency(toDriver)}` : `Explora paga al chofer ${currency(toDriver)}`;
-    return "Cierre equilibrado";
+    if (due > 0) return `Chofer debe liquidar a Explora ${currency(due)}`;
+    if (toDriver > 0) return `Explora debe liquidar a chofer ${currency(toDriver)}`;
+    return "Nadie debe liquidar";
   }
 
   function closureTimeLabel(row = {}) {
@@ -1190,9 +1190,9 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
   function pendingResultLine(closure = {}) {
     const due = number(closure.amountDueFromDriver || 0);
     const toDriver = number(closure.amountDueToDriver || 0);
-    if (due > 0) return `Chofer debe pagar ${currency(due)}`;
-    if (toDriver > 0) return activeClosureKind(closureKindOf(closure)) === "gastos" ? `Explora reintegra ${currency(toDriver)}` : `Explora paga ${currency(toDriver)}`;
-    return "Sin diferencia";
+    if (due > 0) return `Chofer debe liquidar a Explora ${currency(due)}`;
+    if (toDriver > 0) return `Explora debe liquidar a chofer ${currency(toDriver)}`;
+    return "Nadie debe liquidar";
   }
 
   function closureMatchesSummaryKind(row = {}, kind = state.tab) {
@@ -1361,7 +1361,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       const t = tabSummary(summary, "caja_chica");
       main = t.cashboxTotal || 0;
       sub = "Caja chica actual del período abierto";
-      pill = t.amountFromDriver > 0 ? "Chofer debe pasar a Explora" : "Caja chica ya está en Explora";
+      pill = t.amountFromDriver > 0 ? "Chofer debe liquidar a Explora" : "Nadie debe liquidar";
       pillValue = t.amountFromDriver || 0;
       lines.push(
         ["Efectivo base", currency(t.gross || 0)],
@@ -1372,7 +1372,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       const t = tabSummary(summary, "gastos");
       main = t.expenseTotal;
       sub = "Gastos actuales del período abierto";
-      pill = t.netSettlementToDriver > 0 ? "Explora reintegra al chofer" : t.netSettlementToDriver < 0 ? "Chofer reconoce a Explora" : "Gastos equilibrados";
+      pill = t.netSettlementToDriver > 0 ? "Explora debe liquidar a chofer" : t.netSettlementToDriver < 0 ? "Chofer debe liquidar a Explora" : "Nadie debe liquidar";
       pillValue = abs(t.netSettlementToDriver);
       lines.push(
         ["Gastos cargados por chofer", currency(summary.expenseTotal)],
@@ -1384,7 +1384,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       const t = tabSummary(summary, "explora");
       main = summary.nonCashInExplora;
       sub = "Digital actual del período abierto";
-      pill = t.amountToDriver > 0 ? "Explora paga al chofer" : t.amountFromDriver > 0 ? "Chofer paga a Explora" : "Facturación equilibrada";
+      pill = t.amountToDriver > 0 ? "Explora debe liquidar a chofer" : t.amountFromDriver > 0 ? "Chofer debe liquidar a Explora" : "Nadie debe liquidar";
       pillValue = Math.max(t.amountToDriver, t.amountFromDriver);
       lines.push(
         ["Digital cobrado", currency(summary.nonCashGrossInExplora || 0)],
@@ -1396,7 +1396,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       const t = tabSummary(summary, "chofer");
       main = summary.cashInDriver;
       sub = "Efectivo actual del período abierto";
-      pill = t.amountToDriver > 0 ? "Explora paga al chofer" : t.amountFromDriver > 0 ? "Chofer paga a Explora" : "Facturación equilibrada";
+      pill = t.amountToDriver > 0 ? "Explora debe liquidar a chofer" : t.amountFromDriver > 0 ? "Chofer debe liquidar a Explora" : "Nadie debe liquidar";
       pillValue = Math.max(t.amountToDriver, t.amountFromDriver);
       lines.push(
         ["Efectivo cobrado", currency(summary.cashGrossInDriver || 0)],
@@ -1407,7 +1407,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     } else {
       main = summary.cashboxTotal || 0;
       sub = "Caja chica actual del período abierto";
-      pill = summary.cashboxInDriver > 0 ? "Chofer debe pasar a Explora" : "Caja chica ya está en Explora";
+      pill = summary.cashboxInDriver > 0 ? "Chofer debe liquidar a Explora" : "Nadie debe liquidar";
       pillValue = summary.cashboxInDriver || 0;
       lines.push(
         ["Efectivo base", currency(summary.cashboxGross || 0)],
@@ -1444,7 +1444,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const pendingAction = pending ? closureActionForViewer(pending) : "none";
     // Mostrar tarjeta amarilla SOLO cuando el usuario actual tiene acción concreta pendiente:
     // - driver_upload: el chofer debe subir comprobante (chofer paga, no hay comprobante aún)
-    // - admin_upload: admin debe subir comprobante (Explora paga, no hay comprobante aún)
+    // - admin_upload: admin debe subir comprobante (Explora debe liquidar, no hay comprobante aún)
     // - admin_review: admin debe revisar/confirmar el comprobante que subió el chofer
     // NO mostrar si:
     // - driver_waiting_admin: el chofer solo espera que admin actúe (no hay acción para el chofer)
@@ -1461,7 +1461,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       const due = number(pending.amountDueFromDriver || 0);
       const toDriver = number(pending.amountDueToDriver || 0);
       const pk = activeClosureKind(closureKindOf(pending));
-      text.textContent = `${closureTitle(closureKindOf(pending))} · ${due > 0 ? (pk === "caja_chica" ? `caja chica por ${currency(due)}` : `transferencia por ${currency(due)}`) : toDriver > 0 ? `Explora debe pagar ${currency(toDriver)}` : "sin diferencia"}`;
+      text.textContent = `${closureTitle(closureKindOf(pending))} · ${due > 0 ? (pk === "caja_chica" ? `caja chica por ${currency(due)}` : `transferencia por ${currency(due)}`) : toDriver > 0 ? `Explora debe liquidar a chofer ${currency(toDriver)}` : "Nadie debe liquidar"}`;
     }
   }
 
@@ -1557,7 +1557,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const driver = closureDriverName(closure);
     const kindLabel = closureTitle(kind);
     const k = activeClosureKind(kind);
-    const result = due > 0 ? (k === "caja_chica" ? "Chofer pasa caja chica a Explora" : "Chofer paga a Explora") : toDriver > 0 ? (k === "gastos" ? "Explora reintegra al chofer" : "Explora paga al chofer") : "Cierre equilibrado";
+    const result = due > 0 ? "Chofer debe liquidar a Explora" : toDriver > 0 ? "Explora debe liquidar a chofer" : "Nadie debe liquidar";
     const amount = Math.max(due, toDriver);
     const base = [
       ["Motivo", closureRequesterText(closure)],
@@ -1622,7 +1622,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
           submit.disabled = false;
           submit.textContent = "Confirmar recibido";
         } else if (action === "driver_waiting_admin") {
-          subtitle.textContent = "Explora debe pagar y cargar el comprobante. No tenés que subir archivo.";
+          subtitle.textContent = "Explora debe liquidar y cargar el comprobante. No tenés que subir archivo.";
           submit.disabled = true;
           submit.textContent = "Esperando Explora";
         } else {
@@ -1636,7 +1636,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       if (state.modalMode === "admin-review" && isAdmin()) {
         title.textContent = `Revisar ${closureTitle(kind).toLowerCase()}`;
         if (action === "admin_upload") {
-          subtitle.textContent = `${closureRequesterText(closure)}. Explora debe pagar y cargar el comprobante para notificar al chofer.`;
+          subtitle.textContent = `${closureRequesterText(closure)}. Explora debe liquidar y cargar el comprobante para notificar al chofer.`;
           submit.disabled = false;
           submit.textContent = "Enviar comprobante";
         } else if (action === "admin_review") {
@@ -1644,11 +1644,11 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
           submit.disabled = false;
           submit.textContent = "Confirmar cierre";
         } else if (action === "admin_waiting_driver") {
-          subtitle.textContent = `${closureDriverName(closure)} debe pagar y cargar el comprobante. Explora no debe subir archivo.`;
+          subtitle.textContent = `${closureDriverName(closure)} debe liquidar y cargar el comprobante. Explora no debe subir archivo.`;
           submit.disabled = true;
           submit.textContent = "Esperando chofer";
         } else {
-          subtitle.textContent = completed ? "Cierre completo." : proof ? "Comprobante cargado. No corresponde subir otro comprobante." : "Esperando comprobante de quien debe pagar.";
+          subtitle.textContent = completed ? "Cierre completo." : proof ? "Comprobante cargado. No corresponde subir otro comprobante." : "Esperando comprobante de quien debe liquidar.";
           submit.disabled = true;
           submit.textContent = proof ? "Comprobante recibido" : "Esperando";
         }
@@ -1667,11 +1667,11 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     // Regla: el solicitante nunca sube comprobante al pedir —el cierre queda ABIERTO para la otra parte.
     fileField.hidden = true;
     if (kind === "caja_chica") {
-      summary.innerHTML = `<article><span>Efectivo base</span><strong>${currency(latest.gross || 0)}</strong></article><article><span>Caja chica 5%</span><strong>${currency(latest.cashboxTotal || 0)}</strong></article><article><span>En poder del chofer</span><strong>${currency(latest.cashboxInDriver || 0)}</strong></article><article class="closure-payment-result settlement-result-green"><span>Chofer pasa a Explora</span><strong>${currency(latest.amountFromDriver || 0)}</strong></article>`;
+      summary.innerHTML = `<article><span>Efectivo base</span><strong>${currency(latest.gross || 0)}</strong></article><article><span>Caja chica 5%</span><strong>${currency(latest.cashboxTotal || 0)}</strong></article><article><span>En poder del chofer</span><strong>${currency(latest.cashboxInDriver || 0)}</strong></article><article class="closure-payment-result settlement-result-green"><span class="closure-liquidation-label">Chofer debe liquidar a Explora</span><strong>${currency(latest.amountFromDriver || 0)}</strong></article>`;
     } else if (kind === "gastos") {
-      summary.innerHTML = `<article><span>Gastos cargados</span><strong>${currency(latest.expenseTotal || 0)}</strong></article><article><span>Parte chofer</span><strong>${currency(latest.driverExpenseShare || 0)}</strong></article><article><span>Parte Explora</span><strong>${currency(latest.exploraExpenseShare || 0)}</strong></article><article class="closure-payment-result settlement-result-green"><span>Explora reintegra</span><strong>${currency(latest.amountToDriver || 0)}</strong></article>`;
+      summary.innerHTML = `<article><span>Gastos cargados</span><strong>${currency(latest.expenseTotal || 0)}</strong></article><article><span>Parte chofer</span><strong>${currency(latest.driverExpenseShare || 0)}</strong></article><article><span>Parte Explora</span><strong>${currency(latest.exploraExpenseShare || 0)}</strong></article><article class="closure-payment-result settlement-result-green"><span class="closure-liquidation-label">Explora debe liquidar a chofer</span><strong>${currency(latest.amountToDriver || 0)}</strong></article>`;
     } else {
-      summary.innerHTML = `<article><span>Efectivo chofer</span><strong>${currency(latest.cashInDriver || 0)}</strong></article><article><span>Digital Explora</span><strong>${currency(latest.nonCashInExplora || 0)}</strong></article><article><span>Total facturado</span><strong>${currency(latest.gross || 0)}</strong></article><article><span>Parte de cada uno</span><strong>${currency(latest.billingShareEach || 0)}</strong></article><article class="closure-payment-result settlement-result-green"><span>Resultado</span><strong>${latest.amountFromDriver > 0 ? `Chofer paga ${currency(latest.amountFromDriver)}` : latest.amountToDriver > 0 ? `Explora paga ${currency(latest.amountToDriver)}` : "Equilibrado"}</strong></article>`;
+      summary.innerHTML = `<article><span>Efectivo chofer</span><strong>${currency(latest.cashInDriver || 0)}</strong></article><article><span>Digital Explora</span><strong>${currency(latest.nonCashInExplora || 0)}</strong></article><article><span>Total facturado</span><strong>${currency(latest.gross || 0)}</strong></article><article><span>Parte de cada uno</span><strong>${currency(latest.billingShareEach || 0)}</strong></article><article class="closure-payment-result settlement-result-green"><span class="closure-liquidation-label">Resultado</span><strong>${latest.amountFromDriver > 0 ? `Chofer debe liquidar a Explora ${currency(latest.amountFromDriver)}` : latest.amountToDriver > 0 ? `Explora debe liquidar a chofer ${currency(latest.amountToDriver)}` : "Nadie debe liquidar"}</strong></article>`;
     }
   }
 
