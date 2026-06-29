@@ -5,7 +5,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 (() => {
   "use strict";
 
-  const VERSION = "explora-pago-home-v1-on-demand-closure";
+  const VERSION = "explora-pago-home-v2-split-on-demand-closures";
   const AR_TZ = "America/Argentina/Cordoba";
   const $ = id => document.getElementById(id);
   const state = {
@@ -25,6 +25,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     latestSummary:null,
     pendingClosure:null,
     modalMode:"request",
+    modalKind:"",
     modalClosure:null,
     modalFile:null,
     busy:false
@@ -78,6 +79,45 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 
   function paymentLabel(method) {
     return ({ cash:"Cobro efectivo", transfer:"Cobro transferencia", card:"Cobro tarjeta", qr:"Cobro QR" })[method] || "Cobro";
+  }
+
+  function activeClosureKind(kind = state.tab) {
+    const raw = safe(kind).toLowerCase();
+    if (/gasto|expense/.test(raw)) return "gastos";
+    if (/explora|digital|transfer|qr|card|tarjeta/.test(raw)) return "explora";
+    if (/chofer|driver|efectivo|cash/.test(raw)) return "chofer";
+    return "";
+  }
+
+  function closureKindOf(row = {}) {
+    return activeClosureKind(row.closureKind || row.closureType || row.payTab || row.closeKind || row.kind || row.cierreTipo || row.type || row.category);
+  }
+
+  function isClosureTab(kind = state.tab) {
+    return ["gastos", "explora", "chofer"].includes(activeClosureKind(kind));
+  }
+
+  function closureLabel(kind = state.tab) {
+    return ({ gastos:"gastos", explora:"Explora", chofer:"chofer" })[activeClosureKind(kind)] || "";
+  }
+
+  function closureTitle(kind = state.tab) {
+    return ({ gastos:"CIERRE DE GASTOS", explora:"CIERRE DE EXPLORA", chofer:"CIERRE DEL CHOFER" })[activeClosureKind(kind)] || "CIERRE";
+  }
+
+  function expensePayer(row = {}) {
+    const raw = safe(row.payerRole || row.pagadoPorRol || row.paidByRole || row.pagadoPor || row.paidBy || row.paymentSource || row.fuentePago || "driver").toLowerCase();
+    if (/explora|admin|empresa|david|uala|ualá|cuenta|tarjeta/.test(raw)) return "explora";
+    return "driver";
+  }
+
+  function expenseParts(row = {}) {
+    const amount = amountOf(row);
+    const rateRaw = Number(row.sharedRate ?? row.porcentajeCompartido ?? row.driverShareRate ?? row.porcentajeChofer);
+    const rate = Number.isFinite(rateRaw) ? (rateRaw > 1 ? rateRaw / 100 : rateRaw) : .5;
+    const driverPart = amount * Math.min(1, Math.max(0, rate || .5));
+    const exploraPart = amount - driverPart;
+    return { amount, driverPart, exploraPart, payer: expensePayer(row) };
   }
 
   function dateShort(value) {
@@ -145,7 +185,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
           <div class="pay-actions">
             <button class="pay-action" data-pay-run="nuevo-servicio" type="button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg><span>Registrar<br/>cobro</span></button>
             <button class="pay-action" data-pay-run="cargar-gastos" type="button"><svg viewBox="0 0 24 24"><path d="M4 7.5h14.5A1.5 1.5 0 0 1 20 9v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11"></path><path d="M16 12h5v4h-5a2 2 0 0 1 0-4Z"></path></svg><span>Cargar<br/>gasto</span></button>
-            <button class="pay-action" id="payClosureActionBtn" type="button"><svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"></path><path d="M14 3v5h5"></path><path d="M9 14h6M9 17h4"></path></svg><span>Pedir<br/>cierre</span></button>
+            <button class="pay-action" id="payClosureActionBtn" type="button" hidden disabled><svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"></path><path d="M14 3v5h5"></path><path d="M9 14h6M9 17h4"></path></svg><span>Pedir<br/>cierre</span></button>
           </div>
           <div class="pay-liquid-pill"><span id="payPillLabel">Dinero a liquidar</span><strong id="payPillAmount">—</strong></div>
           <div class="pay-extra-lines" id="payExtraLines"></div>
@@ -156,7 +196,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
           <div class="pay-activity-list" id="payActivityList"><div class="pay-activity-empty">Cargando movimientos…</div></div>
         </section>
       </section>
-      <button class="pay-floating-spark" id="payQuickClosureBtn" type="button" aria-label="Pedir cierre"><svg viewBox="0 0 24 24"><path d="M12 2 14.8 9.2 22 12l-7.2 2.8L12 22l-2.8-7.2L2 12l7.2-2.8Z"></path></svg></button>
+      <button class="pay-floating-spark" id="payQuickClosureBtn" type="button" aria-label="Pedir cierre" hidden><svg viewBox="0 0 24 24"><path d="M12 2 14.8 9.2 22 12l-7.2 2.8L12 22l-2.8-7.2L2 12l7.2-2.8Z"></path></svg></button>
       <nav class="pay-bottom-nav" id="payBottomNav" aria-label="Navegación principal Explora">
         <button class="pay-nav-btn is-active" data-pay-nav="inicio" type="button"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 10v10h14V10"></path></svg><span>Inicio</span></button>
         <button class="pay-nav-btn" data-pay-nav="actividad" type="button"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"></path></svg><span>Actividad</span></button>
@@ -193,12 +233,22 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       render();
     }));
     document.querySelectorAll("[data-pay-run]").forEach(button => button.addEventListener("click", () => runExistingAction(button.dataset.payRun)));
-    $("payClosureActionBtn")?.addEventListener("click", () => openClosureModal("request"));
-    $("payQuickClosureBtn")?.addEventListener("click", () => openClosureModal("request"));
-    $("payNavClosure")?.addEventListener("click", () => openClosureModal(state.pendingClosure && !isAdmin() ? "confirm" : "request", state.pendingClosure));
-    $("payClosureStatusBtn")?.addEventListener("click", () => openClosureModal(state.pendingClosure && !isAdmin() ? "confirm" : "admin-review", state.pendingClosure));
-    $("payBellBtn")?.addEventListener("click", () => openClosureModal(state.pendingClosure && !isAdmin() ? "confirm" : "request", state.pendingClosure));
-    $("payCardEnterBtn")?.addEventListener("click", () => { if (state.tab === "gastos") runExistingAction("cargar-gastos"); else if (state.tab === "chofer") openClosureModal(state.pendingClosure && !isAdmin() ? "confirm" : "request", state.pendingClosure); else runExistingAction("nuevo-servicio"); });
+    $("payClosureActionBtn")?.addEventListener("click", () => openClosureModal("request", null, state.tab));
+    $("payQuickClosureBtn")?.addEventListener("click", () => { if (isClosureTab(state.tab)) openClosureModal("request", null, state.tab); });
+    $("payNavClosure")?.addEventListener("click", () => {
+      const kind = isClosureTab(state.tab) ? state.tab : "gastos";
+      const pending = pendingClosureFor(getDriverUid(), kind);
+      openClosureModal(pending && !isAdmin() ? "confirm" : "request", pending, kind);
+    });
+    $("payClosureStatusBtn")?.addEventListener("click", () => {
+      const pending = pendingClosureFor(getDriverUid(), state.tab);
+      openClosureModal(pending && !isAdmin() ? "confirm" : "admin-review", pending, state.tab);
+    });
+    $("payBellBtn")?.addEventListener("click", () => {
+      const pending = pendingClosureFor(getDriverUid(), state.tab) || pendingClosureFor(getDriverUid(), "gastos") || pendingClosureFor(getDriverUid(), "explora") || pendingClosureFor(getDriverUid(), "chofer");
+      openClosureModal(pending && !isAdmin() ? "confirm" : "request", pending, closureKindOf(pending) || state.tab);
+    });
+    $("payCardEnterBtn")?.addEventListener("click", () => { if (state.tab === "gastos") runExistingAction("cargar-gastos"); else if (state.tab === "chofer" || state.tab === "explora") openClosureModal(state.pendingClosure && !isAdmin() ? "confirm" : "request", state.pendingClosure, state.tab); else runExistingAction("nuevo-servicio"); });
     $("payRefreshBtn")?.addEventListener("click", () => startRealtime("manual-refresh"));
     $("payClosureClose")?.addEventListener("click", closeClosureModal);
     $("payClosureCancel")?.addEventListener("click", closeClosureModal);
@@ -277,104 +327,160 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     console.info("EXPLORA_PAY_REALTIME", VERSION, reason);
   }
 
-  function lastClosureMs(rows) {
-    const done = rows
+  function lastClosureMs(rows, kind = state.tab) {
+    const target = activeClosureKind(kind);
+    if (!target) return 0;
+    const cuts = rows
       .filter(row => safe(row.closureMode || row.periodType) === "on_demand")
-      .filter(row => /confirmed|driver_uploaded|driver_confirmed_zero|completed|closed/i.test(safe(row.status || row.estado)))
-      .map(row => Math.max(ms(row.driverUploadedAt), ms(row.confirmedAt), ms(row.closedAt), Number(row.driverUploadedAtMs || 0), Number(row.confirmedAtMs || 0), rowMs(row)))
+      .filter(row => closureKindOf(row) === target)
+      .filter(row => !/cancelled|canceled|anulado|rechazado/i.test(safe(row.status || row.estado)))
+      .map(row => Math.max(
+        Number(row.cutoffAtMs || 0), Number(row.requestedAtMs || 0), Number(row.driverUploadedAtMs || 0), Number(row.confirmedAtMs || 0),
+        ms(row.cutoffAt), ms(row.requestedAt), ms(row.driverUploadedAt), ms(row.confirmedAt), ms(row.closedAt), rowMs(row)
+      ))
       .filter(Boolean)
       .sort((a,b)=>b-a);
-    return done[0] || 0;
+    return cuts[0] || 0;
   }
 
-  function pendingClosureFor(uid = getDriverUid()) {
+  function pendingClosureFor(uid = getDriverUid(), kind = state.tab) {
+    const target = activeClosureKind(kind);
+    if (!target) return null;
     const pending = state.closures
       .filter(row => safe(row.closureMode || row.periodType) === "on_demand")
+      .filter(row => closureKindOf(row) === target)
       .filter(row => !uid || [row.driverUid,row.choferUid,row.uid].map(safe).includes(uid))
-      .filter(row => !/confirmed|completed|closed|cancelled|canceled/i.test(safe(row.status || row.estado)))
+      .filter(row => !/confirmed|completed|closed|cancelled|canceled|anulado|rechazado/i.test(safe(row.status || row.estado)))
       .sort((a,b)=>rowMs(b)-rowMs(a));
     return pending[0] || null;
   }
 
   function computeSummary({ records = state.records, expenses = state.expenses, closures = state.closures } = {}) {
-    const resetMs = lastClosureMs(closures);
-    const filteredRecords = records.filter(row => rowMs(row) >= resetMs);
-    const filteredExpenses = expenses.filter(row => rowMs(row) >= resetMs);
-    let gross = 0, cashInDriver = 0, nonCashInExplora = 0, driverShare = 0, exploraShare = 0;
-    for (const row of filteredRecords) {
+    const resetCashMs = lastClosureMs(closures, "chofer");
+    const resetExploraMs = lastClosureMs(closures, "explora");
+    const resetExpensesMs = lastClosureMs(closures, "gastos");
+
+    const cashRecords = records.filter(row => methodOf(row) === "cash" && rowMs(row) > resetCashMs);
+    const exploraRecords = records.filter(row => methodOf(row) !== "cash" && rowMs(row) > resetExploraMs);
+    const filteredRecords = [...cashRecords, ...exploraRecords].sort((a,b)=>rowMs(b)-rowMs(a));
+    const filteredExpenses = expenses.filter(row => rowMs(row) > resetExpensesMs).sort((a,b)=>rowMs(b)-rowMs(a));
+
+    let cashInDriver = 0, nonCashInExplora = 0;
+    for (const row of cashRecords) {
       const amount = amountOf(row);
-      if (!(amount > 0)) continue;
-      const method = methodOf(row);
-      gross += amount;
-      driverShare += amount * .5;
-      exploraShare += amount * .5;
-      if (method === "cash") cashInDriver += amount;
-      else nonCashInExplora += amount;
+      if (amount > 0) cashInDriver += amount;
     }
-    let expenseTotal = 0, driverExpenseShare = 0, exploraExpenseShare = 0, expensesPaidByDriver = 0, expensesPaidByExplora = 0;
-    for (const row of filteredExpenses) {
+    for (const row of exploraRecords) {
       const amount = amountOf(row);
+      if (amount > 0) nonCashInExplora += amount;
+    }
+
+    const gross = cashInDriver + nonCashInExplora;
+    const driverShareFromCash = cashInDriver * .5;
+    const exploraShareFromCash = cashInDriver * .5;
+    const driverShareFromExplora = nonCashInExplora * .5;
+    const exploraShareFromExplora = nonCashInExplora * .5;
+
+    let expenseTotal = 0, driverExpenseShare = 0, exploraExpenseShare = 0, expensesPaidByDriver = 0, expensesPaidByExplora = 0;
+    let expenseAmountToDriver = 0, expenseAmountFromDriver = 0;
+    for (const row of filteredExpenses) {
+      const { amount, driverPart, exploraPart, payer } = expenseParts(row);
       if (!(amount > 0)) continue;
-      const sharedRate = Number.isFinite(Number(row.sharedRate ?? row.porcentajeCompartido))
-        ? (Number(row.sharedRate ?? row.porcentajeCompartido) > 1 ? Number(row.sharedRate ?? row.porcentajeCompartido) / 100 : Number(row.sharedRate ?? row.porcentajeCompartido))
-        : .5;
-      const driverPart = amount * Math.min(1, Math.max(0, sharedRate || .5));
-      const exploraPart = amount - driverPart;
-      const payer = safe(row.payerRole || row.pagadoPorRol || row.paidByRole || row.pagadoPor || "driver").toLowerCase();
       expenseTotal += amount;
       driverExpenseShare += driverPart;
       exploraExpenseShare += exploraPart;
-      if (/explora|admin|empresa|david/.test(payer)) expensesPaidByExplora += amount;
-      else expensesPaidByDriver += amount;
+      if (payer === "explora") {
+        expensesPaidByExplora += amount;
+        expenseAmountFromDriver += driverPart;
+      } else {
+        expensesPaidByDriver += amount;
+        expenseAmountToDriver += exploraPart;
+      }
     }
-    const bonuses = 0;
-    const penalties = 0;
-    const loans = 0;
-    const driverEntitlement = driverShare - driverExpenseShare + bonuses - penalties - loans;
+
+    const amountFromDriverForCash = exploraShareFromCash;
+    const amountToDriverForExplora = driverShareFromExplora;
+    const netSettlementToDriver = (amountToDriverForExplora + expenseAmountToDriver) - (amountFromDriverForCash + expenseAmountFromDriver);
     const driverActualCash = cashInDriver - expensesPaidByDriver;
     const exploraCash = nonCashInExplora - expensesPaidByExplora;
-    const netSettlementToDriver = driverEntitlement - driverActualCash;
-    const driverFinal = driverEntitlement;
+
+    const tabs = {
+      bruto:{
+        kind:"bruto", resetMs:Math.min(resetCashMs||0, resetExploraMs||0, resetExpensesMs||0), records:filteredRecords, expenses:filteredExpenses,
+        gross, expenseTotal, mainTotal:gross, amountToDriver:Math.max(0, netSettlementToDriver), amountFromDriver:Math.max(0, -netSettlementToDriver), netSettlementToDriver
+      },
+      gastos:{
+        kind:"gastos", resetMs:resetExpensesMs, records:[], expenses:filteredExpenses, gross:0, expenseTotal,
+        amountToDriver:expenseAmountToDriver, amountFromDriver:expenseAmountFromDriver, netSettlementToDriver:expenseAmountToDriver - expenseAmountFromDriver,
+        summaryLabel:"Gastos cargados por el chofer"
+      },
+      explora:{
+        kind:"explora", resetMs:resetExploraMs, records:exploraRecords, expenses:[], gross:nonCashInExplora, expenseTotal:0,
+        amountToDriver:amountToDriverForExplora, amountFromDriver:0, netSettlementToDriver:amountToDriverForExplora,
+        summaryLabel:"Facturación cobrada por Explora"
+      },
+      chofer:{
+        kind:"chofer", resetMs:resetCashMs, records:cashRecords, expenses:[], gross:cashInDriver, expenseTotal:0,
+        amountToDriver:0, amountFromDriver:amountFromDriverForCash, netSettlementToDriver:-amountFromDriverForCash,
+        summaryLabel:"Efectivo cobrado por el chofer"
+      }
+    };
+
     return {
-      resetMs, records:filteredRecords, expenses:filteredExpenses,
-      gross, cashInDriver, nonCashInExplora, driverShare, exploraShare,
+      resetMs:tabs[activeClosureKind(state.tab) || "bruto"]?.resetMs || 0,
+      records:filteredRecords, cashRecords, exploraRecords, expenses:filteredExpenses, tabs,
+      gross, cashInDriver, nonCashInExplora, driverShare:driverShareFromCash + driverShareFromExplora, exploraShare:exploraShareFromCash + exploraShareFromExplora,
+      driverShareFromCash, exploraShareFromCash, driverShareFromExplora, exploraShareFromExplora,
       expenseTotal, driverExpenseShare, exploraExpenseShare, expensesPaidByDriver, expensesPaidByExplora,
-      driverEntitlement, driverActualCash, exploraCash, netSettlementToDriver, driverFinal,
+      expenseAmountToDriver, expenseAmountFromDriver,
+      driverActualCash, exploraCash,
+      driverEntitlement:driverShareFromCash + driverShareFromExplora + expenseAmountToDriver - expenseAmountFromDriver,
+      netSettlementToDriver,
+      driverFinal:driverShareFromCash + driverShareFromExplora,
       amountToDriver:Math.max(0, netSettlementToDriver), amountFromDriver:Math.max(0, -netSettlementToDriver)
     };
   }
 
+  function tabSummary(summary = computeSummary(), kind = state.tab) {
+    return summary.tabs?.[activeClosureKind(kind)] || summary.tabs?.bruto || summary;
+  }
+
   function movementRows(summary = computeSummary()) {
     const rows = [];
-    for (const row of summary.records) {
+    const kind = activeClosureKind(state.tab);
+    const paymentRows = state.tab === "bruto" ? summary.records : (kind === "explora" ? summary.exploraRecords : kind === "chofer" ? summary.cashRecords : []);
+    const expenseRows = state.tab === "bruto" || kind === "gastos" ? summary.expenses : [];
+    for (const row of paymentRows || []) {
       const amount = amountOf(row), method = methodOf(row), at = rowMs(row);
       if (!(amount > 0)) continue;
       rows.push({
         at, type:"payment", title:`${dateShort(at)} · ${paymentLabel(method)}`,
         meta:safe(row.description || row.detalle || row.notes || row.ruta || "Servicio registrado"),
         detail: method === "cash"
-          ? `Total cobrado: ${currency(amount)} · Efectivo en mano del chofer: +${currency(amount)} · Parte chofer: ${currency(amount*.5)} · Parte Explora: ${currency(amount*.5)}`
-          : `Total cobrado: ${currency(amount)} · Recibido por Explora · Parte chofer a liquidar: ${currency(amount*.5)} · Parte Explora: ${currency(amount*.5)}`,
+          ? `Cobró el chofer: ${currency(amount)} · Cierre Chofer: debe rendir a Explora ${currency(amount*.5)} y conserva ${currency(amount*.5)}`
+          : `Cobró Explora: ${currency(amount)} · Cierre Explora: debe pagar al chofer ${currency(amount*.5)} y conserva ${currency(amount*.5)}`,
         amount, positive:true
       });
     }
-    for (const row of summary.expenses) {
-      const amount = amountOf(row), at = rowMs(row);
+    for (const row of expenseRows || []) {
+      const at = rowMs(row);
+      const { amount, driverPart, exploraPart, payer } = expenseParts(row);
       if (!(amount > 0)) continue;
-      const shared = Number.isFinite(Number(row.sharedRate ?? row.porcentajeCompartido)) ? (Number(row.sharedRate ?? row.porcentajeCompartido) > 1 ? Number(row.sharedRate ?? row.porcentajeCompartido)/100 : Number(row.sharedRate ?? row.porcentajeCompartido)) : .5;
-      const driverPart = amount * Math.min(1, Math.max(0, shared || .5));
-      const exploraPart = amount - driverPart;
       rows.push({
         at, type:"expense", title:`${dateShort(at)} · ${expenseTypeLabel(row)}`,
-        meta:safe(row.notes || row.descripcion || "Gasto operativo"),
-        detail:`Gasto total: -${currency(amount)} · Chofer: -${currency(driverPart)} · Explora: -${currency(exploraPart)} · Pagado por: ${/explora|admin|empresa|david/i.test(safe(row.payerRole || row.pagadoPorRol || row.pagadoPor)) ? "Explora" : "chofer"}`,
+        meta:safe(row.notes || row.descripcion || row.description || "Gasto operativo"),
+        detail: payer === "driver"
+          ? `Pagó el chofer: ${currency(amount)} · Explora reintegra ${currency(exploraPart)} · Parte chofer ${currency(driverPart)}`
+          : `Pagó Explora/Ualá: ${currency(amount)} · Chofer reconoce ${currency(driverPart)} · Parte Explora ${currency(exploraPart)}`,
         amount:-amount, negative:true
       });
     }
     for (const row of state.closures.filter(r => safe(r.closureMode || r.periodType) === "on_demand")) {
+      const closureKind = closureKindOf(row);
+      if (state.tab !== "bruto" && kind && closureKind !== kind) continue;
       const at = rowMs(row);
       rows.push({
-        at, type:"closure", title:`${dateShort(at)} · Cierre a demanda`,
+        at, type:"closure", title:`${dateShort(at)} · ${closureTitle(closureKind)}`,
         meta:safe(row.statusLabel || row.status || "Cierre solicitado"),
         detail:`A rendir: ${currency(row.amountDueFromDriver || 0)} · A cobrar: ${currency(row.amountDueToDriver || 0)}`,
         amount:0
@@ -387,7 +493,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     installShell();
     const summary = computeSummary();
     state.latestSummary = summary;
-    state.pendingClosure = pendingClosureFor();
+    state.pendingClosure = pendingClosureFor(getDriverUid(), state.tab);
     document.querySelectorAll("[data-pay-tab]").forEach(button => {
       const active = button.dataset.payTab === state.tab;
       button.classList.toggle("is-active", active);
@@ -404,51 +510,80 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
   function renderMainCard(summary) {
     const amount = $("payMainAmount"), subtitle = $("payMainSubtitle"), pillLabel = $("payPillLabel"), pillAmount = $("payPillAmount"), extra = $("payExtraLines");
     if (!amount || !subtitle || !pillLabel || !pillAmount || !extra) return;
-    let main = summary.gross, sub = `Facturado bruto del ciclo abierto`, pill = "Dinero a liquidar", pillValue = summary.amountToDriver;
     const lines = [];
+    let main = summary.gross, sub = "Bruto abierto informativo", pill = "Sin cierre en Bruto", pillValue = 0;
     if (state.tab === "gastos") {
-      main = summary.expenseTotal;
-      sub = "Gastos totales del ciclo abierto";
-      pill = "Gastos compartidos";
-      pillValue = summary.expenseTotal;
-      lines.push(["Chofer", `-${currency(summary.driverExpenseShare)}`], ["Explora", `-${currency(summary.exploraExpenseShare)}`]);
+      const t = tabSummary(summary, "gastos");
+      main = t.expenseTotal;
+      sub = "Solo gastos desde el último cierre de gastos";
+      pill = t.netSettlementToDriver > 0 ? "Explora reintegra al chofer" : t.netSettlementToDriver < 0 ? "Chofer reconoce a Explora" : "Gastos equilibrados";
+      pillValue = abs(t.netSettlementToDriver);
+      lines.push(
+        ["Gastos pagados por chofer", currency(summary.expensesPaidByDriver)],
+        ["Gastos pagados por Explora/Ualá", currency(summary.expensesPaidByExplora)],
+        ["Parte chofer", currency(summary.driverExpenseShare)],
+        ["Parte Explora", currency(summary.exploraExpenseShare)]
+      );
     } else if (state.tab === "explora") {
-      main = summary.exploraCash;
-      sub = "Dinero en mano de Explora";
-      pill = summary.netSettlementToDriver > 0 ? "Explora debe pagar" : summary.netSettlementToDriver < 0 ? "Chofer debe rendir" : "Liquidación equilibrada";
-      pillValue = abs(summary.netSettlementToDriver);
-      lines.push(["Transferencia / QR / Tarjeta", currency(summary.nonCashInExplora)], ["Gastos pagados por Explora", `-${currency(summary.expensesPaidByExplora)}`]);
+      const t = tabSummary(summary, "explora");
+      main = summary.nonCashInExplora;
+      sub = "Solo transferencias, QR y tarjetas cobradas por Explora";
+      pill = "Explora debe pagar al chofer";
+      pillValue = t.amountToDriver;
+      lines.push(
+        ["Transferencia / QR / Tarjeta", currency(summary.nonCashInExplora)],
+        ["Parte chofer 50%", currency(summary.driverShareFromExplora)],
+        ["Parte Explora 50%", currency(summary.exploraShareFromExplora)]
+      );
     } else if (state.tab === "chofer") {
-      main = summary.driverFinal;
-      sub = "Dinero final del chofer después de gastos";
-      pill = summary.netSettlementToDriver > 0 ? "A cobrar de Explora" : summary.netSettlementToDriver < 0 ? "A rendir a Explora" : "Equilibrado";
-      pillValue = abs(summary.netSettlementToDriver);
-      lines.push(["Efectivo en mano", currency(summary.driverActualCash)], ["A cobrar de Explora", currency(summary.amountToDriver)], ["A rendir a Explora", currency(summary.amountFromDriver)]);
+      const t = tabSummary(summary, "chofer");
+      main = summary.cashInDriver;
+      sub = "Solo efectivo cobrado por el chofer";
+      pill = "Chofer debe pagar a Explora";
+      pillValue = t.amountFromDriver;
+      lines.push(
+        ["Efectivo cobrado", currency(summary.cashInDriver)],
+        ["Parte chofer 50%", currency(summary.driverShareFromCash)],
+        ["Parte Explora 50%", currency(summary.exploraShareFromCash)]
+      );
     } else {
       main = summary.gross;
-      sub = "Facturado bruto del ciclo abierto";
-      pill = summary.netSettlementToDriver > 0 ? "Dinero a liquidar por Explora" : summary.netSettlementToDriver < 0 ? "Chofer debe rendir a Explora" : "Liquidación equilibrada";
-      pillValue = abs(summary.netSettlementToDriver);
-      lines.push(["Efectivo en mano del chofer", currency(summary.driverActualCash)]);
+      sub = "Vista general. No genera cierre.";
+      pill = "Para cerrar, elegí Gastos, Explora o Chofer";
+      pillValue = summary.gross;
+      lines.push(
+        ["Chofer · efectivo abierto", currency(summary.cashInDriver)],
+        ["Explora · digital abierto", currency(summary.nonCashInExplora)],
+        ["Gastos abiertos", currency(summary.expenseTotal)]
+      );
     }
     amount.textContent = currency(main);
-    subtitle.innerHTML = `${esc(sub)} <b>${summary.resetMs ? "desde último cierre" : "sin cierre previo"}</b>`;
+    subtitle.innerHTML = `${esc(sub)} <b>${tabSummary(summary, state.tab).resetMs ? "desde último cierre" : "sin cierre previo"}</b>`;
     pillLabel.textContent = pill;
     pillAmount.textContent = currency(pillValue);
     extra.innerHTML = lines.map(([label,value]) => `<div><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`).join("");
   }
 
   function renderClosureStatus(summary) {
-    const box = $("payClosureStatus"), text = $("payClosureStatusText"), action = $("payClosureActionBtn");
+    const box = $("payClosureStatus"), text = $("payClosureStatusText"), action = $("payClosureActionBtn"), quick = $("payQuickClosureBtn");
+    const kind = activeClosureKind(state.tab);
+    const canClose = isClosureTab(kind);
+    if (action) {
+      action.hidden = !canClose;
+      action.disabled = !canClose;
+      const label = canClose ? closureLabel(kind) : "";
+      action.querySelector("span").innerHTML = state.pendingClosure && !isAdmin() ? `Confirmar<br/>${esc(label)}` : `Pedir cierre<br/>${esc(label)}`;
+    }
+    if (quick) quick.hidden = !canClose;
     if (!box || !text) return;
-    const pending = state.pendingClosure;
+    const pending = canClose ? pendingClosureFor(getDriverUid(), kind) : null;
+    state.pendingClosure = pending;
     box.hidden = !pending;
     if (pending) {
       const due = number(pending.amountDueFromDriver || 0);
       const toDriver = number(pending.amountDueToDriver || 0);
-      text.textContent = due > 0 ? `Transferencia pendiente por ${currency(due)}` : toDriver > 0 ? `Explora debe pagar ${currency(toDriver)}` : "Cierre equilibrado pendiente de confirmar";
+      text.textContent = `${closureTitle(closureKindOf(pending))} · ${due > 0 ? `transferencia pendiente por ${currency(due)}` : toDriver > 0 ? `Explora debe pagar ${currency(toDriver)}` : "cierre equilibrado pendiente"}`;
     }
-    if (action) action.querySelector("span").innerHTML = pending && !isAdmin() ? "Confirmar<br/>cierre" : "Pedir<br/>cierre";
   }
 
   function activityIcon(type) {
@@ -480,10 +615,13 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     return computeSummary({ records, expenses, closures });
   }
 
-  async function openClosureModal(mode = "request", closure = null) {
+  async function openClosureModal(mode = "request", closure = null, kind = state.tab) {
     if (state.busy) return;
+    const resolvedKind = closureKindOf(closure || {}) || activeClosureKind(kind);
+    if (mode === "request" && !isClosureTab(resolvedKind)) return;
     state.modalMode = mode;
-    state.modalClosure = closure || state.pendingClosure || null;
+    state.modalKind = resolvedKind;
+    state.modalClosure = closure || pendingClosureFor(getDriverUid(), resolvedKind) || null;
     state.modalFile = null;
     const input = $("payClosureReceiptInput");
     if (input) input.value = "";
@@ -498,6 +636,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     $("payClosureBackdrop")?.setAttribute("aria-hidden", "true");
     state.modalFile = null;
     state.modalClosure = null;
+    state.modalKind = "";
     state.busy = false;
   }
 
@@ -522,31 +661,40 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const title = $("payClosureTitle"), subtitle = $("payClosureSubtitle"), summary = $("payClosureSummary"), fileField = $("payClosureFileField"), submit = $("payClosureSubmit"), cancel = $("payClosureCancel");
     if (!title || !subtitle || !summary || !fileField || !submit || !cancel) return;
     const closure = state.modalClosure;
-    const latest = state.latestSummary || computeSummary();
+    const kind = closureKindOf(closure || {}) || activeClosureKind(state.modalKind || state.tab) || "gastos";
+    const latest = tabSummary(state.latestSummary || computeSummary(), kind);
     fileField.hidden = true;
     cancel.textContent = "Cancelar";
     submit.className = "pay-closure-primary";
     if (state.modalMode === "confirm" && closure) {
       const due = number(closure.amountDueFromDriver || 0), toDriver = number(closure.amountDueToDriver || 0);
-      title.textContent = "Confirmar cierre";
+      title.textContent = `Confirmar ${closureTitle(kind).toLowerCase()}`;
       subtitle.textContent = due > 0 ? "Transferí a Explora y cargá la foto del comprobante." : "El cierre no requiere transferencia del chofer.";
       fileField.hidden = !(due > 0);
       submit.textContent = due > 0 ? "Subir comprobante" : "Confirmar cierre";
-      summary.innerHTML = `<article><span>Chofer debe rendir</span><strong>${currency(due)}</strong></article><article><span>Explora debe pagar</span><strong>${currency(toDriver)}</strong></article>`;
+      summary.innerHTML = `<article><span>Tipo de cierre</span><strong>${esc(closureTitle(kind))}</strong></article><article><span>Chofer debe rendir</span><strong>${currency(due)}</strong></article><article><span>Explora debe pagar</span><strong>${currency(toDriver)}</strong></article>`;
       return;
     }
     if (state.modalMode === "admin-review" && closure && isAdmin()) {
       const due = number(closure.amountDueFromDriver || 0), toDriver = number(closure.amountDueToDriver || 0);
-      title.textContent = "Revisar cierre";
-      subtitle.textContent = "Confirmá el cierre cuando el comprobante esté correcto.";
+      title.textContent = `Revisar ${closureTitle(kind).toLowerCase()}`;
+      subtitle.textContent = "Confirmá el cierre cuando el comprobante esté correcto o cuando el pago de Explora corresponda.";
       submit.textContent = "Confirmar recibido";
-      summary.innerHTML = `<article><span>Estado</span><strong>${esc(closure.status || "pendiente")}</strong></article><article><span>Chofer debe rendir</span><strong>${currency(due)}</strong></article><article><span>Explora debe pagar</span><strong>${currency(toDriver)}</strong></article>${closure.receiptUrl ? `<article><span>Comprobante</span><strong>cargado</strong></article>` : ""}`;
+      summary.innerHTML = `<article><span>Tipo</span><strong>${esc(closureTitle(kind))}</strong></article><article><span>Estado</span><strong>${esc(closure.status || "pendiente")}</strong></article><article><span>Chofer debe rendir</span><strong>${currency(due)}</strong></article><article><span>Explora debe pagar</span><strong>${currency(toDriver)}</strong></article>${closure.receiptUrl ? `<article><span>Comprobante</span><strong>cargado</strong></article>` : ""}`;
       return;
     }
-    title.textContent = isAdmin() ? "Pedir cierre a un chofer" : "Pedir cierre";
-    subtitle.textContent = isAdmin() ? "Elegí el chofer y se calculará el saldo abierto desde su último cierre." : "Se generará una solicitud de cierre con el saldo abierto actual.";
-    submit.textContent = "Pedir cierre";
-    summary.innerHTML = `<article><span>Bruto abierto</span><strong>${currency(latest.gross)}</strong></article><article><span>Gastos abiertos</span><strong>${currency(latest.expenseTotal)}</strong></article><article><span>A cobrar de Explora</span><strong>${currency(latest.amountToDriver)}</strong></article><article><span>A rendir a Explora</span><strong>${currency(latest.amountFromDriver)}</strong></article>`;
+    title.textContent = isAdmin() ? `Pedir ${closureTitle(kind).toLowerCase()} a un chofer` : `Pedir ${closureTitle(kind).toLowerCase()}`;
+    subtitle.textContent = isAdmin()
+      ? "Elegí el chofer. El corte será inmediato y solo afectará este tipo de cierre."
+      : "El corte será inmediato: lo nuevo que cargues después empieza desde cero en este mismo tipo de cierre.";
+    submit.textContent = `Pedir ${closureTitle(kind).toLowerCase()}`;
+    if (kind === "gastos") {
+      summary.innerHTML = `<article><span>Gastos abiertos</span><strong>${currency(latest.expenseTotal)}</strong></article><article><span>Explora reintegra al chofer</span><strong>${currency(latest.amountToDriver)}</strong></article><article><span>Chofer reconoce a Explora</span><strong>${currency(latest.amountFromDriver)}</strong></article>`;
+    } else if (kind === "explora") {
+      summary.innerHTML = `<article><span>Cobrado por Explora</span><strong>${currency(latest.gross)}</strong></article><article><span>Parte chofer 50%</span><strong>${currency(latest.amountToDriver)}</strong></article><article><span>Parte Explora 50%</span><strong>${currency(latest.gross * .5)}</strong></article>`;
+    } else {
+      summary.innerHTML = `<article><span>Efectivo del chofer</span><strong>${currency(latest.gross)}</strong></article><article><span>Parte chofer 50%</span><strong>${currency(latest.gross * .5)}</strong></article><article><span>Chofer debe rendir a Explora</span><strong>${currency(latest.amountFromDriver)}</strong></article>`;
+    }
   }
 
   async function submitClosureModal() {
@@ -574,6 +722,8 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
   async function requestClosure() {
     const user = state.auth?.currentUser;
     if (!user?.uid) throw new Error("No hay sesión activa.");
+    const kind = activeClosureKind(state.modalKind || state.tab);
+    if (!isClosureTab(kind)) throw new Error("Bruto es solo informativo. Elegí Gastos, Explora o Chofer para pedir un cierre.");
     let targetUid = getDriverUid();
     let targetName = displayName();
     if (isAdmin()) {
@@ -582,15 +732,22 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       if (!targetUid || !driver) throw new Error("Elegí un chofer para pedir el cierre.");
       targetName = driver.name;
     }
-    const pending = pendingClosureFor(targetUid);
-    if (pending) throw new Error("Ese chofer ya tiene un cierre pendiente.");
-    const summary = isAdmin() ? await computeDriverSummary(targetUid) : (state.latestSummary || computeSummary());
-    await addDoc(collection(state.db, "cierres_semanales"), {
+    const pending = pendingClosureFor(targetUid, kind);
+    if (pending) throw new Error(`Ese chofer ya tiene un ${closureTitle(kind).toLowerCase()} pendiente.`);
+    const fullSummary = isAdmin() ? await computeDriverSummary(targetUid) : (state.latestSummary || computeSummary());
+    const summary = tabSummary(fullSummary, kind);
+    const cutoffAtMs = Date.now();
+    const recordIds = (summary.records || []).map(row => safe(row.id)).filter(Boolean).slice(0, 200);
+    const expenseIds = (summary.expenses || []).map(row => safe(row.id)).filter(Boolean).slice(0, 200);
+    const payload = {
       closureMode:"on_demand",
       periodType:"on_demand",
+      closureKind:kind,
+      closureType:kind,
+      payTab:kind,
       status:"requested",
       estado:"solicitado",
-      statusLabel:"Cierre solicitado",
+      statusLabel:`${closureTitle(kind)} solicitado`,
       driverUid:targetUid,
       choferUid:targetUid,
       uid:targetUid,
@@ -600,18 +757,25 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       requestedByRole:isAdmin() ? "admin" : "driver",
       gross:Number(summary.gross || 0),
       expenseTotal:Number(summary.expenseTotal || 0),
-      cashInDriver:Number(summary.driverActualCash || 0),
-      exploraCash:Number(summary.exploraCash || 0),
+      cashInDriver:Number(kind === "chofer" ? summary.gross : 0),
+      exploraCash:Number(kind === "explora" ? summary.gross : 0),
       netSettlementToDriver:Number(summary.netSettlementToDriver || 0),
       amountDueFromDriver:Number(summary.amountFromDriver || 0),
       amountDueToDriver:Number(summary.amountToDriver || 0),
+      includedBillingIds:recordIds,
+      includedExpenseIds:expenseIds,
+      includedCount:Number(recordIds.length + expenseIds.length),
       cycleStartedAtMs:Number(summary.resetMs || 0),
-      requestedAtMs:Date.now(),
+      cutoffAtMs,
+      requestedAtMs:cutoffAtMs,
       requestedAt:serverTimestamp(),
       createdAt:serverTimestamp(),
       updatedAt:serverTimestamp(),
       version:VERSION
-    });
+    };
+    const created = await addDoc(collection(state.db, "cierres_semanales"), payload);
+    state.closures = [{ ...payload, id:created.id, createdAtMs:cutoffAtMs, updatedAtMs:cutoffAtMs }, ...state.closures.filter(row => row.id !== created.id)];
+    render();
   }
 
   function extensionForFile(file) {
