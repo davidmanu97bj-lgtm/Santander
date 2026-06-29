@@ -85,6 +85,8 @@ body.explora-pay-mode #mainBottomNav.performance-bottom-nav{
 .pay-status-pill{margin-top:12px;border-radius:18px;background:#fff9df;border:1px solid rgba(228,181,50,.35);padding:11px 13px;font-size:13px;color:#6d571d;display:flex;align-items:center;justify-content:space-between;gap:10px;}
 .pay-status-pill b{color:#312914;}
 .pay-status-pill button{border:0;background:var(--pay-blue);color:white;border-radius:12px;padding:8px 10px;font-weight:800;white-space:nowrap;}
+.pay-status-pill[hidden],.pay-status-pill.is-hidden{display:none!important;margin:0!important;padding:0!important;border:0!important;box-shadow:none!important;background:transparent!important;min-height:0!important;height:0!important;overflow:hidden!important;}
+.pay-status-pill button[hidden]{display:none!important;}
 .pay-section{margin-top:0;}
 .pay-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 16px;}
 .pay-section h2{font-size:25px;font-weight:870;letter-spacing:-.03em;margin:0;color:#292b38;}

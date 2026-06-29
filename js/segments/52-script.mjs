@@ -5,7 +5,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 (() => {
   "use strict";
 
-  const VERSION = "explora-pago-home-v29-carteles-home-modulo-estricto";
+  const VERSION = "explora-pago-home-v30-sin-rastros-cartel-amarillo";
   const AR_TZ = "America/Argentina/Cordoba";
   const $ = id => document.getElementById(id);
   const state = {
@@ -957,6 +957,27 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     return null;
   }
 
+  function homePendingClosureCardData(closure = {}, kind = state.tab, uid = getDriverUid()) {
+    const target = activeClosureKind(kind);
+    const targetUid = safe(uid);
+    if (!closure || !["caja_chica", "gastos", "explora", "chofer"].includes(target)) return null;
+    if (isAdmin() && !targetUid) return null;
+    if (closureIsCompleted(closure)) return null;
+    if (safe(closure.closureMode || closure.periodType) !== "on_demand") return null;
+    if (!closureMatchesHomeModule(closure, target)) return null;
+    if (targetUid && !closureBelongsToDriver(closure, targetUid)) return null;
+    const action = closureActionForViewer(closure);
+    if (!action || action === "none" || action === "view") return null;
+    const message = safe(closureYellowBannerMessage(closure));
+    if (!message) return null;
+    const due = number(closure.amountDueFromDriver || closure.amountFromDriver || 0);
+    const toDriver = number(closure.amountDueToDriver || closure.amountToDriver || 0);
+    const amount = Math.max(due, toDriver);
+    const title = `${closureTitle(closureHomeModuleOf(closure) || closureKindOf(closure))}${amount > 0 ? ` · ${currency(amount)}` : ""}`;
+    if (!safe(title)) return null;
+    return { closure, message, title, action, amount };
+  }
+
   function renderBellBadge() {
     const badge = $("payBellBadge");
     if (!badge) return;
@@ -1574,23 +1595,23 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     }
     if (!box || !text) return;
     const pending = pendingHomeClosureFor(getDriverUid(), kind);
-    state.pendingClosure = pending || null;
-    const bannerMessage = pending ? closureYellowBannerMessage(pending) : null;
-    const showPendingCard = !!bannerMessage;
+    const card = homePendingClosureCardData(pending, kind, getDriverUid());
+    state.pendingClosure = card ? card.closure : null;
+    const showPendingCard = !!card;
     box.hidden = !showPendingCard;
     box.classList.toggle("is-home-module-pending", showPendingCard);
+    box.style.display = showPendingCard ? "" : "none";
+    const labelEl = box.querySelector("b");
+    const buttonEl = box.querySelector("button");
     if (!showPendingCard) {
-      const labelEl = box.querySelector("b");
       if (labelEl) labelEl.textContent = "";
       text.textContent = "";
+      if (buttonEl) buttonEl.hidden = true;
       return;
     }
-    const labelEl = box.querySelector("b");
-    if (labelEl) labelEl.textContent = bannerMessage;
-    const due = number(pending.amountDueFromDriver || pending.amountFromDriver || 0);
-    const toDriver = number(pending.amountDueToDriver || pending.amountToDriver || 0);
-    const amount = Math.max(due, toDriver);
-    text.textContent = `${closureTitle(closureHomeModuleOf(pending) || closureKindOf(pending))}${amount > 0 ? ` · ${currency(amount)}` : ""}`;
+    if (buttonEl) buttonEl.hidden = false;
+    if (labelEl) labelEl.textContent = card.message;
+    text.textContent = card.title;
   }
 
   function activityIcon(type) {
