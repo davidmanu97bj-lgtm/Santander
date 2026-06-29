@@ -122,6 +122,7 @@ body.explora-pay-mode #mainBottomNav.performance-bottom-nav{
 .pay-closure-field select,.pay-closure-field input{width:100%;border:1px solid var(--pay-line);border-radius:16px;padding:13px 14px;font-size:16px;background:#fff;color:var(--pay-ink);}
 .pay-closure-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;}
 .pay-closure-actions button{border:0;border-radius:16px;padding:14px 12px;font-size:15px;font-weight:850;}
+.pay-closure-field[hidden]{display:none!important;}
 .pay-closure-actions[hidden]{display:none!important;} .pay-closure-actions button:disabled{opacity:.55;filter:grayscale(.18);} .pay-closure-actions button[hidden]{display:none!important;}
 .pay-closure-secondary{background:#eef1f9;color:#303447;}.pay-closure-primary{background:var(--pay-blue);color:#fff;}.pay-closure-danger{background:#ca3a3a;color:#fff;}
 .pay-closure-message{min-height:20px;margin-top:10px;font-size:13px;font-weight:700;color:#596073;}
@@ -422,3 +423,7 @@ body.explora-pay-mode.pay-notifications-open .dashboard-shell-real{padding-botto
 .pay-activity.is-clickable{cursor:pointer;}
 .pay-activity.is-clickable:active{transform:scale(.995);}
 .pay-closure-receipt-link{display:block;margin-top:12px;border-radius:16px;background:#eef3ff;color:var(--pay-blue);font-weight:850;text-align:center;text-decoration:none;padding:12px 14px;}
+
+/* CAMBIO 2: Botón inferior "Cierre" en rojo cuando hay cierres abiertos/sin resolver */
+#payNavClosure.is-pending-closure{color:#d93025;}
+#payNavClosure.is-pending-closure svg{stroke:#d93025;}
