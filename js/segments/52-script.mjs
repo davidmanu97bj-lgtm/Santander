@@ -299,16 +299,18 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     }));
     document.querySelectorAll("[data-pay-run]").forEach(button => button.addEventListener("click", () => runExistingAction(button.dataset.payRun)));
     $("payClosureActionBtn")?.addEventListener("click", () => {
+      if (!closureButtonState(state.tab, state.latestSummary || computeSummary()).enabled) return;
       const pending = pendingClosureFor(getDriverUid(), state.tab);
       openClosureModal(pending && !isAdmin() ? "confirm" : "request", pending, state.tab);
     });
     $("payQuickClosureBtn")?.addEventListener("click", () => {
-      if (!isClosureTab(state.tab)) return;
+      if (!isClosureTab(state.tab) || !closureButtonState(state.tab, state.latestSummary || computeSummary()).enabled) return;
       const pending = pendingClosureFor(getDriverUid(), state.tab);
       openClosureModal(pending && !isAdmin() ? "confirm" : "request", pending, state.tab);
     });
     $("payNavClosure")?.addEventListener("click", () => {
       const kind = isClosureTab(state.tab) ? state.tab : "gastos";
+      if (!closureButtonState(kind, state.latestSummary || computeSummary()).enabled) return;
       const pending = pendingClosureFor(getDriverUid(), kind);
       openClosureModal(pending && !isAdmin() ? "confirm" : "request", pending, kind);
     });
@@ -317,7 +319,15 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       openClosureModal(pending && !isAdmin() ? "confirm" : "admin-review", pending, state.tab);
     });
     $("payBellBtn")?.addEventListener("click", () => showPayView("notificaciones"));
-    $("payCardEnterBtn")?.addEventListener("click", () => { if (state.tab === "gastos") runExistingAction("cargar-gastos"); else if (state.tab === "chofer" || state.tab === "explora") openClosureModal(state.pendingClosure && !isAdmin() ? "confirm" : "request", state.pendingClosure, state.tab); else runExistingAction("nuevo-servicio"); });
+    $("payCardEnterBtn")?.addEventListener("click", () => {
+      if (state.tab === "gastos") { runExistingAction("cargar-gastos"); return; }
+      if (state.tab === "chofer" || state.tab === "explora") {
+        if (!closureButtonState(state.tab, state.latestSummary || computeSummary()).enabled) return;
+        openClosureModal(state.pendingClosure && !isAdmin() ? "confirm" : "request", state.pendingClosure, state.tab);
+        return;
+      }
+      runExistingAction("nuevo-servicio");
+    });
     $("payRefreshBtn")?.addEventListener("click", () => startRealtime("manual-refresh"));
     $("payAdminDriverSelect")?.addEventListener("change", event => selectAdminDriver(event.target?.value || ""));
     $("payClosureClose")?.addEventListener("click", closeClosureModal);
@@ -786,6 +796,53 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     return summary.tabs?.[activeClosureKind(kind)] || summary.tabs?.bruto || summary;
   }
 
+  function billingWinner(summary = state.latestSummary || computeSummary()) {
+    const cash = number(summary.cashInDriver || 0);
+    const digital = number(summary.nonCashInExplora || 0);
+    const total = cash + digital;
+    if (!(total > 0)) return "none";
+    const share = total * .5;
+    const delta = cash - share;
+    if (delta > 0.49) return "chofer";
+    if (delta < -0.49) return "explora";
+    return "balanced";
+  }
+
+  function closureButtonState(kind = state.tab, summary = state.latestSummary || computeSummary()) {
+    const target = activeClosureKind(kind);
+    if (!isClosureTab(target) || !hasAdminDriverSelected()) return { visible:false, enabled:false };
+    const pending = pendingClosureFor(getDriverUid(), target);
+    if (pending) {
+      const pendingKind = closureKindOf(pending);
+      if (target === "gastos") return { visible:true, enabled:pendingKind === "gastos", pending:true };
+      const direction = number(pending.amountDueFromDriver || 0) > 0
+        ? "chofer"
+        : number(pending.amountDueToDriver || 0) > 0
+          ? "explora"
+          : "balanced";
+      return { visible:true, enabled:direction === target || activeClosureKind(pendingKind) === target, pending:true };
+    }
+    if (target === "gastos") {
+      const t = tabSummary(summary, "gastos");
+      return { visible:true, enabled:number(t.expenseTotal || 0) > 0 && number(t.amountToDriver || 0) > 0 };
+    }
+    if (target === "chofer" || target === "explora") {
+      return { visible:true, enabled:billingWinner(summary) === target };
+    }
+    return { visible:false, enabled:false };
+  }
+
+  function requireClosureAllowed(kind = state.tab, summary = state.latestSummary || computeSummary()) {
+    const status = closureButtonState(kind, summary);
+    if (!status.visible || !status.enabled) {
+      const target = activeClosureKind(kind);
+      if (target === "gastos") throw new Error("No hay gastos abiertos para pedir cierre.");
+      if (target === "chofer") throw new Error("El cierre de facturación no corresponde al chofer en este momento.");
+      if (target === "explora") throw new Error("El cierre de facturación no corresponde a Explora en este momento.");
+      throw new Error("Bruto es solo informativo.");
+    }
+  }
+
   function movementRows(summary = computeSummary()) {
     const rows = [];
     const kind = activeClosureKind(state.tab);
@@ -955,16 +1012,22 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
   function renderClosureStatus(summary) {
     const box = $("payClosureStatus"), text = $("payClosureStatusText"), action = $("payClosureActionBtn"), quick = $("payQuickClosureBtn");
     const kind = activeClosureKind(state.tab);
-    const canClose = isClosureTab(kind) && hasAdminDriverSelected();
+    const stateForButton = closureButtonState(kind, summary);
     if (action) {
-      action.hidden = !canClose;
-      action.disabled = !canClose;
-      const label = canClose ? closureLabel(kind) : "";
-      action.querySelector("span").innerHTML = state.pendingClosure && !isAdmin() ? `Confirmar<br/>${esc(label)}` : `Pedir cierre<br/>${esc(label)}`;
+      action.hidden = !stateForButton.visible;
+      action.disabled = !stateForButton.enabled;
+      action.classList.toggle("is-closure-ready", !!stateForButton.enabled);
+      action.classList.toggle("is-closure-locked", stateForButton.visible && !stateForButton.enabled);
+      const label = stateForButton.visible ? closureLabel(kind) : "";
+      const pendingForTab = stateForButton.visible ? pendingClosureFor(getDriverUid(), kind) : null;
+      action.querySelector("span").innerHTML = pendingForTab && !isAdmin() ? `Confirmar<br/>${esc(label)}` : `Pedir cierre<br/>${esc(label)}`;
     }
-    if (quick) quick.hidden = !canClose;
+    if (quick) {
+      quick.hidden = !stateForButton.visible || !stateForButton.enabled;
+      quick.disabled = !stateForButton.enabled;
+    }
     if (!box || !text) return;
-    const pending = canClose ? pendingClosureFor(getDriverUid(), kind) : null;
+    const pending = stateForButton.visible ? pendingClosureFor(getDriverUid(), kind) : null;
     state.pendingClosure = pending;
     box.hidden = !pending;
     if (pending) {
@@ -1006,7 +1069,11 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
   async function openClosureModal(mode = "request", closure = null, kind = state.tab) {
     if (state.busy) return;
     const resolvedKind = closureKindOf(closure || {}) || activeClosureKind(kind);
-    if (mode === "request" && !isClosureTab(resolvedKind)) return;
+    if (mode === "request") {
+      if (!isClosureTab(resolvedKind)) return;
+      const status = closureButtonState(resolvedKind, state.latestSummary || computeSummary());
+      if (!status.enabled) return;
+    }
     state.modalMode = mode;
     state.modalKind = resolvedKind;
     state.modalClosure = closure || pendingClosureFor(getDriverUid(), resolvedKind) || null;
@@ -1157,6 +1224,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const pending = pendingClosureFor(targetUid, kind);
     if (pending) throw new Error(`Ese chofer ya tiene un ${closureTitle(kind).toLowerCase()} pendiente.`);
     const fullSummary = isAdmin() ? await computeDriverSummary(targetUid) : (state.latestSummary || computeSummary());
+    requireClosureAllowed(kind, fullSummary);
     const summary = tabSummary(fullSummary, kind);
     const cutoffAtMs = Date.now();
     const recordIds = (summary.records || []).map(row => safe(row.id)).filter(Boolean).slice(0, 200);
