@@ -785,3 +785,23 @@
 /* EXPLORA v3.9.26 · Fondo oscuro de login detrás del logo en Registrar cobro */
 .new-service-logo-wrap{background:linear-gradient(180deg, rgba(20,23,26,.94), rgba(8,10,12,.98))!important;border:1px solid rgba(255,255,255,.10)!important;box-shadow:0 14px 32px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.04)!important}
 .new-service-brand-image{filter:contrast(1.16) saturate(1.12) drop-shadow(0 2px 0 rgba(0,0,0,.38)) drop-shadow(0 6px 12px rgba(0,0,0,.28))!important}
+
+
+/* EXPLORA v3.9.27 · Logo con fondo gris casi negro y sin campana en Registrar cobro */
+#newServiceScreen .new-service-logo-wrap{
+  background:linear-gradient(180deg,#202329 0%,#111317 100%)!important;
+  border:1px solid rgba(255,255,255,.10)!important;
+  box-shadow:0 14px 30px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.06)!important;
+}
+#newServiceScreen .new-service-brand-image{
+  opacity:1!important;
+  filter:contrast(1.22) saturate(1.12) brightness(1.04) drop-shadow(0 1px 0 rgba(0,0,0,.55)) drop-shadow(0 6px 12px rgba(0,0,0,.38))!important;
+}
+#newServiceScreen .new-service-bell-wrap{
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+#newServiceScreen .new-service-bell,
+#newServiceScreen .new-service-bell-dot{
+  display:none!important;
+}
