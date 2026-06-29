@@ -5,7 +5,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 (() => {
   "use strict";
 
-  const VERSION = "explora-pago-home-v23-detalles-plegables-resumen-anterior";
+  const VERSION = "explora-pago-home-v26-pull-refresh-fuente";
   const AR_TZ = "America/Argentina/Cordoba";
   const $ = id => document.getElementById(id);
   const state = {
@@ -32,7 +32,9 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     modalClosure:null,
     modalFile:null,
     previousDetailsOpen:{ caja_chica:false, gastos:false, explora:false, chofer:false },
-    busy:false
+    busy:false,
+    refreshing:false,
+    pullRefresh:{ startY:0, distance:0, active:false, ready:false, raf:0 }
   };
 
   const currency = value => new Intl.NumberFormat("es-AR", { style:"currency", currency:"ARS", maximumFractionDigits:0 }).format(Number(value) || 0).replace(/\s/g, "");
@@ -218,6 +220,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const shell = document.querySelector(".dashboard-shell-real");
     if (!shell) return;
     const html = `
+      <div class="explora-pull-refresh" id="exploraPullRefresh" aria-hidden="true"><div class="explora-pull-spinner" id="exploraPullSpinner"></div></div>
       <section aria-label="Inicio financiero Explora" class="explora-pay-home" id="exploraPagoDashboard">
         <header class="pay-topbar">
           <div class="pay-hello">
@@ -329,6 +332,120 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     } catch (error) { console.warn("EXPLORA_PAY_ACTION_FAILED", action, error); }
   }
 
+
+  function getScrollTop() {
+    return Math.max(0, window.scrollY || document.documentElement?.scrollTop || document.body?.scrollTop || 0);
+  }
+
+  function setPullRefreshDistance(distance = 0, ready = false, refreshing = false) {
+    const holder = $("exploraPullRefresh");
+    if (!holder) return;
+    const clamped = Math.max(0, Math.min(126, distance));
+    holder.style.setProperty("--pull-distance", `${clamped}px`);
+    document.body.style.setProperty("--pull-distance", `${clamped}px`);
+    holder.classList.toggle("is-visible", clamped > 2 || refreshing);
+    holder.classList.toggle("is-ready", !!ready);
+    holder.classList.toggle("is-refreshing", !!refreshing);
+    holder.setAttribute("aria-hidden", refreshing || clamped > 2 ? "false" : "true");
+    document.body.classList.toggle("explora-pulling-refresh", clamped > 2 || refreshing);
+  }
+
+  async function refreshOpenData(reason = "pull-refresh") {
+    if (!state.db || !state.user || state.refreshing) return;
+    state.refreshing = true;
+    try {
+      const activeTab = state.tab;
+      const activeView = state.view;
+      const selectedUid = state.selectedDriverUid;
+      const selectedName = state.selectedDriverName;
+      if (isAdmin()) {
+        await fetchDrivers();
+        if (selectedUid) {
+          const driver = state.drivers.find(item => item.uid === selectedUid);
+          state.selectedDriverUid = selectedUid;
+          state.selectedDriverName = driver?.name || selectedName || "";
+        }
+      }
+      const uid = getDriverUid();
+      if (uid) {
+        const [records, expenses, closures] = await Promise.all([
+          getScopedDocs("billing_records", uid),
+          getScopedDocs("gastos", uid),
+          getScopedDocs("cierres_semanales", uid)
+        ]);
+        state.records = records.sort((a,b)=>rowMs(b)-rowMs(a));
+        state.expenses = expenses.sort((a,b)=>rowMs(b)-rowMs(a));
+        state.closures = closures.sort((a,b)=>rowMs(b)-rowMs(a));
+      } else if (isAdmin()) {
+        state.records = [];
+        state.expenses = [];
+        state.closures = [];
+        state.pendingClosure = null;
+      }
+      state.tab = activeTab;
+      state.view = activeView;
+      render();
+      startRealtime(reason);
+    } catch (error) {
+      console.warn("EXPLORA_PULL_REFRESH", error?.code || error?.message || error);
+      startRealtime(`${reason}-fallback`);
+    } finally {
+      state.refreshing = false;
+    }
+  }
+
+  function installPullRefresh() {
+    if (window.__exploraPullRefreshInstalled) return;
+    window.__exploraPullRefreshInstalled = true;
+    const threshold = 82;
+    const resistance = 0.52;
+    const reset = () => {
+      const pull = state.pullRefresh;
+      pull.active = false;
+      pull.ready = false;
+      pull.distance = 0;
+      if (pull.raf) cancelAnimationFrame(pull.raf);
+      pull.raf = requestAnimationFrame(() => setPullRefreshDistance(0, false, state.refreshing));
+    };
+    window.addEventListener("touchstart", event => {
+      if (event.touches?.length !== 1 || state.refreshing || getScrollTop() > 0) return;
+      if (!document.body.classList.contains("explora-pay-mode")) return;
+      const target = event.target;
+      if (target?.closest?.(".pay-closure-modal, .pay-bottom-nav, .explora-pay-more, .explora-pay-notifications, select, input, textarea")) return;
+      state.pullRefresh.startY = event.touches[0].clientY;
+      state.pullRefresh.distance = 0;
+      state.pullRefresh.active = true;
+      state.pullRefresh.ready = false;
+    }, { passive:true });
+
+    window.addEventListener("touchmove", event => {
+      const pull = state.pullRefresh;
+      if (!pull.active || state.refreshing || event.touches?.length !== 1) return;
+      const delta = event.touches[0].clientY - pull.startY;
+      if (delta <= 0 || getScrollTop() > 2) { reset(); return; }
+      const distance = Math.min(126, delta * resistance);
+      pull.distance = distance;
+      pull.ready = distance >= threshold;
+      if (pull.raf) cancelAnimationFrame(pull.raf);
+      pull.raf = requestAnimationFrame(() => setPullRefreshDistance(distance, pull.ready, false));
+      if (distance > 10 && event.cancelable) event.preventDefault();
+    }, { passive:false });
+
+    window.addEventListener("touchend", async () => {
+      const pull = state.pullRefresh;
+      if (!pull.active) return;
+      const shouldRefresh = pull.ready && pull.distance >= threshold;
+      pull.active = false;
+      pull.ready = false;
+      if (!shouldRefresh) { reset(); return; }
+      setPullRefreshDistance(94, true, true);
+      await refreshOpenData("pull-refresh");
+      setPullRefreshDistance(0, false, false);
+    }, { passive:true });
+
+    window.addEventListener("touchcancel", reset, { passive:true });
+  }
+
   function bindShell() {
     document.querySelectorAll("[data-pay-tab]").forEach(button => button.addEventListener("click", () => {
       state.tab = button.dataset.payTab || "caja_chica";
@@ -383,7 +500,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       }
       runExistingAction("nuevo-servicio");
     });
-    $("payRefreshBtn")?.addEventListener("click", () => startRealtime("manual-refresh"));
+    $("payRefreshBtn")?.addEventListener("click", () => refreshOpenData("manual-refresh"));
     $("payAdminDriverSelect")?.addEventListener("change", event => selectAdminDriver(event.target?.value || ""));
     $("payClosureClose")?.addEventListener("click", closeClosureModal);
     $("payClosureCancel")?.addEventListener("click", closeClosureModal);
@@ -1911,7 +2028,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 
   async function boot() {
     try {
-      installShell(); bindShell();
+      installShell(); bindShell(); installPullRefresh();
       await waitFirebase();
       onAuthStateChanged(state.auth, user => refreshSession(user));
       window.addEventListener("explora:session-opened", () => refreshSession(state.auth?.currentUser));
@@ -1924,5 +2041,5 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once:true });
   else boot();
-  window.ExploraPagoHome = Object.freeze({ version:VERSION, render, openClosureModal, computeSummary });
+  window.ExploraPagoHome = Object.freeze({ version:VERSION, render, openClosureModal, computeSummary, refreshOpenData });
 })();
