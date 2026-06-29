@@ -1,7 +1,7 @@
-/* Compatibilidad validada: v2519-explora-closure-button-soft */
-/* EXPLORA PWA service worker · v2.4.98 */
+/* Compatibilidad validada: v2520-explora-new-closure-period */
+/* EXPLORA PWA service worker · v2.4.99 */
 const CACHE_PREFIX = 'explora-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}v2519-explora-closure-button-soft`;
+const CACHE_NAME = `${CACHE_PREFIX}v2520-explora-new-closure-period`;
 const APP_SHELL = [
   './',
   './index.html',
