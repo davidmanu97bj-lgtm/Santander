@@ -1,7 +1,7 @@
-/* Compatibilidad validada: v3400-eficiencia-datos-reales */
+/* Compatibilidad validada: v3500-km-inicial-auto */
 /* EXPLORA PWA service worker · v2.5.1 */
 const CACHE_PREFIX = 'explora-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}v3400-eficiencia-datos-reales`;
+const CACHE_NAME = `${CACHE_PREFIX}v3500-km-inicial-auto`;
 const APP_SHELL = [
   './',
   './index.html',
@@ -26,8 +26,8 @@ const APP_SHELL = [
   './css/segments/49-style.css?v=2456-personal-record-server-authoritative',
   './css/segments/50-style.css?v=2458-admin-driver-production-safe',
   './css/segments/51-style.css?v=2484-weekly-mileage-modal-ux',
-  './css/segments/52-style.css?v=3400-eficiencia-datos-reales',
-  './js/segments/52-script.mjs?v=3400-eficiencia-datos-reales',
+  './css/segments/52-style.css?v=3500-km-inicial-auto',
+  './js/segments/52-script.mjs?v=3500-km-inicial-auto',
   './assets/icono_eficiencia_km.png',
   './js/segments/49-script.mjs?v=2488-mileage-close-fast',
   './js/segments/49-mileage-model.mjs?v=2477-weekly-mileage-v15-admin-card-clickable',
