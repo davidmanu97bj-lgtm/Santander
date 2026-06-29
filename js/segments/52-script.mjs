@@ -5,7 +5,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 (() => {
   "use strict";
 
-  const VERSION = "explora-pago-home-v21-textos-cierre-anterior";
+  const VERSION = "explora-pago-home-v22-resumen-5050-anterior";
   const AR_TZ = "America/Argentina/Cordoba";
   const $ = id => document.getElementById(id);
   const state = {
@@ -1235,14 +1235,43 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       .sort((a,b)=>closureCutMs(b)-closureCutMs(a) || rowMs(b)-rowMs(a))[0] || null;
   }
 
-  function previousClosureSummaryText(kind = state.tab, uid = getDriverUid()) {
+  function previousBillingClosureParts(row = {}) {
+    const cash = firstUsefulNumber(row, ["cashInDriver", "cashGrossInDriver", "driverActualCash", "efectivoChofer", "cash", "efectivo"]) ?? 0;
+    const digital = firstUsefulNumber(row, ["exploraCash", "nonCashInExplora", "nonCashGrossInExplora", "digitalExplora", "digitalInExplora", "digital", "transferQrCardTotal"]) ?? 0;
+    const gross = firstUsefulNumber(row, ["gross", "grossBeforeCashbox", "totalFacturado", "totalBilling", "billingTotal", "mainTotal", "total", "amount", "monto"]) ?? (cash + digital);
+    const storedShare = firstUsefulNumber(row, ["billingShareEach", "shareEach", "parteCadaUno", "driverEntitlement", "driverFinal", "exploraFinal"]);
+    const share = storedShare !== null ? storedShare : (gross * .5);
+    const fromDriver = firstUsefulNumber(row, ["amountDueFromDriver", "amountFromDriver", "paidByDriver", "liquidadoPorChofer", "driverPaidExplora"]) ?? 0;
+    const toDriver = firstUsefulNumber(row, ["amountDueToDriver", "amountToDriver", "paidByExplora", "liquidadoPorExplora", "exploraPaidDriver"]) ?? 0;
+    return {
+      cash:Math.max(0, cash),
+      digital:Math.max(0, digital),
+      gross:Math.max(0, gross),
+      share:Math.max(0, share),
+      fromDriver:Math.max(0, fromDriver),
+      toDriver:Math.max(0, toDriver)
+    };
+  }
+
+  function previousClosureSummaryHtml(kind = state.tab, uid = getDriverUid()) {
     const row = previousClosureRow(kind, uid);
-    if (!row) return "Sin cierre anterior";
-    const amount = closureSnapshotAmount(row, kind);
     const target = activeClosureKind(kind);
-    if (target === "gastos") return `Gastos anteriores: ${currency(amount)}`;
-    if (target === "caja_chica") return `Caja chica anterior: ${currency(amount)}`;
-    return `Facturación anterior: ${currency(amount)}`;
+    if (!row) {
+      const empty = isBillingClosureKind(target) ? "Sin facturación anterior" : "Sin cierre anterior";
+      return `<b class="pay-previous-single">${esc(empty)}</b>`;
+    }
+    const amount = closureSnapshotAmount(row, kind);
+    if (target === "gastos") return `<b class="pay-previous-single">${esc(`Gastos anteriores: ${currency(amount)}`)}</b>`;
+    if (target === "caja_chica") return `<b class="pay-previous-single">${esc(`Caja chica anterior: ${currency(amount)}`)}</b>`;
+    if (target === "explora") {
+      const p = previousBillingClosureParts(row);
+      return `<span class="pay-previous-breakdown" aria-label="Resumen de facturación anterior de Explora"><span>Digital anterior: <strong>${esc(currency(p.digital))}</strong></span><span>Liquidado por chofer: <strong>${esc(currency(p.fromDriver))}</strong></span><span>Total Explora anterior 50%: <strong>${esc(currency(p.share))}</strong></span></span>`;
+    }
+    if (target === "chofer") {
+      const p = previousBillingClosureParts(row);
+      return `<span class="pay-previous-breakdown" aria-label="Resumen de facturación anterior del chofer"><span>Efectivo anterior: <strong>${esc(currency(p.cash))}</strong></span><span>Liquidado por Explora: <strong>${esc(currency(p.toDriver))}</strong></span><span>Total chofer anterior 50%: <strong>${esc(currency(p.share))}</strong></span></span>`;
+    }
+    return `<b class="pay-previous-single">${esc(`Facturación anterior: ${currency(amount)}`)}</b>`;
   }
 
   function renderMainCard(summary) {
@@ -1315,9 +1344,9 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
         ["Caja chica 5% efectivo", currency(summary.cashboxInDriver || 0)]
       );
     }
-    const previousText = previousClosureSummaryText(state.tab, getDriverUid());
+    const previousHtml = previousClosureSummaryHtml(state.tab, getDriverUid());
     amount.textContent = currency(main);
-    subtitle.innerHTML = `${esc(sub)} <b>${esc(previousText)}</b>`;
+    subtitle.innerHTML = `${esc(sub)}${previousHtml}`;
     pillLabel.textContent = pill;
     pillAmount.textContent = currency(pillValue);
     extra.innerHTML = lines.map(([label,value]) => `<div><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`).join("");
