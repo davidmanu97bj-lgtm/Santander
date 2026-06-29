@@ -116,10 +116,13 @@
     }
 
     .dashboard-profile-avatar-real{
-      width:38px;height:38px;border-radius:50%;
-      object-fit:cover;
-      border:1px solid rgba(246,190,59,.6);
-      background:#15191d;
+      width:42px;height:42px;border-radius:50%;
+      object-fit:contain;
+      padding:5px;
+      box-sizing:border-box;
+      border:1.5px solid rgba(212,175,55,.72);
+      background:linear-gradient(180deg,#fffdf3,#f4efe0);
+      box-shadow:0 8px 22px rgba(9,12,20,.12), inset 0 0 0 1px rgba(255,255,255,.75);
       flex:0 0 auto;
     }
 
@@ -592,7 +595,7 @@
       .explora-sub-real{letter-spacing:.18em}
       .explora-mark-real{width:36px;height:36px}
       .driver-profile-button-real{max-width:43%;padding:7px}
-      .dashboard-profile-avatar-real{width:33px;height:33px}
+      .dashboard-profile-avatar-real{width:36px;height:36px;padding:4px}
       .driver-welcome-real{flex-direction:column}
       .logout-pill-real{align-self:flex-start}
       .weekly-ranking-grid-real{grid-template-columns:1fr}
