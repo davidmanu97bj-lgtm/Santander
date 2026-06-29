@@ -425,3 +425,18 @@ body.explora-pay-mode.pay-notifications-open .dashboard-shell-real{padding-botto
 .pay-activity.is-clickable{cursor:pointer;}
 .pay-activity.is-clickable:active{transform:scale(.995);}
 .pay-closure-receipt-link{display:block;margin-top:12px;border-radius:16px;background:#eef3ff;color:var(--pay-blue);font-weight:850;text-align:center;text-decoration:none;padding:12px 14px;}
+
+/* v37 · Historial rotativo de eficiencia por cierre */
+.pay-efficiency-history{display:grid;gap:10px;}
+.pay-efficiency-history-empty{border:1px dashed rgba(190,197,215,.95);border-radius:20px;background:#fbfcff;color:#666d82;padding:16px;font-size:14px;line-height:1.36;font-weight:780;text-align:center;}
+.pay-efficiency-history-item{display:flex;align-items:center;justify-content:space-between;gap:12px;border-radius:20px;padding:13px 14px;border:1px solid rgba(216,220,235,.95);background:#fff;box-shadow:0 8px 20px rgba(25,28,40,.05);}
+.pay-efficiency-history-item.is-good{border-color:rgba(23,138,58,.26);background:linear-gradient(180deg,#f2fff6 0%,#ffffff 100%);}
+.pay-efficiency-history-item.is-bad{border-color:rgba(200,58,58,.25);background:linear-gradient(180deg,#fff2f0 0%,#ffffff 100%);}
+.pay-efficiency-history-main{display:grid;gap:4px;min-width:0;}
+.pay-efficiency-history-main strong{font-size:15px;line-height:1.1;font-weight:950;color:var(--pay-ink);letter-spacing:-.015em;}
+.pay-efficiency-history-main span{font-size:13.5px;line-height:1.22;font-weight:850;color:#4b5268;}
+.pay-efficiency-history-main small{font-size:12px;line-height:1.18;font-weight:800;color:#7a8094;}
+.pay-efficiency-history-badge{flex:0 0 auto;border-radius:999px;padding:7px 9px;font-size:12px;line-height:1;font-weight:950;}
+.pay-efficiency-history-item.is-good .pay-efficiency-history-badge{background:rgba(23,138,58,.12);color:#178a3a;}
+.pay-efficiency-history-item.is-bad .pay-efficiency-history-badge{background:rgba(200,58,58,.12);color:#a93535;}
+@media (max-width:390px){.pay-efficiency-history-item{align-items:flex-start;flex-direction:column}.pay-efficiency-history-badge{align-self:flex-start}}
