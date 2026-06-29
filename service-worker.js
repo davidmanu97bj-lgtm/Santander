@@ -1,7 +1,7 @@
-/* Compatibilidad validada: v2508-reverse-requester-buttons */
-/* EXPLORA PWA service worker · v2.4.93 */
+/* Compatibilidad validada: v2509-admin-only-driver-debt */
+/* EXPLORA PWA service worker · v2.4.94 */
 const CACHE_PREFIX = 'explora-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}v2508-reverse-requester-buttons`;
+const CACHE_NAME = `${CACHE_PREFIX}v2509-admin-only-driver-debt`;
 const APP_SHELL = [
   './',
   './index.html',
@@ -26,8 +26,8 @@ const APP_SHELL = [
   './css/segments/49-style.css?v=2456-personal-record-server-authoritative',
   './css/segments/50-style.css?v=2458-admin-driver-production-safe',
   './css/segments/51-style.css?v=2484-weekly-mileage-modal-ux',
-  './css/segments/52-style.css?v=2507-closure-button-gating',
-  './js/segments/52-script.mjs?v=2507-closure-button-gating',
+  './css/segments/52-style.css?v=2509-admin-only-driver-debt',
+  './js/segments/52-script.mjs?v=2509-admin-only-driver-debt',
   './js/segments/49-script.mjs?v=2488-mileage-close-fast',
   './js/segments/49-mileage-model.mjs?v=2477-weekly-mileage-v15-admin-card-clickable',
   './js/segments/44-script.mjs?v=2456-personal-record-server-authoritative',
