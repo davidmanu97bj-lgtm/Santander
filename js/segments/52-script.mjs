@@ -5,7 +5,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 (() => {
   "use strict";
 
-  const VERSION = "explora-pago-home-v27-cartel-amarillo-dinamico";
+  const VERSION = "explora-pago-home-v28-carteles-pendientes-por-modulo";
   const AR_TZ = "America/Argentina/Cordoba";
   const $ = id => document.getElementById(id);
   const state = {
@@ -103,6 +103,47 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 
   function closureKindOf(row = {}) {
     return activeClosureKind(row.closureKind || row.closureType || row.payTab || row.closeKind || row.kind || row.cierreTipo || row.type || row.category);
+  }
+
+  function closureHomeModuleOf(row = {}) {
+    const explicit = activeClosureKind(
+      row.homeModule ||
+      row.requestModule ||
+      row.requestedModule ||
+      row.originModule ||
+      row.sourceModule ||
+      row.module ||
+      row.modulo ||
+      row.requestedFrom ||
+      row.source ||
+      row.origin ||
+      row.tab ||
+      row.payTab ||
+      row.closeKind ||
+      row.kind ||
+      row.closureKind ||
+      row.closureType ||
+      row.cierreTipo ||
+      row.type ||
+      row.category
+    );
+    if (["caja_chica", "gastos", "explora", "chofer"].includes(explicit)) return explicit;
+
+    // Compatibilidad con cierres viejos de facturación: solo inferimos si el
+    // documento no trae una pestaña clara pero sí indica quién originó el pedido.
+    const rowKind = activeClosureKind(row.closureKind || row.closureType || row.type || row.category);
+    const requestedByRole = safe(row.requestedByRole || row.solicitadoPorRol || row.requestedRole).toLowerCase();
+    if (rowKind === "facturacion") {
+      if (requestedByRole === "admin" || requestedByRole === "explora") return "explora";
+      if (requestedByRole === "driver" || requestedByRole === "chofer") return "chofer";
+    }
+    return "";
+  }
+
+  function closureMatchesHomeModule(row = {}, kind = state.tab) {
+    const target = activeClosureKind(kind);
+    if (!["caja_chica", "gastos", "explora", "chofer"].includes(target)) return false;
+    return closureHomeModuleOf(row) === target;
   }
 
   function isClosureTab(kind = state.tab) {
@@ -781,8 +822,20 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       .filter(row => closureActionForViewer(row) !== "none")
       .sort((a,b)=>rowMs(b)-rowMs(a));
     const unique = new Map();
-    for (const row of rows) unique.set(safe(row.id || `${closureKindOf(row)}_${rowMs(row)}`), row);
+    for (const row of rows) unique.set(safe(row.id || `${closureHomeModuleOf(row) || closureKindOf(row)}_${rowMs(row)}`), row);
     return Array.from(unique.values());
+  }
+
+  function pendingHomeClosureFor(uid = getDriverUid(), kind = state.tab) {
+    const targetUid = safe(uid);
+    if (isAdmin() && !targetUid) return null;
+    return state.closures
+      .filter(row => safe(row.closureMode || row.periodType) === "on_demand")
+      .filter(row => !/confirmed|completed|closed|cerrado|al_dia|al día|pagado|cancelled|canceled|anulado|rechazado/i.test(safe(row.status || row.estado)))
+      .filter(row => closureMatchesHomeModule(row, kind))
+      .filter(row => !targetUid || closureBelongsToDriver(row, targetUid))
+      .filter(row => closureActionForViewer(row) !== "none")
+      .sort((a,b)=>rowMs(b)-rowMs(a))[0] || null;
   }
 
   function closureResultText(closure = {}) {
@@ -1504,8 +1557,8 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       quick.disabled = !stateForButton.enabled;
     }
     if (!box || !text) return;
-    const pending = stateForButton.visible ? pendingClosureFor(getDriverUid(), kind) : null;
-    state.pendingClosure = pending;
+    const pending = pendingHomeClosureFor(getDriverUid(), kind);
+    state.pendingClosure = pending || pendingClosureFor(getDriverUid(), kind);
     const bannerMessage = pending ? closureYellowBannerMessage(pending) : null;
     const showPendingCard = !!bannerMessage;
     box.hidden = !showPendingCard;
@@ -1783,6 +1836,9 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       billingClosure:isBillingClosureKind(kind),
       billingResetGroup:isBillingClosureKind(kind) ? "facturacion" : "",
       affectsTabs:isBillingClosureKind(kind) ? ["chofer", "explora", "facturacion"] : [kind],
+      homeModule:kind,
+      requestModule:kind,
+      originModule:kind,
       status:"requested",
       estado:"solicitado",
       statusLabel:`${closureTitle(kind)} solicitado`,
