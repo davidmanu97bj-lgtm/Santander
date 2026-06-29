@@ -1,7 +1,7 @@
-/* Compatibilidad validada: v3926-billing-logo-dark-login-bg */
+/* Compatibilidad validada: v3927-billing-logo-dark-no-bell */
 /* EXPLORA PWA service worker · v2.5.1 */
 const CACHE_PREFIX = 'explora-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}v3926-billing-logo-dark-login-bg`;
+const CACHE_NAME = `${CACHE_PREFIX}v3927-billing-logo-dark-no-bell`;
 const APP_SHELL = [
   './',
   './index.html',
