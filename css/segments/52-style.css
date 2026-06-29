@@ -487,15 +487,12 @@ body.explora-pay-mode.pay-notifications-open .dashboard-shell-real{padding-botto
 .pay-liquid-pill .closure-liquidation-label{font-size:13px!important;}
 
 /* EXPLORA v32 · Eficiencia propia/KM */
-.pay-efficiency-btn{background:linear-gradient(145deg,#ffe66f,#e9bf45);border-color:rgba(233,191,69,.78);color:#7a5510;overflow:visible;}
+.pay-efficiency-btn{background:linear-gradient(145deg,#ffe66f,#e9bf45);border-color:rgba(233,191,69,.78);color:#202331;overflow:visible;}
 .pay-efficiency-btn[hidden]{display:none!important;}
 .pay-efficiency-icon{width:34px;height:34px;display:block;background:currentColor;-webkit-mask:url("../../assets/icono_eficiencia_km.png") center/contain no-repeat;mask:url("../../assets/icono_eficiencia_km.png") center/contain no-repeat;}
 .pay-efficiency-asterisk{position:absolute;right:7px;top:4px;min-width:17px;height:17px;border-radius:999px;background:#fff;color:#c83a3a;border:1px solid rgba(200,58,58,.25);display:none;place-items:center;font-size:16px;line-height:17px;font-weight:950;box-shadow:0 2px 8px rgba(34,34,34,.14);}
-.pay-efficiency-btn.efficiency-good{color:#178a3a;border-color:rgba(23,138,58,.46);background:linear-gradient(145deg,#f5ffe9,#e9bf45);}
-.pay-efficiency-btn.efficiency-mid{color:#9b6f08;border-color:rgba(233,191,69,.76);background:linear-gradient(145deg,#fff5bf,#e9bf45);}
-.pay-efficiency-btn.efficiency-bad{color:#c83a3a;border-color:rgba(200,58,58,.38);background:linear-gradient(145deg,#fff1ea,#e9bf45);}
-.pay-efficiency-btn.efficiency-missing{color:#c83a3a;border-color:rgba(200,58,58,.45);background:linear-gradient(145deg,#fff1ea,#e9bf45);}
-.pay-efficiency-btn.efficiency-missing .pay-efficiency-asterisk{display:grid;}
+.pay-efficiency-btn.efficiency-good,.pay-efficiency-btn.efficiency-mid,.pay-efficiency-btn.efficiency-bad,.pay-efficiency-btn.efficiency-missing{color:#202331;border-color:rgba(233,191,69,.78);background:linear-gradient(145deg,#ffe66f,#e9bf45);}
+.pay-efficiency-btn.efficiency-missing .pay-efficiency-asterisk{display:none;}
 .pay-efficiency-backdrop{position:fixed;inset:0;z-index:230;background:rgba(20,21,30,.48);display:none;align-items:flex-end;justify-content:center;padding:18px;}
 .pay-efficiency-backdrop.is-open{display:flex;}
 .pay-efficiency-modal{width:min(100%,490px);background:#fff;border-radius:28px;padding:20px;box-shadow:0 24px 60px rgba(0,0,0,.26);max-height:calc(100dvh - 54px);overflow:auto;font-family:var(--pay-font);}
