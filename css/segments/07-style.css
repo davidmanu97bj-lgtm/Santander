@@ -614,3 +614,143 @@
   #billingForm .billing-form-icon{width:56px!important;height:56px!important;border-radius:22px!important}
   #billingForm .billing-amount-box{min-height:76px!important;border-radius:24px!important}
 }
+
+
+/* EXPLORA v3.9.23 · Modal arriba para teclado + colores por método elegido */
+#billingFormBackdrop.billing-form-backdrop{
+  align-items:flex-start!important;
+  justify-content:center!important;
+  padding:calc(max(10px,env(safe-area-inset-top)) + 8px) 12px calc(12px + env(safe-area-inset-bottom))!important;
+  overflow-y:auto!important;
+}
+#billingForm.billing-form-card{
+  width:min(100%,500px)!important;
+  max-height:calc(var(--visual-viewport-height,100dvh) - max(24px,env(safe-area-inset-top)) - 20px)!important;
+  margin:0 auto!important;
+  border-radius:30px!important;
+  padding:20px 18px calc(18px + env(safe-area-inset-bottom))!important;
+  transform:none!important;
+}
+#billingForm .billing-modal-content{
+  max-height:calc(var(--visual-viewport-height,100dvh) - max(42px,env(safe-area-inset-top)) - 44px)!important;
+  padding:0 0 8px!important;
+}
+#billingForm .billing-form-head{
+  margin-bottom:14px!important;
+}
+#billingForm .billing-invoice-row{
+  padding:13px 16px!important;
+}
+#billingForm .billing-amount-section{
+  margin-top:14px!important;
+}
+#billingForm .billing-amount-box{
+  min-height:72px!important;
+}
+#billingForm .billing-transfer-receipt{
+  margin-top:14px!important;
+}
+#billingForm .billing-actions{
+  margin-top:16px!important;
+}
+
+.billing-method-card--qr{--method-accent:#6f4be8;--method-soft:#f0edff;--method-border:#d8cff8;}
+.billing-method-card--cash{--method-accent:#148a48;--method-soft:#eaf8ef;--method-border:#c7ead4;}
+.billing-method-card--card{--method-accent:#bd8420;--method-soft:#fff5dd;--method-border:#f0d79f;}
+.billing-method-card--transfer{--method-accent:#1683a8;--method-soft:#e8f7fc;--method-border:#c4e5f1;}
+.billing-method-card--qr,
+.billing-method-card--cash,
+.billing-method-card--card,
+.billing-method-card--transfer{
+  border-color:var(--method-border)!important;
+}
+.billing-method-card--qr .billing-method-icon,
+.billing-method-card--cash .billing-method-icon,
+.billing-method-card--card .billing-method-icon,
+.billing-method-card--transfer .billing-method-icon{
+  color:var(--method-accent)!important;
+  background:var(--method-soft)!important;
+}
+.billing-method-card--qr:active,
+.billing-method-card--cash:active,
+.billing-method-card--card:active,
+.billing-method-card--transfer:active{
+  box-shadow:0 8px 20px rgba(31,36,58,.08), 0 0 0 3px var(--method-soft)!important;
+}
+
+#billingForm[data-billing-method="qr"]{
+  --billing-method-color:#6f4be8;
+  --billing-method-soft:#f0edff;
+  --billing-method-border:#d8cff8;
+  --billing-method-wash:#fbfaff;
+}
+#billingForm[data-billing-method="cash"]{
+  --billing-method-color:#148a48;
+  --billing-method-soft:#eaf8ef;
+  --billing-method-border:#c7ead4;
+  --billing-method-wash:#fbfffc;
+}
+#billingForm[data-billing-method="card"]{
+  --billing-method-color:#bd8420;
+  --billing-method-soft:#fff5dd;
+  --billing-method-border:#f0d79f;
+  --billing-method-wash:#fffdf8;
+}
+#billingForm[data-billing-method="transfer"]{
+  --billing-method-color:#1683a8;
+  --billing-method-soft:#e8f7fc;
+  --billing-method-border:#c4e5f1;
+  --billing-method-wash:#fbfeff;
+}
+#billingForm[data-billing-method] .billing-form-icon{
+  color:var(--billing-method-color)!important;
+  background:var(--billing-method-soft)!important;
+  box-shadow:inset 0 0 0 1px var(--billing-method-border)!important;
+}
+#billingForm[data-billing-method] .billing-amount-box>span,
+#billingForm[data-billing-method] .billing-transfer-receipt .receipt-upload-heading{
+  color:var(--billing-method-color)!important;
+}
+#billingForm[data-billing-method] .billing-amount-box{
+  border-color:var(--billing-method-border)!important;
+  background:var(--billing-method-wash)!important;
+}
+#billingForm[data-billing-method] .billing-transfer-receipt{
+  border-color:var(--billing-method-border)!important;
+  background:#fff!important;
+}
+#billingForm[data-billing-method] .billing-action--primary,
+#billingForm[data-billing-method] .billing-action--primary.is-upload,
+#billingForm[data-billing-method] .billing-action--primary.is-finalize,
+#billingForm[data-billing-method].has-receipt .billing-action--primary{
+  background:var(--billing-method-color)!important;
+  box-shadow:0 12px 26px color-mix(in srgb,var(--billing-method-color) 22%,transparent)!important;
+}
+#billingForm[data-billing-method] .billing-action--primary:disabled{
+  background:#d9deea!important;
+  color:#8a90a3!important;
+  box-shadow:none!important;
+}
+
+@media(max-width:390px){
+  #billingFormBackdrop.billing-form-backdrop{
+    padding:calc(max(8px,env(safe-area-inset-top)) + 6px) 10px calc(10px + env(safe-area-inset-bottom))!important;
+  }
+  #billingForm.billing-form-card{
+    width:100%!important;
+    border-radius:28px!important;
+    padding:18px 16px calc(16px + env(safe-area-inset-bottom))!important;
+  }
+  #billingForm .billing-form-head{
+    grid-template-columns:54px minmax(0,1fr)!important;
+    gap:12px!important;
+    margin-bottom:12px!important;
+  }
+  #billingForm .billing-form-icon{width:54px!important;height:54px!important;border-radius:20px!important;}
+  #billingForm .billing-form-title h2{font-size:clamp(23px,6.4vw,30px)!important;}
+  #billingForm .billing-form-title p{font-size:13px!important;}
+  #billingForm .billing-invoice-row{padding:12px 14px!important;}
+  #billingForm .billing-amount-box{min-height:68px!important;border-radius:23px!important;}
+  #billingForm .billing-transfer-receipt{padding:15px!important;border-radius:22px!important;}
+  #billingForm .billing-action{height:56px!important;min-height:56px!important;border-radius:19px!important;}
+}
