@@ -269,6 +269,16 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         <path d="M42 172c8-38 33-58 58-58s50 20 58 58" fill="#d4af37" opacity=".80"/>
       </svg>
     `);
+    const EXPLORA_HEADER_LOGO_SRC = "icons/explora-logo-real-mark-v3911.png";
+
+    function setHeaderExploraLogo() {
+      const image = $("dashboardProfileAvatar");
+      if (!image) return;
+      image.src = EXPLORA_HEADER_LOGO_SRC;
+      image.alt = "Logo EXPLORA";
+      image.setAttribute("aria-label", "Logo EXPLORA");
+    }
+
 
     function delay(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
@@ -485,7 +495,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
 
       if (dashName) dashName.textContent = name;
       if (dashRole) dashRole.textContent = role;
-      if (dashAvatar) dashAvatar.src = avatar;
+      if (dashAvatar) setHeaderExploraLogo();
       if (greetingName) greetingName.textContent = `¡${greetingByHour()}, ${firstNameOf(name)}!`;
       if (greetingDate) greetingDate.textContent = formatArgentinaLongDate();
       if (greetingVehicle) greetingVehicle.textContent = assignedVehicle.assigned
@@ -555,7 +565,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       const dashAvatar = $("dashboardProfileAvatar");
       if (dashName) dashName.textContent = "Cargando perfil…";
       if (dashRole) dashRole.textContent = "Chofer";
-      if (dashAvatar) dashAvatar.src = DEFAULT_AVATAR_SVG;
+      if (dashAvatar) setHeaderExploraLogo();
       const greetingName = $("driverGreetingName");
       const greetingDate = $("driverGreetingDate");
       const greetingVehicle = $("driverGreetingVehicle");
@@ -4500,12 +4510,11 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
 
     function renderAdminHeader(profile = {}) {
       const name = getProfileName(profile, auth.currentUser) || "David";
-      const avatar = getProfileAvatarUrl(profile, auth.currentUser) || DEFAULT_AVATAR_SVG;
       const profileButton = $("dashboardProfileButton");
       profileButton?.classList.add("is-admin-identity");
       profileButton?.removeAttribute("data-action");
       profileButton?.setAttribute("aria-label", "Identidad del administrador");
-      $("dashboardProfileAvatar") && ($("dashboardProfileAvatar").src = avatar);
+      setHeaderExploraLogo();
       $("dashboardProfileName") && ($("dashboardProfileName").textContent = name);
       $("dashboardProfileRole") && ($("dashboardProfileRole").textContent = "Administrador EXPLORA");
       $("driverGreetingName") && ($("driverGreetingName").textContent = `¡${greetingByHour()}, ${firstNameOf(name)}!`);
@@ -10460,7 +10469,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       const currentUid = exploraSession.authUser && exploraSession.authUser.uid;
 
       if (uidText === String(currentUid || "")) {
-        ["dashboardProfileAvatar", "profileAvatarPreview", "adminAvatar"].forEach((id) => {
+        ["profileAvatarPreview", "adminAvatar"].forEach((id) => {
           const image = $(id);
           if (image && image.tagName && image.tagName.toLowerCase() === "img") image.src = visualUrl;
         });
@@ -10479,7 +10488,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     function applyOptimisticAvatarEverywhere(uid, previewUrl) {
       if (!uid || !previewUrl) return;
       const uidText = String(uid);
-      ["dashboardProfileAvatar", "profileAvatarPreview", "adminAvatar"].forEach((id) => {
+      ["profileAvatarPreview", "adminAvatar"].forEach((id) => {
         const image = $(id);
         if (image && image.tagName?.toLowerCase() === "img") image.src = previewUrl;
       });
