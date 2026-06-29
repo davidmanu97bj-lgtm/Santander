@@ -1,4 +1,4 @@
-/* EXPLORA · Pago Home v25 · visual anterior y textos liquidar */
+/* EXPLORA · Pago Home v26 · pull refresh y fuente formal */
 :root{
   --pay-gold:#e9bf45;
   --pay-gold-2:#f4d857;
@@ -11,10 +11,14 @@
   --pay-card:#ffffff;
   --pay-radius:30px;
   --pay-shadow:0 16px 34px rgba(25,28,40,.10);
+  --pay-font:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Inter","Segoe UI",Roboto,Arial,sans-serif;
 }
 body.explora-pay-mode{
   background:var(--pay-bg)!important;
   color:var(--pay-ink);
+  font-family:var(--pay-font);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
 }
 body.explora-pay-mode #app.driver-dashboard{
   min-height:100dvh;
@@ -41,7 +45,63 @@ body.explora-pay-mode #mainBottomNav.performance-bottom-nav{
   display:none!important;
 }
 .explora-pay-home[hidden]{display:none!important;}
-.explora-pay-home{display:block;padding-top:max(22px,env(safe-area-inset-top));font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+
+
+/* EXPLORA · Pull to refresh interno tipo app bancaria */
+.explora-pull-refresh{
+  --pull-distance:0px;
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  height:calc(var(--pull-distance) + env(safe-area-inset-top));
+  min-height:0;
+  z-index:9998;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  padding-bottom:18px;
+  background:linear-gradient(180deg,var(--pay-gold-2) 0%,var(--pay-gold) 100%);
+  opacity:0;
+  pointer-events:none;
+  transform:translateY(-8px);
+  transition:height .22s cubic-bezier(.22,.9,.28,1), opacity .18s ease, transform .18s ease;
+  box-shadow:0 14px 24px rgba(28,31,45,.08);
+}
+.explora-pull-refresh.is-visible,
+.explora-pull-refresh.is-refreshing{
+  opacity:1;
+  transform:translateY(0);
+}
+.explora-pull-spinner{
+  width:32px;
+  height:32px;
+  border-radius:999px;
+  border:2px solid rgba(36,38,56,.20);
+  border-top-color:rgba(36,38,56,.86);
+  background:rgba(255,255,255,.34);
+  box-shadow:0 8px 18px rgba(25,28,40,.10), inset 0 1px 0 rgba(255,255,255,.55);
+  opacity:.88;
+  transform:scale(.86) rotate(0deg);
+  transition:transform .18s ease, opacity .18s ease;
+}
+.explora-pull-refresh.is-ready .explora-pull-spinner,
+.explora-pull-refresh.is-refreshing .explora-pull-spinner{
+  opacity:1;
+  transform:scale(1) rotate(180deg);
+}
+.explora-pull-refresh.is-refreshing .explora-pull-spinner{
+  animation:exploraPullSpin .78s linear infinite;
+}
+body.explora-pulling-refresh #app.driver-dashboard{
+  background:linear-gradient(180deg,var(--pay-gold-2) 0 calc(248px + var(--pull-distance,0px)),var(--pay-bg) calc(248px + var(--pull-distance,0px)) 100%)!important;
+}
+@keyframes exploraPullSpin{to{transform:scale(1) rotate(540deg);}}
+@media (prefers-reduced-motion:reduce){
+  .explora-pull-refresh,.explora-pull-spinner{transition:none!important;animation:none!important;}
+}
+
+.explora-pay-home{display:block;padding-top:max(22px,env(safe-area-inset-top));font-family:var(--pay-font);}
 .pay-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 0 28px;}
 .pay-hello{display:flex;align-items:center;gap:13px;min-width:0;}
 .pay-avatar{width:38px;height:38px;border-radius:999px;background:#eaf1ff;border:2px solid rgba(38,65,130,.22);display:grid;place-items:center;box-shadow:0 2px 0 rgba(255,255,255,.5) inset;overflow:hidden;flex:0 0 auto;}
@@ -93,7 +153,7 @@ body.explora-pay-mode #mainBottomNav.performance-bottom-nav{
 .pay-liquid-pill{background:#f4f5fa;border-radius:999px;padding:13px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:#282a3a;font-size:18px;line-height:1.22;}
 .pay-liquid-pill strong{font-size:18px;font-weight:850;white-space:nowrap;}
 .pay-liquid-pill span{font-weight:520;}
-.closure-liquidation-label{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px!important;font-weight:700!important;letter-spacing:.012em;line-height:1.22;}
+.closure-liquidation-label{font-family:var(--pay-font);font-size:13px!important;font-weight:700!important;letter-spacing:.012em;line-height:1.22;}
 .pay-liquid-pill .closure-liquidation-label{font-size:14px!important;text-transform:none;color:#2f3142;}
 .pay-closure-summary article.closure-payment-result .closure-liquidation-label{font-size:12.5px!important;text-transform:none;}
 
@@ -164,7 +224,7 @@ body.explora-pay-mode.pay-more-open #payMoreScreen:not([hidden]){display:block!i
   min-height:calc(100dvh - 88px);
   padding:calc(18px + env(safe-area-inset-top)) 0 118px;
   color:var(--pay-ink);
-  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-family:var(--pay-font);
   background:#fff;
 }
 .pay-more-head{
@@ -401,7 +461,7 @@ body.explora-pay-mode.pay-notifications-open #payNotificationsScreen:not([hidden
   padding:calc(18px + env(safe-area-inset-top)) 0 118px;
   background:#fff;
   color:var(--pay-ink);
-  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-family:var(--pay-font);
 }
 .pay-notification-head{display:flex;align-items:center;justify-content:space-between;padding:6px 0 30px;}
 .pay-notification-back,.pay-notification-settings{
@@ -448,3 +508,34 @@ body.explora-pay-mode.pay-notifications-open .dashboard-shell-real{padding-botto
 /* CAMBIO 2: Botón inferior "Cierre" en rojo cuando hay cierres abiertos/sin resolver */
 #payNavClosure.is-pending-closure{color:#d93025;}
 #payNavClosure.is-pending-closure svg{stroke:#d93025;}
+
+
+/* Ajuste fino de tipografía financiera */
+.pay-subtitle,
+.pay-extra-lines,
+.pay-status-pill,
+.pay-activity-meta,
+.pay-activity-detail,
+.pay-previous-toggle,
+.pay-previous-panel,
+.pay-previous-breakdown,
+.pay-closure-summary,
+.pay-closure-message,
+.pay-notification-copy small,
+.pay-notification-copy em,
+.pay-more-row-copy small{
+  font-family:var(--pay-font);
+  letter-spacing:-.012em;
+}
+.pay-subtitle{font-size:clamp(12.8px,3.45vw,15px);font-weight:500;color:#3b3e50;}
+.pay-previous-toggle{font-size:11.5px;font-weight:820;padding:5px 9px;}
+.pay-previous-panel,.pay-subtitle .pay-previous-breakdown{font-size:12.4px;font-weight:720;}
+.pay-extra-lines{font-size:13px;}
+.pay-extra-lines strong{font-size:13px;font-weight:780;}
+.pay-activity-title{font-size:14.5px;font-weight:820;letter-spacing:-.018em;}
+.pay-activity-meta,.pay-activity-detail{font-size:12.7px;font-weight:540;line-height:1.33;}
+.pay-section-head button{font-size:14px;font-weight:760;}
+.pay-liquid-pill{font-size:16px;}
+.pay-liquid-pill strong{font-size:16px;}
+.closure-liquidation-label{font-size:12.5px!important;font-weight:650!important;letter-spacing:.004em;}
+.pay-liquid-pill .closure-liquidation-label{font-size:13px!important;}
