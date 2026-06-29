@@ -5,7 +5,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 (() => {
   "use strict";
 
-  const VERSION = "explora-pago-home-v12-caja-chica-solo-efectivo";
+  const VERSION = "explora-pago-home-v13-cierre-facturacion-resetea-ambos";
   const AR_TZ = "America/Argentina/Cordoba";
   const $ = id => document.getElementById(id);
   const state = {
@@ -586,6 +586,13 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     console.info("EXPLORA_PAY_REALTIME", VERSION, reason, uid || "no-driver");
   }
 
+  function closureCutMs(row = {}) {
+    return Math.max(
+      Number(row.cutoffAtMs || 0), Number(row.requestedAtMs || 0), Number(row.driverUploadedAtMs || 0), Number(row.confirmedAtMs || 0),
+      ms(row.cutoffAt), ms(row.requestedAt), ms(row.driverUploadedAt), ms(row.confirmedAt), ms(row.closedAt), rowMs(row)
+    );
+  }
+
   function lastClosureMs(rows, kind = state.tab) {
     const target = activeClosureKind(kind);
     if (!target) return 0;
@@ -595,17 +602,20 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
         const rowKind = closureKindOf(row);
         if (target === "caja_chica") return rowKind === "caja_chica";
         if (target === "gastos") return rowKind === "gastos";
+        // Un cierre pedido desde Chofer o desde Explora corta TODO el período de facturación.
+        // Por eso ambos contadores usan el mismo corte: efectivo del chofer + digital de Explora.
         if (isBillingClosureKind(target)) return isBillingClosureKind(rowKind);
         return rowKind === target;
       })
       .filter(row => !/cancelled|canceled|anulado|rechazado/i.test(safe(row.status || row.estado)))
-      .map(row => Math.max(
-        Number(row.cutoffAtMs || 0), Number(row.requestedAtMs || 0), Number(row.driverUploadedAtMs || 0), Number(row.confirmedAtMs || 0),
-        ms(row.cutoffAt), ms(row.requestedAt), ms(row.driverUploadedAt), ms(row.confirmedAt), ms(row.closedAt), rowMs(row)
-      ))
+      .map(closureCutMs)
       .filter(Boolean)
       .sort((a,b)=>b-a);
     return cuts[0] || 0;
+  }
+
+  function lastBillingClosureMs(rows = []) {
+    return lastClosureMs(rows, "facturacion");
   }
 
   function pendingClosureFor(uid = getDriverUid(), kind = state.tab) {
@@ -712,7 +722,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
   function computeSummary({ records = state.records, expenses = state.expenses, closures = state.closures } = {}) {
     // Nuevo modo: Chofer y Explora son dos vistas del mismo cierre de facturación.
     // El corte de cualquiera de los dos corta toda la facturación: efectivo + digital.
-    const resetBillingMs = Math.max(lastClosureMs(closures, "chofer"), lastClosureMs(closures, "explora"), lastClosureMs(closures, "facturacion"));
+    const resetBillingMs = lastBillingClosureMs(closures);
     const resetExpensesMs = lastClosureMs(closures, "gastos");
     const resetCashboxMs = lastClosureMs(closures, "caja_chica");
 
@@ -1322,6 +1332,8 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       closureType:kind,
       payTab:kind,
       billingClosure:isBillingClosureKind(kind),
+      billingResetGroup:isBillingClosureKind(kind) ? "facturacion" : "",
+      affectsTabs:isBillingClosureKind(kind) ? ["chofer", "explora", "facturacion"] : [kind],
       status:"requested",
       estado:"solicitado",
       statusLabel:`${closureTitle(kind)} solicitado`,
