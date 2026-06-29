@@ -5,11 +5,11 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 (() => {
   "use strict";
 
-  const VERSION = "explora-pago-home-v9-admin-only-driver-debt-closure";
+  const VERSION = "explora-pago-home-v10-caja-chica-5";
   const AR_TZ = "America/Argentina/Cordoba";
   const $ = id => document.getElementById(id);
   const state = {
-    tab:"bruto",
+    tab:"caja_chica",
     view:"inicio",
     user:null,
     role:"driver",
@@ -86,6 +86,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 
   function activeClosureKind(kind = state.tab) {
     const raw = safe(kind).toLowerCase();
+    if (/caja|chica|cashbox|bruto/.test(raw)) return "caja_chica";
     if (/gasto|expense/.test(raw)) return "gastos";
     if (/factur|billing|cobro/.test(raw)) return "facturacion";
     if (/explora|digital|transfer|qr|card|tarjeta/.test(raw)) return "explora";
@@ -103,15 +104,15 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
   }
 
   function isClosureTab(kind = state.tab) {
-    return ["gastos", "explora", "chofer", "facturacion"].includes(activeClosureKind(kind));
+    return ["caja_chica", "gastos", "explora", "chofer", "facturacion"].includes(activeClosureKind(kind));
   }
 
   function closureLabel(kind = state.tab) {
-    return ({ gastos:"gastos", explora:"facturación", chofer:"facturación", facturacion:"facturación" })[activeClosureKind(kind)] || "";
+    return ({ caja_chica:"caja chica", gastos:"gastos", explora:"facturación", chofer:"facturación", facturacion:"facturación" })[activeClosureKind(kind)] || "";
   }
 
   function closureTitle(kind = state.tab) {
-    return ({ gastos:"CIERRE DE GASTOS", explora:"CIERRE DE FACTURACIÓN", chofer:"CIERRE DE FACTURACIÓN", facturacion:"CIERRE DE FACTURACIÓN" })[activeClosureKind(kind)] || "CIERRE";
+    return ({ caja_chica:"CIERRE DE CAJA CHICA", gastos:"CIERRE DE GASTOS", explora:"CIERRE DE FACTURACIÓN", chofer:"CIERRE DE FACTURACIÓN", facturacion:"CIERRE DE FACTURACIÓN" })[activeClosureKind(kind)] || "CIERRE";
   }
 
   function expensePayer(row = {}) {
@@ -193,7 +194,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
           </div>
         </header>
         <nav class="pay-tabs" aria-label="Resumen de caja Explora" role="tablist">
-          <button class="pay-tab is-active" data-pay-tab="bruto" type="button" role="tab" aria-selected="true">Bruto</button>
+          <button class="pay-tab is-active" data-pay-tab="caja_chica" type="button" role="tab" aria-selected="true">Caja chica</button>
           <button class="pay-tab" data-pay-tab="gastos" type="button" role="tab" aria-selected="false">Gastos</button>
           <button class="pay-tab" data-pay-tab="explora" type="button" role="tab" aria-selected="false">Explora</button>
           <button class="pay-tab" data-pay-tab="chofer" type="button" role="tab" aria-selected="false">Chofer</button>
@@ -294,7 +295,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 
   function bindShell() {
     document.querySelectorAll("[data-pay-tab]").forEach(button => button.addEventListener("click", () => {
-      state.tab = button.dataset.payTab || "bruto";
+      state.tab = button.dataset.payTab || "caja_chica";
       render();
     }));
     document.querySelectorAll("[data-pay-run]").forEach(button => button.addEventListener("click", () => runExistingAction(button.dataset.payRun)));
@@ -592,6 +593,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       .filter(row => safe(row.closureMode || row.periodType) === "on_demand")
       .filter(row => {
         const rowKind = closureKindOf(row);
+        if (target === "caja_chica") return rowKind === "caja_chica";
         if (target === "gastos") return rowKind === "gastos";
         if (isBillingClosureKind(target)) return isBillingClosureKind(rowKind);
         return rowKind === target;
@@ -613,6 +615,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       .filter(row => safe(row.closureMode || row.periodType) === "on_demand")
       .filter(row => {
         const rowKind = closureKindOf(row);
+        if (target === "caja_chica") return rowKind === "caja_chica";
         if (target === "gastos") return rowKind === "gastos";
         if (isBillingClosureKind(target)) return isBillingClosureKind(rowKind);
         return rowKind === target;
@@ -644,8 +647,9 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
   function closureResultText(closure = {}) {
     const due = number(closure.amountDueFromDriver || closure.amountFromDriver || 0);
     const toDriver = number(closure.amountDueToDriver || closure.amountToDriver || 0);
-    if (due > 0) return `Chofer paga a Explora ${currency(due)}`;
-    if (toDriver > 0) return activeClosureKind(closureKindOf(closure)) === "gastos" ? `Explora reintegra al chofer ${currency(toDriver)}` : `Explora paga al chofer ${currency(toDriver)}`;
+    const kind = activeClosureKind(closureKindOf(closure));
+    if (due > 0) return kind === "caja_chica" ? `Chofer pasa caja chica a Explora ${currency(due)}` : `Chofer paga a Explora ${currency(due)}`;
+    if (toDriver > 0) return kind === "gastos" ? `Explora reintegra al chofer ${currency(toDriver)}` : `Explora paga al chofer ${currency(toDriver)}`;
     return "Cierre equilibrado";
   }
 
@@ -710,10 +714,14 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     // El corte de cualquiera de los dos corta toda la facturación: efectivo + digital.
     const resetBillingMs = Math.max(lastClosureMs(closures, "chofer"), lastClosureMs(closures, "explora"), lastClosureMs(closures, "facturacion"));
     const resetExpensesMs = lastClosureMs(closures, "gastos");
+    const resetCashboxMs = lastClosureMs(closures, "caja_chica");
 
     const billingRecords = records.filter(row => rowMs(row) > resetBillingMs).sort((a,b)=>rowMs(b)-rowMs(a));
     const cashRecords = billingRecords.filter(row => methodOf(row) === "cash");
     const exploraRecords = billingRecords.filter(row => methodOf(row) !== "cash");
+    const cashboxRecords = records.filter(row => rowMs(row) > resetCashboxMs).sort((a,b)=>rowMs(b)-rowMs(a));
+    const cashboxCashRecords = cashboxRecords.filter(row => methodOf(row) === "cash");
+    const cashboxExploraRecords = cashboxRecords.filter(row => methodOf(row) !== "cash");
     const filteredExpenses = expenses.filter(row => rowMs(row) > resetExpensesMs).sort((a,b)=>rowMs(b)-rowMs(a));
 
     let cashInDriver = 0, nonCashInExplora = 0;
@@ -727,6 +735,13 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     }
 
     const gross = cashInDriver + nonCashInExplora;
+    const cashboxRate = .05;
+    const cashboxGross = cashboxRecords.reduce((sum, row) => sum + amountOf(row), 0);
+    const cashboxTotal = cashboxGross * cashboxRate;
+    const cashboxInDriver = cashboxCashRecords.reduce((sum, row) => sum + amountOf(row) * cashboxRate, 0);
+    const cashboxInExplora = cashboxExploraRecords.reduce((sum, row) => sum + amountOf(row) * cashboxRate, 0);
+    const cashboxAmountFromDriver = cashboxInDriver;
+    const cashboxAmountToDriver = 0;
     const billingShareEach = gross * .5;
     const billingNetToDriver = billingShareEach - cashInDriver;
     const amountToDriverForBilling = Math.max(0, billingNetToDriver);
@@ -757,10 +772,12 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     };
 
     const tabs = {
-      bruto:{
-        kind:"bruto", resetMs:Math.min(resetBillingMs||0, resetExpensesMs||0), records:billingRecords, expenses:filteredExpenses,
-        gross, expenseTotal, mainTotal:gross, amountToDriver:0, amountFromDriver:0, netSettlementToDriver:0,
-        cashInDriver, nonCashInExplora, billingShareEach
+      caja_chica:{
+        kind:"caja_chica", resetMs:resetCashboxMs, records:cashboxRecords, cashboxRecords, cashboxCashRecords, cashboxExploraRecords, expenses:[],
+        gross:cashboxGross, expenseTotal:0, mainTotal:cashboxTotal,
+        cashInDriver, nonCashInExplora, cashboxRate, cashboxTotal, cashboxInDriver, cashboxInExplora,
+        amountToDriver:cashboxAmountToDriver, amountFromDriver:cashboxAmountFromDriver, netSettlementToDriver:-cashboxAmountFromDriver,
+        summaryLabel:"Caja chica automática 5%"
       },
       gastos:{
         kind:"gastos", resetMs:resetExpensesMs, records:[], expenses:filteredExpenses, gross:0, expenseTotal,
@@ -774,9 +791,11 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     };
 
     return {
-      resetMs:tabs[activeClosureKind(state.tab) || "bruto"]?.resetMs || 0,
+      resetMs:tabs[activeClosureKind(state.tab) || "caja_chica"]?.resetMs || 0,
       records:billingRecords, billingRecords, cashRecords, exploraRecords, expenses:filteredExpenses, tabs,
+      cashboxRecords, cashboxCashRecords, cashboxExploraRecords,
       gross, cashInDriver, nonCashInExplora, billingShareEach,
+      cashboxRate, cashboxGross, cashboxTotal, cashboxInDriver, cashboxInExplora, cashboxAmountFromDriver, cashboxAmountToDriver,
       driverShare:billingShareEach, exploraShare:billingShareEach,
       driverShareFromCash:cashInDriver * .5, exploraShareFromCash:cashInDriver * .5,
       driverShareFromExplora:nonCashInExplora * .5, exploraShareFromExplora:nonCashInExplora * .5,
@@ -793,7 +812,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
   }
 
   function tabSummary(summary = computeSummary(), kind = state.tab) {
-    return summary.tabs?.[activeClosureKind(kind)] || summary.tabs?.bruto || summary;
+    return summary.tabs?.[activeClosureKind(kind)] || summary.tabs?.caja_chica || summary;
   }
 
   function billingWinner(summary = state.latestSummary || computeSummary()) {
@@ -821,6 +840,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const pending = pendingClosureFor(getDriverUid(), target);
     if (pending) {
       const pendingKind = closureKindOf(pending);
+      if (target === "caja_chica") return { visible:true, enabled:isAdmin() && pendingKind === "caja_chica", pending:true };
       if (target === "gastos") return { visible:true, enabled:pendingKind === "gastos", pending:true };
       if (target === "chofer") return { visible:false, enabled:false, pending:true };
       if (target === "explora") {
@@ -831,6 +851,10 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
         return { visible:true, enabled:false, pending:true };
       }
       return { visible:false, enabled:false, pending:true };
+    }
+    if (target === "caja_chica") {
+      const t = tabSummary(summary, "caja_chica");
+      return { visible:true, enabled:isAdmin() && number(t.amountFromDriver || 0) > 0 };
     }
     if (target === "gastos") {
       const t = tabSummary(summary, "gastos");
@@ -853,28 +877,38 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const status = closureButtonState(kind, summary);
     if (!status.visible || !status.enabled) {
       const target = activeClosureKind(kind);
+      if (target === "caja_chica") throw new Error("No hay caja chica en efectivo pendiente para cerrar.");
       if (target === "gastos") throw new Error("No hay gastos abiertos para pedir cierre.");
       if (target === "chofer") throw new Error("El cierre de facturación no corresponde al chofer en este momento.");
       if (target === "explora") throw new Error("El cierre de facturación no corresponde a Explora en este momento.");
-      throw new Error("Bruto es solo informativo.");
+      throw new Error("Este módulo no tiene cierre disponible en este momento.");
     }
   }
 
   function movementRows(summary = computeSummary()) {
     const rows = [];
     const kind = activeClosureKind(state.tab);
-    const paymentRows = state.tab === "bruto" ? summary.records : (kind === "explora" ? summary.exploraRecords : kind === "chofer" ? summary.cashRecords : []);
-    const expenseRows = state.tab === "bruto" || kind === "gastos" ? summary.expenses : [];
+    const paymentRows = kind === "caja_chica" ? summary.cashboxRecords : (kind === "explora" ? summary.exploraRecords : kind === "chofer" ? summary.cashRecords : []);
+    const expenseRows = kind === "gastos" ? summary.expenses : [];
     for (const row of paymentRows || []) {
       const amount = amountOf(row), method = methodOf(row), at = rowMs(row);
       if (!(amount > 0)) continue;
+      if (kind !== "caja_chica") {
+        rows.push({
+          at, type:"payment", title:`${dateShort(at)} · ${paymentLabel(method)}`,
+          meta:safe(row.description || row.detalle || row.notes || row.ruta || "Servicio registrado"),
+          detail: method === "cash"
+            ? `Cobró el chofer en efectivo: ${currency(amount)} · En el cierre de facturación se compara contra lo cobrado por Explora`
+            : `Cobró Explora: ${currency(amount)} · En el cierre de facturación se compara contra el efectivo del chofer`,
+          amount, positive:true
+        });
+      }
+      const cashbox = amount * .05;
       rows.push({
-        at, type:"payment", title:`${dateShort(at)} · ${paymentLabel(method)}`,
-        meta:safe(row.description || row.detalle || row.notes || row.ruta || "Servicio registrado"),
-        detail: method === "cash"
-          ? `Cobró el chofer en efectivo: ${currency(amount)} · En el cierre de facturación se compara contra lo cobrado por Explora`
-          : `Cobró Explora: ${currency(amount)} · En el cierre de facturación se compara contra el efectivo del chofer`,
-        amount, positive:true
+        at: at + 1, type:"cashbox", title:`${dateShort(at)} · Caja chica 5%`,
+        meta:safe(row.description || row.detalle || row.notes || row.ruta || "Generada automáticamente por cobro"),
+        detail: method === "cash" ? `Caja chica generada por efectivo: la tiene el chofer y debe pasarla a Explora` : `Caja chica generada por cobro digital: ya está en Explora`,
+        amount:-cashbox, negative:true
       });
     }
     for (const row of expenseRows || []) {
@@ -890,7 +924,8 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     }
     for (const row of state.closures.filter(r => safe(r.closureMode || r.periodType) === "on_demand")) {
       const closureKind = closureKindOf(row);
-      if (state.tab !== "bruto" && kind) {
+      if (kind) {
+        if (kind === "caja_chica" && closureKind !== "caja_chica") continue;
         if (kind === "gastos" && closureKind !== "gastos") continue;
         if (isBillingClosureKind(kind) && !isBillingClosureKind(closureKind)) continue;
         if (!isBillingClosureKind(kind) && closureKind !== kind) continue;
@@ -935,6 +970,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 
   function pendingValueForTab(closure = {}, kind = state.tab) {
     const target = activeClosureKind(kind);
+    if (target === "caja_chica") return number(closure.cashboxTotal || closure.mainTotal || 0);
     if (target === "gastos") return number(closure.expenseTotal || 0);
     if (target === "chofer") return number(closure.cashInDriver || 0);
     if (target === "explora") return number(closure.exploraCash || closure.nonCashInExplora || 0);
@@ -963,8 +999,20 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       extra.innerHTML = `<div><span>Administrador</span><strong>Seleccionar chofer</strong></div>`;
       return;
     }
-    let main = summary.gross, sub = "Bruto abierto informativo", pill = "Sin cierre en Bruto", pillValue = 0;
-    if (state.tab === "gastos") {
+    let main = summary.cashboxTotal, sub = "Caja chica automática 5%", pill = "Caja chica", pillValue = 0;
+    if (activeClosureKind(state.tab) === "caja_chica") {
+      const t = tabSummary(summary, "caja_chica");
+      main = t.cashboxTotal || 0;
+      sub = pending ? "Caja chica nueva desde el cierre pendiente" : "Caja chica 5% desde el último cierre";
+      pill = t.amountFromDriver > 0 ? "Chofer debe pasar a Explora" : "Caja chica ya está en Explora";
+      pillValue = t.amountFromDriver || 0;
+      lines.push(
+        ["Facturación base", currency(t.gross || 0)],
+        ["Caja chica por efectivo", currency(t.cashboxInDriver || 0)],
+        ["Caja chica por digital", currency(t.cashboxInExplora || 0)],
+        ["Total caja chica 5%", currency(t.cashboxTotal || 0)]
+      );
+    } else if (state.tab === "gastos") {
       const t = tabSummary(summary, "gastos");
       main = t.expenseTotal;
       sub = pending ? "Gastos nuevos desde el cierre pendiente" : "Solo gastos desde el último cierre de gastos";
@@ -1001,14 +1049,14 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
         ["Parte de cada uno 50%", currency(summary.billingShareEach)]
       );
     } else {
-      main = summary.gross;
-      sub = "Vista general. No genera cierre.";
-      pill = "Para cerrar, elegí Gastos, Explora o Chofer";
-      pillValue = summary.gross;
+      main = summary.cashboxTotal || 0;
+      sub = "Caja chica 5% desde el último cierre";
+      pill = summary.cashboxInDriver > 0 ? "Chofer debe pasar a Explora" : "Caja chica ya está en Explora";
+      pillValue = summary.cashboxInDriver || 0;
       lines.push(
-        ["Chofer · efectivo abierto", currency(summary.cashInDriver)],
-        ["Explora · digital abierto", currency(summary.nonCashInExplora)],
-        ["Gastos abiertos", currency(summary.expenseTotal)]
+        ["Facturación base", currency(summary.cashboxGross || 0)],
+        ["Caja chica por efectivo", currency(summary.cashboxInDriver || 0)],
+        ["Caja chica por digital", currency(summary.cashboxInExplora || 0)]
       );
     }
     if (pending) {
@@ -1050,12 +1098,13 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     if (pending) {
       const due = number(pending.amountDueFromDriver || 0);
       const toDriver = number(pending.amountDueToDriver || 0);
-      text.textContent = `${closureTitle(closureKindOf(pending))} · ${due > 0 ? `transferencia pendiente por ${currency(due)}` : toDriver > 0 ? `Explora debe pagar ${currency(toDriver)}` : "cierre equilibrado pendiente"}`;
+      const pk = activeClosureKind(closureKindOf(pending));
+      text.textContent = `${closureTitle(closureKindOf(pending))} · ${due > 0 ? (pk === "caja_chica" ? `caja chica pendiente por ${currency(due)}` : `transferencia pendiente por ${currency(due)}`) : toDriver > 0 ? `Explora debe pagar ${currency(toDriver)}` : "cierre equilibrado pendiente"}`;
     }
   }
 
   function activityIcon(type) {
-    if (type === "expense") return `<svg viewBox="0 0 24 24"><path d="M4 7.5h14.5A1.5 1.5 0 0 1 20 9v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11"></path><path d="M16 12h5v4h-5a2 2 0 0 1 0-4Z"></path></svg>`;
+    if (type === "expense" || type === "cashbox") return `<svg viewBox="0 0 24 24"><path d="M4 7.5h14.5A1.5 1.5 0 0 1 20 9v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11"></path><path d="M16 12h5v4h-5a2 2 0 0 1 0-4Z"></path></svg>`;
     if (type === "closure") return `<svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"></path><path d="M14 3v5h5"></path></svg>`;
     return `<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>`;
   }
@@ -1141,7 +1190,8 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const cut = closureTimeLabel(closure);
     const driver = safe(closure.driverName || closure.choferNombre || closure.nombreChofer || "Chofer");
     const kindLabel = closureTitle(kind);
-    const result = due > 0 ? "Chofer paga a Explora" : toDriver > 0 ? (activeClosureKind(kind) === "gastos" ? "Explora reintegra al chofer" : "Explora paga al chofer") : "Cierre equilibrado";
+    const k = activeClosureKind(kind);
+    const result = due > 0 ? (k === "caja_chica" ? "Chofer pasa caja chica a Explora" : "Chofer paga a Explora") : toDriver > 0 ? (k === "gastos" ? "Explora reintegra al chofer" : "Explora paga al chofer") : "Cierre equilibrado";
     const amount = Math.max(due, toDriver);
     const base = [
       ["Motivo", "Explora pidió el cierre"],
@@ -1151,9 +1201,11 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       ["Estado", status],
       [result, currency(amount)]
     ];
-    const detail = activeClosureKind(kind) === "gastos"
-      ? [["Gastos incluidos", currency(expenseTotal)], ["Parte chofer 50%", currency(expenseTotal * .5)], ["Parte Explora 50%", currency(toDriver || expenseTotal * .5)]]
-      : [["Efectivo chofer", currency(cash)], ["Digital Explora", currency(digital)], ["Total facturado", currency(gross)], ["Parte de cada uno", currency(share)]];
+    const detail = k === "caja_chica"
+      ? [["Facturación base", currency(closure.cashboxGross || gross)], ["Caja chica total 5%", currency(closure.cashboxTotal || closure.mainTotal || amount)], ["En efectivo / chofer", currency(closure.cashboxInDriver || due)], ["En digital / Explora", currency(closure.cashboxInExplora || 0)]]
+      : k === "gastos"
+        ? [["Gastos incluidos", currency(expenseTotal)], ["Parte chofer 50%", currency(expenseTotal * .5)], ["Parte Explora 50%", currency(toDriver || expenseTotal * .5)]]
+        : [["Efectivo chofer", currency(cash)], ["Digital Explora", currency(digital)], ["Total facturado", currency(gross)], ["Parte de cada uno", currency(share)]];
     const receipt = closure.receiptUrl ? [["Comprobante", "cargado"]] : [];
     return base.concat(detail, receipt).map(([label,value]) => `<article><span>${esc(label)}</span><strong>${esc(value)}</strong></article>`).join("") + (due > 0 && !closure.receiptUrl && !adminView ? `<div class="pay-closure-alert">Para quedar al día, cargá el comprobante de transferencia.</div>` : "");
   }
@@ -1192,7 +1244,9 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       : "El corte será inmediato: lo nuevo que cargues después empieza desde cero en este mismo tipo de cierre.";
     submit.textContent = `Pedir ${closureTitle(kind).toLowerCase()}`;
     submit.disabled = isAdmin() && !getDriverUid();
-    if (kind === "gastos") {
+    if (kind === "caja_chica") {
+      summary.innerHTML = `<article><span>Facturación base</span><strong>${currency(latest.gross || 0)}</strong></article><article><span>Caja chica total 5%</span><strong>${currency(latest.cashboxTotal || 0)}</strong></article><article><span>En poder del chofer</span><strong>${currency(latest.cashboxInDriver || 0)}</strong></article><article><span>Ya en Explora</span><strong>${currency(latest.cashboxInExplora || 0)}</strong></article><article><span>Chofer pasa a Explora</span><strong>${currency(latest.amountFromDriver || 0)}</strong></article>`;
+    } else if (kind === "gastos") {
       summary.innerHTML = `<article><span>Gastos abiertos</span><strong>${currency(latest.expenseTotal)}</strong></article><article><span>Parte chofer 50%</span><strong>${currency(latest.driverExpenseShare || 0)}</strong></article><article><span>Explora reintegra al chofer</span><strong>${currency(latest.amountToDriver)}</strong></article>`;
     } else {
       const resultLabel = latest.amountToDriver > 0 ? "Explora paga al chofer" : latest.amountFromDriver > 0 ? "Chofer paga a Explora" : "Facturación equilibrada";
@@ -1227,7 +1281,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const user = state.auth?.currentUser;
     if (!user?.uid) throw new Error("No hay sesión activa.");
     const kind = activeClosureKind(state.modalKind || state.tab);
-    if (!isClosureTab(kind)) throw new Error("Bruto es solo informativo. Elegí Gastos, Explora o Chofer para pedir un cierre.");
+    if (!isClosureTab(kind)) throw new Error("Elegí Caja chica, Gastos o Explora para pedir un cierre.");
     let targetUid = getDriverUid();
     let targetName = displayName();
     if (isAdmin()) {
@@ -1267,6 +1321,11 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       expenseTotal:Number(summary.expenseTotal || 0),
       cashInDriver:Number(summary.cashInDriver || 0),
       exploraCash:Number(summary.nonCashInExplora || 0),
+      cashboxRate:Number(summary.cashboxRate || 0),
+      cashboxGross:Number(summary.gross || 0),
+      cashboxTotal:Number(summary.cashboxTotal || 0),
+      cashboxInDriver:Number(summary.cashboxInDriver || 0),
+      cashboxInExplora:Number(summary.cashboxInExplora || 0),
       billingShareEach:Number(summary.billingShareEach || 0),
       netSettlementToDriver:Number(summary.netSettlementToDriver || 0),
       amountDueFromDriver:Number(summary.amountFromDriver || 0),
