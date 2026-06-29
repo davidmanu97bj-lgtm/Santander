@@ -1,7 +1,7 @@
-/* Compatibilidad validada: v2505-closure-notifications */
-/* EXPLORA PWA service worker · v2.4.92 */
+/* Compatibilidad validada: v2506-admin-driver-pending */
+/* EXPLORA PWA service worker · v2.4.93 */
 const CACHE_PREFIX = 'explora-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}v2505-closure-notifications`;
+const CACHE_NAME = `${CACHE_PREFIX}v2506-admin-driver-pending`;
 const APP_SHELL = [
   './',
   './index.html',
@@ -17,7 +17,7 @@ const APP_SHELL = [
   './js/segments/01-script.js?v2442-weekly-payment-production',
   './js/segments/18-script.mjs?v2442-weekly-payment-production',
   './js/segments/19-script.mjs?v2442-weekly-payment-production',
-  './js/segments/11-script.mjs?v2505-closure-notifications',
+  './js/segments/11-script.mjs?v2506-admin-driver-pending',
   './js/segments/35-script.mjs?v2442-weekly-payment-production',
   './js/core/weekly-core.mjs?v2442-weekly-payment-production',
   './css/segments/45-style.css?v=2440-weekly-closure-cash-record-recovery',
@@ -26,8 +26,8 @@ const APP_SHELL = [
   './css/segments/49-style.css?v=2456-personal-record-server-authoritative',
   './css/segments/50-style.css?v=2458-admin-driver-production-safe',
   './css/segments/51-style.css?v=2484-weekly-mileage-modal-ux',
-  './css/segments/52-style.css?v=2505-closure-notifications',
-  './js/segments/52-script.mjs?v=2505-closure-notifications',
+  './css/segments/52-style.css?v=2506-admin-driver-pending',
+  './js/segments/52-script.mjs?v=2506-admin-driver-pending',
   './js/segments/49-script.mjs?v=2488-mileage-close-fast',
   './js/segments/49-mileage-model.mjs?v=2477-weekly-mileage-v15-admin-card-clickable',
   './js/segments/44-script.mjs?v=2456-personal-record-server-authoritative',
