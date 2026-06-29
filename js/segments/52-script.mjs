@@ -5,11 +5,12 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 (() => {
   "use strict";
 
-  const VERSION = "explora-pago-home-v3-billing-balance-expenses-separate";
+  const VERSION = "explora-pago-home-v4-more-white-exit";
   const AR_TZ = "America/Argentina/Cordoba";
   const $ = id => document.getElementById(id);
   const state = {
     tab:"bruto",
+    view:"inicio",
     user:null,
     role:"driver",
     profile:{},
@@ -202,6 +203,32 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
           <div class="pay-activity-list" id="payActivityList"><div class="pay-activity-empty">Cargando movimientos…</div></div>
         </section>
       </section>
+      <section class="explora-pay-more" id="payMoreScreen" hidden aria-label="Más opciones Explora">
+        <header class="pay-more-head">
+          <button class="pay-more-back" id="payMoreBack" type="button" aria-label="Volver al inicio"><svg viewBox="0 0 24 24"><path d="M15 6 9 12l6 6"></path></svg></button>
+          <div class="pay-more-title-wrap">
+            <span class="pay-more-kicker">EXPLORA</span>
+            <h1>Más</h1>
+            <p id="payMoreSubtitle">Accesos rápidos y configuración de la cuenta.</p>
+          </div>
+        </header>
+        <section class="pay-more-profile">
+          <span class="pay-more-avatar" id="payMoreAvatar"><svg viewBox="0 0 24 24"><path d="M7.5 12.5 10 15l6.5-6.5"></path><path d="M3.5 12c2.4-4.4 5.6-4.4 8 0 2.4 4.4 5.6 4.4 9 0"></path></svg></span>
+          <div>
+            <strong id="payMoreName">CHOFER</strong>
+            <small id="payMoreRole">Cuenta Explora</small>
+          </div>
+        </section>
+        <section class="pay-more-card" id="payMoreList" aria-label="Accesos de Más"></section>
+        <section class="pay-more-card pay-more-admin" id="payMoreAdminList" aria-label="Accesos administrativos" hidden></section>
+        <div class="pay-more-spacer"></div>
+        <section class="pay-more-logout-zone">
+          <button class="pay-more-logout" id="payMoreLogoutBtn" type="button">
+            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg>
+            <span>Salir</span>
+          </button>
+        </section>
+      </section>
       <button class="pay-floating-spark" id="payQuickClosureBtn" type="button" aria-label="Pedir cierre" hidden><svg viewBox="0 0 24 24"><path d="M12 2 14.8 9.2 22 12l-7.2 2.8L12 22l-2.8-7.2L2 12l7.2-2.8Z"></path></svg></button>
       <nav class="pay-bottom-nav" id="payBottomNav" aria-label="Navegación principal Explora">
         <button class="pay-nav-btn is-active" data-pay-nav="inicio" type="button"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 10v10h14V10"></path></svg><span>Inicio</span></button>
@@ -268,8 +295,115 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     $("payClosureBackdrop")?.addEventListener("click", event => { if (event.target?.id === "payClosureBackdrop") closeClosureModal(); });
     $("payClosureReceiptInput")?.addEventListener("change", event => { state.modalFile = event.target?.files?.[0] || null; renderClosureModal(); });
     $("payClosureSubmit")?.addEventListener("click", submitClosureModal);
-    document.querySelector('[data-pay-nav="actividad"]')?.addEventListener("click", () => $("payActivityTitle")?.scrollIntoView({ behavior:"smooth", block:"start" }));
-    document.querySelector('[data-pay-nav="mas"]')?.addEventListener("click", () => runExistingAction(isAdmin() ? "admin-choferes" : "abrir-perfil"));
+    document.querySelector('[data-pay-nav="inicio"]')?.addEventListener("click", () => showPayView("inicio"));
+    document.querySelector('[data-pay-nav="actividad"]')?.addEventListener("click", () => {
+      showPayView("inicio");
+      setTimeout(() => $("payActivityTitle")?.scrollIntoView({ behavior:"smooth", block:"start" }), 40);
+    });
+    document.querySelector('[data-pay-nav="mas"]')?.addEventListener("click", () => showPayView("mas"));
+    $("payMoreBack")?.addEventListener("click", () => showPayView("inicio"));
+    $("payMoreLogoutBtn")?.addEventListener("click", logoutFromMore);
+    $("payMoreList")?.addEventListener("click", event => {
+      const button = event.target.closest("[data-pay-more-action]");
+      if (!button) return;
+      showPayView("inicio");
+      runExistingAction(button.dataset.payMoreAction);
+    });
+    $("payMoreAdminList")?.addEventListener("click", event => {
+      const button = event.target.closest("[data-pay-more-action]");
+      if (!button) return;
+      showPayView("inicio");
+      runExistingAction(button.dataset.payMoreAction);
+    });
+  }
+
+  function setBottomNavActive(target = "inicio") {
+    document.querySelectorAll("#payBottomNav .pay-nav-btn").forEach(button => {
+      const nav = button.dataset.payNav || (button.id === "payNavClosure" ? "cierre" : "");
+      button.classList.toggle("is-active", nav === target);
+    });
+  }
+
+  function showPayView(view = "inicio") {
+    const target = view === "mas" ? "mas" : "inicio";
+    state.view = target;
+    const dashboard = $("exploraPagoDashboard");
+    const more = $("payMoreScreen");
+    if (more) more.hidden = target !== "mas";
+    if (dashboard) dashboard.hidden = target === "mas";
+    document.body.classList.toggle("pay-more-open", target === "mas");
+    setBottomNavActive(target);
+    if (target === "mas") renderMoreScreen();
+  }
+
+  function moreItems() {
+    return [
+      { title:"Mi perfil", detail:"Datos de cuenta y preferencias", action:"abrir-perfil", icon:"user" },
+      { title:"Mi auto", detail:"Vencimientos, patente y documentación", action:"mi-auto", icon:"car" },
+      { title:"Multas y choques", detail:"Deudas y novedades del vehículo", action:"multas-choques", icon:"alert" },
+      { title:"Préstamo Explora", detail:"Solicitud y estado del préstamo", action:"prestamo-explora", icon:"loan" },
+      { title:"Comprobantes", detail:"Cobros, gastos y cierres cargados", action:"comprobantes", icon:"receipt" }
+    ];
+  }
+
+  function adminMoreItems() {
+    return [
+      { title:"Choferes", detail:"Altas, autos y gestión", action:"admin-choferes", icon:"users" },
+      { title:"Cierres", detail:"Comprobantes y pagos pendientes", action:"admin-cierres", icon:"receipt" },
+      { title:"Gastos", detail:"Gastos cargados por choferes", action:"admin-gastos", icon:"wallet" },
+      { title:"Multas", detail:"Multas, choques y deudas", action:"admin-multas", icon:"alert" }
+    ];
+  }
+
+  function moreIcon(name = "user") {
+    const icons = {
+      user:'<path d="M20 21a8 8 0 0 0-16 0"></path><circle cx="12" cy="8" r="4"></circle>',
+      car:'<path d="M6 17h12l1-5-2-5H7l-2 5 1 5Z"></path><path d="M7 17v2M17 17v2M5 12h14"></path>',
+      alert:'<path d="M12 9v4"></path><path d="M12 17h.01"></path><path d="M10.3 3.9 2.6 18a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"></path>',
+      loan:'<path d="M4 7h16v12H4z"></path><path d="M4 10h16"></path><path d="M8 15h4"></path>',
+      receipt:'<path d="M7 3h10v18l-2-1-2 1-2-1-2 1-2-1Z"></path><path d="M9 8h6M9 12h6M9 16h4"></path>',
+      users:'<path d="M16 21a6 6 0 0 0-12 0"></path><circle cx="10" cy="8" r="4"></circle><path d="M22 21a5 5 0 0 0-5-5"></path><path d="M17 4a4 4 0 0 1 0 8"></path>',
+      wallet:'<path d="M4 7.5h14.5A1.5 1.5 0 0 1 20 9v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11"></path><path d="M16 12h5v4h-5a2 2 0 0 1 0-4Z"></path>'
+    };
+    return `<svg viewBox="0 0 24 24">${icons[name] || icons.user}</svg>`;
+  }
+
+  function renderMoreScreen() {
+    const name = displayName();
+    const roleLabel = isAdmin() ? "Administrador" : "Chofer";
+    const subtitle = $("payMoreSubtitle");
+    const moreName = $("payMoreName");
+    const moreRole = $("payMoreRole");
+    if (subtitle) subtitle.textContent = isAdmin() ? "Panel blanco de accesos rápidos administrativos." : "Accesos rápidos de tu cuenta Explora.";
+    if (moreName) moreName.textContent = name;
+    if (moreRole) moreRole.textContent = roleLabel;
+    const list = $("payMoreList");
+    if (list) list.innerHTML = moreItems().map(item => `
+      <button class="pay-more-row" data-pay-more-action="${esc(item.action)}" type="button">
+        <span class="pay-more-row-icon">${moreIcon(item.icon)}</span>
+        <span class="pay-more-row-copy"><strong>${esc(item.title)}</strong><small>${esc(item.detail)}</small></span>
+        <span class="pay-more-chevron">›</span>
+      </button>
+    `).join("");
+    const adminList = $("payMoreAdminList");
+    if (adminList) {
+      adminList.hidden = !isAdmin();
+      adminList.innerHTML = !isAdmin() ? "" : `<div class="pay-more-card-title">Administración</div>` + adminMoreItems().map(item => `
+        <button class="pay-more-row" data-pay-more-action="${esc(item.action)}" type="button">
+          <span class="pay-more-row-icon">${moreIcon(item.icon)}</span>
+          <span class="pay-more-row-copy"><strong>${esc(item.title)}</strong><small>${esc(item.detail)}</small></span>
+          <span class="pay-more-chevron">›</span>
+        </button>
+      `).join("");
+    }
+  }
+
+  function logoutFromMore() {
+    if (window.ExploraActions?.salir) { window.ExploraActions.salir(); return; }
+    const explicit = $("exploraRoleLogout");
+    if (explicit) { explicit.click(); return; }
+    const oldLogout = Array.from(document.querySelectorAll('[data-action="salir"], .logout-pill-real')).find(el => !el.closest("#payMoreScreen"));
+    if (oldLogout) oldLogout.click();
   }
 
   async function fetchDrivers() {
@@ -530,6 +664,11 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     renderMainCard(summary);
     renderClosureStatus(summary);
     renderActivities(summary);
+    if (state.view === "mas") {
+      showPayView("mas");
+    } else {
+      setBottomNavActive("inicio");
+    }
     if ($("payClosureBackdrop")?.classList.contains("is-open")) renderClosureModal();
   }
 
