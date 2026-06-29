@@ -1,4 +1,4 @@
-/* EXPLORA · Pago Home v22 · resumen 50/50 anterior */
+/* EXPLORA · Pago Home v23 · detalles plegables resumen anterior */
 :root{
   --pay-gold:#e9bf45;
   --pay-gold-2:#f4d857;
@@ -72,6 +72,16 @@ body.explora-pay-mode #mainBottomNav.performance-bottom-nav{
 .pay-subtitle .pay-previous-breakdown span{display:flex;align-items:baseline;justify-content:space-between;gap:9px;max-width:100%;}
 .pay-subtitle .pay-previous-breakdown strong{color:#20883a;font-weight:900;white-space:nowrap;}
 .pay-subtitle .pay-previous-single{display:block;color:#2f8b35;font-weight:800;margin-top:3px;}
+
+.pay-previous-details{display:block;margin-top:8px;line-height:1.25;}
+.pay-previous-toggle{appearance:none;-webkit-appearance:none;border:1px solid rgba(32,136,58,.24);background:linear-gradient(180deg,#f2fff6 0%,#ffffff 100%);color:#20883a;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900;letter-spacing:.01em;box-shadow:0 4px 10px rgba(32,136,58,.08);cursor:pointer;}
+.pay-previous-toggle:active{transform:translateY(1px);}
+.pay-previous-toggle:focus-visible{outline:3px solid rgba(32,136,58,.20);outline-offset:2px;}
+.pay-previous-panel{display:grid;gap:4px;margin-top:7px;color:#2f8b35;font-size:13px;font-weight:780;line-height:1.25;max-width:100%;}
+.pay-previous-panel[hidden]{display:none!important;}
+.pay-previous-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;max-width:100%;}
+.pay-previous-row span:first-child{min-width:0;}
+.pay-previous-row strong{color:#20883a;font-weight:900;white-space:nowrap;text-align:right;}
 .pay-enter{border:0;background:transparent;color:var(--pay-blue);font-size:18px;font-weight:800;display:flex;align-items:center;gap:8px;padding:8px 0 0;white-space:nowrap;}
 .pay-enter svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;}
 .pay-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0 20px;}
