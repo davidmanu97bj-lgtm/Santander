@@ -5,7 +5,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 (() => {
   "use strict";
 
-  const VERSION = "explora-pago-home-v11-caja-chica-neto-actividades";
+  const VERSION = "explora-pago-home-v12-caja-chica-solo-efectivo";
   const AR_TZ = "America/Argentina/Cordoba";
   const $ = id => document.getElementById(id);
   const state = {
@@ -719,9 +719,11 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const billingRecords = records.filter(row => rowMs(row) > resetBillingMs).sort((a,b)=>rowMs(b)-rowMs(a));
     const cashRecords = billingRecords.filter(row => methodOf(row) === "cash");
     const exploraRecords = billingRecords.filter(row => methodOf(row) !== "cash");
-    const cashboxRecords = records.filter(row => rowMs(row) > resetCashboxMs).sort((a,b)=>rowMs(b)-rowMs(a));
-    const cashboxCashRecords = cashboxRecords.filter(row => methodOf(row) === "cash");
-    const cashboxExploraRecords = cashboxRecords.filter(row => methodOf(row) !== "cash");
+    // Caja chica es módulo independiente y SOLO se genera por cobros en efectivo.
+    // Cobros digitales (transferencia/QR/tarjeta) no generan ni descuentan caja chica.
+    const cashboxRecords = records.filter(row => rowMs(row) > resetCashboxMs && methodOf(row) === "cash").sort((a,b)=>rowMs(b)-rowMs(a));
+    const cashboxCashRecords = cashboxRecords;
+    const cashboxExploraRecords = [];
     const filteredExpenses = expenses.filter(row => rowMs(row) > resetExpensesMs).sort((a,b)=>rowMs(b)-rowMs(a));
 
     const cashboxRate = .05;
@@ -735,19 +737,19 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       if (amount > 0) nonCashGrossInExplora += amount;
     }
 
-    // Facturación de Chofer/Explora usa NETO: cobro bruto menos caja chica 5%.
-    // Caja chica se cierra aparte, para que no aparente más dinero del real en facturación.
+    // Facturación de Chofer/Explora mantiene los montos completos.
+    // Caja chica NO descuenta facturación; se calcula aparte solo sobre efectivo.
     const cashboxFromBillingCash = cashGrossInDriver * cashboxRate;
-    const cashboxFromBillingExplora = nonCashGrossInExplora * cashboxRate;
-    const cashInDriver = cashGrossInDriver - cashboxFromBillingCash;
-    const nonCashInExplora = nonCashGrossInExplora - cashboxFromBillingExplora;
+    const cashboxFromBillingExplora = 0;
+    const cashInDriver = cashGrossInDriver;
+    const nonCashInExplora = nonCashGrossInExplora;
 
     const gross = cashInDriver + nonCashInExplora;
-    const grossBeforeCashbox = cashGrossInDriver + nonCashGrossInExplora;
+    const grossBeforeCashbox = gross;
     const cashboxGross = cashboxRecords.reduce((sum, row) => sum + amountOf(row), 0);
     const cashboxTotal = cashboxGross * cashboxRate;
-    const cashboxInDriver = cashboxCashRecords.reduce((sum, row) => sum + amountOf(row) * cashboxRate, 0);
-    const cashboxInExplora = cashboxExploraRecords.reduce((sum, row) => sum + amountOf(row) * cashboxRate, 0);
+    const cashboxInDriver = cashboxTotal;
+    const cashboxInExplora = 0;
     const cashboxAmountFromDriver = cashboxInDriver;
     const cashboxAmountToDriver = 0;
     const billingShareEach = gross * .5;
@@ -866,7 +868,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     }
     if (target === "gastos") {
       const t = tabSummary(summary, "gastos");
-      return { visible:true, enabled:number(t.expenseTotal || 0) > 0 && number(t.amountToDriver || 0) > 0 };
+      return { visible:true, enabled:!isAdmin() && number(t.expenseTotal || 0) > 0 && number(t.amountToDriver || 0) > 0 };
     }
     if (target === "chofer") {
       return { visible:false, enabled:false };
@@ -904,26 +906,25 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     for (const row of paymentRows || []) {
       const amount = amountOf(row), method = methodOf(row), at = rowMs(row);
       if (!(amount > 0)) continue;
-      const cashbox = amount * .05;
-      const net = amount - cashbox;
+      const cashbox = method === "cash" ? amount * .05 : 0;
       rows.push({
         at, type:"payment", title:`${dateShort(at)} · ${paymentLabel(method)}`,
         meta:safe(row.description || row.detalle || row.notes || row.ruta || "Servicio registrado"),
         detail: method === "cash"
-          ? `Cobró el chofer en efectivo: ${currency(amount)} · Caja chica ${currency(cashbox)} · Neto facturación ${currency(net)}`
-          : `Cobró Explora: ${currency(amount)} · Caja chica ${currency(cashbox)} · Neto facturación ${currency(net)}`,
+          ? `Cobró el chofer en efectivo: ${currency(amount)} · caja chica separada ${currency(cashbox)}`
+          : `Cobró Explora: ${currency(amount)} · no genera caja chica`,
         amount, positive:true
       });
     }
 
     for (const row of cashboxRows || []) {
-      const amount = amountOf(row), method = methodOf(row), at = rowMs(row);
+      const amount = amountOf(row), at = rowMs(row);
       if (!(amount > 0)) continue;
       const cashbox = amount * .05;
       rows.push({
         at: at + 1, type:"cashbox", title:`${dateShort(at)} · Caja chica 5%`,
-        meta:safe(row.description || row.detalle || row.notes || row.ruta || "Generada automáticamente por cobro"),
-        detail: method === "cash" ? `Caja chica generada por efectivo: la tiene el chofer y debe pasarla a Explora` : `Caja chica generada por cobro digital: ya está en Explora`,
+        meta:safe(row.description || row.detalle || row.notes || row.ruta || "Generada automáticamente por cobro efectivo"),
+        detail:`Caja chica generada solo por efectivo: la tiene el chofer y debe pasarla a Explora`,
         amount:-cashbox, negative:true
       });
     }
@@ -1019,10 +1020,10 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       pill = t.amountFromDriver > 0 ? "Chofer debe pasar a Explora" : "Caja chica ya está en Explora";
       pillValue = t.amountFromDriver || 0;
       lines.push(
-        ["Facturación base", currency(t.gross || 0)],
-        ["Caja chica por efectivo", currency(t.cashboxInDriver || 0)],
-        ["Caja chica por digital", currency(t.cashboxInExplora || 0)],
-        ["Total caja chica 5%", currency(t.cashboxTotal || 0)]
+        ["Efectivo base", currency(t.gross || 0)],
+        ["Caja chica 5% efectivo", currency(t.cashboxInDriver || 0)],
+        ["Cobros digitales", "No generan caja chica"],
+        ["Total caja chica", currency(t.cashboxTotal || 0)]
       );
     } else if (state.tab === "gastos") {
       const t = tabSummary(summary, "gastos");
@@ -1039,29 +1040,27 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     } else if (state.tab === "explora") {
       const t = tabSummary(summary, "explora");
       main = summary.nonCashInExplora;
-      sub = pending ? "Digital neto nuevo desde el cierre pendiente" : "Facturación neta: ya descuenta caja chica 5%";
+      sub = pending ? "Digital nuevo desde el cierre pendiente" : "Facturación digital completa, sin caja chica";
       pill = t.amountToDriver > 0 ? "Explora paga al chofer" : t.amountFromDriver > 0 ? "Chofer paga a Explora" : "Facturación equilibrada";
       pillValue = Math.max(t.amountToDriver, t.amountFromDriver);
       lines.push(
-        ["Digital bruto cobrado", currency(summary.nonCashGrossInExplora || 0)],
-        ["Caja chica digital 5%", `-${currency(summary.cashboxFromBillingExplora || 0)}`],
-        ["Digital neto para facturación", currency(summary.nonCashInExplora)],
-        ["Efectivo neto del chofer", currency(summary.cashInDriver)],
-        ["Total neto facturado", currency(summary.gross)],
+        ["Digital cobrado", currency(summary.nonCashGrossInExplora || 0)],
+        ["Caja chica digital", "No aplica"],
+        ["Efectivo del chofer", currency(summary.cashInDriver)],
+        ["Total facturado", currency(summary.gross)],
         ["Parte de cada uno 50%", currency(summary.billingShareEach)]
       );
     } else if (state.tab === "chofer") {
       const t = tabSummary(summary, "chofer");
       main = summary.cashInDriver;
-      sub = pending ? "Efectivo neto nuevo desde el cierre pendiente" : "Facturación neta: ya descuenta caja chica 5%";
+      sub = pending ? "Efectivo nuevo desde el cierre pendiente" : "Facturación en efectivo completa";
       pill = t.amountToDriver > 0 ? "Explora paga al chofer" : t.amountFromDriver > 0 ? "Chofer paga a Explora" : "Facturación equilibrada";
       pillValue = Math.max(t.amountToDriver, t.amountFromDriver);
       lines.push(
-        ["Efectivo bruto cobrado", currency(summary.cashGrossInDriver || 0)],
-        ["Caja chica efectivo 5%", `-${currency(summary.cashboxFromBillingCash || 0)}`],
-        ["Efectivo neto para facturación", currency(summary.cashInDriver)],
-        ["Digital neto de Explora", currency(summary.nonCashInExplora)],
-        ["Total neto facturado", currency(summary.gross)],
+        ["Efectivo cobrado", currency(summary.cashGrossInDriver || 0)],
+        ["Caja chica", "Se cierra aparte"],
+        ["Digital de Explora", currency(summary.nonCashInExplora)],
+        ["Total facturado", currency(summary.gross)],
         ["Parte de cada uno 50%", currency(summary.billingShareEach)]
       );
     } else {
@@ -1070,9 +1069,9 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       pill = summary.cashboxInDriver > 0 ? "Chofer debe pasar a Explora" : "Caja chica ya está en Explora";
       pillValue = summary.cashboxInDriver || 0;
       lines.push(
-        ["Facturación base", currency(summary.cashboxGross || 0)],
-        ["Caja chica por efectivo", currency(summary.cashboxInDriver || 0)],
-        ["Caja chica por digital", currency(summary.cashboxInExplora || 0)]
+        ["Efectivo base", currency(summary.cashboxGross || 0)],
+        ["Caja chica 5% efectivo", currency(summary.cashboxInDriver || 0)],
+        ["Cobros digitales", "No generan caja chica"]
       );
     }
     if (pending) {
@@ -1218,7 +1217,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       [result, currency(amount)]
     ];
     const detail = k === "caja_chica"
-      ? [["Facturación base", currency(closure.cashboxGross || gross)], ["Caja chica total 5%", currency(closure.cashboxTotal || closure.mainTotal || amount)], ["En efectivo / chofer", currency(closure.cashboxInDriver || due)], ["En digital / Explora", currency(closure.cashboxInExplora || 0)]]
+      ? [["Efectivo base", currency(closure.cashboxGross || gross)], ["Caja chica total 5%", currency(closure.cashboxTotal || closure.mainTotal || amount)], ["En poder del chofer", currency(closure.cashboxInDriver || due)], ["Cobros digitales", "No generan caja chica"]]
       : k === "gastos"
         ? [["Gastos incluidos", currency(expenseTotal)], ["Parte chofer 50%", currency(expenseTotal * .5)], ["Parte Explora 50%", currency(toDriver || expenseTotal * .5)]]
         : [["Efectivo chofer", currency(cash)], ["Digital Explora", currency(digital)], ["Total facturado", currency(gross)], ["Parte de cada uno", currency(share)]];
@@ -1261,13 +1260,13 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     submit.textContent = `Pedir ${closureTitle(kind).toLowerCase()}`;
     submit.disabled = isAdmin() && !getDriverUid();
     if (kind === "caja_chica") {
-      summary.innerHTML = `<article><span>Facturación base</span><strong>${currency(latest.gross || 0)}</strong></article><article><span>Caja chica total 5%</span><strong>${currency(latest.cashboxTotal || 0)}</strong></article><article><span>En poder del chofer</span><strong>${currency(latest.cashboxInDriver || 0)}</strong></article><article><span>Ya en Explora</span><strong>${currency(latest.cashboxInExplora || 0)}</strong></article><article><span>Chofer pasa a Explora</span><strong>${currency(latest.amountFromDriver || 0)}</strong></article>`;
+      summary.innerHTML = `<article><span>Efectivo base</span><strong>${currency(latest.gross || 0)}</strong></article><article><span>Caja chica 5%</span><strong>${currency(latest.cashboxTotal || 0)}</strong></article><article><span>En poder del chofer</span><strong>${currency(latest.cashboxInDriver || 0)}</strong></article><article><span>Cobros digitales</span><strong>No generan caja chica</strong></article><article><span>Chofer pasa a Explora</span><strong>${currency(latest.amountFromDriver || 0)}</strong></article>`;
     } else if (kind === "gastos") {
       summary.innerHTML = `<article><span>Gastos abiertos</span><strong>${currency(latest.expenseTotal)}</strong></article><article><span>Parte chofer 50%</span><strong>${currency(latest.driverExpenseShare || 0)}</strong></article><article><span>Explora reintegra al chofer</span><strong>${currency(latest.amountToDriver)}</strong></article>`;
     } else {
       const resultLabel = latest.amountToDriver > 0 ? "Explora paga al chofer" : latest.amountFromDriver > 0 ? "Chofer paga a Explora" : "Facturación equilibrada";
       const resultValue = Math.max(latest.amountToDriver || 0, latest.amountFromDriver || 0);
-      summary.innerHTML = `<article><span>Efectivo neto chofer</span><strong>${currency(latest.cashInDriver || 0)}</strong></article><article><span>Digital neto Explora</span><strong>${currency(latest.nonCashInExplora || 0)}</strong></article><article><span>Total neto facturado</span><strong>${currency(latest.gross || 0)}</strong></article><article><span>Parte de cada uno</span><strong>${currency(latest.billingShareEach || 0)}</strong></article><article><span>${esc(resultLabel)}</span><strong>${currency(resultValue)}</strong></article>`;
+      summary.innerHTML = `<article><span>Efectivo chofer</span><strong>${currency(latest.cashInDriver || 0)}</strong></article><article><span>Digital Explora</span><strong>${currency(latest.nonCashInExplora || 0)}</strong></article><article><span>Total facturado</span><strong>${currency(latest.gross || 0)}</strong></article><article><span>Parte de cada uno</span><strong>${currency(latest.billingShareEach || 0)}</strong></article><article><span>${esc(resultLabel)}</span><strong>${currency(resultValue)}</strong></article>`;
     }
   }
 
