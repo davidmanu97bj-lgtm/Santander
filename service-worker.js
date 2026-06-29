@@ -1,7 +1,7 @@
-/* Compatibilidad validada: v3921-billing-visual-fix */
+/* Compatibilidad validada: v3922-billing-visual-soft-symmetry */
 /* EXPLORA PWA service worker · v2.5.1 */
 const CACHE_PREFIX = 'explora-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}v3921-billing-visual-fix`;
+const CACHE_NAME = `${CACHE_PREFIX}v3922-billing-visual-soft-symmetry`;
 const APP_SHELL = [
   './',
   './index.html',
