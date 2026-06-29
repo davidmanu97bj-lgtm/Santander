@@ -1,7 +1,7 @@
-/* Compatibilidad validada: v2501-pay-home-split-demand-closures */
+/* Compatibilidad validada: v2502-billing-balance-expenses-separate */
 /* EXPLORA PWA service worker · v2.4.91 */
 const CACHE_PREFIX = 'explora-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}v2501-pay-home-split-demand-closures`;
+const CACHE_NAME = `${CACHE_PREFIX}v2502-billing-balance-expenses-separate`;
 const APP_SHELL = [
   './',
   './index.html',
@@ -17,17 +17,17 @@ const APP_SHELL = [
   './js/segments/01-script.js?v2442-weekly-payment-production',
   './js/segments/18-script.mjs?v2442-weekly-payment-production',
   './js/segments/19-script.mjs?v2442-weekly-payment-production',
-  './js/segments/11-script.mjs?v2501-pay-home-split-demand-closures',
+  './js/segments/11-script.mjs?v2502-billing-balance-expenses-separate',
   './js/segments/35-script.mjs?v2442-weekly-payment-production',
   './js/core/weekly-core.mjs?v2442-weekly-payment-production',
   './css/segments/45-style.css?v=2440-weekly-closure-cash-record-recovery',
-  './css/segments/44-style.css?v=2491-liquidation-expense-detail',
+  './css/segments/44-style.css?v=2502-billing-balance-expenses-separate',
   './js/segments/43-script.mjs?v2442-weekly-payment-production',
   './css/segments/49-style.css?v=2456-personal-record-server-authoritative',
   './css/segments/50-style.css?v=2458-admin-driver-production-safe',
   './css/segments/51-style.css?v=2484-weekly-mileage-modal-ux',
-  './css/segments/52-style.css?v=pay-home-split-demand-closures',
-  './js/segments/52-script.mjs?v=pay-home-split-demand-closures',
+  './css/segments/52-style.css?v=2502-billing-balance-expenses-separate',
+  './js/segments/52-script.mjs?v=2502-billing-balance-expenses-separate',
   './js/segments/49-script.mjs?v=2488-mileage-close-fast',
   './js/segments/49-mileage-model.mjs?v=2477-weekly-mileage-v15-admin-card-clickable',
   './js/segments/44-script.mjs?v=2456-personal-record-server-authoritative',
