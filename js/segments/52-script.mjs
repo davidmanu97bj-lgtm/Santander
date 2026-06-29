@@ -5,7 +5,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 (() => {
   "use strict";
 
-  const VERSION = "explora-pago-home-v13-cierre-facturacion-resetea-ambos";
+  const VERSION = "explora-pago-home-v14-clean-notification-target";
   const AR_TZ = "America/Argentina/Cordoba";
   const $ = id => document.getElementById(id);
   const state = {
@@ -645,8 +645,22 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       .filter(row => !/confirmed|completed|closed|cerrado|al_dia|al día|pagado|cancelled|canceled|anulado|rechazado/i.test(safe(row.status || row.estado)))
       .filter(row => {
         const rowUids = [row.driverUid, row.choferUid, row.uid, row.ownerUid].map(safe);
-        if (isAdmin()) return !!uid && rowUids.includes(uid);
-        return !uid || rowUids.includes(uid);
+        const requestedByRole = safe(row.requestedByRole || row.solicitadoPorRol || row.requestedRole).toLowerCase();
+        const requestedByUid = safe(row.requestedByUid || row.solicitadoPorUid || row.createdByUid);
+        const driverUid = getOwnDriverUid();
+
+        // Notificaciones de cierre: quien pide NO se notifica a sí mismo.
+        // Si pide un chofer, notifica solo a David/admin.
+        // Si pide David/admin, notifica solo al chofer correspondiente.
+        if (isAdmin()) {
+          if (requestedByRole === "admin" || requestedByUid === safe(state.user?.uid)) return false;
+          if (uid) return rowUids.includes(uid);
+          return true;
+        }
+        if (!rowUids.includes(driverUid)) return false;
+        if (requestedByRole !== "admin" && requestedByUid !== "admin") return false;
+        if (requestedByUid && requestedByUid === driverUid) return false;
+        return true;
       })
       .sort((a,b)=>rowMs(b)-rowMs(a));
     const unique = new Map();
@@ -1032,7 +1046,6 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       lines.push(
         ["Efectivo base", currency(t.gross || 0)],
         ["Caja chica 5% efectivo", currency(t.cashboxInDriver || 0)],
-        ["Cobros digitales", "No generan caja chica"],
         ["Total caja chica", currency(t.cashboxTotal || 0)]
       );
     } else if (state.tab === "gastos") {
@@ -1055,7 +1068,6 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       pillValue = Math.max(t.amountToDriver, t.amountFromDriver);
       lines.push(
         ["Digital cobrado", currency(summary.nonCashGrossInExplora || 0)],
-        ["Caja chica digital", "No aplica"],
         ["Efectivo del chofer", currency(summary.cashInDriver)],
         ["Total facturado", currency(summary.gross)],
         ["Parte de cada uno 50%", currency(summary.billingShareEach)]
@@ -1068,7 +1080,6 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       pillValue = Math.max(t.amountToDriver, t.amountFromDriver);
       lines.push(
         ["Efectivo cobrado", currency(summary.cashGrossInDriver || 0)],
-        ["Caja chica", "Se cierra aparte"],
         ["Digital de Explora", currency(summary.nonCashInExplora)],
         ["Total facturado", currency(summary.gross)],
         ["Parte de cada uno 50%", currency(summary.billingShareEach)]
@@ -1080,8 +1091,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       pillValue = summary.cashboxInDriver || 0;
       lines.push(
         ["Efectivo base", currency(summary.cashboxGross || 0)],
-        ["Caja chica 5% efectivo", currency(summary.cashboxInDriver || 0)],
-        ["Cobros digitales", "No generan caja chica"]
+        ["Caja chica 5% efectivo", currency(summary.cashboxInDriver || 0)]
       );
     }
     if (pending) {
@@ -1227,7 +1237,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       [result, currency(amount)]
     ];
     const detail = k === "caja_chica"
-      ? [["Efectivo base", currency(closure.cashboxGross || gross)], ["Caja chica total 5%", currency(closure.cashboxTotal || closure.mainTotal || amount)], ["En poder del chofer", currency(closure.cashboxInDriver || due)], ["Cobros digitales", "No generan caja chica"]]
+      ? [["Efectivo base", currency(closure.cashboxGross || gross)], ["Caja chica total 5%", currency(closure.cashboxTotal || closure.mainTotal || amount)], ["En poder del chofer", currency(closure.cashboxInDriver || due)]]
       : k === "gastos"
         ? [["Gastos incluidos", currency(expenseTotal)], ["Parte chofer 50%", currency(expenseTotal * .5)], ["Parte Explora 50%", currency(toDriver || expenseTotal * .5)]]
         : [["Efectivo chofer", currency(cash)], ["Digital Explora", currency(digital)], ["Total facturado", currency(gross)], ["Parte de cada uno", currency(share)]];
@@ -1270,7 +1280,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     submit.textContent = `Pedir ${closureTitle(kind).toLowerCase()}`;
     submit.disabled = isAdmin() && !getDriverUid();
     if (kind === "caja_chica") {
-      summary.innerHTML = `<article><span>Efectivo base</span><strong>${currency(latest.gross || 0)}</strong></article><article><span>Caja chica 5%</span><strong>${currency(latest.cashboxTotal || 0)}</strong></article><article><span>En poder del chofer</span><strong>${currency(latest.cashboxInDriver || 0)}</strong></article><article><span>Cobros digitales</span><strong>No generan caja chica</strong></article><article><span>Chofer pasa a Explora</span><strong>${currency(latest.amountFromDriver || 0)}</strong></article>`;
+      summary.innerHTML = `<article><span>Efectivo base</span><strong>${currency(latest.gross || 0)}</strong></article><article><span>Caja chica 5%</span><strong>${currency(latest.cashboxTotal || 0)}</strong></article><article><span>En poder del chofer</span><strong>${currency(latest.cashboxInDriver || 0)}</strong></article><article><span>Chofer pasa a Explora</span><strong>${currency(latest.amountFromDriver || 0)}</strong></article>`;
     } else if (kind === "gastos") {
       summary.innerHTML = `<article><span>Gastos abiertos</span><strong>${currency(latest.expenseTotal)}</strong></article><article><span>Parte chofer 50%</span><strong>${currency(latest.driverExpenseShare || 0)}</strong></article><article><span>Explora reintegra al chofer</span><strong>${currency(latest.amountToDriver)}</strong></article>`;
     } else {
