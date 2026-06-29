@@ -1,7 +1,7 @@
-/* Compatibilidad validada: v2522-closure-request-no-upload-by-non-payer */
-/* EXPLORA PWA service worker · v2.4.99 */
+/* Compatibilidad validada: v2523-closure-nav-btn-red-pending-card-fix */
+/* EXPLORA PWA service worker · v2.5.0 */
 const CACHE_PREFIX = 'explora-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}v2522-closure-request-no-upload-by-non-payer`;
+const CACHE_NAME = `${CACHE_PREFIX}v2523-closure-nav-btn-red-pending-card-fix`;
 const APP_SHELL = [
   './',
   './index.html',
@@ -26,8 +26,8 @@ const APP_SHELL = [
   './css/segments/49-style.css?v=2456-personal-record-server-authoritative',
   './css/segments/50-style.css?v=2458-admin-driver-production-safe',
   './css/segments/51-style.css?v=2484-weekly-mileage-modal-ux',
-  './css/segments/52-style.css?v=2522-no-request-upload',
-  './js/segments/52-script.mjs?v=2522-no-request-upload',
+  './css/segments/52-style.css?v=2523-closure-nav-btn-red',
+  './js/segments/52-script.mjs?v=2523-closure-nav-btn-red',
   './js/segments/49-script.mjs?v=2488-mileage-close-fast',
   './js/segments/49-mileage-model.mjs?v=2477-weekly-mileage-v15-admin-card-clickable',
   './js/segments/44-script.mjs?v=2456-personal-record-server-authoritative',
@@ -97,4 +97,4 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
-/* cache bump: cierre habilitado estilo suave */
+/* cache bump: v2523 cierre nav rojo + tarjeta amarilla estricta + modal sin upload en request */
