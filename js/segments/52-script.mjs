@@ -5,7 +5,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 (() => {
   "use strict";
 
-  const VERSION = "explora-pago-home-v8-reverse-requester-closure-buttons";
+  const VERSION = "explora-pago-home-v9-admin-only-driver-debt-closure";
   const AR_TZ = "America/Argentina/Cordoba";
   const $ = id => document.getElementById(id);
   const state = {
@@ -812,34 +812,39 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const target = activeClosureKind(kind);
     if (!isClosureTab(target) || !hasAdminDriverSelected()) return { visible:false, enabled:false };
 
-    // Regla final de cierres a demanda:
-    // - Chofer y Explora son dos vistas del mismo cierre de facturación.
-    // - El botón se habilita en el módulo de quien DEBE COBRAR / PEDIR el cierre,
-    //   no en el módulo de quien tiene que pagar.
-    //   Ej.: si el chofer tiene de más y debe pagar a Explora, se habilita EXPLORA.
-    //   Ej.: si Explora tiene de más y debe pagar al chofer, se habilita CHOFER.
-    // - Gastos queda independiente y puede pedirse desde Gastos cuando haya gastos abiertos.
+    // Regla corregida de solicitud:
+    // - CHOFER no pide cierre de facturación desde su propio módulo; ese botón se oculta.
+    // - Si el chofer tiene de más y debe pagar a Explora, el chofer NO puede pedir ese cierre.
+    //   Solo ADMIN puede pedirlo desde el módulo EXPLORA.
+    // - Si Explora tiene de más y debe pagar al chofer, el chofer sí puede pedir el cierre desde EXPLORA.
+    // - GASTOS queda separado: admin y chofer pueden pedir cierre si hay gastos abiertos.
     const pending = pendingClosureFor(getDriverUid(), target);
     if (pending) {
       const pendingKind = closureKindOf(pending);
       if (target === "gastos") return { visible:true, enabled:pendingKind === "gastos", pending:true };
-      const amountFromDriver = number(pending.amountDueFromDriver || 0);
-      const amountToDriver = number(pending.amountDueToDriver || 0);
-      const requesterTab = amountFromDriver > 0
-        ? "explora"
-        : amountToDriver > 0
-          ? "chofer"
-          : "balanced";
-      return { visible:true, enabled:requesterTab === target || activeClosureKind(pendingKind) === target, pending:true };
+      if (target === "chofer") return { visible:false, enabled:false, pending:true };
+      if (target === "explora") {
+        const amountFromDriver = number(pending.amountDueFromDriver || 0);
+        const amountToDriver = number(pending.amountDueToDriver || 0);
+        if (amountFromDriver > 0) return { visible:true, enabled:isAdmin() && isBillingClosureKind(pendingKind), pending:true };
+        if (amountToDriver > 0) return { visible:true, enabled:!isAdmin() && isBillingClosureKind(pendingKind), pending:true };
+        return { visible:true, enabled:false, pending:true };
+      }
+      return { visible:false, enabled:false, pending:true };
     }
     if (target === "gastos") {
       const t = tabSummary(summary, "gastos");
       return { visible:true, enabled:number(t.expenseTotal || 0) > 0 && number(t.amountToDriver || 0) > 0 };
     }
-    if (target === "chofer" || target === "explora") {
-      const payer = billingWinner(summary);
-      const requesterTab = payer === "chofer" ? "explora" : payer === "explora" ? "chofer" : "balanced";
-      return { visible:true, enabled:requesterTab === target };
+    if (target === "chofer") {
+      return { visible:false, enabled:false };
+    }
+    if (target === "explora") {
+      const t = tabSummary(summary, "explora");
+      const amountFromDriver = number(summary.amountFromDriverForBilling || t.amountFromDriver || 0);
+      const amountToDriver = number(summary.amountToDriverForBilling || t.amountToDriver || 0);
+      const enabled = isAdmin() ? amountFromDriver > 0 : amountToDriver > 0;
+      return { visible:true, enabled };
     }
     return { visible:false, enabled:false };
   }
