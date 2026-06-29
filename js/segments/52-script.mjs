@@ -5,7 +5,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 (() => {
   "use strict";
 
-  const VERSION = "explora-pago-home-v34-eficiencia-datos-reales";
+  const VERSION = "explora-pago-home-v35-km-inicial-auto";
   const AR_TZ = "America/Argentina/Cordoba";
   const $ = id => document.getElementById(id);
   const state = {
@@ -1055,8 +1055,11 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
   function validBillingClosuresFor(uid = "", rows = state.closures) {
     const targetUid = safe(uid);
     return (rows || [])
-      .filter(row => safe(row.closureMode || row.periodType) === "on_demand")
-      .filter(row => isBillingClosureKind(closureKindOf(row)))
+      .filter(row => {
+        const mode = safe(row.closureMode || row.periodType).toLowerCase();
+        return mode === "on_demand" || row.billingClosure === true || isBillingClosureKind(closureKindOf(row));
+      })
+      .filter(row => row.billingClosure === true || isBillingClosureKind(closureKindOf(row)))
       .filter(row => !targetUid || closureBelongsToDriver(row, targetUid))
       .filter(row => !/cancelled|canceled|anulado|rechazado/i.test(safe(row.status || row.estado)))
       .sort((a,b)=>closureCutMs(b)-closureCutMs(a) || rowMs(b)-rowMs(a));
@@ -1068,21 +1071,46 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       [0] || null;
   }
 
+  function kmFinalSeedFromClosure(row = {}) {
+    return kmNumberFrom(row || {}, KM_FINAL_FIELDS.concat(["efficiencyNextKmInitial", "kmInicialNuevoPeriodo", "nextKmInitial", "proximoKmInicial", "ultimoKmCierre"]));
+  }
+
+  function latestBillingClosureWithKmFinal(uid = "", rows = state.closures, beforeMs = 0) {
+    return validBillingClosuresFor(uid, rows)
+      .filter(row => !beforeMs || closureCutMs(row) < beforeMs)
+      .filter(row => kmFinalSeedFromClosure(row) > 0)
+      [0] || null;
+  }
+
+  function profileKmSeed(profile = {}) {
+    return kmNumberFrom(profile || {}, KM_INITIAL_FIELDS.concat(KM_CURRENT_FIELDS).concat(["lastKnownKm", "ultimoKmCierre", "kmInicialNuevoPeriodo", "efficiencyNextKmInitial"]));
+  }
+
+  function hasKmInitialSeedForDriver(uid = getDriverUid(), closures = state.closures, profile = driverProfileForEfficiency(uid)) {
+    const targetUid = safe(uid);
+    if (kmFinalSeedFromClosure(latestBillingClosureWithKmFinal(targetUid, closures)) > 0) return true;
+    return profileKmSeed(profile || {}) > 0;
+  }
+
   function kmInitialForOpenPeriod(uid = getDriverUid(), closures = state.closures, profile = state.profile) {
-    const latest = latestBillingClosureFor(uid, closures);
-    const fromClosure = kmNumberFrom(latest || {}, KM_FINAL_FIELDS.concat(["efficiencyNextKmInitial", "kmInicialNuevoPeriodo"]));
+    // Regla clave: el KM final del último cierre válido pasa automáticamente a ser
+    // el KM inicial del período nuevo. Por eso el botón "Cargar KM inicial" solo
+    // debe aparecer cuando el chofer nunca cargó ningún KM.
+    const targetUid = safe(uid);
+    const latestWithKm = latestBillingClosureWithKmFinal(targetUid, closures);
+    const fromClosure = kmFinalSeedFromClosure(latestWithKm);
     if (fromClosure > 0) return fromClosure;
-    return kmNumberFrom(profile || {}, KM_INITIAL_FIELDS.concat(KM_CURRENT_FIELDS));
+    return profileKmSeed(profile || {});
   }
 
   function kmInitialForClosure(closure = {}) {
     const uid = safe(closure.driverUid || closure.choferUid || closure.uid || getDriverUid());
     const cut = closureCutMs(closure) || Date.now();
-    const previous = latestBillingClosureFor(uid, state.closures, cut);
-    const fromPrevious = kmNumberFrom(previous || {}, KM_FINAL_FIELDS.concat(["efficiencyNextKmInitial", "kmInicialNuevoPeriodo"]));
+    const previousWithKm = latestBillingClosureWithKmFinal(uid, state.closures, cut);
+    const fromPrevious = kmFinalSeedFromClosure(previousWithKm);
     if (fromPrevious > 0) return fromPrevious;
     const driverProfile = (state.drivers.find(driver => driver.uid === uid)?.profile) || (uid === getOwnDriverUid() ? state.profile : {});
-    return kmNumberFrom(driverProfile || {}, KM_INITIAL_FIELDS.concat(KM_CURRENT_FIELDS));
+    return profileKmSeed(driverProfile || {});
   }
 
   function closureNeedsDriverKm(closure = {}) {
@@ -1175,6 +1203,9 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       currentEfficiencyPeriodStartAtMs:nowMs,
       kmInicialPeriodo:Number(km),
       kmActual:Number(km),
+      kmInitialSeedLoaded:true,
+      efficiencyKmSeeded:true,
+      kmInicialCargadoUnaVez:true,
       kmUpdatedAt:serverTimestamp(),
       kmUpdatedAtMs:nowMs
     };
@@ -1259,6 +1290,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const facturacion = openRecords.reduce((sum, row) => sum + amountOf(row), 0);
     const servicios = openRecords.length;
     const kmInicial = kmInitialForOpenPeriod(targetUid, driverClosures, profile);
+    const kmSeedLoaded = hasKmInitialSeedForDriver(targetUid, driverClosures, profile);
     const kmActual = currentKmForEfficiency(targetUid, openRecords, profile);
     const kmRecorridos = kmActual > 0 && kmInicial > 0 ? kmActual - kmInicial : 0;
     const hasCurrent = facturacion > 0 && kmInicial > 0 && kmActual > 0 && kmRecorridos > 0;
@@ -1268,7 +1300,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const isComparable = hasCurrent && reference.value > 0 && Number.isFinite(diferenciaPct);
     const missingReason = isComparable ? "" : efficiencyMissingReason({ facturacion, kmInicial, kmActual, kmRecorridos, reference:reference.value });
     const status = efficiencyStatusFromOwn({ hasCurrent, reference:reference.value, deltaPct:diferenciaPct });
-    return { uid:targetUid, name, resetMs, facturacion, servicios, kmInicial, kmActual, kmRecorridos, eficiencia, referenciaPropia:reference.value, referenciaConteo:reference.count, referenciaModo:reference.mode, diferenciaPct, missingReason, missingReasons:missingReason ? [missingReason] : [], status };
+    return { uid:targetUid, name, resetMs, facturacion, servicios, kmInicial, kmSeedLoaded, kmActual, kmRecorridos, eficiencia, referenciaPropia:reference.value, referenciaConteo:reference.count, referenciaModo:reference.mode, diferenciaPct, missingReason, missingReasons:missingReason ? [missingReason] : [], status };
   }
 
   function currentEfficiencySnapshot() {
@@ -1410,7 +1442,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const tone = snapshot.status?.tone || "missing";
     const softWarning = (tone === "bad" || tone === "missing") ? `<div class="pay-efficiency-warning">Si el resultado parece bajo, chequeá si no olvidaste cargar algún cobro o actualizar tus kilómetros.</div>` : "";
     const missingReason = tone === "missing" && snapshot.missingReason ? `<div class="pay-efficiency-missing-reason">${esc(snapshot.missingReason)}</div>` : "";
-    const initialKmForm = tone === "missing" && !(snapshot.kmInicial > 0) ? renderInitialKmForm(snapshot) : "";
+    const initialKmForm = tone === "missing" && !(snapshot.kmInicial > 0) && !snapshot.kmSeedLoaded ? renderInitialKmForm(snapshot) : "";
     const currentKmForm = tone === "missing" && snapshot.kmInicial > 0 && !(snapshot.kmRecorridos > 0) ? renderCurrentKmForm(snapshot) : "";
     const driverLabel = (isAdmin() ? (state.selectedDriverName || snapshot.name || "chofer") : (snapshot.name || displayName())).toUpperCase();
     const deltaLine = efficiencyHeadlineDelta(snapshot) ? `<span class="pay-efficiency-delta">${esc(efficiencyHeadlineDelta(snapshot))}</span>` : "";
@@ -2400,7 +2432,11 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       eficienciaUpdatedAt:serverTimestamp(),
       eficienciaUpdatedAtMs:Date.now(),
       kmInicialNuevoPeriodo:Number(kmActual || 0),
-      currentEfficiencyPeriodStartKm:Number(kmActual || 0)
+      efficiencyNextKmInitial:Number(kmActual || 0),
+      currentEfficiencyPeriodStartKm:Number(kmActual || 0),
+      kmInitialSeedLoaded: kmActual > 0 || kmInicial > 0,
+      efficiencyKmSeeded: kmActual > 0 || kmInicial > 0,
+      kmInicialCargadoUnaVez: kmActual > 0 || kmInicial > 0
     };
   }
 
@@ -2427,8 +2463,13 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     updateDriverEfficiencyState(uid, {
       lastKnownKm:Number(kmActual || 0),
       currentEfficiencyPeriodStartKm:Number(kmActual || 0),
+      currentEfficiencyPeriodStartAt:serverTimestamp(),
+      currentEfficiencyPeriodStartAtMs:Date.now(),
       kmInicialPeriodo:Number(kmActual || 0),
       kmActual:Number(kmActual || 0),
+      kmInitialSeedLoaded:true,
+      efficiencyKmSeeded:true,
+      kmInicialCargadoUnaVez:true,
       lastEfficiencyPerKm:Number(efficiencyPayload.eficienciaPorKm || 0),
       averageOwnEfficiencyPerKm:Number(efficiencyPayload.eficienciaReferenciaPropia || 0),
       kmUpdatedAt:serverTimestamp(),
@@ -2521,8 +2562,13 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       updateDriverEfficiencyState(targetUid, {
         lastKnownKm:Number(kmActual || 0),
         currentEfficiencyPeriodStartKm:Number(kmActual || 0),
+        currentEfficiencyPeriodStartAt:serverTimestamp(),
+        currentEfficiencyPeriodStartAtMs:Date.now(),
         kmInicialPeriodo:Number(kmActual || 0),
         kmActual:Number(kmActual || 0),
+        kmInitialSeedLoaded:true,
+        efficiencyKmSeeded:true,
+        kmInicialCargadoUnaVez:true,
         lastEfficiencyPerKm:Number(payload.eficienciaPorKm || 0),
         averageOwnEfficiencyPerKm:Number(payload.eficienciaReferenciaPropia || 0),
         kmUpdatedAt:serverTimestamp(),
