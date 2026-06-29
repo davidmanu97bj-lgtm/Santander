@@ -73,6 +73,9 @@ body.explora-pay-mode #mainBottomNav.performance-bottom-nav{
 .pay-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0 20px;}
 .pay-action{min-height:108px;border:0;border-radius:24px;background:#eaf1ff;color:var(--pay-blue);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:820;line-height:1.1;padding:12px 8px;text-align:center;}
 .pay-action svg{width:31px;height:31px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.pay-action.is-closure-ready{background:var(--pay-blue);color:#fff;box-shadow:0 10px 22px rgba(77,79,229,.28);}
+.pay-action.is-closure-locked{background:#eef1f7;color:#9aa2b5;box-shadow:none;cursor:not-allowed;}
+.pay-action:disabled{pointer-events:none;}
 .pay-liquid-pill{background:#f4f5fa;border-radius:999px;padding:13px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:#282a3a;font-size:18px;line-height:1.22;}
 .pay-liquid-pill strong{font-size:18px;font-weight:850;white-space:nowrap;}
 .pay-liquid-pill span{font-weight:520;}
