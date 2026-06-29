@@ -434,7 +434,7 @@ body.explora-pay-mode.pay-notifications-open #payNotificationsScreen:not([hidden
   .pay-notification-title{font-size:31px}.pay-notification-row{gap:13px}.pay-notification-icon{width:54px;height:54px}.pay-notification-copy strong{font-size:16px}.pay-notification-copy small{font-size:15px}.pay-notification-side b{display:none;}
 }
 body.explora-pay-mode.pay-notifications-open #payBottomNav,
-body.explora-pay-mode.pay-notifications-open #payQuickClosureBtn{display:none!important;}
+body.explora-pay-mode.pay-notifications-open #payEfficiencyBtn{display:none!important;}
 body.explora-pay-mode.pay-notifications-open .dashboard-shell-real{padding-bottom:24px!important;}
 
 /* v2511: se quita el ojo de montos en todos los menús */
@@ -485,3 +485,44 @@ body.explora-pay-mode.pay-notifications-open .dashboard-shell-real{padding-botto
 .pay-liquid-pill strong{font-size:16px;}
 .closure-liquidation-label{font-size:12.5px!important;font-weight:650!important;letter-spacing:.004em;}
 .pay-liquid-pill .closure-liquidation-label{font-size:13px!important;}
+
+/* EXPLORA v31 · Eficiencia operativa/KM */
+.pay-efficiency-btn{background:linear-gradient(145deg,#ffe66f,#e9bf45);border-color:rgba(233,191,69,.78);color:#7a5510;overflow:visible;}
+.pay-efficiency-btn[hidden]{display:none!important;}
+.pay-efficiency-icon{width:34px;height:34px;display:block;background:currentColor;-webkit-mask:url("../../assets/icono_eficiencia_km.png") center/contain no-repeat;mask:url("../../assets/icono_eficiencia_km.png") center/contain no-repeat;}
+.pay-efficiency-asterisk{position:absolute;right:7px;top:4px;min-width:17px;height:17px;border-radius:999px;background:#fff;color:#c83a3a;border:1px solid rgba(200,58,58,.25);display:none;place-items:center;font-size:16px;line-height:17px;font-weight:950;box-shadow:0 2px 8px rgba(34,34,34,.14);}
+.pay-efficiency-btn.efficiency-good{color:#178a3a;border-color:rgba(23,138,58,.46);background:linear-gradient(145deg,#f5ffe9,#e9bf45);}
+.pay-efficiency-btn.efficiency-mid{color:#9b6f08;border-color:rgba(233,191,69,.76);background:linear-gradient(145deg,#fff5bf,#e9bf45);}
+.pay-efficiency-btn.efficiency-bad{color:#c83a3a;border-color:rgba(200,58,58,.38);background:linear-gradient(145deg,#fff1ea,#e9bf45);}
+.pay-efficiency-btn.efficiency-missing{color:#c83a3a;border-color:rgba(200,58,58,.45);background:linear-gradient(145deg,#fff1ea,#e9bf45);}
+.pay-efficiency-btn.efficiency-missing .pay-efficiency-asterisk{display:grid;}
+.pay-efficiency-backdrop{position:fixed;inset:0;z-index:230;background:rgba(20,21,30,.48);display:none;align-items:flex-end;justify-content:center;padding:18px;}
+.pay-efficiency-backdrop.is-open{display:flex;}
+.pay-efficiency-modal{width:min(100%,490px);background:#fff;border-radius:28px;padding:20px;box-shadow:0 24px 60px rgba(0,0,0,.26);max-height:calc(100dvh - 54px);overflow:auto;font-family:var(--pay-font);}
+.pay-efficiency-modal header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:15px;}
+.pay-efficiency-modal h2{font-size:23px;line-height:1.05;margin:0;color:var(--pay-ink);letter-spacing:-.03em;font-weight:900;}
+.pay-efficiency-modal p{margin:6px 0 0;color:#6d7285;line-height:1.36;font-size:14px;}
+.pay-efficiency-close{width:38px;height:38px;border-radius:14px;border:0;background:#f1f3fa;font-size:24px;color:#2a2c3b;}
+.pay-efficiency-body{display:grid;gap:12px;}
+.pay-efficiency-loading,.pay-efficiency-empty{border:1px solid var(--pay-line);border-radius:20px;background:#fff;padding:18px;color:#6d7285;font-weight:750;text-align:center;}
+.pay-efficiency-status{display:flex;align-items:center;gap:12px;border-radius:22px;padding:14px;border:1px solid rgba(216,220,235,.9);background:#f9faff;}
+.pay-efficiency-status-icon{width:48px;height:48px;border-radius:17px;background:currentColor;display:block;flex:0 0 auto;-webkit-mask:url("../../assets/icono_eficiencia_km.png") center/33px 33px no-repeat;mask:url("../../assets/icono_eficiencia_km.png") center/33px 33px no-repeat;}
+.pay-efficiency-status small{display:block;color:#767c90;font-size:12px;font-weight:850;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;}
+.pay-efficiency-status strong{display:block;color:var(--pay-ink);font-size:20px;line-height:1.08;font-weight:920;letter-spacing:-.025em;}
+.pay-efficiency-driver{display:block;font-size:13px;font-weight:850;color:#3f4356;margin-bottom:6px;}
+.pay-efficiency-status.efficiency-good{color:#178a3a;background:linear-gradient(180deg,#f2fff6 0%,#ffffff 100%);border-color:rgba(23,138,58,.22);}
+.pay-efficiency-status.efficiency-mid{color:#9b6f08;background:linear-gradient(180deg,#fff9df 0%,#ffffff 100%);border-color:rgba(233,191,69,.28);}
+.pay-efficiency-status.efficiency-bad,.pay-efficiency-status.efficiency-missing{color:#c83a3a;background:linear-gradient(180deg,#fff2f0 0%,#ffffff 100%);border-color:rgba(200,58,58,.22);}
+.pay-efficiency-main-text{font-size:14px;font-weight:750;color:#3e4359;margin:0;}
+.pay-efficiency-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.pay-efficiency-grid article{border:1px solid var(--pay-line);border-radius:18px;background:#fff;padding:12px;min-height:74px;display:grid;align-content:center;gap:5px;}
+.pay-efficiency-grid article span{font-size:12px;color:#747a8f;font-weight:800;line-height:1.2;}
+.pay-efficiency-grid article strong{font-size:16px;color:var(--pay-ink);font-weight:900;line-height:1.12;}
+.pay-efficiency-grid .pay-efficiency-wide{grid-column:1/-1;}
+.pay-efficiency-disclaimer{border-radius:18px;background:#f4f6fb;color:#555d74;padding:12px 13px;font-size:13px;line-height:1.35;font-weight:750;}
+.pay-efficiency-warning{border-radius:18px;background:#fff5df;border:1px solid rgba(228,181,50,.35);color:#6d571d;padding:12px 13px;font-size:13px;line-height:1.38;font-weight:760;}
+.pay-efficiency-warning small{display:block;margin-top:4px;color:#8a6b22;font-weight:850;}
+.pay-efficiency-note{border-radius:16px;background:#eef3ff;color:var(--pay-blue);padding:10px 12px;font-size:12.5px;font-weight:850;text-align:center;}
+.pay-closure-km-field small{color:#667087;font-size:12px;font-weight:720;line-height:1.32;}
+body.explora-pay-mode.pay-notifications-open #payEfficiencyBtn{display:none!important;}
+@media (max-width:390px){.pay-efficiency-grid{grid-template-columns:1fr}.pay-efficiency-grid .pay-efficiency-wide{grid-column:auto}.pay-efficiency-icon{width:31px;height:31px}}
