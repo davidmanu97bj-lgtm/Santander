@@ -1,0 +1,106 @@
+/* EXPLORA v2.4.11 · Identidad visual oficial dorada aplicada en toda la app. */
+
+.explora-splash-logo,
+.explora-login-brand,
+.explora-brand-real,
+.new-service-logo-wrap{
+  isolation:isolate;
+}
+
+.explora-splash-brand-image,
+.explora-login-brand-image,
+.explora-header-brand-image,
+.new-service-brand-image{
+  display:block;
+  object-fit:contain;
+  object-position:center;
+  max-width:100%;
+  height:auto;
+  filter:drop-shadow(0 8px 24px rgba(205,154,48,.16));
+  user-select:none;
+  -webkit-user-drag:none;
+}
+
+/* Splash de carga */
+.explora-splash-logo{
+  width:min(86vw,460px);
+  padding:0 12px;
+}
+.explora-splash-brand-image{
+  width:100%;
+  margin:0 auto;
+}
+.explora-splash-sub{
+  margin-top:12px!important;
+  font-size:10px!important;
+  letter-spacing:.32em!important;
+}
+
+/* Inicio de sesión */
+.explora-login-brand-image{
+  width:min(100%,310px);
+  margin:0 auto 8px;
+}
+.explora-login-brand p{
+  margin-top:8px!important;
+}
+
+/* Encabezado principal */
+.explora-brand-real{
+  min-width:0;
+  flex:0 1 auto;
+  gap:0!important;
+}
+.explora-header-brand-image{
+  width:clamp(138px,38vw,198px);
+  max-height:58px;
+}
+
+/* Encabezado de Registrar cobro */
+.new-service-logo-wrap{
+  display:flex!important;
+  min-width:0;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+}
+.new-service-brand-image{
+  width:clamp(140px,40vw,205px);
+  max-height:64px;
+  margin:0 auto;
+}
+.new-service-logo-sub{
+  margin-top:2px!important;
+  font-size:clamp(6px,1.8vw,9px)!important;
+  letter-spacing:.28em!important;
+  margin-left:.28em!important;
+}
+
+/* Eliminar por completo las marcas tipográficas anteriores. */
+.explora-splash-mark,
+.explora-splash-word,
+.explora-login-mark,
+.explora-login-brand h1,
+.explora-mark-real,
+.explora-word-real,
+.explora-sub-real,
+.new-service-emblem,
+.new-service-logo{
+  display:none!important;
+}
+
+@media (max-width:390px){
+  .explora-header-brand-image{width:clamp(126px,36vw,154px)}
+  .new-service-brand-image{width:clamp(126px,37vw,166px)}
+  .explora-login-brand-image{width:min(100%,270px)}
+}
+
+@media (max-width:340px){
+  .explora-header-brand-image{width:118px}
+  .new-service-brand-image{width:120px}
+  .new-service-logo-sub{display:none}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .explora-splash-logo{animation:none!important}
+}

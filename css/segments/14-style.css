@@ -1,0 +1,9 @@
+
+    .closure-receipt-panel[data-requirement="BALANCED_NO_RECEIPT"],
+    .closure-receipt-panel[data-requirement="ALREADY_CONFIRMED"]{border-color:rgba(92,226,142,.34);background:linear-gradient(180deg,rgba(26,126,70,.16),rgba(10,45,28,.18));}
+    .closure-receipt-panel[data-requirement="BALANCED_NO_RECEIPT"] .closure-receipt-panel-head span,
+    .closure-receipt-panel[data-requirement="BALANCED_NO_RECEIPT"] .closure-administrative-status strong{color:#8ff0b2;}
+    .closure-receipt-panel[data-requirement="BALANCED_NO_RECEIPT"] .closure-receipt-panel-head small{display:none;}
+    .closure-receipt-panel[data-requirement="BALANCED_NO_RECEIPT"] .closure-administrative-status{border-color:rgba(92,226,142,.28);background:rgba(26,126,70,.12);}
+    .closure-receipt-panel[data-requirement="BALANCED_NO_RECEIPT"] .closure-receipt-actions{display:none!important;}
+  
