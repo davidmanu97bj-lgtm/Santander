@@ -1,4 +1,4 @@
-/* EXPLORA · Pago Home v1 · interfaz tipo app de pagos, cierre a demanda */
+/* EXPLORA · Pago Home v7 · admin selector y períodos pendientes */
 :root{
   --pay-gold:#e9bf45;
   --pay-gold-2:#f4d857;
@@ -54,6 +54,11 @@ body.explora-pay-mode #mainBottomNav.performance-bottom-nav{
 .pay-tabs{position:relative;display:grid;grid-template-columns:repeat(4,1fr);align-items:end;margin:0 0 -1px;min-height:58px;z-index:2;}
 .pay-tab{height:58px;border:0;background:transparent;color:#242638;font-size:19px;font-weight:520;letter-spacing:-.02em;border-radius:22px 22px 0 0;position:relative;z-index:2;padding:0 5px;}
 .pay-tab.is-active{font-weight:850;background:var(--pay-card);box-shadow:0 -1px 0 rgba(255,255,255,.8) inset;}
+.pay-admin-driver-picker{background:rgba(255,255,255,.88);border:1px solid rgba(255,255,255,.65);border-radius:22px;padding:12px 13px;margin:0 0 14px;box-shadow:0 8px 22px rgba(25,28,40,.08);display:grid;gap:8px;}
+.pay-admin-driver-picker[hidden]{display:none!important;}
+.pay-admin-driver-picker label{font-size:12px;font-weight:900;color:#474b61;text-transform:uppercase;letter-spacing:.04em;}
+.pay-admin-driver-picker select{width:100%;border:1px solid rgba(204,211,230,.95);border-radius:16px;background:#fff;color:var(--pay-ink);font-size:16px;font-weight:780;padding:13px 14px;}
+.pay-admin-driver-picker small{color:#687087;font-weight:700;line-height:1.35;}
 .pay-main-card{background:var(--pay-card);border-radius:0 28px 28px 28px;box-shadow:var(--pay-shadow);padding:28px 20px 20px;margin-bottom:38px;min-height:286px;}
 .pay-main-row{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:18px;}
 .pay-amount-wrap{min-width:0;}
@@ -73,7 +78,7 @@ body.explora-pay-mode #mainBottomNav.performance-bottom-nav{
 .pay-liquid-pill span{font-weight:520;}
 .pay-extra-lines{display:grid;gap:7px;margin-top:12px;font-size:14px;color:var(--pay-muted);}
 .pay-extra-lines div{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid rgba(216,220,235,.7);padding-top:7px;}
-.pay-extra-lines strong{color:var(--pay-ink);font-size:14px;white-space:nowrap;}
+.pay-extra-lines strong{color:var(--pay-ink);font-size:14px;white-space:normal;text-align:right;line-height:1.2;}
 .pay-status-pill{margin-top:12px;border-radius:18px;background:#fff9df;border:1px solid rgba(228,181,50,.35);padding:11px 13px;font-size:13px;color:#6d571d;display:flex;align-items:center;justify-content:space-between;gap:10px;}
 .pay-status-pill b{color:#312914;}
 .pay-status-pill button{border:0;background:var(--pay-blue);color:white;border-radius:12px;padding:8px 10px;font-weight:800;white-space:nowrap;}
@@ -114,6 +119,7 @@ body.explora-pay-mode #mainBottomNav.performance-bottom-nav{
 .pay-closure-field select,.pay-closure-field input{width:100%;border:1px solid var(--pay-line);border-radius:16px;padding:13px 14px;font-size:16px;background:#fff;color:var(--pay-ink);}
 .pay-closure-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;}
 .pay-closure-actions button{border:0;border-radius:16px;padding:14px 12px;font-size:15px;font-weight:850;}
+.pay-closure-actions button:disabled{opacity:.55;filter:grayscale(.18);}
 .pay-closure-secondary{background:#eef1f9;color:#303447;}.pay-closure-primary{background:var(--pay-blue);color:#fff;}.pay-closure-danger{background:#ca3a3a;color:#fff;}
 .pay-closure-message{min-height:20px;margin-top:10px;font-size:13px;font-weight:700;color:#596073;}
 .pay-closure-message.is-error{color:#be2e2e}.pay-closure-message.is-ok{color:#25823a}
