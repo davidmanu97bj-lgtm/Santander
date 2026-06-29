@@ -300,20 +300,21 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     }));
     document.querySelectorAll("[data-pay-run]").forEach(button => button.addEventListener("click", () => runExistingAction(button.dataset.payRun)));
     $("payClosureActionBtn")?.addEventListener("click", () => {
+      // Pedir cierre SIEMPRE crea un cierre nuevo del período abierto actual.
+      // No debe abrir un cierre viejo pendiente: eso queda para "Ver", notificaciones o actividad.
       if (!closureButtonState(state.tab, state.latestSummary || computeSummary()).enabled) return;
-      const pending = pendingClosureFor(getDriverUid(), state.tab);
-      openClosureModal(pending && !isAdmin() ? "confirm" : "request", pending, state.tab);
+      openClosureModal("request", null, state.tab);
     });
     $("payQuickClosureBtn")?.addEventListener("click", () => {
+      // Botón rápido de cierre: crear nuevo cierre del período abierto actual.
       if (!isClosureTab(state.tab) || !closureButtonState(state.tab, state.latestSummary || computeSummary()).enabled) return;
-      const pending = pendingClosureFor(getDriverUid(), state.tab);
-      openClosureModal(pending && !isAdmin() ? "confirm" : "request", pending, state.tab);
+      openClosureModal("request", null, state.tab);
     });
     $("payNavClosure")?.addEventListener("click", () => {
+      // "Cierre" del menú inferior también debe iniciar un cierre nuevo, no reabrir uno viejo.
       const kind = isClosureTab(state.tab) ? state.tab : "gastos";
       if (!closureButtonState(kind, state.latestSummary || computeSummary()).enabled) return;
-      const pending = pendingClosureFor(getDriverUid(), kind);
-      openClosureModal(pending && !isAdmin() ? "confirm" : "request", pending, kind);
+      openClosureModal("request", null, kind);
     });
     $("payClosureStatusBtn")?.addEventListener("click", () => {
       const pending = pendingClosureFor(getDriverUid(), state.tab);
@@ -324,7 +325,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       if (state.tab === "gastos") { runExistingAction("cargar-gastos"); return; }
       if (state.tab === "chofer" || state.tab === "explora") {
         if (!closureButtonState(state.tab, state.latestSummary || computeSummary()).enabled) return;
-        openClosureModal(state.pendingClosure && !isAdmin() ? "confirm" : "request", state.pendingClosure, state.tab);
+        openClosureModal("request", null, state.tab);
         return;
       }
       runExistingAction("nuevo-servicio");
@@ -1231,7 +1232,9 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     }
     state.modalMode = mode;
     state.modalKind = resolvedKind;
-    state.modalClosure = closure || pendingClosureFor(getDriverUid(), resolvedKind) || null;
+    // En modo request no pre-cargar cierres pendientes anteriores.
+    // "Pedir cierre" debe trabajar únicamente con el período abierto actual.
+    state.modalClosure = mode === "request" ? null : (closure || pendingClosureFor(getDriverUid(), resolvedKind) || null);
     state.modalFile = null;
     const input = $("payClosureReceiptInput");
     if (input) input.value = "";
@@ -1423,8 +1426,8 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       state.selectedDriverName = driver.name;
       targetName = driver.name;
     }
-    const pending = pendingClosureFor(targetUid, kind);
-    if (pending) throw new Error(`Ese chofer ya tiene un ${closureTitle(kind).toLowerCase()} pendiente.`);
+    // Puede existir un cierre anterior pendiente; eso no debe impedir cortar un nuevo período
+    // si ya hay movimientos nuevos después del último corte.
     const fullSummary = isAdmin() ? await computeDriverSummary(targetUid) : (state.latestSummary || computeSummary());
     requireClosureAllowed(kind, fullSummary);
     const summary = tabSummary(fullSummary, kind);
