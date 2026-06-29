@@ -411,3 +411,7 @@ body.explora-pay-mode.pay-notifications-open .dashboard-shell-real{padding-botto
 
 /* v2511: se quita el ojo de montos en todos los menús */
 .pay-eye{display:none!important;}
+
+.pay-activity.is-clickable{cursor:pointer;}
+.pay-activity.is-clickable:active{transform:scale(.995);}
+.pay-closure-receipt-link{display:block;margin-top:12px;border-radius:16px;background:#eef3ff;color:var(--pay-blue);font-weight:850;text-align:center;text-decoration:none;padding:12px 14px;}
