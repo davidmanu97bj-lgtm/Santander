@@ -5,7 +5,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 (() => {
   "use strict";
 
-  const VERSION = "explora-pago-home-v28-carteles-pendientes-por-modulo";
+  const VERSION = "explora-pago-home-v29-carteles-home-modulo-estricto";
   const AR_TZ = "America/Argentina/Cordoba";
   const $ = id => document.getElementById(id);
   const state = {
@@ -105,38 +105,52 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     return activeClosureKind(row.closureKind || row.closureType || row.payTab || row.closeKind || row.kind || row.cierreTipo || row.type || row.category);
   }
 
-  function closureHomeModuleOf(row = {}) {
-    const explicit = activeClosureKind(
-      row.homeModule ||
-      row.requestModule ||
-      row.requestedModule ||
-      row.originModule ||
-      row.sourceModule ||
-      row.module ||
-      row.modulo ||
-      row.requestedFrom ||
-      row.source ||
-      row.origin ||
-      row.tab ||
-      row.payTab ||
-      row.closeKind ||
-      row.kind ||
-      row.closureKind ||
-      row.closureType ||
-      row.cierreTipo ||
-      row.type ||
-      row.category
-    );
-    if (["caja_chica", "gastos", "explora", "chofer"].includes(explicit)) return explicit;
+  function normalizeHomeModuleValue(value = "") {
+    const raw = safe(value).toLowerCase();
+    if (!raw) return "";
+    if (/^(caja_chica|cajachica|caja chica|cashbox|petty_cash|petty cash|bruto)$/.test(raw)) return "caja_chica";
+    if (/^(gastos|gasto|expenses|expense)$/.test(raw)) return "gastos";
+    if (/^(explora|digital|admin|david|transfer|transferencia|qr|card|tarjeta)$/.test(raw)) return "explora";
+    if (/^(chofer|driver|efectivo|cash)$/.test(raw)) return "chofer";
+    return "";
+  }
 
-    // Compatibilidad con cierres viejos de facturación: solo inferimos si el
-    // documento no trae una pestaña clara pero sí indica quién originó el pedido.
-    const rowKind = activeClosureKind(row.closureKind || row.closureType || row.type || row.category);
-    const requestedByRole = safe(row.requestedByRole || row.solicitadoPorRol || row.requestedRole).toLowerCase();
-    if (rowKind === "facturacion") {
-      if (requestedByRole === "admin" || requestedByRole === "explora") return "explora";
-      if (requestedByRole === "driver" || requestedByRole === "chofer") return "chofer";
+  function firstHomeModuleFromFields(row = {}, fields = []) {
+    for (const field of fields) {
+      const value = row?.[field];
+      if (Array.isArray(value)) {
+        const normalized = value.map(normalizeHomeModuleValue).find(Boolean);
+        if (normalized) return normalized;
+        continue;
+      }
+      const normalized = normalizeHomeModuleValue(value);
+      if (normalized) return normalized;
     }
+    return "";
+  }
+
+  function closureHomeModuleOf(row = {}) {
+    // Este valor es SOLO para el cartel amarillo del Home. No se usa para cálculos.
+    // Debe ser estricto: si no sabemos la tarjeta exacta donde nació el pedido,
+    // no mostramos cartel en Home para evitar falsos positivos.
+    const explicit = firstHomeModuleFromFields(row, [
+      "homeModule", "homeTab", "homeCard",
+      "requestModule", "requestedModule", "requestedTab", "requestedFrom",
+      "originModule", "originTab", "sourceModule", "sourceTab", "settlementType"
+    ]);
+    if (explicit) return explicit;
+
+    // Compatibilidad con cierres creados antes de guardar homeModule:
+    // si la propia clase del cierre ya era exacta, podemos usarla.
+    const exactKind = firstHomeModuleFromFields(row, ["payTab", "closeKind", "kind", "closureKind", "closureType", "cierreTipo"]);
+    if (exactKind) return exactKind;
+
+    // Campos genéricos solo se aceptan si dicen literalmente una tarjeta del Home.
+    const generic = firstHomeModuleFromFields(row, ["module", "modulo", "source", "origin", "tab", "type", "category"]);
+    if (generic) return generic;
+
+    // Si solo aparece "facturacion"/"billing", afecta cálculos de Chofer+Explora,
+    // pero NO alcanza para mostrar cartel en ninguna tarjeta específica.
     return "";
   }
 
@@ -459,8 +473,10 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       }
     });
     $("payClosureStatusBtn")?.addEventListener("click", () => {
-      const pending = pendingClosureFor(getDriverUid(), state.tab);
-      openClosureModal(pending && !isAdmin() ? "confirm" : "admin-review", pending, state.tab);
+      const pending = state.pendingClosure || pendingHomeClosureFor(getDriverUid(), state.tab);
+      if (!pending) return;
+      const kind = closureHomeModuleOf(pending) || closureKindOf(pending) || state.tab;
+      openClosureModal(pending && !isAdmin() ? "confirm" : "admin-review", pending, kind);
     });
     $("payBellBtn")?.addEventListener("click", () => showPayView("notificaciones"));
     $("payMainSubtitle")?.addEventListener("click", event => {
@@ -1152,7 +1168,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const target = activeClosureKind(kind);
     if (!isClosureTab(target) || !hasAdminDriverSelected()) return { visible:false, enabled:false };
 
-    const pending = pendingClosureFor(getDriverUid(), target);
+    const pending = pendingHomeClosureFor(getDriverUid(), target);
     if (pending) {
       // Si existe un cierre anterior pendiente, NO debe bloquear un nuevo período abierto.
       // Facturación corta Chofer+Explora juntos; por eso, si después del corte Explora vuelve a
@@ -1558,18 +1574,23 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     }
     if (!box || !text) return;
     const pending = pendingHomeClosureFor(getDriverUid(), kind);
-    state.pendingClosure = pending || pendingClosureFor(getDriverUid(), kind);
+    state.pendingClosure = pending || null;
     const bannerMessage = pending ? closureYellowBannerMessage(pending) : null;
     const showPendingCard = !!bannerMessage;
     box.hidden = !showPendingCard;
-    if (showPendingCard) {
+    box.classList.toggle("is-home-module-pending", showPendingCard);
+    if (!showPendingCard) {
       const labelEl = box.querySelector("b");
-      if (labelEl) labelEl.textContent = bannerMessage;
-      const due = number(pending.amountDueFromDriver || pending.amountFromDriver || 0);
-      const toDriver = number(pending.amountDueToDriver || pending.amountToDriver || 0);
-      const amount = Math.max(due, toDriver);
-      text.textContent = `${closureTitle(closureKindOf(pending))}${amount > 0 ? ` · ${currency(amount)}` : ""}`;
+      if (labelEl) labelEl.textContent = "";
+      text.textContent = "";
+      return;
     }
+    const labelEl = box.querySelector("b");
+    if (labelEl) labelEl.textContent = bannerMessage;
+    const due = number(pending.amountDueFromDriver || pending.amountFromDriver || 0);
+    const toDriver = number(pending.amountDueToDriver || pending.amountToDriver || 0);
+    const amount = Math.max(due, toDriver);
+    text.textContent = `${closureTitle(closureHomeModuleOf(pending) || closureKindOf(pending))}${amount > 0 ? ` · ${currency(amount)}` : ""}`;
   }
 
   function activityIcon(type) {
