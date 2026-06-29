@@ -670,3 +670,58 @@ body.explora-pay-mode.pay-notifications-open #payEfficiencyBtn{display:none!impo
   .pay-closure-summary strong{text-align:left;}
   .pay-closure-actions{grid-template-columns:1fr;}
 }
+
+/* v3910 perfil chofer + datos de pago para cierres */
+.pay-profile-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:10060;
+  display:none;
+  align-items:flex-end;
+  justify-content:center;
+  padding:18px;
+  background:rgba(17,24,39,.54);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+.pay-profile-backdrop.is-open{display:flex;}
+.pay-profile-modal{
+  width:min(560px,100%);
+  max-height:min(86vh,760px);
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  border-radius:28px;
+  background:#fff;
+  box-shadow:0 26px 80px rgba(15,23,42,.28);
+  padding:20px;
+  color:#202436;
+}
+.pay-profile-modal *,
+.pay-profile-modal *::before,
+.pay-profile-modal *::after{box-sizing:border-box;}
+.pay-profile-modal header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px;}
+.pay-profile-modal h2{margin:0;font-size:clamp(24px,6vw,34px);line-height:1.05;font-weight:900;letter-spacing:-.04em;}
+.pay-profile-modal p{margin:6px 0 0;color:#747b91;font-weight:750;line-height:1.25;}
+.pay-profile-close{width:44px;height:44px;border:0;border-radius:16px;background:#f1f3f8;color:#25293a;font-size:34px;line-height:1;display:grid;place-items:center;flex:0 0 auto;}
+.pay-profile-body{display:grid;gap:12px;}
+.pay-profile-readonly,.pay-profile-field{display:grid;gap:7px;border:1px solid #dfe4f2;border-radius:18px;padding:13px 14px;background:#fff;}
+.pay-profile-readonly span,.pay-profile-field span{font-size:13px;font-weight:900;color:#7b8297;text-transform:uppercase;letter-spacing:.02em;}
+.pay-profile-readonly strong{font-size:17px;line-height:1.25;color:#25293a;overflow-wrap:anywhere;}
+.pay-profile-field input{width:100%;border:0;outline:0;background:#f8f9fd;border-radius:14px;padding:13px 14px;font-size:17px;font-weight:850;color:#25293a;}
+.pay-profile-field input::placeholder{color:#a4a9b8;}
+.pay-profile-note{padding:13px 14px;border-radius:18px;background:#f1f5ff;color:#4b55d9;font-weight:850;line-height:1.25;text-align:center;}
+.pay-profile-message{min-height:20px;margin-top:12px;font-weight:850;color:#6b7280;}
+.pay-profile-message.is-ok{color:#138a3d;}
+.pay-profile-message.is-error{color:#a73333;}
+.pay-profile-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+.pay-profile-actions button{border:0;border-radius:18px;padding:15px 12px;font-size:16px;font-weight:900;}
+.pay-profile-secondary{background:#f1f3f8;color:#25293a;}
+.pay-profile-primary{background:#4c4cf3;color:#fff;}
+.pay-payment-info-row{background:#f6f8ff!important;border-color:#dfe4ff!important;}
+.pay-payment-info-row strong{color:#3338cc!important;}
+@media (max-width:390px){
+  .pay-profile-backdrop{padding:10px;}
+  .pay-profile-modal{padding:16px;border-radius:24px;max-height:88vh;}
+  .pay-profile-actions{gap:8px;}
+  .pay-profile-actions button{font-size:14px;padding:13px 10px;}
+}
