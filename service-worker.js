@@ -1,7 +1,7 @@
-/* Compatibilidad validada: v2524-admin-driver-notifications-filtered */
+/* Compatibilidad validada: v2525-closure-result-green */
 /* EXPLORA PWA service worker · v2.5.0 */
 const CACHE_PREFIX = 'explora-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}v2524-admin-driver-notifications-filtered`;
+const CACHE_NAME = `${CACHE_PREFIX}v2525-closure-result-green`;
 const APP_SHELL = [
   './',
   './index.html',
@@ -26,8 +26,8 @@ const APP_SHELL = [
   './css/segments/49-style.css?v=2456-personal-record-server-authoritative',
   './css/segments/50-style.css?v=2458-admin-driver-production-safe',
   './css/segments/51-style.css?v=2484-weekly-mileage-modal-ux',
-  './css/segments/52-style.css?v=2524-admin-driver-notifications-filtered',
-  './js/segments/52-script.mjs?v=2524-admin-driver-notifications-filtered',
+  './css/segments/52-style.css?v=2525-closure-result-green',
+  './js/segments/52-script.mjs?v=2525-closure-result-green',
   './js/segments/49-script.mjs?v=2488-mileage-close-fast',
   './js/segments/49-mileage-model.mjs?v=2477-weekly-mileage-v15-admin-card-clickable',
   './js/segments/44-script.mjs?v=2456-personal-record-server-authoritative',
@@ -97,4 +97,4 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
-/* cache bump: v2524 notificaciones admin filtradas por chofer seleccionado */
+/* cache bump: v2525 resultado de cierre en verde */
