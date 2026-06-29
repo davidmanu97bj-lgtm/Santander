@@ -1,7 +1,7 @@
-/* Compatibilidad validada: v2600-pull-refresh-fuente */
+/* Compatibilidad validada: v2700-actualizar-sin-pull */
 /* EXPLORA PWA service worker · v2.5.1 */
 const CACHE_PREFIX = 'explora-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}v2600-pull-refresh-fuente`;
+const CACHE_NAME = `${CACHE_PREFIX}v2700-actualizar-sin-pull`;
 const APP_SHELL = [
   './',
   './index.html',
@@ -26,8 +26,8 @@ const APP_SHELL = [
   './css/segments/49-style.css?v=2456-personal-record-server-authoritative',
   './css/segments/50-style.css?v=2458-admin-driver-production-safe',
   './css/segments/51-style.css?v=2484-weekly-mileage-modal-ux',
-  './css/segments/52-style.css?v=2600-pull-refresh-fuente',
-  './js/segments/52-script.mjs?v=2600-pull-refresh-fuente',
+  './css/segments/52-style.css?v=2700-actualizar-sin-pull',
+  './js/segments/52-script.mjs?v=2700-actualizar-sin-pull',
   './js/segments/49-script.mjs?v=2488-mileage-close-fast',
   './js/segments/49-mileage-model.mjs?v=2477-weekly-mileage-v15-admin-card-clickable',
   './js/segments/44-script.mjs?v=2456-personal-record-server-authoritative',
@@ -97,4 +97,4 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
-/* cache bump: v2530 visual anterior textos liquidar */
+/* cache bump: v2700 actualizar manual sin pull refresh */
