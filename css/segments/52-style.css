@@ -408,3 +408,6 @@ body.explora-pay-mode.pay-notifications-open #payNotificationsScreen:not([hidden
 body.explora-pay-mode.pay-notifications-open #payBottomNav,
 body.explora-pay-mode.pay-notifications-open #payQuickClosureBtn{display:none!important;}
 body.explora-pay-mode.pay-notifications-open .dashboard-shell-real{padding-bottom:24px!important;}
+
+/* v2511: se quita el ojo de montos en todos los menús */
+.pay-eye{display:none!important;}
