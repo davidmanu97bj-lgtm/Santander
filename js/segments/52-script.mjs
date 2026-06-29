@@ -391,7 +391,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
           <div class="pay-notification-empty">No tenés cierres abiertos.</div>
         </div>
       </section>
-      <button class="pay-floating-spark pay-efficiency-btn efficiency-missing" id="payEfficiencyBtn" type="button" aria-label="Eficiencia Operativa"><span class="pay-efficiency-icon" aria-hidden="true"></span><span class="pay-efficiency-asterisk" aria-hidden="true">*</span></button>
+      <button class="pay-floating-spark pay-efficiency-btn" id="payEfficiencyBtn" type="button" aria-label="Eficiencia Operativa"><span class="pay-efficiency-icon" aria-hidden="true"></span><span class="pay-efficiency-asterisk" aria-hidden="true">*</span></button>
       <nav class="pay-bottom-nav" id="payBottomNav" aria-label="Navegación principal Explora">
         <button class="pay-nav-btn is-active" data-pay-nav="inicio" type="button"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 10v10h14V10"></path></svg><span>Inicio</span></button>
         <button class="pay-nav-btn" data-pay-nav="actividad" type="button"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"></path></svg><span>Actividad</span></button>
@@ -1310,7 +1310,9 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
         label:safe(item.label || item.resultado || "Cierre guardado"),
         deltaPct:Number.isFinite(Number(item.deltaPct)) ? Number(item.deltaPct) : NaN
       };
-    }).filter(item => item.kmRecorridos > 0 && item.facturacion > 0 && item.perKm > 0).slice(-5);
+    }).filter(item => item.kmRecorridos > 0 && item.facturacion > 0 && item.perKm > 0)
+      .sort((a,b)=>Number(a.cutMs || 0)-Number(b.cutMs || 0))
+      .slice(-5);
   }
 
   function efficiencyHistoryForDriver(uid = getDriverUid(), closures = state.closures, profile = driverProfileForEfficiency(uid)) {
@@ -1449,11 +1451,11 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const button = $("payEfficiencyBtn");
     if (!button) return;
     const snapshot = currentEfficiencySnapshot();
-    const css = snapshot.status?.css || "efficiency-missing";
+    // El botón del Home queda neutro: los colores verde/rojo pertenecen al historial interno,
+    // no al estado del período actual.
     button.classList.remove("efficiency-good", "efficiency-mid", "efficiency-bad", "efficiency-missing");
-    button.classList.add(css);
-    button.setAttribute("aria-label", `Eficiencia operativa: ${snapshot.status?.label || "Faltan datos"}`);
-    button.title = snapshot.status?.label || "Eficiencia operativa";
+    button.setAttribute("aria-label", `Eficiencia operativa: ${snapshot.status?.label || "Historial"}`);
+    button.title = "Eficiencia operativa";
   }
 
   function signedPercent(value) {
@@ -1527,7 +1529,8 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     if (!history.length) {
       return `<div class="pay-efficiency-history-empty">Todavía no hay cierres de eficiencia. Cuando pidas un cierre de facturación, se cargará el KM final y se guardará acá.</div>`;
     }
-    return `<div class="pay-efficiency-history" aria-label="Últimos cierres de eficiencia">${history.map(item => {
+    const ordered = [...history].sort((a,b)=>Number(b.cutMs || 0)-Number(a.cutMs || 0) || safe(b.id).localeCompare(safe(a.id)));
+    return `<div class="pay-efficiency-history" aria-label="Últimos cierres de eficiencia">${ordered.map(item => {
       const tone = item.tone === "bad" ? "bad" : "good";
       const resultText = item.label === "Primer cierre" ? "Base" : item.label;
       const delta = Number.isFinite(Number(item.deltaPct)) ? `<small>${esc(signedPercent(item.deltaPct))} vs cierre anterior</small>` : `<small>Primer cierre guardado</small>`;
