@@ -5,7 +5,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 (() => {
   "use strict";
 
-  const VERSION = "explora-pago-home-v16-proof-final-clean";
+  const VERSION = "explora-pago-home-v17-closure-button-proof-clean";
   const AR_TZ = "America/Argentina/Cordoba";
   const $ = id => document.getElementById(id);
   const state = {
@@ -915,45 +915,41 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const target = activeClosureKind(kind);
     if (!isClosureTab(target) || !hasAdminDriverSelected()) return { visible:false, enabled:false };
 
-    // Regla corregida de solicitud:
-    // - CHOFER no pide cierre de facturación desde su propio módulo; ese botón se oculta.
-    // - Si el chofer tiene de más y debe pagar a Explora, el chofer NO puede pedir ese cierre.
-    //   Solo ADMIN puede pedirlo desde el módulo EXPLORA.
-    // - Si Explora tiene de más y debe pagar al chofer, el chofer sí puede pedir el cierre desde EXPLORA.
-    // - GASTOS queda separado: admin y chofer pueden pedir cierre si hay gastos abiertos.
     const pending = pendingClosureFor(getDriverUid(), target);
     if (pending) {
-      const pendingKind = closureKindOf(pending);
-      if (target === "caja_chica") return { visible:true, enabled:isAdmin() && pendingKind === "caja_chica", pending:true };
-      if (target === "gastos") return { visible:true, enabled:pendingKind === "gastos", pending:true };
-      if (target === "chofer") return { visible:false, enabled:false, pending:true };
-      if (target === "explora") {
-        const amountFromDriver = number(pending.amountDueFromDriver || 0);
-        const amountToDriver = number(pending.amountDueToDriver || 0);
-        if (amountFromDriver > 0) return { visible:true, enabled:isAdmin() && isBillingClosureKind(pendingKind), pending:true };
-        if (amountToDriver > 0) return { visible:true, enabled:!isAdmin() && isBillingClosureKind(pendingKind), pending:true };
-        return { visible:true, enabled:false, pending:true };
-      }
+      // Si ya existe un cierre pedido, no se habilita un nuevo pedido desde la tarjeta.
+      // La acción pendiente se resuelve desde la campana/notificación o desde el detalle del cierre.
+      if (target === "chofer" || target === "explora" || target === "facturacion") return { visible:true, enabled:false, pending:true };
+      if (target === "caja_chica" || target === "gastos") return { visible:true, enabled:false, pending:true };
       return { visible:false, enabled:false, pending:true };
     }
+
     if (target === "caja_chica") {
       const t = tabSummary(summary, "caja_chica");
+      // Caja chica solo la pide Explora/admin cuando hay caja chica en efectivo para pasar.
       return { visible:true, enabled:isAdmin() && number(t.amountFromDriver || 0) > 0 };
     }
+
     if (target === "gastos") {
       const t = tabSummary(summary, "gastos");
+      // Gastos: los pide el chofer si hay gastos abiertos para reintegrar.
       return { visible:true, enabled:!isAdmin() && number(t.expenseTotal || 0) > 0 && number(t.amountToDriver || 0) > 0 };
     }
+
     if (target === "chofer") {
-      return { visible:false, enabled:false };
+      // El chofer nunca pide su propio cierre de facturación desde su módulo.
+      // El botón debe quedar visible, con el mismo texto, pero bloqueado/transparente.
+      return { visible:true, enabled:false };
     }
+
     if (target === "explora") {
       const t = tabSummary(summary, "explora");
-      const amountFromDriver = number(summary.amountFromDriverForBilling || t.amountFromDriver || 0);
       const amountToDriver = number(summary.amountToDriverForBilling || t.amountToDriver || 0);
-      const enabled = isAdmin() ? amountFromDriver > 0 : amountToDriver > 0;
-      return { visible:true, enabled };
+      // Facturación: solo se habilita si Explora tiene más dinero y debe pagar al chofer.
+      // Si el chofer tiene más dinero, este botón también queda bloqueado.
+      return { visible:true, enabled:amountToDriver > 0 };
     }
+
     return { visible:false, enabled:false };
   }
 
@@ -1163,8 +1159,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       action.classList.toggle("is-closure-ready", !!stateForButton.enabled);
       action.classList.toggle("is-closure-locked", stateForButton.visible && !stateForButton.enabled);
       const label = stateForButton.visible ? closureLabel(kind) : "";
-      const pendingForTab = stateForButton.visible ? pendingClosureFor(getDriverUid(), kind) : null;
-      action.querySelector("span").innerHTML = pendingForTab && !isAdmin() ? `Confirmar<br/>${esc(label)}` : `Pedir cierre<br/>${esc(label)}`;
+      action.querySelector("span").innerHTML = `Pedir cierre<br/>${esc(label)}`;
     }
     if (quick) {
       quick.hidden = !stateForButton.visible || !stateForButton.enabled;
@@ -1173,7 +1168,11 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     if (!box || !text) return;
     const pending = stateForButton.visible ? pendingClosureFor(getDriverUid(), kind) : null;
     state.pendingClosure = pending;
-    const showPendingCard = !!pending && !closureHasProof(pending) && !closureIsCompleted(pending);
+    const pendingAction = pending ? closureActionForViewer(pending) : "none";
+    const showPendingCard = !!pending
+      && !closureHasProof(pending)
+      && !closureIsCompleted(pending)
+      && ["driver_upload", "admin_upload"].includes(pendingAction);
     box.hidden = !showPendingCard;
     if (showPendingCard) {
       const labelEl = box.querySelector("b");
@@ -1301,12 +1300,16 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
   function renderClosureModal() {
     renderDriverSelect();
     const title = $("payClosureTitle"), subtitle = $("payClosureSubtitle"), summary = $("payClosureSummary"), fileField = $("payClosureFileField"), submit = $("payClosureSubmit"), cancel = $("payClosureCancel");
+    const actions = submit?.closest(".pay-closure-actions");
     if (!title || !subtitle || !summary || !fileField || !submit || !cancel) return;
     const closure = state.modalClosure;
     const kind = closureKindOf(closure || {}) || activeClosureKind(state.modalKind || state.tab) || "gastos";
     const latest = tabSummary(state.latestSummary || computeSummary(), kind);
     fileField.hidden = true;
     cancel.textContent = "Cancelar";
+    cancel.hidden = false;
+    submit.hidden = false;
+    if (actions) actions.hidden = false;
     submit.className = "pay-closure-primary";
     submit.disabled = false;
 
@@ -1319,6 +1322,11 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       const uploadNeeded = (action === "driver_upload" || action === "admin_upload") && !proof && !completed;
       fileField.hidden = !uploadNeeded;
       summary.innerHTML = closureDetailSummary(closure, kind, isAdmin());
+      const noSubmitNeeded = (completed || proof) && !["admin_review", "driver_review"].includes(action);
+      if (noSubmitNeeded) {
+        submit.hidden = true;
+        cancel.textContent = "Cerrar";
+      }
 
       if (state.modalMode === "confirm") {
         title.textContent = "Explora pidió el cierre";
