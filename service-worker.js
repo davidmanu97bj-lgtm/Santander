@@ -1,7 +1,7 @@
-/* Compatibilidad validada: v3923-billing-modal-top-method-colors */
+/* Compatibilidad validada: v3924-billing-modal-solid-background */
 /* EXPLORA PWA service worker · v2.5.1 */
 const CACHE_PREFIX = 'explora-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}v3923-billing-modal-top-method-colors`;
+const CACHE_NAME = `${CACHE_PREFIX}v3924-billing-modal-solid-background`;
 const APP_SHELL = [
   './',
   './index.html',
@@ -102,3 +102,5 @@ self.addEventListener('message', (event) => {
 });
 
 /* cache bump: v3921 billing visual fix */
+
+/* cache bump: v3924 billing modal solid background */
