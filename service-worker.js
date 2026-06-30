@@ -1,7 +1,7 @@
-/* Compatibilidad validada: v3927-billing-logo-dark-no-bell */
+/* Compatibilidad validada: v4011-whatsapp-nativo */
 /* EXPLORA PWA service worker · v2.5.1 */
 const CACHE_PREFIX = 'explora-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}v3927-billing-logo-dark-no-bell`;
+const CACHE_NAME = `${CACHE_PREFIX}v4011-whatsapp-nativo`;
 const APP_SHELL = [
   './',
   './index.html',
@@ -27,8 +27,8 @@ const APP_SHELL = [
   './css/segments/50-style.css?v=2458-admin-driver-production-safe',
   './css/segments/51-style.css?v=2484-weekly-mileage-modal-ux',
   './css/segments/02-style.css?v=3911-logo-real-header',
-  './css/segments/52-style.css?v=3910-perfil-whatsapp-cierres',
-  './js/segments/52-script.mjs?v=3910-perfil-whatsapp-cierres',
+  './css/segments/52-style.css?v=4011-whatsapp-nativo',
+  './js/segments/52-script.mjs?v=4011-whatsapp-nativo',
   './assets/icono_eficiencia_km.png',
   './js/segments/49-script.mjs?v=2488-mileage-close-fast',
   './js/segments/49-mileage-model.mjs?v=2477-weekly-mileage-v15-admin-card-clickable',
