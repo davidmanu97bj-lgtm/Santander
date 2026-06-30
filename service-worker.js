@@ -1,7 +1,7 @@
-/* Compatibilidad validada: v4015-driver-admin */
+/* Compatibilidad validada: v4016-card-alerts */
 /* EXPLORA PWA service worker · v2.5.2 */
 const CACHE_PREFIX = 'explora-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}v4015-driver-admin`;
+const CACHE_NAME = `${CACHE_PREFIX}v4016-card-alerts`;
 
 const LEGACY_MILEAGE_STUB = `
 const noop=()=>{};const asyncTrue=async()=>true;
@@ -9,7 +9,7 @@ function kill(){try{document.querySelectorAll('#mileageOverlay,.mileage-overlay,
 window.EXPLORA_DISABLE_LEGACY_MILEAGE=true;
 window.__EXPLORA_KILL_LEGACY_MILEAGE__=kill;
 window.ExploraMileageControl=Object.freeze({disabled:true,refresh:async()=>null,open:()=>false,ensureBeforeBilling:asyncTrue,startReminder:noop,stopReminder:noop,scheduleReminder:noop,getStartGraceState:()=>({disabled:true}),getState:()=>({disabled:true,firebaseReady:false,storageReady:false}),parseNumber:v=>Number(v)||0,classify:()=>({disabled:true}),ensureFirebase:async()=>null,stableHash:v=>String(v||''),idempotentAlertId:()=>'',vehicleIsOperational:()=>true,canonicalAssignmentMatches:()=>true});
-kill();if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',kill,{once:true});try{new MutationObserver(kill).observe(document.documentElement,{childList:true,subtree:true});}catch(e){};setTimeout(kill,50);setTimeout(kill,300);setTimeout(kill,1200);console.info('EXPLORA_LEGACY_MILEAGE_SW_STUB_v4015');export {};
+kill();if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',kill,{once:true});try{new MutationObserver(kill).observe(document.documentElement,{childList:true,subtree:true});}catch(e){};setTimeout(kill,50);setTimeout(kill,300);setTimeout(kill,1200);console.info('EXPLORA_LEGACY_MILEAGE_SW_STUB_v4016');export {};
 `;
 
 const APP_SHELL = [
@@ -25,16 +25,16 @@ const APP_SHELL = [
   './css/segments/38-style.css?v=2445-finance-nav-fix',
   './js/segments/01-script.js?v2442-weekly-payment-production',
   './js/segments/19-script.mjs?v2442-weekly-payment-production',
-  './js/segments/39-script.mjs?v=4015-driver-admin',
-  './js/segments/11-script.mjs?v4015-driver-admin',
+  './js/segments/39-script.mjs?v=4016-card-alerts',
+  './js/segments/11-script.mjs?v4016-card-alerts',
   './js/core/weekly-core.mjs?v2442-weekly-payment-production',
   './css/segments/45-style.css?v=2440-weekly-closure-cash-record-recovery',
   './css/segments/44-style.css?v=2503-more-white-exit',
-  './css/segments/50-style.css?v=4015-driver-admin',
+  './css/segments/50-style.css?v=4016-card-alerts',
   './css/segments/02-style.css?v=3911-logo-real-header',
-  './css/segments/51-style.css?v=4015-driver-admin',
-  './css/segments/52-style.css?v=4015-driver-admin',
-  './js/segments/52-script.mjs?v=4015-driver-admin',
+  './css/segments/51-style.css?v=4016-card-alerts',
+  './css/segments/52-style.css?v=4016-card-alerts',
+  './js/segments/52-script.mjs?v=4016-card-alerts',
   './assets/icono_eficiencia_km.png',
   './js/segments/44-script.mjs?v=2456-personal-record-server-authoritative',
   './manifest.webmanifest?v=2411',
