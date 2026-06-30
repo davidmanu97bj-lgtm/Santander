@@ -3421,7 +3421,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       };
     }
 
-    const PROFILE_REF_CACHE_PREFIX = "explora_profile_ref_v4014_";
+    const PROFILE_REF_CACHE_PREFIX = "explora_profile_ref_v4015_driver_admin_";
 
     function cacheResolvedProfileReference(authUser, result) {
       try {
@@ -3810,7 +3810,13 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     }
 
     function isDriverActive(data = {}) {
-      return !(data.activo === false || data.active === false || data.habilitado === false || String(data.estado || "").toLowerCase() === "inactivo");
+      const estado = String(data.estado || data.status || data.state || "").trim().toLowerCase();
+      const deletionStatus = String(data.deletionStatus || "").trim().toLowerCase();
+      if (data.activo === false || data.active === false || data.habilitado === false) return false;
+      if (data.isDeleted === true || data.deleted === true || data.eliminado === true) return false;
+      if (["inactivo","bloqueado","suspendido","deleted","deleting","deletion_failed","borrado","eliminado"].includes(estado)) return false;
+      if (["running","completed","failed"].includes(deletionStatus)) return false;
+      return true;
     }
 
     function adminVehicleLabel(vehicle = {}) {
@@ -3822,7 +3828,25 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     }
 
     function adminDriverRole(data = {}) {
-      return String(data.rol || data.role || data.tipo || "").trim().toLowerCase();
+      const raw = String(data.rol || data.role || data.tipo || "").trim().toLowerCase();
+      if (["admin","administrador","owner","superadmin"].includes(raw)) return "admin";
+      if (["chofer","driver","conductor"].includes(raw)) return "chofer";
+      return raw || "chofer";
+    }
+
+    function profileHasRequiredDriverName(data = {}) {
+      return Boolean(String(data.nombre || data.nombreCompleto || data.displayName || data.name || "").trim());
+    }
+
+    function isVisibleDriverProfile(data = {}, { includeInactive = false, includeDeleted = false, includeOrphans = false } = {}) {
+      const role = adminDriverRole(data);
+      const uid = adminDriverKey(data);
+      if (role !== "chofer") return false;
+      if (EXPLORA_ADMIN_UIDS.has(uid) || EXPLORA_ADMIN_UIDS.has(String(data.id || ""))) return false;
+      if (!includeDeleted && (data.isDeleted === true || data.deleted === true || ["deleted","deleting","deletion_failed","borrado","eliminado"].includes(String(data.status || data.estado || "").toLowerCase()))) return false;
+      if (!includeInactive && !isDriverActive(data)) return false;
+      if (!includeOrphans && !profileHasRequiredDriverName(data)) return false;
+      return true;
     }
 
     function adminDriverKey(driver = {}) {
@@ -4246,19 +4270,14 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     window.ExploraVehicleManagement = { openCreateVehicle:openAdminCreateVehicleModal, closeCreateVehicle:closeAdminCreateVehicleModal, createVehicle:createVehicleRecord, loadVehicles:loadAdminVehicles, validateVehicleAvailability, assignVehicleToDriver, releaseVehicleFromDriver:(payload = {}) => assignVehicleToDriver({ ...payload, vehicleId:"" }), reportProfileRenderFailure:reportProfileVehicleRenderFailure, diagnostic:showVehicleDiagnostic };
     window.ExploraAdminManagement = { diagnostic:showVehicleDiagnostic, softDeleteVehicle, openDrivers:() => openAdminSharedModule("drivers-management"), openVehicles:openAdminCreateVehicleModal };
 
-    async function loadAdminDrivers({ includeInactive = false, includeDeleted = false } = {}) {
+    async function loadAdminDrivers({ includeInactive = false, includeDeleted = false, includeOrphans = false } = {}) {
       try {
         const snap = await getDocs(collection(db, "choferes"));
         const drivers = [];
         snap.forEach((docSnap) => {
           const data = { id: docSnap.id, ...docSnap.data() };
-          const role = adminDriverRole(data);
+          if (!isVisibleDriverProfile(data, { includeInactive, includeDeleted, includeOrphans })) return;
           const uid = adminDriverKey(data);
-          const deleted = data.isDeleted === true || String(data.status || "").toLowerCase() === "deleted";
-          if (role !== "chofer" && role !== "driver") return;
-          if (EXPLORA_ADMIN_UIDS.has(uid)) return;
-          if (!includeDeleted && deleted) return;
-          if (!includeInactive && !isDriverActive(data)) return;
           drivers.push(data);
           adminDriverProfileCache.set(uid || data.id, data);
         });
@@ -5151,16 +5170,17 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     }
 
     async function renderAdminDriversManagement() {
-      const [drivers, vehicles] = await Promise.all([loadAdminDrivers({ includeInactive:true }), loadAdminVehicles()]);
+      const [drivers, vehicles] = await Promise.all([loadAdminDrivers({ includeInactive:false, includeDeleted:false, includeOrphans:false }), loadAdminVehicles()]);
       adminManagementState.drivers = drivers;
       adminManagementState.vehicles = vehicles;
       const rows = drivers.map(driver => {
         const uid = adminDriverKey(driver) || driver.id;
+        const username = String(driver.usuario || driver.username || driver.usuarioNormalizado || "").trim();
         const vehicleId = driverVehicleId(driver);
         const resolved = adminResolveVehicle(driver, new Map(vehicles.map(vehicle => [String(vehicle.id), vehicle])));
-        return `<article class="admin-management-card" data-admin-driver-card="${escapeAdminHtml(driver.id)}"><div class="admin-management-card-head"><div class="admin-management-card-title"><strong>${escapeAdminHtml(getProfileName(driver))}</strong><span>${escapeAdminHtml(driver.email || driver.contactEmail || driver.correo || "Sin email")}</span><small>UID ${escapeAdminHtml(shortAdminUid(uid))} · ${escapeAdminHtml(resolved.displayName)}</small></div><span class="admin-management-status${vehicleId ? " is-assigned" : ""}">${vehicleId ? "Con vehículo" : "Sin vehículo"}</span></div><div class="admin-management-field"><label for="driverVehicle_${escapeAdminHtml(driver.id)}">Asignar vehículo por patente</label><select id="driverVehicle_${escapeAdminHtml(driver.id)}" data-admin-driver-vehicle="${escapeAdminHtml(driver.id)}">${managementVehicleOptions(vehicleId, driver)}</select></div><div class="admin-management-actions"><button class="admin-management-save" type="button" data-admin-save-driver-vehicle="${escapeAdminHtml(driver.id)}">GUARDAR ASIGNACIÓN</button><button class="admin-management-delete" type="button" data-admin-delete-driver="${escapeAdminHtml(driver.id)}">DESACTIVAR</button><button class="admin-management-hard-delete" type="button" data-admin-hard-delete-driver="${escapeAdminHtml(driver.id)}">ELIMINAR DATOS FIREBASE</button></div></article>`;
+        return `<article class="admin-management-card" data-admin-driver-card="${escapeAdminHtml(driver.id)}"><div class="admin-management-card-head"><div class="admin-management-card-title"><strong>${escapeAdminHtml(getProfileName(driver))}</strong><span>ID ${escapeAdminHtml(username || shortAdminUid(uid))} · Rol chofer</span><small>${escapeAdminHtml(driver.email || driver.contactEmail || driver.correo || "Correo opcional pendiente")} · ${escapeAdminHtml(driver.telefono || driver.phone || "Teléfono opcional pendiente")}</small></div><span class="admin-management-status${vehicleId ? " is-assigned" : ""}">${vehicleId ? "Con vehículo" : "Sin vehículo"}</span></div><div class="admin-management-field"><label for="driverVehicle_${escapeAdminHtml(driver.id)}">Asignar vehículo por patente</label><select id="driverVehicle_${escapeAdminHtml(driver.id)}" data-admin-driver-vehicle="${escapeAdminHtml(driver.id)}">${managementVehicleOptions(vehicleId, driver)}</select></div><div class="admin-management-actions"><button class="admin-management-save" type="button" data-admin-save-driver-vehicle="${escapeAdminHtml(driver.id)}">GUARDAR ASIGNACIÓN</button><button class="admin-management-hard-delete" type="button" data-admin-hard-delete-driver="${escapeAdminHtml(driver.id)}">ELIMINAR CHOFER</button></div></article>`;
       }).join("");
-      return `<section class="admin-management-toolbar"><div class="admin-management-toolbar-copy"><strong>Choferes operativos</strong><small>Agregar, asignar vehículos o desactivar perfiles manualmente.</small></div><button class="admin-management-add" type="button" data-admin-add-driver>AGREGAR CHOFER</button></section><section class="admin-management-list">${rows || '<div class="admin-management-empty">No hay choferes activos.</div>'}</section>`;
+      return `<section class="admin-management-toolbar"><div class="admin-management-toolbar-copy"><strong>Chofer</strong><small>Rol fijo: chofer. Crear chofer o eliminarlo por completo.</small></div><button class="admin-management-add" type="button" data-admin-add-driver>CREAR CHOFER</button></section><section class="admin-management-list">${rows || '<div class="admin-management-empty">No hay choferes activos.</div>'}</section>`;
     }
 
     async function refreshDriversManagement() {
@@ -5544,7 +5564,10 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       const emailInput = String($("newDriverEmail")?.value || "").trim().toLowerCase();
       const email = emailInput || legacyEmailFromLogin(username);
       const phone = String($("newDriverPhone")?.value || "").trim().replace(/\s+/g, " ");
-      const vehicleId = String($("newDriverVehicle")?.value || "").trim();
+      const cuit = String($("newDriverCuit")?.value || "").trim().replace(/[^0-9-]/g, "");
+      const alias = String($("newDriverAlias")?.value || "").trim().toLowerCase();
+      const role = "chofer";
+      const vehicleId = "";
       let stage = "VALIDATE_DRIVER_FORM";
       try {
         assertVehicleAdmin("OPEN_DRIVERS_MENU");
@@ -5565,11 +5588,11 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         stage = "CREATE_DRIVER_BACKEND";
         adminMsg("Creando usuario, perfil y acceso de forma segura…");
         const callable = httpsCallable(functions, "adminCreateDriver", { timeout: 120000 });
-        const response = await callable({ nombre, username, password, email, phone, vehicleId, allowReassign });
+        const response = await callable({ nombre, username, password, email, phone, cuit, alias, role, vehicleId, allowReassign });
         const result = response?.data || {};
         if (result.ok !== true || !result.uid) throw vehicleInternalError(stage, "DRIVER_CREATE_INCOMPLETE", "Firebase no confirmó la creación completa del chofer.");
         adminMsg("Chofer creado correctamente.", "ok");
-        ["newDriverName","newDriverUsername","newDriverPassword","newDriverEmail","newDriverPhone","newDriverVehicle"].forEach(id => { const element = $(id); if (element) element.value = ""; });
+        ["newDriverName","newDriverUsername","newDriverPassword","newDriverEmail","newDriverPhone","newDriverCuit","newDriverAlias"].forEach(id => { const element = $(id); if (element) element.value = ""; });
         invalidateAdminWeeklyData("driver-created");
         await refreshDriversManagement();
         window.showExploraSuccess?.({ title:"CHOFER CREADO", message:`${nombre} ya puede ingresar con su ID y contraseña.` });
@@ -5579,7 +5602,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         adminMsg(internal.message || "No se pudo crear el chofer.", "err");
         showVehicleDiagnostic(stage, code, internal, { functionName:"adminCreateDriver", driverEmail:email, driverName:nombre, vehicleId, firestorePath:"Cloud Function adminCreateDriver", queryUsed:"Firebase Admin SDK transaction" });
       } finally {
-        if (btn) { btn.disabled = false; btn.textContent = "CREAR USUARIO Y CHOFER"; btn.removeAttribute("aria-busy"); }
+        if (btn) { btn.disabled = false; btn.textContent = "CREAR CHOFER"; btn.removeAttribute("aria-busy"); }
       }
     }
 
@@ -6148,7 +6171,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         adminManagementState.busy = true; hardDeleteDriverButton.disabled = true; hardDeleteDriverButton.textContent = "ELIMINANDO…";
         try {
           const result = await hardDeleteDriverFirebaseData(driver.id, typed.trim());
-          window.showExploraSuccess?.({ title:"DATOS ELIMINADOS", message:`${driverName} fue eliminado de forma segura. Documentos eliminados: ${result.deletedDocuments || 0}. Registros compartidos preservados: ${result.anonymizedDocuments || 0}.` });
+          window.showExploraSuccess?.({ title:"CHOFER ELIMINADO", message:`${driverName} fue eliminado de Firebase. Documentos eliminados: ${result.deletedDocuments || 0}. Archivos eliminados: ${result.deletedFiles || 0}.` });
         } catch (error) {
           showVehicleDiagnostic("HARD_DELETE_DRIVER_DATA", error?.internalCode || error?.code || "HARD_DELETE_FAILED", error, { functionName:"adminDeleteDriverCompletely", driverUid:driver.id, firestorePath:"Cloud Function Admin SDK", queryUsed:"recursive scan + preserve shared records" });
         } finally { adminManagementState.busy = false; }

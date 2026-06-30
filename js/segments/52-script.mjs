@@ -9,12 +9,13 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     ranking:true, dailyRanking:true, derivationRanking:true, weeklyClosure:true, weeklyMileage:true
   });
 
-  const VERSION = "explora-pago-home-v42-legacy-cleanup";
+  const VERSION = "explora-pago-home-v43-driver-admin";
   const AR_TZ = "America/Argentina/Cordoba";
   const EXPLORA_WHATSAPP = "5493757461564";
   const EXPLORA_WHATSAPP_DISPLAY = "+5493757461564";
   const EXPLORA_CUIT = "20-40411688-7";
   const EXPLORA_ALIAS = "mp.explora";
+  const EXPLORA_ADMIN_UIDS = new Set(["2LziyTTdFcZzSOhK3hLbAKs2U4s2"]);
   const $ = id => document.getElementById(id);
   const state = {
     tab:"caja_chica",
@@ -50,7 +51,22 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
   const abs = value => Math.abs(number(value));
   const safe = value => String(value ?? "").trim();
   const esc = value => String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
-  const isAdmin = () => /admin|owner|david/i.test(String(state.role || "")) || /david/i.test(String(state.profile?.nombre || state.profile?.displayName || state.user?.displayName || ""));
+  const isAdmin = () => EXPLORA_ADMIN_UIDS.has(String(state.user?.uid || window.ExploraSession?.authUser?.uid || ""));
+  const driverRole = data => {
+    const raw = safe(data.role || data.rol || data.tipo).toLowerCase();
+    if (/admin|owner|superadmin|administrador/.test(raw)) return "admin";
+    if (/chofer|driver|conductor/.test(raw)) return "chofer";
+    return raw || "chofer";
+  };
+  const driverIsActive = data => {
+    const estado = safe(data.estado || data.status || data.state).toLowerCase();
+    const deletionStatus = safe(data.deletionStatus).toLowerCase();
+    if (data.activo === false || data.active === false || data.habilitado === false) return false;
+    if (data.isDeleted === true || data.deleted === true || data.eliminado === true) return false;
+    if (["inactivo","bloqueado","suspendido","deleted","deleting","deletion_failed","borrado","eliminado"].includes(estado)) return false;
+    if (["running","completed","failed"].includes(deletionStatus)) return false;
+    return true;
+  };
 
   function ms(value) {
     if (!value) return 0;
@@ -658,7 +674,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 
   function adminMoreItems() {
     return [
-      { title:"Choferes", detail:"Altas, autos y gestión", action:"admin-choferes", icon:"users" },
+      { title:"Chofer", detail:"Crear o eliminar", action:"admin-choferes", icon:"users" },
       { title:"Cierres", detail:"Comprobantes y pagos pendientes", action:"admin-cierres", icon:"receipt" },
       { title:"Gastos", detail:"Gastos cargados por choferes", action:"admin-gastos", icon:"wallet" },
       { title:"Multas", detail:"Multas, choques y deudas", action:"admin-multas", icon:"alert" }
@@ -750,13 +766,16 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const map = new Map();
     for (const name of collections) {
       try {
-        const snap = await getDocs(query(collection(state.db, name), limit(200)));
+        const snap = await getDocs(query(collection(state.db, name), limit(300)));
         snap.forEach(item => {
           const data = item.data() || {};
-          const role = safe(data.role || data.rol || data.tipo).toLowerCase();
-          const uid = safe(data.uid || data.driverUid || data.choferUid || item.id);
-          const driverName = safe(data.nombre || data.nombreCompleto || data.displayName || data.name || data.email || uid);
-          if (!uid || /admin/.test(role)) return;
+          const role = driverRole(data);
+          const uid = safe(data.uid || data.authUid || data.driverUid || data.choferUid || data.userId || item.id);
+          const driverName = safe(data.nombre || data.nombreCompleto || data.displayName || data.name);
+          if (!uid || EXPLORA_ADMIN_UIDS.has(uid) || EXPLORA_ADMIN_UIDS.has(item.id)) return;
+          if (role !== "chofer") return;
+          if (!driverIsActive(data)) return;
+          if (!driverName) return;
           map.set(uid, { uid, id:item.id, collection:name, name:driverName, role, profile:data });
         });
       } catch (error) { console.warn("EXPLORA_PAY_DRIVERS_READ", name, error?.code || error?.message); }
