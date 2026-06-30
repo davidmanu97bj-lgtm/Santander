@@ -9,7 +9,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     ranking:true, dailyRanking:true, derivationRanking:true, weeklyClosure:true, weeklyMileage:true
   });
 
-  const VERSION = "explora-pago-home-v43-driver-admin";
+  const VERSION = "explora-pago-home-v44-card-order-alerts";
   const AR_TZ = "America/Argentina/Cordoba";
   const EXPLORA_WHATSAPP = "5493757461564";
   const EXPLORA_WHATSAPP_DISPLAY = "+5493757461564";
@@ -17,8 +17,11 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
   const EXPLORA_ALIAS = "mp.explora";
   const EXPLORA_ADMIN_UIDS = new Set(["2LziyTTdFcZzSOhK3hLbAKs2U4s2"]);
   const $ = id => document.getElementById(id);
+  const PAY_TAB_ORDER = Object.freeze(["chofer", "explora", "gastos", "caja_chica"]);
+  const PAY_TAB_LABELS = Object.freeze({ chofer:"Chofer", explora:"Explora", gastos:"Gastos", caja_chica:"Caja chica" });
+  const PAY_TAB_ALERT_ZERO = Object.freeze({ chofer:0, explora:0, gastos:0, caja_chica:0 });
   const state = {
-    tab:"caja_chica",
+    tab:"chofer",
     view:"inicio",
     user:null,
     role:"driver",
@@ -40,7 +43,11 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     modalKind:"",
     modalClosure:null,
     modalFile:null,
-    previousDetailsOpen:{ caja_chica:false, gastos:false, explora:false, chofer:false },
+    previousDetailsOpen:{ chofer:false, explora:false, gastos:false, caja_chica:false },
+    tabAlerts:{ chofer:0, explora:0, gastos:0, caja_chica:0 },
+    tabAlertMovements:{},
+    tabAlertScope:"",
+    tabAlertLoadedAt:0,
     efficiency:{ loadedAt:0, loading:false, error:"" },
     busy:false,
     refreshing:false
@@ -284,6 +291,139 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     ].map(safe).filter(Boolean);
   }
 
+  function tabAlertScopeUid() {
+    return safe(notificationDriverUid() || getDriverUid() || getOwnDriverUid() || state.user?.uid || "anon");
+  }
+
+  function tabAlertStorageKey(uid = tabAlertScopeUid()) {
+    return `explora:pay-home:card-alerts:v4016:${uid || "anon"}`;
+  }
+
+  function normalizeTabAlertCounts(counts = {}) {
+    return PAY_TAB_ORDER.reduce((acc, tab) => {
+      acc[tab] = Math.max(0, Math.min(99, Math.trunc(number(counts?.[tab]))));
+      return acc;
+    }, { ...PAY_TAB_ALERT_ZERO });
+  }
+
+  function resetTabAlertScope() {
+    state.tabAlertScope = "";
+    state.tabAlertLoadedAt = 0;
+    state.tabAlertMovements = {};
+    state.tabAlerts = { ...PAY_TAB_ALERT_ZERO };
+  }
+
+  function ensureTabAlertState() {
+    const uid = tabAlertScopeUid();
+    if (state.tabAlertScope === uid) return;
+    state.tabAlertScope = uid;
+    state.tabAlertLoadedAt = Date.now();
+    state.tabAlerts = { ...PAY_TAB_ALERT_ZERO };
+    state.tabAlertMovements = {};
+    try {
+      const raw = localStorage.getItem(tabAlertStorageKey(uid));
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      state.tabAlerts = normalizeTabAlertCounts(parsed?.counts || {});
+      state.tabAlertMovements = parsed?.movements && typeof parsed.movements === "object" ? parsed.movements : {};
+    } catch (_) {
+      state.tabAlerts = { ...PAY_TAB_ALERT_ZERO };
+      state.tabAlertMovements = {};
+    }
+  }
+
+  function persistTabAlertState() {
+    ensureTabAlertState();
+    try {
+      const entries = Object.entries(state.tabAlertMovements || {})
+        .sort((a, b) => number(b[1]?.ms) - number(a[1]?.ms))
+        .slice(0, 900);
+      state.tabAlertMovements = Object.fromEntries(entries);
+      localStorage.setItem(tabAlertStorageKey(), JSON.stringify({
+        counts:normalizeTabAlertCounts(state.tabAlerts),
+        movements:state.tabAlertMovements,
+        updatedAt:Date.now()
+      }));
+    } catch (_) {}
+  }
+
+  function tabAlertRowKey(collectionName = "", row = {}) {
+    const id = safe(row.id || row.recordId || row.billingRecordId || row.expenseId || row.gastoId || row.operationId || row.uid);
+    if (id) return `${collectionName}:${id}`;
+    return `${collectionName}:${rowMs(row)}:${amountOf(row)}:${methodOf(row)}:${safe(row.createdByUid || row.driverUid || row.choferUid)}`;
+  }
+
+  function tabAlertSignature(collectionName = "", row = {}) {
+    if (collectionName === "gastos") {
+      return [amountOf(row), expenseTypeLabel(row), rowMs(row), safe(row.updatedAtMs || row.estado || row.status || row.notes || row.descripcion)].join("|");
+    }
+    const method = methodOf(row);
+    return [amountOf(row), method, rowMs(row), safe(row.updatedAtMs || row.estado || row.status || row.paymentProvider || row.metodoPago)].join("|");
+  }
+
+  function tabAlertTargetsForMovement(collectionName = "", row = {}) {
+    if (collectionName === "gastos") return ["gastos"];
+    if (collectionName !== "billing_records") return [];
+    const method = methodOf(row);
+    if (method === "cash") return ["chofer", "caja_chica"];
+    return ["explora"];
+  }
+
+  function registerTabAlertMovements(collectionName = "", rows = []) {
+    if (!collectionName || !Array.isArray(rows)) return;
+    ensureTabAlertState();
+    const currentUid = tabAlertScopeUid();
+    if (!currentUid || currentUid === "anon") return;
+    const hadStoredHistory = Object.keys(state.tabAlertMovements || {}).length > 0;
+    const freshBootWindow = !hadStoredHistory && Date.now() - number(state.tabAlertLoadedAt) < 3500;
+    let changed = false;
+    for (const row of rows) {
+      const tabs = tabAlertTargetsForMovement(collectionName, row);
+      if (!tabs.length) continue;
+      const key = tabAlertRowKey(collectionName, row);
+      const sig = tabAlertSignature(collectionName, row);
+      const previous = state.tabAlertMovements[key];
+      const previousSig = safe(previous?.sig);
+      const isNewOrChanged = !previous || previousSig !== sig;
+      const shouldNotify = isNewOrChanged && !freshBootWindow;
+      if (shouldNotify) {
+        const targetTabs = Array.from(new Set([...(Array.isArray(previous?.tabs) ? previous.tabs : []), ...tabs])).filter(tab => PAY_TAB_ORDER.includes(tab));
+        for (const tab of targetTabs) state.tabAlerts[tab] = Math.min(99, number(state.tabAlerts[tab]) + 1);
+      }
+      if (isNewOrChanged || !previous) {
+        state.tabAlertMovements[key] = { sig, tabs, ms:rowMs(row) || Date.now(), collection:collectionName };
+        changed = true;
+      }
+    }
+    if (changed) persistTabAlertState();
+  }
+
+  function markTabAlertSeen(tab = state.tab) {
+    const key = activeClosureKind(tab) || tab;
+    if (!PAY_TAB_ORDER.includes(key)) return;
+    ensureTabAlertState();
+    if (!number(state.tabAlerts[key])) return;
+    state.tabAlerts[key] = 0;
+    persistTabAlertState();
+  }
+
+  function renderTabAlerts() {
+    ensureTabAlertState();
+    document.querySelectorAll("[data-pay-tab]").forEach(button => {
+      const tab = activeClosureKind(button.dataset.payTab) || button.dataset.payTab;
+      let badge = button.querySelector(".pay-tab-alert-badge");
+      if (!badge) {
+        badge = document.createElement("span");
+        badge.className = "pay-tab-alert-badge";
+        button.appendChild(badge);
+      }
+      const count = Math.max(0, Math.trunc(number(state.tabAlerts?.[tab])));
+      badge.hidden = count < 1;
+      badge.textContent = `🛎️ ${count > 99 ? "99+" : count}`;
+      button.classList.toggle("has-pay-alert", count > 0);
+    });
+  }
+
   function closureBelongsToDriver(row = {}, uid = "") {
     const targetUid = safe(uid);
     if (!targetUid) return false;
@@ -348,10 +488,10 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
           </div>
         </header>
         <nav class="pay-tabs" aria-label="Resumen de caja Explora" role="tablist">
-          <button class="pay-tab is-active" data-pay-tab="caja_chica" type="button" role="tab" aria-selected="true">Caja chica</button>
-          <button class="pay-tab" data-pay-tab="gastos" type="button" role="tab" aria-selected="false">Gastos</button>
-          <button class="pay-tab" data-pay-tab="explora" type="button" role="tab" aria-selected="false">Explora</button>
-          <button class="pay-tab" data-pay-tab="chofer" type="button" role="tab" aria-selected="false">Chofer</button>
+          <button class="pay-tab is-active" data-pay-tab="chofer" type="button" role="tab" aria-selected="true"><span class="pay-tab-label">Chofer</span><span class="pay-tab-alert-badge" hidden>🛎️ 0</span></button>
+          <button class="pay-tab" data-pay-tab="explora" type="button" role="tab" aria-selected="false"><span class="pay-tab-label">Explora</span><span class="pay-tab-alert-badge" hidden>🛎️ 0</span></button>
+          <button class="pay-tab" data-pay-tab="gastos" type="button" role="tab" aria-selected="false"><span class="pay-tab-label">Gastos</span><span class="pay-tab-alert-badge" hidden>🛎️ 0</span></button>
+          <button class="pay-tab" data-pay-tab="caja_chica" type="button" role="tab" aria-selected="false"><span class="pay-tab-label">Caja chica</span><span class="pay-tab-alert-badge" hidden>🛎️ 0</span></button>
         </nav>
         <section class="pay-admin-driver-picker" id="payAdminDriverPicker" hidden>
           <label for="payAdminDriverSelect">Seleccionar chofer</label>
@@ -494,6 +634,8 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
         state.records = records.sort((a,b)=>rowMs(b)-rowMs(a));
         state.expenses = expenses.sort((a,b)=>rowMs(b)-rowMs(a));
         state.closures = closures.sort((a,b)=>rowMs(b)-rowMs(a));
+        registerTabAlertMovements("billing_records", state.records);
+        registerTabAlertMovements("gastos", state.expenses);
       } else if (isAdmin()) {
         state.records = [];
         state.expenses = [];
@@ -524,7 +666,8 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 
   function bindShell() {
     document.querySelectorAll("[data-pay-tab]").forEach(button => button.addEventListener("click", () => {
-      state.tab = button.dataset.payTab || "caja_chica";
+      state.tab = button.dataset.payTab || "chofer";
+      markTabAlertSeen(state.tab);
       render();
     }));
     document.querySelectorAll("[data-pay-run]").forEach(button => button.addEventListener("click", () => runExistingAction(button.dataset.payRun)));
@@ -747,7 +890,8 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     state.expenses = [];
     state.closures = [];
     state.pendingClosure = null;
-    state.previousDetailsOpen = { caja_chica:false, gastos:false, explora:false, chofer:false };
+    state.previousDetailsOpen = { chofer:false, explora:false, gastos:false, caja_chica:false };
+    resetTabAlertScope();
     render();
     startRealtime("admin-driver-selected");
   }
@@ -808,6 +952,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       if (!targetUid) {
         return onSnapshot(scopedQuery(collectionName, targetUid), snap => {
           state[targetArray] = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+          if (collectionName === "billing_records" || collectionName === "gastos") registerTabAlertMovements(collectionName, state[targetArray]);
           render();
         }, error => {
           console.warn(`EXPLORA_PAY_LISTENER_${collectionName}`, error?.code || error?.message);
@@ -821,6 +966,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
           for (const item of docs) merged.set(item.id, item);
         }
         state[targetArray] = Array.from(merged.values()).sort((a,b)=>rowMs(b)-rowMs(a));
+        if (collectionName === "billing_records" || collectionName === "gastos") registerTabAlertMovements(collectionName, state[targetArray]);
         render();
       };
       const unsubs = fields.map(field => {
@@ -2316,11 +2462,13 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const summary = computeSummary();
     state.latestSummary = summary;
     state.pendingClosure = pendingClosureFor(getDriverUid(), state.tab);
+    if (!PAY_TAB_ORDER.includes(state.tab)) state.tab = "chofer";
     document.querySelectorAll("[data-pay-tab]").forEach(button => {
       const active = button.dataset.payTab === state.tab;
       button.classList.toggle("is-active", active);
       button.setAttribute("aria-selected", active ? "true" : "false");
     });
+    renderTabAlerts();
     const greeting = $("payGreeting");
     if (greeting) greeting.textContent = isAdmin() ? (state.selectedDriverName ? `Chofer, ${displayName()}` : "Seleccionar chofer") : `Hola, ${displayName()}`;
     renderAdminDriverPicker();

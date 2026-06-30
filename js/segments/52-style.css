@@ -54,6 +54,11 @@ body.explora-pay-mode #mainBottomNav.performance-bottom-nav{
 .pay-tabs{position:relative;display:grid;grid-template-columns:repeat(4,1fr);align-items:end;margin:0 0 -1px;min-height:72px;z-index:2;}
 .pay-tab{height:72px;border:0;background:transparent;color:#242638;font-size:18px;font-weight:520;letter-spacing:-.02em;border-radius:22px 22px 0 0;position:relative;z-index:2;padding:0 5px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.05;white-space:normal;}
 .pay-tab.is-active{font-weight:850;background:var(--pay-card);box-shadow:0 -1px 0 rgba(255,255,255,.8) inset;}
+.pay-tab-label{display:block;max-width:100%;}
+.pay-tab-alert-badge{position:absolute;top:4px;right:7px;min-width:24px;height:18px;padding:0 5px;border-radius:999px;background:#fff7d6;border:1px solid rgba(212,164,22,.45);box-shadow:0 4px 10px rgba(35,38,53,.14);color:#2a2b36;font-size:10px;font-weight:900;line-height:18px;letter-spacing:-.02em;display:inline-flex;align-items:center;justify-content:center;gap:2px;white-space:nowrap;z-index:5;}
+.pay-tab-alert-badge[hidden]{display:none!important;}
+.pay-tab.has-pay-alert .pay-tab-label{padding-top:8px;}
+.pay-tab.is-active .pay-tab-alert-badge{top:6px;right:9px;}
 .pay-admin-driver-picker{background:rgba(255,255,255,.88);border:1px solid rgba(255,255,255,.65);border-radius:22px;padding:12px 13px;margin:0 0 14px;box-shadow:0 8px 22px rgba(25,28,40,.08);display:grid;gap:8px;}
 .pay-admin-driver-picker[hidden]{display:none!important;}
 .pay-admin-driver-picker label{font-size:12px;font-weight:900;color:#474b61;text-transform:uppercase;letter-spacing:.04em;}
