@@ -5,7 +5,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 (() => {
   "use strict";
 
-  const VERSION = "explora-pago-home-v39-perfil-whatsapp-cierres";
+  const VERSION = "explora-pago-home-v40-cierre-directo-comprobante";
   const AR_TZ = "America/Argentina/Cordoba";
   const EXPLORA_WHATSAPP = "5493757461564";
   const EXPLORA_WHATSAPP_DISPLAY = "+5493757461564";
@@ -477,7 +477,12 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       } else if (isAdmin()) {
         state.records = [];
         state.expenses = [];
-        state.closures = [];
+        try {
+          const snap = await getDocs(query(collection(state.db, "cierres_semanales"), limit(250)));
+          state.closures = snap.docs.map(item => ({ id:item.id, ...item.data() })).sort((a,b)=>rowMs(b)-rowMs(a));
+        } catch (_) {
+          state.closures = [];
+        }
         state.pendingClosure = null;
       }
       state.tab = activeTab;
@@ -830,10 +835,11 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       if (!uid) {
         state.records = [];
         state.expenses = [];
-        state.closures = [];
         state.pendingClosure = null;
+        const unsub = listenCollection("cierres_semanales", "closures", "");
+        if (unsub) state.unsubscribers.push(unsub);
         render();
-        console.info("EXPLORA_PAY_REALTIME", VERSION, reason, "admin-waiting-driver");
+        console.info("EXPLORA_PAY_REALTIME", VERSION, reason, "admin-global-closures");
         return;
       }
     }
@@ -847,9 +853,16 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
   }
 
   function closureCutMs(row = {}) {
+    // El corte operativo queda fijado cuando se pide el cierre.
+    // Subir el comprobante cierra el trámite, pero NO debe mover el corte ni borrar movimientos cargados después.
+    const explicitCutoff = Number(row.cutoffAtMs || 0) || ms(row.cutoffAt);
+    if (explicitCutoff > 0) return explicitCutoff;
+    const requestedCutoff = Number(row.requestedAtMs || 0) || ms(row.requestedAt) || Number(row.createdAtMs || 0) || ms(row.createdAt);
+    if (requestedCutoff > 0) return requestedCutoff;
     return Math.max(
-      Number(row.cutoffAtMs || 0), Number(row.requestedAtMs || 0), Number(row.driverUploadedAtMs || 0), Number(row.confirmedAtMs || 0),
-      ms(row.cutoffAt), ms(row.requestedAt), ms(row.driverUploadedAt), ms(row.confirmedAt), ms(row.closedAt), rowMs(row)
+      Number(row.driverUploadedAtMs || 0), Number(row.adminUploadedAtMs || 0), Number(row.receiptUploadedAtMs || 0),
+      Number(row.confirmedAtMs || 0), Number(row.closedAtMs || 0),
+      ms(row.driverUploadedAt), ms(row.adminUploadedAt), ms(row.receiptUploadedAt), ms(row.confirmedAt), ms(row.closedAt), rowMs(row)
     );
   }
 
@@ -900,11 +913,10 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 
   function pendingClosureRows(uid = notificationDriverUid()) {
     const targetUid = safe(uid);
-    if (isAdmin() && !targetUid) return [];
     const rows = state.closures
       .filter(row => safe(row.closureMode || row.periodType) === "on_demand")
       .filter(row => !/confirmed|completed|closed|cerrado|al_dia|al día|pagado|cancelled|canceled|anulado|rechazado/i.test(safe(row.status || row.estado)))
-      .filter(row => closureBelongsToDriver(row, targetUid))
+      .filter(row => targetUid ? closureBelongsToDriver(row, targetUid) : isAdmin())
       .filter(row => closureActionForViewer(row) !== "none")
       .sort((a,b)=>rowMs(b)-rowMs(a));
     const unique = new Map();
@@ -994,7 +1006,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     if (!isAdmin() && closureNeedsDriverKm(closure)) return "driver_km";
     if (isAdmin()) {
       const targetUid = notificationDriverUid();
-      if (!targetUid || !closureBelongsToDriver(closure, targetUid)) return "none";
+      if (targetUid && !closureBelongsToDriver(closure, targetUid)) return "none";
       if (toDriver > 0 && !proof) return "admin_upload";
       if (due > 0 && proof) return "admin_review";
       if (due > 0 && !proof) return "admin_waiting_driver";
@@ -1915,10 +1927,6 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const list = $("payNotificationList");
     if (!list) return;
     const targetUid = notificationDriverUid();
-    if (isAdmin() && !targetUid) {
-      list.innerHTML = `<div class="pay-notification-empty">Seleccioná un chofer para ver sus cierres abiertos.</div>`;
-      return;
-    }
     const rows = pendingClosureRows(targetUid);
     if (!rows.length) {
       list.innerHTML = `<div class="pay-notification-empty">No tenés cierres abiertos.</div>`;
@@ -1972,10 +1980,18 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const targetUid = notificationDriverUid();
     const closure = state.closures.find(row => {
       if (safe(row.id) !== safe(id)) return false;
-      if (isAdmin()) return closureBelongsToDriver(row, targetUid);
+      if (isAdmin()) return targetUid ? closureBelongsToDriver(row, targetUid) : true;
       return closureBelongsToDriver(row, getOwnDriverUid());
     });
     if (!closure) return;
+    if (isAdmin()) {
+      const closureUid = closureDriverUids(closure)[0] || "";
+      if (closureUid && closureUid !== state.selectedDriverUid) {
+        state.selectedDriverUid = closureUid;
+        state.selectedDriverName = closureDriverName(closure);
+        setTimeout(() => startRealtime("admin-open-closure-notification"), 50);
+      }
+    }
     showPayView("inicio");
     const kind = closureKindOf(closure) || state.tab;
     openClosureModal(isAdmin() ? "admin-review" : "confirm", closure, kind);
@@ -2123,7 +2139,11 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
         const amountToDriver = number(summary.amountToDriverForBilling || t.amountToDriver || 0);
         return { visible:true, enabled:amountToDriver > 0.49, pending:true };
       }
-      if (target === "chofer") return { visible:true, enabled:false, pending:true };
+      if (target === "chofer") {
+        const t = tabSummary(summary, "chofer");
+        const amountFromDriver = number(summary.amountFromDriverForBilling || t.amountFromDriver || 0);
+        return { visible:true, enabled:isAdmin() && amountFromDriver > 0.49, pending:true };
+      }
       if (target === "caja_chica" || target === "gastos") return { visible:true, enabled:false, pending:true };
       return { visible:false, enabled:false, pending:true };
     }
@@ -2141,9 +2161,11 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     }
 
     if (target === "chofer") {
-      // El chofer nunca pide su propio cierre de facturación desde su módulo.
-      // El botón debe quedar visible, con el mismo texto, pero bloqueado/transparente.
-      return { visible:true, enabled:false };
+      const t = tabSummary(summary, "chofer");
+      const amountFromDriver = number(summary.amountFromDriverForBilling || t.amountFromDriver || 0);
+      // Admin puede pedir cierre al chofer cuando el efectivo del chofer supera su parte.
+      // El chofer no se pide a sí mismo este cierre desde su módulo.
+      return { visible:true, enabled:isAdmin() && amountFromDriver > 0 };
     }
 
     if (target === "explora") {
@@ -2163,7 +2185,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       const target = activeClosureKind(kind);
       if (target === "caja_chica") throw new Error("No hay caja chica en efectivo pendiente para cerrar.");
       if (target === "gastos") throw new Error("No hay gastos abiertos para pedir cierre.");
-      if (target === "chofer") throw new Error("El cierre de facturación no corresponde al chofer en este momento.");
+      if (target === "chofer") throw new Error("No hay saldo pendiente para pedir cierre al chofer en este momento.");
       if (target === "explora") throw new Error("El cierre de facturación no corresponde a Explora en este momento.");
       throw new Error("Este módulo no tiene cierre disponible en este momento.");
     }
@@ -2704,11 +2726,11 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
         } else if (action === "driver_upload") {
           subtitle.textContent = "Resolvé tu situación: transferí a Explora y cargá el comprobante.";
           submit.disabled = false;
-          submit.textContent = "Subir comprobante";
+          submit.textContent = "Subir comprobante y cerrar";
         } else if (action === "driver_review") {
-          subtitle.textContent = "Explora cargó el comprobante. Revisalo y confirmá recibido.";
+          subtitle.textContent = "Explora cargó el comprobante. El cierre quedará cerrado automáticamente.";
           submit.disabled = false;
-          submit.textContent = "Confirmar recibido";
+          submit.textContent = "Cerrar";
         } else if (action === "driver_waiting_admin") {
           subtitle.textContent = "Explora debe liquidar y cargar el comprobante. No tenés que subir archivo.";
           submit.disabled = true;
@@ -2726,11 +2748,11 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
         if (action === "admin_upload") {
           subtitle.textContent = `${closureRequesterText(closure)}. Explora debe liquidar y cargar el comprobante para notificar al chofer.`;
           submit.disabled = false;
-          submit.textContent = "Enviar comprobante";
+          submit.textContent = "Subir comprobante y cerrar";
         } else if (action === "admin_review") {
-          subtitle.textContent = `${closureDriverName(closure)} cargó el comprobante. Confirmá si la foto está correcta.`;
+          subtitle.textContent = `${closureDriverName(closure)} cargó el comprobante. El cierre quedará cerrado automáticamente.`;
           submit.disabled = false;
-          submit.textContent = "Confirmar cierre";
+          submit.textContent = "Cerrar";
         } else if (action === "admin_waiting_driver") {
           subtitle.textContent = `${closureDriverName(closure)} debe liquidar y cargar el comprobante. Explora no debe subir archivo.`;
           submit.disabled = true;
@@ -2937,6 +2959,10 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     }
     const recordIds = (summary.records || []).map(row => safe(row.id)).filter(Boolean).slice(0, 200);
     const expenseIds = (summary.expenses || []).map(row => safe(row.id)).filter(Boolean).slice(0, 200);
+    const amountFromDriver = Number(summary.amountFromDriver || 0);
+    const amountToDriver = Number(summary.amountToDriver || 0);
+    const payerRole = amountFromDriver > 0.49 ? "driver" : amountToDriver > 0.49 ? "admin" : "balanced";
+    const autoClosed = payerRole === "balanced";
     const payload = {
       closureMode:"on_demand",
       periodType:"on_demand",
@@ -2949,9 +2975,16 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       homeModule:kind,
       requestModule:kind,
       originModule:kind,
-      status:"requested",
-      estado:"solicitado",
-      statusLabel:`${closureTitle(kind)} solicitado`,
+      status:autoClosed ? "closed" : "requested",
+      estado:autoClosed ? "cerrado" : "solicitado",
+      statusLabel:autoClosed ? "Cierre equilibrado · cerrado automáticamente" : `${closureTitle(kind)} solicitado`,
+      closureStatus:autoClosed ? "closed" : "requested",
+      paymentStatus:autoClosed ? "paid" : "pending",
+      receiptStatus:autoClosed ? "not_required" : "pending",
+      paid:autoClosed,
+      completed:autoClosed,
+      pendingPayerRole:payerRole,
+      receiptRequiredFrom:payerRole,
       driverUid:targetUid,
       choferUid:targetUid,
       uid:targetUid,
@@ -2975,8 +3008,8 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       cashboxInExplora:Number(summary.cashboxInExplora || 0),
       billingShareEach:Number(summary.billingShareEach || 0),
       netSettlementToDriver:Number(summary.netSettlementToDriver || 0),
-      amountDueFromDriver:Number(summary.amountFromDriver || 0),
-      amountDueToDriver:Number(summary.amountToDriver || 0),
+      amountDueFromDriver:amountFromDriver,
+      amountDueToDriver:amountToDriver,
       includedBillingIds:recordIds,
       includedExpenseIds:expenseIds,
       includedCount:Number(recordIds.length + expenseIds.length),
@@ -2984,6 +3017,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       cutoffAtMs,
       requestedAtMs:cutoffAtMs,
       requestedAt:serverTimestamp(),
+      ...(autoClosed ? { closedAt:serverTimestamp(), closedAtMs:cutoffAtMs, completedAt:serverTimestamp(), completedAtMs:cutoffAtMs } : {}),
       createdAt:serverTimestamp(),
       updatedAt:serverTimestamp(),
       version:VERSION
@@ -3036,87 +3070,76 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     return { url, path, ext };
   }
 
+  function closureClosedPayload({ closure = {}, receipt = null, uploadedBy = "admin" } = {}) {
+    const nowMs = Date.now();
+    const isDriver = uploadedBy === "driver";
+    const actorName = isDriver ? displayName() : accountName();
+    const actorRole = isDriver ? "driver" : "admin";
+    const label = isDriver
+      ? "Cierre cerrado automáticamente con comprobante del chofer"
+      : "Cierre cerrado automáticamente con comprobante de Explora";
+    return {
+      status:"closed",
+      estado:"cerrado",
+      statusLabel:label,
+      closureStatus:"closed",
+      paymentStatus:"paid",
+      receiptStatus:"confirmed",
+      paid:true,
+      completed:true,
+      closedByUid:state.auth?.currentUser?.uid || "",
+      closedByName:actorName,
+      closedByRole:actorRole,
+      closedReason:"receipt_uploaded_by_payer",
+      closedAt:serverTimestamp(),
+      closedAtMs:nowMs,
+      completedAt:serverTimestamp(),
+      completedAtMs:nowMs,
+      confirmedByUid:state.auth?.currentUser?.uid || "",
+      confirmedByName:actorName,
+      confirmedAt:serverTimestamp(),
+      confirmedAtMs:nowMs,
+      receiptUrl:receipt?.url || closureProofUrl(closure) || null,
+      receiptPath:receipt?.path || safe(closure.receiptPath || closure.driverReceiptPath || closure.adminReceiptPath) || null,
+      receiptUploadedBy:actorRole,
+      receiptUploadedAt:serverTimestamp(),
+      receiptUploadedAtMs:nowMs,
+      updatedAt:serverTimestamp(),
+      updatedAtMs:nowMs,
+      ...(isDriver ? { driverUploadedAt:serverTimestamp(), driverUploadedAtMs:nowMs, driverReceiptUrl:receipt?.url || closure.driverReceiptUrl || closure.receiptUrl || null, driverReceiptPath:receipt?.path || closure.driverReceiptPath || closure.receiptPath || null } : {}),
+      ...(!isDriver ? { adminUploadedAt:serverTimestamp(), adminUploadedAtMs:nowMs, adminReceiptUrl:receipt?.url || closure.adminReceiptUrl || closure.receiptUrl || null, adminReceiptPath:receipt?.path || closure.adminReceiptPath || closure.receiptPath || null } : {})
+    };
+  }
+
   async function driverConfirmClosure(closure) {
     const due = number(closure.amountDueFromDriver || 0);
     const toDriver = number(closure.amountDueToDriver || 0);
-    const proof = closureHasProof(closure);
-    let receipt = null;
-    if (due > 0 && !proof) receipt = await uploadClosureReceipt(closure, state.modalFile);
     const ref = doc(state.db, "cierres_semanales", closure.id);
-    if (due > 0 && !proof) {
-      await updateDoc(ref, {
-        status:"driver_uploaded",
-        estado:"comprobante_cargado",
-        statusLabel:"Comprobante cargado por chofer",
-        receiptUrl:receipt?.url || null,
-        receiptPath:receipt?.path || null,
-        receiptUploadedBy:"driver",
-        receiptUploadedAt:serverTimestamp(),
-        receiptUploadedAtMs:Date.now(),
-        driverUploadedAt:serverTimestamp(),
-        driverUploadedAtMs:Date.now(),
-        updatedAt:serverTimestamp()
-      });
-      return;
-    }
-    if (toDriver > 0 && proof) {
-      await updateDoc(ref, {
-        status:"confirmed",
-        estado:"confirmado",
-        statusLabel:"Comprobante recibido por chofer",
-        confirmedByUid:state.auth?.currentUser?.uid || "",
-        confirmedByName:displayName(),
-        confirmedAt:serverTimestamp(),
-        confirmedAtMs:Date.now(),
-        updatedAt:serverTimestamp()
-      });
-      return;
-    }
-    await updateDoc(ref, {
-      status:"driver_viewed",
-      estado:"visto_por_chofer",
-      statusLabel:"Visto por chofer",
-      driverViewedAt:serverTimestamp(),
-      driverViewedAtMs:Date.now(),
-      updatedAt:serverTimestamp()
-    });
-  }
-
-  async function adminSubmitClosure(closure) {
-    if (!closure?.id) throw new Error("No se pudo identificar el cierre.");
-    const due = number(closure.amountDueFromDriver || 0);
-    const toDriver = number(closure.amountDueToDriver || 0);
-    const proof = closureHasProof(closure);
-    if (toDriver > 0 && !proof) {
+    if (due > 0 && !closureHasProof(closure)) {
       const receipt = await uploadClosureReceipt(closure, state.modalFile);
-      await updateDoc(doc(state.db, "cierres_semanales", closure.id), {
-        status:"admin_uploaded",
-        estado:"comprobante_explora_cargado",
-        statusLabel:"Comprobante enviado por Explora",
-        receiptUrl:receipt?.url || null,
-        receiptPath:receipt?.path || null,
-        receiptUploadedBy:"admin",
-        receiptUploadedAt:serverTimestamp(),
-        receiptUploadedAtMs:Date.now(),
-        adminUploadedAt:serverTimestamp(),
-        adminUploadedAtMs:Date.now(),
-        updatedAt:serverTimestamp()
-      });
+      await updateDoc(ref, closureClosedPayload({ closure, receipt, uploadedBy:"driver" }));
       return;
     }
-    if (due > 0 && proof) {
-      await adminConfirmClosure(closure);
+    if (toDriver > 0 && closureHasProof(closure)) {
+      await updateDoc(ref, closureClosedPayload({ closure, uploadedBy:"admin" }));
       return;
     }
-    if (toDriver > 0 && proof) {
-      await updateDoc(doc(state.db, "cierres_semanales", closure.id), {
-        status:"confirmed",
-        estado:"confirmado",
-        statusLabel:"Cierre confirmado por Explora",
-        confirmedByUid:state.auth?.currentUser?.uid || "",
-        confirmedByName:accountName(),
-        confirmedAt:serverTimestamp(),
-        confirmedAtMs:Date.now(),
+    if (!(due > 0) && !(toDriver > 0)) {
+      await updateDoc(ref, {
+        status:"closed",
+        estado:"cerrado",
+        statusLabel:"Cierre equilibrado · cerrado automáticamente",
+        closureStatus:"closed",
+        paymentStatus:"paid",
+        receiptStatus:"not_required",
+        paid:true,
+        completed:true,
+        closedByUid:state.auth?.currentUser?.uid || "",
+        closedByName:displayName(),
+        closedByRole:"driver",
+        closedReason:"balanced_no_receipt_required",
+        closedAt:serverTimestamp(),
+        closedAtMs:Date.now(),
         updatedAt:serverTimestamp()
       });
       return;
@@ -3124,18 +3147,41 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     throw new Error("Todavía falta el comprobante correspondiente.");
   }
 
-  async function adminConfirmClosure(closure) {
+  async function adminSubmitClosure(closure) {
     if (!closure?.id) throw new Error("No se pudo identificar el cierre.");
-    await updateDoc(doc(state.db, "cierres_semanales", closure.id), {
-      status:"confirmed",
-      estado:"confirmado",
-      statusLabel:"Cierre confirmado por Explora",
-      confirmedByUid:state.auth?.currentUser?.uid || "",
-      confirmedByName:accountName(),
-      confirmedAt:serverTimestamp(),
-      confirmedAtMs:Date.now(),
-      updatedAt:serverTimestamp()
-    });
+    const due = number(closure.amountDueFromDriver || 0);
+    const toDriver = number(closure.amountDueToDriver || 0);
+    const ref = doc(state.db, "cierres_semanales", closure.id);
+    if (toDriver > 0 && !closureHasProof(closure)) {
+      const receipt = await uploadClosureReceipt(closure, state.modalFile);
+      await updateDoc(ref, closureClosedPayload({ closure, receipt, uploadedBy:"admin" }));
+      return;
+    }
+    if (due > 0 && closureHasProof(closure)) {
+      await updateDoc(ref, closureClosedPayload({ closure, uploadedBy:"driver" }));
+      return;
+    }
+    if (!(due > 0) && !(toDriver > 0)) {
+      await updateDoc(ref, {
+        status:"closed",
+        estado:"cerrado",
+        statusLabel:"Cierre equilibrado · cerrado automáticamente",
+        closureStatus:"closed",
+        paymentStatus:"paid",
+        receiptStatus:"not_required",
+        paid:true,
+        completed:true,
+        closedByUid:state.auth?.currentUser?.uid || "",
+        closedByName:accountName(),
+        closedByRole:"admin",
+        closedReason:"balanced_no_receipt_required",
+        closedAt:serverTimestamp(),
+        closedAtMs:Date.now(),
+        updatedAt:serverTimestamp()
+      });
+      return;
+    }
+    throw new Error("Todavía falta el comprobante correspondiente.");
   }
 
   async function refreshSession(user) {
