@@ -582,9 +582,26 @@ function financialMethodOf(data = {}) {
 function financialDriverValues(data = {}) {
   return FINANCIAL_DRIVER_FIELDS.map(field => text(data[field])).filter(Boolean);
 }
-function financialBelongsToDriver(data = {}, driverUid = "") {
+async function financialDriverAllowedAliases(driverUid = "") {
+  const aliases = new Set([text(driverUid)]);
+  for (const collectionName of ["choferes", "usuarios"]) {
+    const snap = await db.collection(collectionName).doc(driverUid).get().catch(() => null);
+    if (!snap?.exists) continue;
+    const data = snap.data() || {};
+    for (const field of FINANCIAL_DRIVER_FIELDS.concat(["authUid", "profileDocumentId", "perfilId", "id", "username", "usuario"])) {
+      const value = text(data[field]);
+      if (value) aliases.add(value);
+    }
+  }
+  return aliases;
+}
+async function financialBelongsToDriver(data = {}, driverUid = "") {
   const target = text(driverUid);
-  return !!target && financialDriverValues(data).includes(target);
+  if (!target) return false;
+  const values = financialDriverValues(data);
+  if (values.includes(target)) return true;
+  const aliases = await financialDriverAllowedAliases(target);
+  return values.some(value => aliases.has(value));
 }
 function financialClosureKind(data = {}) {
   const raw = normalized(data.closureKind || data.closureType || data.payTab || data.closeKind || data.kind || data.cierreTipo || data.type || data.category);
@@ -704,7 +721,7 @@ async function financialAdjustClosures({ type, driverUid, documentId, movement, 
       adminAdjustedByUid:adminUid,
       updatedAt:FieldValue.serverTimestamp(),
       updatedAtMs:Date.now(),
-      version:"v4017-admin-delete-financial"
+      version:"v4018-admin-delete-action-fix"
     }, { merge:true });
     adjusted += 1;
   }
@@ -725,7 +742,7 @@ exports.adminDeleteFinancialMovement = onCall({ region:"southamerica-east1", tim
   const snap = await ref.get();
   if (!snap.exists) throw new HttpsError("not-found", "El movimiento ya no existe en Firestore.");
   const data = snap.data() || {};
-  if (!financialBelongsToDriver(data, driverUid)) throw new HttpsError("permission-denied", "El movimiento no pertenece al chofer seleccionado.");
+  if (!(await financialBelongsToDriver(data, driverUid))) throw new HttpsError("permission-denied", "El movimiento no pertenece al chofer seleccionado.");
   if (type === "caja_chica" && financialMethodOf(data) !== "cash") throw new HttpsError("failed-precondition", "Solo los cobros en efectivo generan caja chica.");
 
   const auditRef = db.collection(ADMIN_AUDIT_COLLECTION).doc(`financial_delete_${Date.now()}_${documentId}`);
