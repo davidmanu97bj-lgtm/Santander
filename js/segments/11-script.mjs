@@ -3379,7 +3379,49 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       return true;
     }
 
-    const PROFILE_REF_CACHE_PREFIX = "explora_profile_ref_v183_";
+    const LEGACY_ADMIN_ROLES = new Set(["admin", "administrador", "owner", "superadmin"]);
+    const LEGACY_DRIVER_ROLES = new Set(["chofer", "driver", "conductor"]);
+
+    function normalizeLegacyIdentity(value) {
+      return String(value || "").trim().toLowerCase();
+    }
+
+    function legacyProfileIdentityMatchesAuth(profile = {}, docId = "", authUser = null, username = "", email = "") {
+      const uid = normalizeLegacyIdentity(authUser?.uid || "");
+      const normalizedUsername = normalizeLegacyIdentity(username);
+      const normalizedEmail = normalizeLegacyIdentity(email || authUser?.email || "");
+      const docIdentity = normalizeLegacyIdentity(docId);
+      const uidFields = [profile.uid, profile.authUid, profile.firebaseUid, profile.userId, profile.driverUid, profile.choferUid].map(normalizeLegacyIdentity).filter(Boolean);
+      const usernameFields = [profile.usuario, profile.username, profile.usuarioNormalizado, profile.userName, profile.login, profile.choferId].map(normalizeLegacyIdentity).filter(Boolean);
+      const emailFields = [profile.email, profile.authEmail, profile.correo, profile.firebaseEmail].map(normalizeLegacyIdentity).filter(Boolean);
+
+      if (uidFields.length && uid) return uidFields.includes(uid);
+      if (emailFields.length && normalizedEmail) return emailFields.includes(normalizedEmail);
+      if (usernameFields.length && normalizedUsername) return usernameFields.includes(normalizedUsername);
+      return Boolean(docIdentity && [uid, normalizedUsername, normalizedEmail].filter(Boolean).includes(docIdentity));
+    }
+
+    function secureLegacyRoleForAuth(profile = {}, authUser = null, fallbackRole = "") {
+      const rawRole = String(legacyProfileRole(profile) || fallbackRole || "chofer").trim().toLowerCase();
+      const uidIsAdmin = EXPLORA_ADMIN_UIDS.has(authUser?.uid || "");
+      if (LEGACY_ADMIN_ROLES.has(rawRole)) return uidIsAdmin ? "admin" : "chofer";
+      if (LEGACY_DRIVER_ROLES.has(rawRole)) return "chofer";
+      return rawRole || "chofer";
+    }
+
+    function buildLegacyProfileResultFromSnap(snap, authUser, fallbackRole = "") {
+      const profile = snap.data() || {};
+      return {
+        profileDocumentId: snap.id,
+        profileRef: doc(db, EXPLORA_LEGACY_PROFILE_COLLECTION, snap.id),
+        collectionName: EXPLORA_LEGACY_PROFILE_COLLECTION,
+        profile,
+        role: secureLegacyRoleForAuth(profile, authUser, fallbackRole || legacyProfileRole(profile)),
+        active: legacyProfileIsActive(profile)
+      };
+    }
+
+    const PROFILE_REF_CACHE_PREFIX = "explora_profile_ref_v4014_";
 
     function cacheResolvedProfileReference(authUser, result) {
       try {
@@ -3402,12 +3444,15 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
         const snap = await getDoc(ref);
         if (!snap.exists()) return null;
         const profile = snap.data() || {};
+        const username = legacyUsernameFromAuthUser(authUser);
+        const email = String(authUser?.email || "").trim().toLowerCase();
+        if (!legacyProfileIdentityMatchesAuth(profile, snap.id, authUser, username, email)) return null;
         return {
           profileDocumentId: snap.id,
           profileRef: ref,
           collectionName: cached.collectionName,
           profile,
-          role: legacyProfileRole(profile),
+          role: secureLegacyRoleForAuth(profile, authUser, legacyProfileRole(profile)),
           active: legacyProfileIsActive(profile)
         };
       } catch (_) { return null; }
@@ -3420,57 +3465,85 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       if (!username) throw new Error("PROFILE_USERNAME_MISSING");
       loginDevDiagnostic("LEGACY_PROFILE_LOOKUP_START", { uid: Boolean(authUser.uid), username });
 
+      const aliasInfo = await getAuthenticatedLoginAlias(authUser).catch(() => null);
+      const aliasProfileId = String(aliasInfo?.profileId || aliasInfo?.driverId || aliasInfo?.choferId || aliasInfo?.uid || "").trim();
+
       const cached = await readCachedProfileReference(authUser);
       if (cached) {
-        loginDevDiagnostic("LEGACY_PROFILE_LOOKUP_METHOD", { method: "session_cached_ref", docId: cached.profileDocumentId });
+        loginDevDiagnostic("LEGACY_PROFILE_LOOKUP_METHOD", { method: "session_cached_ref", docId: cached.profileDocumentId, role: cached.role });
         return cached;
       }
 
-      const directRef = doc(db, EXPLORA_LEGACY_PROFILE_COLLECTION, username);
-      const directSnap = await getDoc(directRef).catch(() => null);
-      if (directSnap?.exists()) {
-        const profile = directSnap.data() || {};
-        const result = {
-          profileDocumentId: directSnap.id,
-          profileRef: directRef,
-          collectionName: EXPLORA_LEGACY_PROFILE_COLLECTION,
-          profile,
-          role: legacyProfileRole(profile),
-          active: legacyProfileIsActive(profile)
-        };
+      // Seguridad: primero buscar el perfil por UID/AuthUID/ProfileID real.
+      // Antes se probaba choferes/{username} primero; si quedaba un documento viejo
+      // con id david7 y rol admin, podía abrir una UI equivocada. Ahora el UID manda.
+      const directIdentityIds = Array.from(new Set([authUser.uid, aliasProfileId].filter(Boolean)));
+      for (const profileId of directIdentityIds) {
+        const directIdentityRef = doc(db, EXPLORA_LEGACY_PROFILE_COLLECTION, profileId);
+        const directIdentitySnap = await getDoc(directIdentityRef).catch(() => null);
+        if (!directIdentitySnap?.exists()) continue;
+        const result = buildLegacyProfileResultFromSnap(directIdentitySnap, authUser, aliasInfo?.role || "chofer");
+        if (!legacyProfileIdentityMatchesAuth(result.profile, result.profileDocumentId, authUser, username, email)) continue;
         cacheResolvedProfileReference(authUser, result);
-        loginDevDiagnostic("LEGACY_PROFILE_LOOKUP_METHOD", { method: "direct_doc_username", docId: directSnap.id });
+        loginDevDiagnostic("LEGACY_PROFILE_LOOKUP_METHOD", { method: "direct_doc_uid", docId: result.profileDocumentId, role: result.role });
         return result;
       }
 
       const targeted = await Promise.allSettled([
         getDocs(query(collection(db, EXPLORA_LEGACY_PROFILE_COLLECTION), where("uid", "==", authUser.uid), limit(2))),
         getDocs(query(collection(db, EXPLORA_LEGACY_PROFILE_COLLECTION), where("authUid", "==", authUser.uid), limit(2))),
+        getDocs(query(collection(db, EXPLORA_LEGACY_PROFILE_COLLECTION), where("firebaseUid", "==", authUser.uid), limit(2))).catch(() => ({ docs: [] })),
         getDocs(query(collection(db, EXPLORA_LEGACY_PROFILE_COLLECTION), where("usuario", "==", username), limit(2))),
         getDocs(query(collection(db, EXPLORA_LEGACY_PROFILE_COLLECTION), where("username", "==", username), limit(2))),
-        email ? getDocs(query(collection(db, EXPLORA_LEGACY_PROFILE_COLLECTION), where("email", "==", email), limit(2))) : Promise.resolve({ docs: [] })
+        getDocs(query(collection(db, EXPLORA_LEGACY_PROFILE_COLLECTION), where("usuarioNormalizado", "==", username), limit(2))).catch(() => ({ docs: [] })),
+        email ? getDocs(query(collection(db, EXPLORA_LEGACY_PROFILE_COLLECTION), where("email", "==", email), limit(2))) : Promise.resolve({ docs: [] }),
+        email ? getDocs(query(collection(db, EXPLORA_LEGACY_PROFILE_COLLECTION), where("authEmail", "==", email), limit(2))).catch(() => ({ docs: [] })) : Promise.resolve({ docs: [] })
       ]);
       const candidates = new Map();
       targeted.forEach((result) => {
         if (result.status !== "fulfilled") return;
-        (result.value.docs || []).forEach((snap) => candidates.set(snap.id, snap));
+        (result.value.docs || []).forEach((snap) => {
+          const profile = snap.data() || {};
+          if (!legacyProfileIdentityMatchesAuth(profile, snap.id, authUser, username, email)) return;
+          candidates.set(snap.id, snap);
+        });
       });
       if (candidates.size === 1) {
         const snap = Array.from(candidates.values())[0];
-        const profile = snap.data() || {};
-        const result = {
-          profileDocumentId: snap.id,
-          profileRef: doc(db, EXPLORA_LEGACY_PROFILE_COLLECTION, snap.id),
-          collectionName: EXPLORA_LEGACY_PROFILE_COLLECTION,
-          profile,
-          role: legacyProfileRole(profile),
-          active: legacyProfileIsActive(profile)
-        };
+        const result = buildLegacyProfileResultFromSnap(snap, authUser, aliasInfo?.role || "chofer");
         cacheResolvedProfileReference(authUser, result);
-        loginDevDiagnostic("LEGACY_PROFILE_LOOKUP_METHOD", { method: "targeted_query", docId: snap.id });
+        loginDevDiagnostic("LEGACY_PROFILE_LOOKUP_METHOD", { method: "targeted_query", docId: snap.id, role: result.role });
         return result;
       }
-      if (candidates.size > 1) throw new Error("PROFILE_DUPLICATE");
+      if (candidates.size > 1) {
+        const uidSnap = Array.from(candidates.values()).find((snap) => snap.id === authUser.uid);
+        if (uidSnap) {
+          const result = buildLegacyProfileResultFromSnap(uidSnap, authUser, aliasInfo?.role || "chofer");
+          cacheResolvedProfileReference(authUser, result);
+          loginDevDiagnostic("LEGACY_PROFILE_LOOKUP_METHOD", { method: "targeted_query_uid_preferred", docId: uidSnap.id, role: result.role });
+          return result;
+        }
+        const driverSnaps = Array.from(candidates.values()).filter((snap) => secureLegacyRoleForAuth(snap.data() || {}, authUser, aliasInfo?.role || "chofer") === "chofer");
+        if (driverSnaps.length === 1) {
+          const result = buildLegacyProfileResultFromSnap(driverSnaps[0], authUser, aliasInfo?.role || "chofer");
+          cacheResolvedProfileReference(authUser, result);
+          loginDevDiagnostic("LEGACY_PROFILE_LOOKUP_METHOD", { method: "targeted_query_driver_preferred", docId: driverSnaps[0].id, role: result.role });
+          return result;
+        }
+        throw new Error("PROFILE_DUPLICATE");
+      }
+
+      const directRef = doc(db, EXPLORA_LEGACY_PROFILE_COLLECTION, username);
+      const directSnap = await getDoc(directRef).catch(() => null);
+      if (directSnap?.exists()) {
+        const profile = directSnap.data() || {};
+        if (legacyProfileIdentityMatchesAuth(profile, directSnap.id, authUser, username, email)) {
+          const result = buildLegacyProfileResultFromSnap(directSnap, authUser, aliasInfo?.role || "chofer");
+          cacheResolvedProfileReference(authUser, result);
+          loginDevDiagnostic("LEGACY_PROFILE_LOOKUP_METHOD", { method: "direct_doc_username", docId: directSnap.id, role: result.role });
+          return result;
+        }
+      }
 
       // Último recurso exclusivamente para documentos históricos sin UID/usuario normalizado.
       const all = await getDocs(collection(db, EXPLORA_LEGACY_PROFILE_COLLECTION));
@@ -3478,25 +3551,14 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       all.forEach((docSnap) => {
         if (found) return;
         const data = docSnap.data() || {};
-        const values = [
-          docSnap.id, data.nombre, data.nombreCompleto, data.usuario, data.username,
-          data.email, data.correo, data.authUid, data.uid, data.choferId
-        ].map(value => String(value || "").trim().toLowerCase());
-        if (values.includes(username) || values.includes(email) || values.includes(String(authUser.uid).toLowerCase())) {
+        if (legacyProfileIdentityMatchesAuth(data, docSnap.id, authUser, username, email)) {
           found = { snap: docSnap, data };
         }
       });
       if (!found) throw new Error("PROFILE_NOT_FOUND");
-      const result = {
-        profileDocumentId: found.snap.id,
-        profileRef: doc(db, EXPLORA_LEGACY_PROFILE_COLLECTION, found.snap.id),
-        collectionName: EXPLORA_LEGACY_PROFILE_COLLECTION,
-        profile: found.data,
-        role: legacyProfileRole(found.data),
-        active: legacyProfileIsActive(found.data)
-      };
+      const result = buildLegacyProfileResultFromSnap(found.snap, authUser, aliasInfo?.role || "chofer");
       cacheResolvedProfileReference(authUser, result);
-      loginDevDiagnostic("LEGACY_PROFILE_LOOKUP_METHOD", { method: "legacy_collection_scan", docId: found.snap.id });
+      loginDevDiagnostic("LEGACY_PROFILE_LOOKUP_METHOD", { method: "legacy_collection_scan", docId: found.snap.id, role: result.role });
       return result;
     }
 
@@ -3509,10 +3571,12 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       authSessionState.profileLoading = true;
 
       const loaded = await withTimeout(loadLegacyExploraProfile(authUser), 8000, "PROFILE_TIMEOUT");
-      const profile = loaded.profile || {};
-      const role = loaded.role || "";
+      const rawProfile = loaded.profile || {};
+      const role = secureLegacyRoleForAuth(rawProfile, authUser, loaded.role || "");
       if (!loaded.active) throw new Error("PROFILE_DISABLED");
       if (!role) throw new Error("PROFILE_ROLE_INVALID");
+      if (role === "admin" && !EXPLORA_ADMIN_UIDS.has(authUser.uid)) throw new Error("PROFILE_ROLE_INVALID");
+      const profile = { ...rawProfile, role: role === "admin" ? "admin" : "driver", rol: role === "admin" ? "admin" : "chofer" };
 
       exploraSession.authUser = authUser;
       exploraSession.driverId = loaded.profileDocumentId;
@@ -3828,7 +3892,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
 
     function vehicleAdminSession() {
       const user = auth.currentUser;
-      const role = legacyProfileRole(exploraSession.profile || {});
+      const role = secureLegacyRoleForAuth(exploraSession.profile || {}, user, exploraSession.role || "");
       return { user, uid:user?.uid || "", role, isAdmin:Boolean(user?.uid && EXPLORA_ADMIN_UIDS.has(user.uid) && role === "admin") };
     }
 
@@ -4640,7 +4704,7 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
       window.unlockAllPageScroll?.();
       window.ExploraDerivations?.stopSession?.();
       const user = auth.currentUser;
-      if (!user || !EXPLORA_ADMIN_UIDS.has(user.uid) || legacyProfileRole(exploraSession.profile || {}) !== "admin") {
+      if (!user || !EXPLORA_ADMIN_UIDS.has(user.uid) || secureLegacyRoleForAuth(exploraSession.profile || {}, user, exploraSession.role || "") !== "admin") {
         throw new Error("PROFILE_ROLE_INVALID");
       }
       authSessionState.authenticatedUser = exploraSession.authUser || user;
