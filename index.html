@@ -146,38 +146,49 @@
 <div aria-labelledby="adminCreateDriverTitle" aria-modal="true" class="admin-modal-panel" role="dialog">
 <header class="admin-modal-header">
 <button aria-label="Cerrar" id="adminCreateCloseBtn" type="button">‹</button>
-<div><h2 id="adminCreateDriverTitle">Crear acceso de chofer</h2><p>Crea el usuario, la contraseña y el perfil operativo en Firebase.</p></div>
+<div><h2 id="adminCreateDriverTitle">Chofer</h2><p>Rol chofer, alta de acceso y datos opcionales del perfil.</p></div>
 </header>
 <form class="admin-create-form" id="adminCreateDriverForm" novalidate="">
 <fieldset>
-<legend>Datos del chofer</legend>
-<label for="newDriverName">Nombre completo
+<legend>Rol</legend>
+<label for="newDriverRoleVisible">Rol del usuario
+            <select id="newDriverRoleVisible" disabled=""><option value="chofer" selected="">Chofer</option></select>
+</label>
+<div class="admin-role-fixed"><strong>Rol elegido</strong><span>Chofer — nunca administrador</span></div>
+<input id="newDriverRole" type="hidden" value="chofer"/>
+</fieldset>
+<fieldset>
+<legend>Crear chofer</legend>
+<label for="newDriverName">Nombre obligatorio
             <input autocomplete="name" id="newDriverName" maxlength="100" placeholder="Nombre y apellido" required=""/>
 </label>
-<label for="newDriverUsername">ID de acceso
-            <input autocapitalize="none" autocomplete="username" id="newDriverUsername" maxlength="32" placeholder="ejemplo: ariel" required="" spellcheck="false"/>
+<label for="newDriverUsername">ID obligatorio
+            <input autocapitalize="none" autocomplete="username" id="newDriverUsername" maxlength="32" placeholder="ejemplo: david7" required="" spellcheck="false"/>
 </label>
-<label for="newDriverPassword">Contraseña inicial
+<label for="newDriverPassword">Contraseña obligatoria
             <input autocomplete="new-password" id="newDriverPassword" minlength="6" maxlength="72" placeholder="Mínimo 6 caracteres" required="" type="password"/>
-</label>
-<label for="newDriverEmail">Email opcional
-            <input autocapitalize="none" autocomplete="email" id="newDriverEmail" inputmode="email" maxlength="160" placeholder="Si se deja vacío se crea ID@explora.local" spellcheck="false" type="email"/>
-</label>
-<label for="newDriverPhone">Teléfono opcional
-            <input autocomplete="tel" id="newDriverPhone" inputmode="tel" maxlength="40" placeholder="+54..."/>
 </label>
 </fieldset>
 <fieldset>
-<legend>Datos operativos</legend>
-<div class="admin-role-fixed"><strong>Rol asignado</strong><span>Chofer — acceso operativo</span></div>
-<label for="newDriverVehicle">Vehículo asignado opcional
-            <select id="newDriverVehicle"><option value="">Sin vehículo asignado</option></select>
+<legend>Datos opcionales</legend>
+<label for="newDriverEmail">Correo opcional
+            <input autocapitalize="none" autocomplete="email" id="newDriverEmail" inputmode="email" maxlength="160" placeholder="Puede completarlo después" spellcheck="false" type="email"/>
 </label>
+<label for="newDriverPhone">Número de teléfono opcional
+            <input autocomplete="tel" id="newDriverPhone" inputmode="tel" maxlength="40" placeholder="Puede completarlo después"/>
+</label>
+<label for="newDriverCuit">CUIT opcional
+            <input autocomplete="off" id="newDriverCuit" inputmode="numeric" maxlength="20" placeholder="Puede completarlo después"/>
+</label>
+<label for="newDriverAlias">Alias opcional
+            <input autocapitalize="none" autocomplete="off" id="newDriverAlias" maxlength="80" placeholder="Puede completarlo después" spellcheck="false"/>
+</label>
+<p class="admin-create-help">Los campos opcionales quedan vacíos y el chofer puede completarlos al iniciar sesión.</p>
 </fieldset>
 <div aria-live="assertive" class="admin-create-msg" id="adminCreateMsg"></div>
 <div class="admin-form-actions">
 <button class="admin-form-cancel" id="adminCreateDriverCancelBtn" type="button">CANCELAR</button>
-<button class="admin-form-save" id="adminCreateSubmitBtn" type="submit">CREAR USUARIO Y CHOFER</button>
+<button class="admin-form-save" id="adminCreateSubmitBtn" type="submit">CREAR CHOFER</button>
 </div>
 </form>
 </div>
@@ -288,8 +299,8 @@
 <span aria-hidden="true" class="admin-command-badge">ADMIN</span>
 </header>
 <div aria-label="Herramientas administrativas" class="admin-action-tray" hidden="" id="adminActionTray">
-<button aria-label="Gestionar choferes" class="admin-action-button" data-action="admin-choferes" type="button">
-<svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><path d="M3 20c.5-4 2.6-6 6-6s5.5 2 6 6"></path><path d="M18 8v6M15 11h6"></path></svg><span><b>CHOFERES</b><small>Perfiles y accesos</small></span>
+<button aria-label="Gestionar chofer" class="admin-action-button" data-action="admin-choferes" type="button">
+<svg aria-hidden="true" viewbox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><path d="M3 20c.5-4 2.6-6 6-6s5.5 2 6 6"></path><path d="M18 8v6M15 11h6"></path></svg><span><b>CHOFER</b><small>Crear o eliminar</small></span>
 </button>
 <button aria-label="Crear vehículo" class="admin-action-button admin-action-button--vehicle" data-action="admin-create-vehicle" type="button">
 <svg aria-hidden="true" viewbox="0 0 24 24"><path d="M4 14 6.5 8h11L20 14"></path><path d="M3 14h18v5H3z"></path><circle cx="7" cy="19" r="1.5"></circle><circle cx="17" cy="19" r="1.5"></circle><path d="M8 8l1.5-3h5L16 8"></path></svg><span><b>CREAR VEHÍCULO</b><small>Flota y asignaciones</small></span>
@@ -1281,7 +1292,7 @@
 <script id="exploraPerformanceNavigationV210" src="js/segments/08-script.js"></script>
 <script id="exploraReceiptsV247" src="js/segments/09-script.js?v=247"></script>
 <script id="exploraProductionPolicyV251" src="js/segments/10-script.js"></script>
-<script src="js/segments/11-script.mjs?v4014-role-guard" type="module"></script>
+<script src="js/segments/11-script.mjs?v4015-driver-admin" type="module"></script>
 <!-- EXPLORA v160: motor semanal unificado + splash seguro + históricos financieros -->
 <link href="css/segments/32-style.css?v=2445-finance-nav-fix" rel="stylesheet"/>
 <script id="exploraSplashEmergencyPatch" src="js/segments/12-script.js"></script>
@@ -1321,10 +1332,10 @@
 <link href="css/segments/37-style.css" rel="stylesheet"/>
 <!-- legacy disabled: weekly closure engine / js/segments/35-script.mjs -->
 <!-- legacy disabled: daily ranking and weekly plaques / js/segments/43-script.mjs -->
-<link href="css/segments/51-style.css?v=4013-hard-disable-km" rel="stylesheet"/>
+<link href="css/segments/51-style.css?v=4015-driver-admin" rel="stylesheet"/>
 <!-- legacy disabled: weekly mileage control / js/segments/49-script.mjs -->
 <link href="css/segments/49-style.css?v=2456-personal-record-server-authoritative" rel="stylesheet"/>
-<link href="css/segments/50-style.css?v=2458-admin-driver-production-safe" rel="stylesheet"/>
+<link href="css/segments/50-style.css?v=4015-driver-admin" rel="stylesheet"/>
 <script id="explora-personal-record-production-safe" src="js/segments/44-script.mjs?v=2456-personal-record-server-authoritative" type="module"></script>
 <link href="css/segments/38-style.css?v=2445-finance-nav-fix" rel="stylesheet"/>
 <script id="exploraChromiumAuditRepairRuntimeV284" src="js/segments/36-script.js"></script>
@@ -1351,7 +1362,7 @@
 </section>
 </div>
 </section>
-<script id="exploraAdminBillingForDriverV1" src="js/segments/39-script.mjs" type="module"></script>
+<script id="exploraAdminBillingForDriverV1" src="js/segments/39-script.mjs?v=4015-driver-admin" type="module"></script>
 <link href="css/segments/40-style.css" rel="stylesheet"/>
 <script id="exploraNoVisualDiagnosticsRuntimeV289" src="js/segments/40-script.js"></script>
 <link href="css/segments/41-style.css" rel="stylesheet"/>
@@ -1362,8 +1373,8 @@
 <script id="exploraGlobalClockAppWideSync" src="js/segments/42-script.js"></script>
 <link href="css/segments/47-style.css?v=2411-logo" rel="stylesheet"/>
 <link href="css/segments/48-style.css?v=2412-ranking-mobile" rel="stylesheet"/>
-<link href="css/segments/52-style.css?v=4013-hard-disable-km" rel="stylesheet"/>
-<script id="exploraPagoHomeOnDemandClosure" src="js/segments/52-script.mjs?v=4013-hard-disable-km" type="module"></script>
-<script defer="" id="explora-pwa-registration" src="js/pwa-register.js?v4014-role-guard"></script>
+<link href="css/segments/52-style.css?v=4015-driver-admin" rel="stylesheet"/>
+<script id="exploraPagoHomeOnDemandClosure" src="js/segments/52-script.mjs?v=4015-driver-admin" type="module"></script>
+<script defer="" id="explora-pwa-registration" src="js/pwa-register.js?v4015-driver-admin"></script>
 </body>
 </html>
