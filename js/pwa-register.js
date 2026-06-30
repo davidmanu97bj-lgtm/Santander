@@ -3,7 +3,7 @@
   'use strict';
   if (!('serviceWorker' in navigator)) return;
 
-  const BUILD = 'v4013-hard-disable-km';
+  const BUILD = 'v4014-role-guard';
   const reloadOnceKey = `explora-sw-reload-${BUILD}`;
 
   const clearLegacyCaches = async () => {
@@ -21,7 +21,7 @@
   const register = async () => {
     try {
       await clearLegacyCaches();
-      const registration = await navigator.serviceWorker.register('./service-worker.js?build=v4013-hard-disable-km', {
+      const registration = await navigator.serviceWorker.register('./service-worker.js?build=v4014-role-guard', {
         scope: './',
         updateViaCache: 'none'
       });
