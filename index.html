@@ -5,7 +5,7 @@
   Ranking diario/semanal, cierre semanal automático y control semanal de KM
   quedan desactivados. La app usa el Home de pagos y cierres a demanda.
 -->
-<html data-explora-build="2.5.2-pay-home-legacy-clean" lang="es" data-performance-nav-mode="disabled">
+<html data-explora-build="2.5.3-pay-home-hard-km-off" lang="es" data-performance-nav-mode="disabled">
 <head>
 <meta charset="utf-8"/>
 <meta content="v2.5.8-logo-real-header" name="explora-version"/>
@@ -31,6 +31,36 @@
     weeklyClosure:true,
     weeklyMileage:true
   });
+  window.EXPLORA_DISABLE_LEGACY_MILEAGE = true;
+  window.ExploraMileageControl = Object.freeze({
+    disabled:true,
+    refresh:async()=>null,
+    open:()=>false,
+    ensureBeforeBilling:async()=>true,
+    startReminder:()=>{},
+    stopReminder:()=>{},
+    scheduleReminder:()=>{},
+    getStartGraceState:()=>({disabled:true}),
+    getState:()=>({disabled:true,firebaseReady:false,storageReady:false})
+  });
+</script>
+<script id="explora-hard-kill-legacy-mileage">
+  (()=>{
+    const kill=()=>{
+      try{
+        document.querySelectorAll('#mileageOverlay,.mileage-overlay,#mileageDashboardCard,#mileageClosureCard,#mileageAdminAlertsCard').forEach(node=>node.remove());
+        document.documentElement.classList.add('explora-legacy-mileage-off');
+        document.body?.classList?.add('explora-legacy-mileage-off');
+        if(document.body?.style?.overflow==='hidden' && !document.querySelector('.pay-closure-modal:not([hidden]),.admin-modal:not([aria-hidden="true"])')) document.body.style.overflow='';
+      }catch(_){/* noop */}
+    };
+    window.__EXPLORA_KILL_LEGACY_MILEAGE__=kill;
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',kill,{once:true}); else kill();
+    try{
+      new MutationObserver(kill).observe(document.documentElement,{childList:true,subtree:true});
+    }catch(_){/* noop */}
+    setTimeout(kill,50);setTimeout(kill,300);setTimeout(kill,1200);
+  })();
 </script>
 <style id="explora-legacy-cleanup-hide">
   .driver-status-real,
@@ -38,9 +68,11 @@
   #performanceScreen,
   #performanceGoalViewport,
   #weeklyClosureOverlay,
+  #mileageOverlay,
+  .mileage-overlay,
   #mileageClosureCard,
   #mileageDashboardCard,
-  #mileageAdminAlertsCard{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+  #mileageAdminAlertsCard{display:none!important;visibility:hidden!important;pointer-events:none!important;opacity:0!important;}
 </style>
 
 <link href="css/segments/01-style.css" rel="stylesheet"/>
@@ -74,7 +106,7 @@
 <link href="css/segments/29-style.css" rel="stylesheet"/>
 <link href="css/segments/30-style.css" rel="stylesheet"/>
 <link href="css/segments/31-style.css" rel="stylesheet"/>
-</meta></meta><meta content="modular-compatibility-layer-v1" name="explora-architecture"/><meta content="v2.5.2-pay-home-legacy-clean" name="explora-project-version"/></head>
+</meta></meta><meta content="modular-compatibility-layer-v1" name="explora-architecture"/><meta content="v2.5.3-pay-home-hard-km-off" name="explora-project-version"/></head>
 <body class="explora-auth-checking">
 <div aria-live="polite" class="explora-splash" id="exploraSplash" role="status">
 <div class="explora-splash-logo">
@@ -1289,7 +1321,7 @@
 <link href="css/segments/37-style.css" rel="stylesheet"/>
 <!-- legacy disabled: weekly closure engine / js/segments/35-script.mjs -->
 <!-- legacy disabled: daily ranking and weekly plaques / js/segments/43-script.mjs -->
-<link href="css/segments/51-style.css?v=2484-weekly-mileage-modal-ux" rel="stylesheet"/>
+<link href="css/segments/51-style.css?v=4013-hard-disable-km" rel="stylesheet"/>
 <!-- legacy disabled: weekly mileage control / js/segments/49-script.mjs -->
 <link href="css/segments/49-style.css?v=2456-personal-record-server-authoritative" rel="stylesheet"/>
 <link href="css/segments/50-style.css?v=2458-admin-driver-production-safe" rel="stylesheet"/>
@@ -1330,8 +1362,8 @@
 <script id="exploraGlobalClockAppWideSync" src="js/segments/42-script.js"></script>
 <link href="css/segments/47-style.css?v=2411-logo" rel="stylesheet"/>
 <link href="css/segments/48-style.css?v=2412-ranking-mobile" rel="stylesheet"/>
-<link href="css/segments/52-style.css?v=4012-legacy-cleanup" rel="stylesheet"/>
-<script id="exploraPagoHomeOnDemandClosure" src="js/segments/52-script.mjs?v=4012-legacy-cleanup" type="module"></script>
-<script defer="" id="explora-pwa-registration" src="js/pwa-register.js?v4012-legacy-cleanup"></script>
+<link href="css/segments/52-style.css?v=4013-hard-disable-km" rel="stylesheet"/>
+<script id="exploraPagoHomeOnDemandClosure" src="js/segments/52-script.mjs?v=4013-hard-disable-km" type="module"></script>
+<script defer="" id="explora-pwa-registration" src="js/pwa-register.js?v4013-hard-disable-km"></script>
 </body>
 </html>
