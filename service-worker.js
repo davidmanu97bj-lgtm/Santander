@@ -1,7 +1,7 @@
-/* Compatibilidad validada: v4013-hard-disable-km */
+/* Compatibilidad validada: v4014-role-guard */
 /* EXPLORA PWA service worker · v2.5.2 */
 const CACHE_PREFIX = 'explora-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}v4013-hard-disable-km`;
+const CACHE_NAME = `${CACHE_PREFIX}v4014-role-guard`;
 
 const LEGACY_MILEAGE_STUB = `
 const noop=()=>{};const asyncTrue=async()=>true;
@@ -25,7 +25,7 @@ const APP_SHELL = [
   './css/segments/38-style.css?v=2445-finance-nav-fix',
   './js/segments/01-script.js?v2442-weekly-payment-production',
   './js/segments/19-script.mjs?v2442-weekly-payment-production',
-  './js/segments/11-script.mjs?v3911-logo-real-header',
+  './js/segments/11-script.mjs?v4014-role-guard',
   './js/core/weekly-core.mjs?v2442-weekly-payment-production',
   './css/segments/45-style.css?v=2440-weekly-closure-cash-record-recovery',
   './css/segments/44-style.css?v=2503-more-white-exit',
@@ -122,4 +122,4 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
-/* cache bump: v4013 hard disable km */
+/* cache bump: v4014 role guard */
