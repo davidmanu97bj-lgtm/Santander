@@ -9,7 +9,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     ranking:true, dailyRanking:true, derivationRanking:true, weeklyClosure:true, weeklyMileage:true
   });
 
-  const VERSION = "explora-pago-home-v46-admin-delete-financial-fix";
+  const VERSION = "explora-pago-home-v47-activity-time-home-start";
   const AR_TZ = "America/Argentina/Cordoba";
   const EXPLORA_WHATSAPP = "5493757461564";
   const EXPLORA_WHATSAPP_DISPLAY = "+5493757461564";
@@ -269,6 +269,16 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
   function dateShort(value) {
     const d = new Date(value || Date.now());
     return new Intl.DateTimeFormat("es-AR", { timeZone:AR_TZ, day:"2-digit", month:"2-digit" }).format(d);
+  }
+
+  function timeShort(value) {
+    const d = new Date(value || Date.now());
+    return new Intl.DateTimeFormat("es-AR", { timeZone:AR_TZ, hour:"2-digit", minute:"2-digit", hour12:false }).format(d);
+  }
+
+  function dateTimeShort(value) {
+    const d = new Date(value || Date.now());
+    return `${dateShort(d.getTime())} · ${timeShort(d.getTime())}`;
   }
 
   function accountName() {
@@ -845,6 +855,23 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     if (isMore) renderMoreScreen();
     if (isNotifications) renderNotificationsScreen();
     if (isMore || isNotifications) window.scrollTo({ top: 0, behavior: "auto" });
+  }
+
+  function payOverlayIsOpen() {
+    return !!document.querySelector(".pay-modal-backdrop.is-open, #payClosureBackdrop.is-open, #payEfficiencyBackdrop.is-open, #payProfileBackdrop.is-open, #payAdminDeleteBackdrop.is-open");
+  }
+
+  function forceHomeLanding() {
+    state.view = "inicio";
+    state.tab = "chofer";
+    document.body.classList.remove("pay-more-open", "pay-notifications-open");
+    const dashboard = $("exploraPagoDashboard");
+    const more = $("payMoreScreen");
+    const notifications = $("payNotificationsScreen");
+    if (dashboard) { dashboard.hidden = false; dashboard.style.display = ""; dashboard.setAttribute("aria-hidden", "false"); }
+    if (more) { more.hidden = true; more.style.display = "none"; more.setAttribute("aria-hidden", "true"); }
+    if (notifications) { notifications.hidden = true; notifications.style.display = "none"; notifications.setAttribute("aria-hidden", "true"); }
+    setBottomNavActive("inicio");
   }
 
   function moreItems() {
@@ -2767,7 +2794,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       if (!(amount > 0)) continue;
       const cashbox = method === "cash" ? amount * .05 : 0;
       rows.push({
-        at, type:"payment", title:`${dateShort(at)} · ${paymentLabel(method)}`,
+        at, type:"payment", title:`${dateTimeShort(at)} · ${paymentLabel(method)}`,
         meta:safe(row.description || row.detalle || row.notes || row.ruta || "Servicio registrado"),
         detail: method === "cash"
           ? `Cobró el chofer en efectivo: ${currency(amount)} · caja chica separada ${currency(cashbox)}`
@@ -2781,7 +2808,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       if (!(amount > 0)) continue;
       const cashbox = amount * .05;
       rows.push({
-        at: at + 1, type:"cashbox", title:`${dateShort(at)} · Caja chica 5%`,
+        at: at + 1, type:"cashbox", title:`${dateTimeShort(at)} · Caja chica 5%`,
         meta:safe(row.description || row.detalle || row.notes || row.ruta || "Generada automáticamente por cobro efectivo"),
         detail:`Caja chica generada solo por efectivo: la tiene el chofer y debe pasarla a Explora`,
         amount:-cashbox, negative:true
@@ -2793,7 +2820,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       const { amount, driverPart, exploraPart } = expenseParts(row);
       if (!(amount > 0)) continue;
       rows.push({
-        at, type:"expense", title:`${dateShort(at)} · ${expenseTypeLabel(row)}`,
+        at, type:"expense", title:`${dateTimeShort(at)} · ${expenseTypeLabel(row)}`,
         meta:safe(row.notes || row.descripcion || row.description || "Gasto operativo"),
         detail: `Gasto cargado por el chofer: ${currency(amount)} · Explora reintegra ${currency(exploraPart)} · Parte chofer ${currency(driverPart)}`,
         amount:-amount, negative:true
@@ -2805,7 +2832,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       const closureKind = closureKindOf(row);
       const stateText = closureActivityStateText(row);
       rows.push({
-        at, type:"closure", closureId:safe(row.id || row.closureId), tone:closurePayerClass(row), title:`${dateShort(at)} · ${closureTitle(closureKind)} · ${stateText}`,
+        at, type:"closure", closureId:safe(row.id || row.closureId), tone:closurePayerClass(row), title:`${dateTimeShort(at)} · ${closureTitle(closureKind)} · ${stateText}`,
         meta:closureActivityMeta(row),
         detail:`${closureStatusText(row)} · A rendir: ${currency(row.amountDueFromDriver || 0)} · A cobrar: ${currency(row.amountDueToDriver || 0)}`,
         amount:0
@@ -3761,6 +3788,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       state.selectedDriverName = "";
     }
     state.previousDetailsOpen = { caja_chica:false, gastos:false, explora:false, chofer:false };
+    forceHomeLanding();
     render();
     startRealtime("session");
     setTimeout(() => refreshEfficiencyOwnData(false).catch(()=>{}), 700);
@@ -3769,6 +3797,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
   async function boot() {
     try {
       installShell(); bindShell();
+      forceHomeLanding();
       await waitFirebase();
       onAuthStateChanged(state.auth, user => refreshSession(user));
       window.addEventListener("explora:session-opened", () => refreshSession(state.auth?.currentUser));
@@ -3778,6 +3807,23 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       console.warn("EXPLORA_PAY_BOOT", error?.message || error);
     }
   }
+
+  window.addEventListener("pageshow", event => {
+    if (!event.persisted && document.readyState !== "complete") return;
+    if (payOverlayIsOpen()) return;
+    forceHomeLanding();
+    render();
+  });
+  let payHiddenAt = 0;
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") { payHiddenAt = Date.now(); return; }
+    if (document.visibilityState !== "visible") return;
+    if (payOverlayIsOpen()) return;
+    if (payHiddenAt && Date.now() - payHiddenAt > 45000) {
+      forceHomeLanding();
+      render();
+    }
+  });
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once:true });
   else boot();
