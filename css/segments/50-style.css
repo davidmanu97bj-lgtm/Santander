@@ -4,3 +4,10 @@
 .admin-management-actions .admin-management-hard-delete{grid-column:1/-1;min-height:44px;border:1px solid rgba(255,91,112,.58);border-radius:14px;background:linear-gradient(180deg,rgba(96,15,31,.92),rgba(45,6,15,.96));color:#ffd8df;font-weight:900;letter-spacing:.05em;padding:11px 14px}
 .admin-management-actions .admin-management-hard-delete:disabled{opacity:.55}
 @media(max-width:520px){.admin-management-actions{grid-template-columns:1fr}.admin-management-actions .admin-management-hard-delete{grid-column:auto}.admin-create-form fieldset{min-width:0}}
+/* EXPLORA v4015 · Chofer admin panel */
+.admin-create-help{margin:6px 0 0;color:#737789;font-size:.88rem;font-weight:700;line-height:1.35}
+.admin-role-fixed span{color:#16a34a;font-weight:900}
+.admin-management-toolbar-copy strong{letter-spacing:.01em}
+.admin-management-actions{grid-template-columns:1fr 1fr}
+.admin-management-actions .admin-management-hard-delete{grid-column:auto}
+@media(max-width:520px){.admin-management-actions{grid-template-columns:1fr}.admin-management-actions .admin-management-hard-delete{grid-column:auto}}
