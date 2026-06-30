@@ -1,2 +1,4 @@
-
-(()=>{"use strict";const cleanup=()=>{const amount=document.getElementById("performanceDerivatorDerivedAmount");if(amount){const cleaned=String(amount.textContent||"").replace(/DINERO\s+DERIVADO\s*(?:[·:.-])?\s*/gi,"").replace(/\s+/g," ").trim();if(cleaned&&cleaned!==amount.textContent)amount.textContent=cleaned;}};document.addEventListener("DOMContentLoaded",cleanup,{once:true});window.addEventListener("explora:session-opened",()=>queueMicrotask(cleanup));})();
+(()=>{
+  "use strict";
+  console.info("EXPLORA_LEGACY_DASHBOARD_RANKING_CLEANUP_DISABLED");
+})();

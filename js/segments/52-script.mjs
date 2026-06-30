@@ -5,7 +5,11 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 (() => {
   "use strict";
 
-  const VERSION = "explora-pago-home-v41-whatsapp-nativo";
+  window.EXPLORA_LEGACY_MODULES_DISABLED = window.EXPLORA_LEGACY_MODULES_DISABLED || Object.freeze({
+    ranking:true, dailyRanking:true, derivationRanking:true, weeklyClosure:true, weeklyMileage:true
+  });
+
+  const VERSION = "explora-pago-home-v42-legacy-cleanup";
   const AR_TZ = "America/Argentina/Cordoba";
   const EXPLORA_WHATSAPP = "5493757461564";
   const EXPLORA_WHATSAPP_DISPLAY = "+5493757461564";
@@ -430,7 +434,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       </div>
     `;
     shell.insertAdjacentHTML("afterbegin", html);
-    document.body.classList.add("explora-pay-mode");
+    document.body.classList.add("explora-pay-mode", "explora-legacy-clean");
   }
 
   function runExistingAction(action) {

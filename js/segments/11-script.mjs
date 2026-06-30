@@ -9578,6 +9578,14 @@ apiKey: "AIzaSyDbTWF8fVVMMk2b8eWYv_0mHSl-AQmW2qs",
     }
 
     async function openWeeklyClosureModal() {
+      // Nueva versión: el cierre semanal legacy queda desactivado.
+      // El único flujo vigente es el cierre a demanda de Pago Home (segmento 52).
+      const legacyFlags = window.EXPLORA_LEGACY_MODULES_DISABLED || {};
+      if (legacyFlags.weeklyClosure !== false) {
+        closeWeeklyClosureModal();
+        console.info("EXPLORA_LEGACY_WEEKLY_CLOSURE_DISABLED");
+        return null;
+      }
       if(!auth.currentUser?.uid)return;
       const overlay=$("weeklyClosureOverlay");if(!overlay)return;
       stopWeeklyClosureLiveBinding();
