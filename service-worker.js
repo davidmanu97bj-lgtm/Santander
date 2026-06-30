@@ -1,7 +1,7 @@
-/* Compatibilidad validada: v4018-admin-delete-action-fix */
+/* Compatibilidad validada: v4019-activity-time-home */
 /* EXPLORA PWA service worker · v2.5.2 */
 const CACHE_PREFIX = 'explora-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}v4018-admin-delete-action-fix`;
+const CACHE_NAME = `${CACHE_PREFIX}v4019-activity-time-home`;
 
 const LEGACY_MILEAGE_STUB = `
 const noop=()=>{};const asyncTrue=async()=>true;
@@ -26,15 +26,15 @@ const APP_SHELL = [
   './js/segments/01-script.js?v2442-weekly-payment-production',
   './js/segments/19-script.mjs?v2442-weekly-payment-production',
   './js/segments/39-script.mjs?v=4016-card-alerts',
-  './js/segments/11-script.mjs?v4018-admin-delete-action-fix',
+  './js/segments/11-script.mjs?v4019-activity-time-home',
   './js/core/weekly-core.mjs?v2442-weekly-payment-production',
   './css/segments/45-style.css?v=2440-weekly-closure-cash-record-recovery',
   './css/segments/44-style.css?v=2503-more-white-exit',
   './css/segments/50-style.css?v=4016-card-alerts',
   './css/segments/02-style.css?v=3911-logo-real-header',
   './css/segments/51-style.css?v=4016-card-alerts',
-  './css/segments/52-style.css?v=4018-admin-delete-action-fix',
-  './js/segments/52-script.mjs?v=4018-admin-delete-action-fix',
+  './css/segments/52-style.css?v=4019-activity-time-home',
+  './js/segments/52-script.mjs?v=4019-activity-time-home',
   './assets/icono_eficiencia_km.png',
   './js/segments/44-script.mjs?v=2456-personal-record-server-authoritative',
   './manifest.webmanifest?v=2411',
