@@ -74,8 +74,11 @@ body.explora-pay-mode #mainBottomNav.performance-bottom-nav{
 .pay-icons{display:flex;align-items:center;gap:11px;}
 .pay-icon-btn{width:52px;height:52px;border:0;border-radius:18px;background:rgba(255,255,255,.72);display:grid;place-items:center;color:#26283a;padding:0;box-shadow:0 1px 0 rgba(255,255,255,.42) inset;}
 .pay-icon-btn svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;opacity:.82;}
-.pay-tabs{position:relative;display:grid;grid-template-columns:repeat(4,1fr);align-items:end;margin:0 0 -1px;min-height:72px;z-index:2;}
-.pay-tab{height:72px;border:0;background:transparent;color:#242638;font-size:18px;font-weight:520;letter-spacing:-.02em;border-radius:22px 22px 0 0;position:relative;z-index:2;padding:0 5px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.05;white-space:normal;}
+.pay-tabs{position:relative;display:flex;align-items:flex-end;gap:2px;margin:0 0 -1px;min-height:72px;z-index:2;overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;overscroll-behavior-x:contain;padding:0 2px;scrollbar-width:none;}
+.pay-tabs::-webkit-scrollbar{display:none;}
+.pay-tab{height:72px;min-width:92px;flex:0 0 auto;scroll-snap-align:start;border:0;background:transparent;color:#242638;font-size:18px;font-weight:520;letter-spacing:-.02em;border-radius:22px 22px 0 0;position:relative;z-index:2;padding:0 12px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.05;white-space:nowrap;}
+.pay-tab[data-pay-tab="caja_chica"]{min-width:112px;}
+.pay-tab[data-pay-tab="pendientes"]{min-width:118px;}
 .pay-tab.is-active{font-weight:850;background:var(--pay-card);box-shadow:0 -1px 0 rgba(255,255,255,.8) inset;}
 .pay-tab-label{display:block;max-width:100%;}
 .pay-tab-alert-badge{position:absolute;top:4px;right:7px;min-width:24px;height:18px;padding:0 5px;border-radius:999px;background:#fff7d6;border:1px solid rgba(212,164,22,.45);box-shadow:0 4px 10px rgba(35,38,53,.14);color:#2a2b36;font-size:10px;font-weight:900;line-height:18px;letter-spacing:-.02em;display:inline-flex;align-items:center;justify-content:center;gap:2px;white-space:nowrap;z-index:5;}
@@ -94,7 +97,7 @@ body.explora-pay-mode #mainBottomNav.performance-bottom-nav{
 .pay-amount{font-size:44px;font-weight:840;line-height:1;letter-spacing:-.055em;color:var(--pay-ink);white-space:nowrap;}
 .pay-eye{border:0;background:transparent;color:var(--pay-blue);padding:2px;display:grid;place-items:center;}
 .pay-eye svg{width:31px;height:31px;fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round;}
-.pay-subtitle{display:block;color:#303244;font-size:clamp(13.4px,3.65vw,16px);font-weight:520;line-height:1.26;margin-top:9px;letter-spacing:-.025em;white-space:nowrap;max-width:100%;}
+.pay-subtitle{display:block;color:#303244;font-size:clamp(13.4px,3.65vw,16px);font-weight:520;line-height:1.26;margin-top:9px;letter-spacing:-.025em;white-space:normal;max-width:100%;overflow-wrap:anywhere;}
 .pay-subtitle b{display:block;color:#2f8b35;font-weight:800;margin-top:2px;}
 .pay-subtitle .pay-previous-breakdown{display:grid;gap:2px;margin-top:5px;color:#2f8b35;font-size:13px;font-weight:780;line-height:1.25;white-space:normal;}
 .pay-subtitle .pay-previous-breakdown span{display:flex;align-items:baseline;justify-content:space-between;gap:9px;max-width:100%;}
@@ -111,11 +114,14 @@ body.explora-pay-mode #mainBottomNav.performance-bottom-nav{
 .pay-previous-row span:first-child{min-width:0;}
 .pay-previous-row strong{color:#20883a;font-weight:900;white-space:nowrap;text-align:right;}
 .pay-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0 20px;}
+.pay-actions.is-pending-mode{grid-template-columns:1fr;}
 .pay-action{min-height:108px;border:0;border-radius:24px;background:#eaf1ff;color:var(--pay-blue);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:820;line-height:1.1;padding:12px 8px;text-align:center;}
 .pay-action svg{width:31px;height:31px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 .pay-action.is-closure-ready{background:#eaf1ff;color:var(--pay-blue);box-shadow:none;border:0;cursor:pointer;}
 .pay-action.is-closure-locked{background:rgba(255,255,255,.34);color:rgba(55,59,78,.38);border:1px solid rgba(158,166,190,.34);box-shadow:none;cursor:not-allowed;}
 .pay-action:disabled{pointer-events:none;}
+.pay-action[hidden]{display:none!important;}
+.pay-actions.is-pending-mode .pay-action{min-height:96px;}
 .pay-liquid-pill{background:#f4f5fa;border-radius:999px;padding:13px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:#282a3a;font-size:18px;line-height:1.22;}
 .pay-liquid-pill strong{font-size:18px;font-weight:850;white-space:nowrap;}
 .pay-liquid-pill span{font-weight:520;}
