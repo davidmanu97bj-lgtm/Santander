@@ -810,3 +810,26 @@ body.explora-pay-mode.pay-notifications-open #payEfficiencyBtn{display:none!impo
   .pay-admin-delete-row button{grid-column:1 / -1;width:100%;padding:13px;}
   .pay-admin-delete-icon{width:38px;height:38px;border-radius:14px;}
 }
+
+/* EXPLORA · Pendientes: foto en Última actividad, sin cartel adicional */
+.pay-activity.has-photo-action{
+  position:relative;
+  padding-bottom:42px;
+}
+.pay-activity-photo{
+  position:absolute;
+  right:13px;
+  bottom:10px;
+  min-height:28px;
+  padding:0 12px;
+  border:1px solid rgba(78,80,230,.18);
+  border-radius:999px;
+  background:#f5f7ff;
+  color:#4e50e6;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.01em;
+  text-transform:lowercase;
+  box-shadow:none;
+}
+.pay-activity-photo:active{transform:scale(.97);}
