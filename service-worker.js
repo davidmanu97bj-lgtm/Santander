@@ -1,5 +1,5 @@
-/* Compatibilidad validada: v4019-activity-time-home */
-/* EXPLORA PWA service worker · v2.5.2 */
+/* Compatibilidad validada: v4020-pendientes-foto-compacta */
+/* EXPLORA PWA service worker · v2.5.3 */
 const CACHE_PREFIX = 'explora-pwa-';
 const CACHE_NAME = `${CACHE_PREFIX}v4019-activity-time-home`;
 
