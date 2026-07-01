@@ -2361,6 +2361,10 @@ function weeklyIds(count) {
   const start = Number(active.startMs || Date.now());
   return Array.from({ length:count }, (_, index) => engine?.getActiveWeeklyPeriod?.(new Date(start + index * 7 * 86400000 + 3600000))?.id || `${active.id}_${index + 1}`);
 }
+const EXPLORA_DEBT_REASONS = Object.freeze({ fine:"Multa", crash:"Choque", personal_loan:"Préstamo", advance:"Adelanto" });
+function validDebtReason(value) { return Object.prototype.hasOwnProperty.call(EXPLORA_DEBT_REASONS, String(value || "")); }
+function debtReasonLabel(value) { return EXPLORA_DEBT_REASONS[String(value || "")] || "Pendiente"; }
+
 window.ExploraCreateDriverDebt = async function(input = {}) {
   const session = input.validatedAdminSession?.uid
     ? input.validatedAdminSession
@@ -2378,7 +2382,7 @@ window.ExploraCreateDriverDebt = async function(input = {}) {
   const installmentCount = Math.max(1, Math.min(52, Math.trunc(Number(input.installmentCount) || 1)));
   const weeklyInstallmentAmount = parseCurrencyInput(input.weeklyInstallmentAmount) || Math.ceil(totalAmount / installmentCount);
   if (!driverUid) throw Object.assign(new Error("Selecciona un chofer."), { code:"DRIVER_REQUIRED", internalCode:"DRIVER_REQUIRED", debtStage:"FORM_VALIDATION" });
-  if (!["fine","crash"].includes(String(input.reason || ""))) throw Object.assign(new Error("Selecciona Multa o Choque."), { code:"DEBT_REASON_REQUIRED", internalCode:"DEBT_REASON_REQUIRED", debtStage:"FORM_VALIDATION" });
+  if (!validDebtReason(input.reason)) throw Object.assign(new Error("Selecciona Multa, Choque, Préstamo o Adelanto."), { code:"DEBT_REASON_REQUIRED", internalCode:"DEBT_REASON_REQUIRED", debtStage:"FORM_VALIDATION" });
   if (!(totalAmount > 0)) throw Object.assign(new Error("Ingresa un monto válido."), { code:"AMOUNT_REQUIRED", internalCode:"AMOUNT_REQUIRED", debtStage:"FORM_VALIDATION" });
   if (!(weeklyInstallmentAmount > 0)) throw Object.assign(new Error("Ingresa una cuota semanal válida."), { code:"INSTALLMENT_AMOUNT_REQUIRED", internalCode:"INSTALLMENT_AMOUNT_REQUIRED", debtStage:"FORM_VALIDATION" });
   if (weeklyInstallmentAmount * installmentCount < totalAmount) throw Object.assign(new Error("La cantidad de cuotas y el importe semanal no cubren la deuda total."), { code:"INSTALLMENT_PLAN_INCOMPLETE", internalCode:"INSTALLMENT_PLAN_INCOMPLETE", debtStage:"FORM_VALIDATION" });
@@ -2399,7 +2403,7 @@ window.ExploraCreateDriverDebt = async function(input = {}) {
         category:"driver_debt", metadata:{
           contentType:String(input.receiptFile.type || ""), debtId, driverUid, vehicleId:String(input.vehicleId || ""),
           createdByUid:session.uid, createdByRole:normalizedRole, amount:totalAmount, installments:installmentCount,
-          reason:String(input.reason || ""), uploadedFrom:"admin_debt_form", module:"MULTAS_Y_CHOQUES",
+          reason:String(input.reason || ""), uploadedFrom:"admin_debt_form", module:"PENDIENTES",
           type:String(input.reason || "debt"), receiptCategory:"deuda"
         }, onStage:(stage,detail)=>input.onStage?.(stage,detail)
       });
@@ -2417,7 +2421,7 @@ window.ExploraCreateDriverDebt = async function(input = {}) {
     const payload = {
       debtId, id:debtId, driverUid, driverId:driverUid, choferUid:driverUid, driverName:String(input.driverName || "Chofer"),
       vehicleId:String(input.vehicleId || ""), originalVehicleId:String(input.vehicleId || ""), vehiclePlate:String(input.vehiclePlate || "").toUpperCase(), originalVehiclePlate:String(input.vehiclePlate || "").toUpperCase(),
-      type:String(input.reason), receiptCategory:"deuda", reason:input.reason, reasonLabel:input.reasonLabel || (input.reason === "crash" ? "Choque" : "Multa"),
+      type:String(input.reason), receiptCategory:"deuda", reason:input.reason, reasonLabel:input.reasonLabel || debtReasonLabel(input.reason),
       incidentDate:String(input.incidentDate || new Date().toISOString().slice(0,10)), description:String(input.description || input.notes || "").trim(),
       adminNotes:String(input.adminNotes || input.notes || "").trim(), notes:String(input.notes || input.description || "").trim(),
       amount:totalAmount, totalAmount, originalAmount:totalAmount, installmentCount, installments:installmentCount,
@@ -2426,7 +2430,8 @@ window.ExploraCreateDriverDebt = async function(input = {}) {
       firstWeeklyPeriodId:periods[0], nextWeeklyPeriodId:periods[0], weeklyPeriodId:periods[0], installments,
       ...receiptMetadata, attachments,
       status:debtStatus, debtStatus, acknowledgedByDriver:false, acknowledgedAt:null,
-      createdByUid:session.uid, createdByRole:normalizedRole, createdAt:serverTimestamp(), updatedAt:serverTimestamp(), schemaVersion:2
+      sourceModule:"pendientes", penaltyEnabled:true, penaltyGraceDays:15, penaltyDailyRate:0.03, penaltyStartAtMs:Date.now() + 15 * 86400000, lastPenaltyAppliedAt:null, lastPenaltyAppliedAtMs:0, lastPenaltyAppliedDay:"", penaltyAccruedAmount:0,
+      createdByUid:session.uid, createdByRole:normalizedRole, createdAt:serverTimestamp(), updatedAt:serverTimestamp(), schemaVersion:4
     };
     input.onStage?.("FIRESTORE_WRITE", { debtId, driverUid, path:receipt?.receiptPath || "" });
     const batch = writeBatch(db);
@@ -2436,7 +2441,7 @@ window.ExploraCreateDriverDebt = async function(input = {}) {
       Object.assign(indexPayload,{type:String(input.reason),reason:input.reason,driverId:driverUid,vehicleId:String(input.vehicleId||""),receiptCategory:"deuda",detail:payload.reasonLabel,driverName:String(input.driverName||"Chofer")});
       batch.set(doc(db, "receipt_index", indexPayload.receiptId), indexPayload, { merge:false });
     }
-    batch.set(doc(db, "notificaciones", `debt_${debtId}`), { notificationId:`debt_${debtId}`, type:"driver_debt", driverUid, debtId, title:"NUEVA DEUDA REGISTRADA", message:`${payload.reasonLabel}: ${money(totalAmount)} en ${installmentCount} cuota(s).`, read:false, acknowledged:false, createdByUid:session.uid, createdAt:serverTimestamp(), updatedAt:serverTimestamp() }, { merge:false });
+    batch.set(doc(db, "notificaciones", `debt_${debtId}`), { notificationId:`debt_${debtId}`, type:"driver_debt", driverUid, debtId, title:"NUEVO PENDIENTE REGISTRADO", message:`${payload.reasonLabel}: ${money(totalAmount)} en ${installmentCount} cuota(s).`, read:false, acknowledged:false, createdByUid:session.uid, createdAt:serverTimestamp(), updatedAt:serverTimestamp() }, { merge:false });
     await batch.commit();
     input.onStage?.("COMPLETED", { debtId, driverUid, firestoreConfirmed:true, receipt });
     refreshAfter("debt-created", "deudas");
@@ -2467,9 +2472,9 @@ window.ExploraUpdateDriverDebt = async function(input = {}) {
   const totalAmount = parseCurrencyInput(input.totalAmount);
   const requestedCount = Math.max(1, Math.min(52, Math.trunc(Number(input.installmentCount) || 1)));
   const weeklyInstallmentAmount = parseCurrencyInput(input.weeklyInstallmentAmount) || Math.ceil(totalAmount / requestedCount);
-  if (!debtId) throw Object.assign(new Error("No se identificó la multa o choque a editar."), { code:"DEBT_ID_REQUIRED", internalCode:"DEBT_ID_REQUIRED", debtStage:"FORM_VALIDATION" });
+  if (!debtId) throw Object.assign(new Error("No se identificó el pendiente a editar."), { code:"DEBT_ID_REQUIRED", internalCode:"DEBT_ID_REQUIRED", debtStage:"FORM_VALIDATION" });
   if (!driverUid) throw Object.assign(new Error("No se identificó el chofer de la deuda."), { code:"DRIVER_REQUIRED", internalCode:"DRIVER_REQUIRED", debtStage:"FORM_VALIDATION" });
-  if (!["fine","crash"].includes(String(input.reason || ""))) throw Object.assign(new Error("Selecciona Multa o Choque."), { code:"DEBT_REASON_REQUIRED", internalCode:"DEBT_REASON_REQUIRED", debtStage:"FORM_VALIDATION" });
+  if (!validDebtReason(input.reason)) throw Object.assign(new Error("Selecciona Multa, Choque, Préstamo o Adelanto."), { code:"DEBT_REASON_REQUIRED", internalCode:"DEBT_REASON_REQUIRED", debtStage:"FORM_VALIDATION" });
   if (!(totalAmount > 0) || !(weeklyInstallmentAmount > 0)) throw Object.assign(new Error("Ingresa importes válidos."), { code:"AMOUNT_REQUIRED", internalCode:"AMOUNT_REQUIRED", debtStage:"FORM_VALIDATION" });
 
   const hasAttachment = input.receiptFile instanceof File || input.receiptFile instanceof Blob;
@@ -2480,7 +2485,7 @@ window.ExploraUpdateDriverDebt = async function(input = {}) {
         file:input.receiptFile, context:"driverDebt", ownerUid:String(session.uid || ""), driverUid, recordId:`${debtId}_${Date.now()}`,
         weeklyPeriodId:window.ExploraWeeklyEngine?.getActiveWeeklyPeriod?.().id || "", destinationPath:`deudas/${driverUid}/${debtId}/adjunto_${Date.now()}.{extension}`,
         allowPdf:true, uploadedByUid:session.uid, uploadedByRole:normalizedRole, category:"driver_debt",
-        metadata:{ debtId, driverUid, vehicleId:String(input.vehicleId || ""), updatedByUid:session.uid, updatedByRole:normalizedRole, module:"MULTAS_Y_CHOQUES", type:String(input.reason || "debt"), receiptCategory:"deuda" },
+        metadata:{ debtId, driverUid, vehicleId:String(input.vehicleId || ""), updatedByUid:session.uid, updatedByRole:normalizedRole, module:"PENDIENTES", type:String(input.reason || "debt"), receiptCategory:"deuda" },
         onStage:(stage,detail)=>input.onStage?.(stage,detail)
       });
     }
@@ -2512,7 +2517,7 @@ window.ExploraUpdateDriverDebt = async function(input = {}) {
       const status = remainingAmount <= 0 ? "paid" : futureCount > 1 ? "installment" : "pending";
       const attachments = [...(Array.isArray(existing.attachments) ? existing.attachments : []), ...(attachment ? [attachment] : [])];
       const patch = {
-        type:String(input.reason), reason:String(input.reason), reasonLabel:input.reasonLabel || (input.reason === "crash" ? "Choque" : "Multa"),
+        type:String(input.reason), reason:String(input.reason), reasonLabel:input.reasonLabel || debtReasonLabel(input.reason),
         incidentDate:String(input.incidentDate || existing.incidentDate || new Date().toISOString().slice(0,10)),
         description:String(input.description || "").trim(), adminNotes:String(input.adminNotes || input.notes || "").trim(), notes:String(input.notes || input.description || "").trim(),
         amount:totalAmount, totalAmount, remainingAmount, saldoPendiente:remainingAmount, paidAmount,
@@ -2520,7 +2525,8 @@ window.ExploraUpdateDriverDebt = async function(input = {}) {
         paidInstallments:paidInstallments.length, pendingInstallments:futureInstallments.length,
         nextWeeklyPeriodId:next?.weeklyPeriodId || null, installments,
         status, debtStatus:status, attachments,
-        updatedByUid:session.uid, updatedByRole:normalizedRole, updatedAt:serverTimestamp(), schemaVersion:3
+        sourceModule:"pendientes", penaltyEnabled:existing.penaltyEnabled !== false, penaltyGraceDays:Number(existing.penaltyGraceDays || 15), penaltyDailyRate:Number(existing.penaltyDailyRate || 0.03), penaltyStartAtMs:Number(existing.penaltyStartAtMs || Date.now() + 15 * 86400000), lastPenaltyAppliedAt:existing.lastPenaltyAppliedAt || null, lastPenaltyAppliedAtMs:Number(existing.lastPenaltyAppliedAtMs || 0), lastPenaltyAppliedDay:String(existing.lastPenaltyAppliedDay || ""), penaltyAccruedAmount:Number(existing.penaltyAccruedAmount || 0),
+        updatedByUid:session.uid, updatedByRole:normalizedRole, updatedAt:serverTimestamp(), schemaVersion:4
       };
       if (attachment) Object.assign(patch, saveReceiptMetadata(receipt, { ownerUid:driverUid, uploadedByUid:session.uid, uploadedByRole:normalizedRole, category:"driver_debt", relatedDocumentId:debtId }));
       transaction.set(debtRef, patch, { merge:true });

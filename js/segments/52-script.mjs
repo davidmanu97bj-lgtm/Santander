@@ -1,4 +1,4 @@
-import { collection, query, where, limit, onSnapshot, getDocs, getDoc, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { collection, query, where, limit, onSnapshot, getDocs, getDoc, addDoc, doc, updateDoc, deleteDoc, runTransaction, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
@@ -9,7 +9,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     ranking:true, dailyRanking:true, derivationRanking:true, weeklyClosure:true, weeklyMileage:true
   });
 
-  const VERSION = "explora-pago-home-v47-activity-time-home-start";
+  const VERSION = "explora-pago-home-v48-pendientes-deuda-independiente";
   const AR_TZ = "America/Argentina/Cordoba";
   const EXPLORA_WHATSAPP = "5493757461564";
   const EXPLORA_WHATSAPP_DISPLAY = "+5493757461564";
@@ -17,9 +17,9 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
   const EXPLORA_ALIAS = "mp.explora";
   const EXPLORA_ADMIN_UIDS = new Set(["2LziyTTdFcZzSOhK3hLbAKs2U4s2"]);
   const $ = id => document.getElementById(id);
-  const PAY_TAB_ORDER = Object.freeze(["chofer", "explora", "gastos", "caja_chica"]);
-  const PAY_TAB_LABELS = Object.freeze({ chofer:"Chofer", explora:"Explora", gastos:"Gastos", caja_chica:"Caja chica" });
-  const PAY_TAB_ALERT_ZERO = Object.freeze({ chofer:0, explora:0, gastos:0, caja_chica:0 });
+  const PAY_TAB_ORDER = Object.freeze(["chofer", "explora", "gastos", "caja_chica", "pendientes"]);
+  const PAY_TAB_LABELS = Object.freeze({ chofer:"Chofer", explora:"Explora", gastos:"Gastos", caja_chica:"Caja chica", pendientes:"Pendientes" });
+  const PAY_TAB_ALERT_ZERO = Object.freeze({ chofer:0, explora:0, gastos:0, caja_chica:0, pendientes:0 });
   const state = {
     tab:"chofer",
     view:"inicio",
@@ -35,6 +35,8 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     records:[],
     expenses:[],
     closures:[],
+    debts:[],
+    debtPayments:[],
     extra:[],
     unsubscribers:[],
     latestSummary:null,
@@ -43,8 +45,9 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     modalKind:"",
     modalClosure:null,
     modalFile:null,
-    previousDetailsOpen:{ chofer:false, explora:false, gastos:false, caja_chica:false },
-    tabAlerts:{ chofer:0, explora:0, gastos:0, caja_chica:0 },
+    debtPaymentBusy:false,
+    previousDetailsOpen:{ chofer:false, explora:false, gastos:false, caja_chica:false, pendientes:false },
+    tabAlerts:{ chofer:0, explora:0, gastos:0, caja_chica:0, pendientes:0 },
     tabAlertMovements:{},
     tabAlertScope:"",
     tabAlertLoadedAt:0,
@@ -167,6 +170,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 
   function activeClosureKind(kind = state.tab) {
     const raw = safe(kind).toLowerCase();
+    if (/pendiente|deuda|debt|multa|choque|prestamo|pr[eé]stamo|adelanto|loan|advance/.test(raw)) return "pendientes";
     if (/caja|chica|cashbox|bruto/.test(raw)) return "caja_chica";
     if (/gasto|expense/.test(raw)) return "gastos";
     if (/factur|billing|cobro/.test(raw)) return "facturacion";
@@ -187,6 +191,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
   function normalizeHomeModuleValue(value = "") {
     const raw = safe(value).toLowerCase();
     if (!raw) return "";
+    if (/^(pendientes|pendiente|deudas|deuda|debt|debts)$/.test(raw)) return "pendientes";
     if (/^(caja_chica|cajachica|caja chica|cashbox|petty_cash|petty cash|bruto)$/.test(raw)) return "caja_chica";
     if (/^(gastos|gasto|expenses|expense)$/.test(raw)) return "gastos";
     if (/^(explora|digital|admin|david|transfer|transferencia|qr|card|tarjeta)$/.test(raw)) return "explora";
@@ -264,6 +269,81 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const driverPart = amount * Math.min(1, Math.max(0, rate || .5));
     const exploraPart = amount - driverPart;
     return { amount, driverPart, exploraPart, payer: expensePayer(row) };
+  }
+
+
+  const DEBT_ACTIVE_STATUSES = new Set(["", "active", "activo", "active_acknowledged", "acknowledged", "confirmado", "pending", "pendiente", "installment", "en_cuotas", "cuotas", "requested", "open", "abierta"]);
+  const DEBT_TYPE_LABELS = Object.freeze({ fine:"Multa", crash:"Choque", personal_loan:"Préstamo", advance:"Adelanto", other:"Pendiente" });
+
+  function debtTypeOf(row = {}) {
+    const raw = safe(row.type || row.reason || row.reasonLabel || row.tipo || row.category || row.categoria).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (/personal_loan|prestamo|loan/.test(raw)) return "personal_loan";
+    if (/advance|adelanto/.test(raw)) return "advance";
+    if (/crash|choque|siniestro/.test(raw)) return "crash";
+    if (/fine|multa|infraccion/.test(raw)) return "fine";
+    return "other";
+  }
+
+  function debtTypeLabel(row = {}) {
+    const type = debtTypeOf(row);
+    return safe(row.reasonLabel || row.tipoLabel || row.typeLabel) || DEBT_TYPE_LABELS[type] || "Pendiente";
+  }
+
+  function debtTotalAmount(row = {}) {
+    return Math.max(0, moneyNumber(row.totalAmount ?? row.originalAmount ?? row.amount ?? row.montoTotal ?? row.monto ?? row.valor ?? 0));
+  }
+
+  function debtPaidAmount(row = {}) {
+    return Math.max(0, moneyNumber(row.paidAmount ?? row.amountPaid ?? row.importePagado ?? row.discountedAmount ?? 0));
+  }
+
+  function debtRemainingAmount(row = {}) {
+    const stored = row.remainingAmount ?? row.saldoPendiente ?? row.remainingBalance ?? row.balance;
+    if (stored !== undefined && stored !== null && stored !== "") return Math.max(0, moneyNumber(stored));
+    return Math.max(0, debtTotalAmount(row) - debtPaidAmount(row));
+  }
+
+  function debtPenaltyAmount(row = {}) {
+    return Math.max(0, moneyNumber(row.penaltyAccruedAmount ?? row.interestAccruedAmount ?? row.moraAcumulada ?? row.intereses ?? 0));
+  }
+
+  function debtIsActive(row = {}) {
+    if (!row || movementIsDeleted(row)) return false;
+    const status = safe(row.status || row.debtStatus || row.estado || "").toLowerCase();
+    if (/paid|pagad|liquidad|cancel|anulad|closed|cerrad/.test(status)) return false;
+    return debtRemainingAmount(row) > 0 && DEBT_ACTIVE_STATUSES.has(status);
+  }
+
+  function debtCreatedMs(row = {}) {
+    return Math.max(ms(row.createdAt), ms(row.incidentDate), ms(row.fecha), Number(row.createdAtMs || 0), Number(row.incidentAtMs || 0), rowMs(row));
+  }
+
+  function summarizePendingDebts(rows = state.debts) {
+    const normalized = (Array.isArray(rows) ? rows : []).filter(debtIsActive).sort((a,b)=>debtCreatedMs(a)-debtCreatedMs(b));
+    const totalOriginal = normalized.reduce((sum,row)=>sum + debtTotalAmount(row), 0);
+    const totalPaid = normalized.reduce((sum,row)=>sum + debtPaidAmount(row), 0);
+    const totalPenalty = normalized.reduce((sum,row)=>sum + debtPenaltyAmount(row), 0);
+    const remaining = normalized.reduce((sum,row)=>sum + debtRemainingAmount(row), 0);
+    const byType = normalized.reduce((acc,row)=>{ const type = debtTypeOf(row); acc[type] = (acc[type] || 0) + debtRemainingAmount(row); return acc; }, {});
+    return { kind:"pendientes", debts:normalized, activeDebts:normalized, records:[], expenses:[], gross:remaining, mainTotal:remaining, totalOriginal, totalPaid, totalPenalty, remainingAmount:remaining, pendingTotal:remaining, byType, amountToDriver:0, amountFromDriver:remaining, netSettlementToDriver:-remaining, summaryLabel:"Deuda pendiente independiente" };
+  }
+
+  function debtPaymentRows(rows = state.debtPayments) {
+    return (Array.isArray(rows) ? rows : []).filter(row => !movementIsDeleted(row)).sort((a,b)=>rowMs(b)-rowMs(a));
+  }
+
+  function pendingDebtOldestRow() {
+    return summarizePendingDebts().activeDebts[0] || null;
+  }
+
+  function debtPaymentId(driverUid = getOwnDriverUid()) {
+    const rand = Math.random().toString(36).slice(2, 8);
+    return `debtpay_${safe(driverUid || "driver").replace(/[^a-zA-Z0-9_-]/g, "_")}_${Date.now()}_${rand}`;
+  }
+
+  function debtReceiptPath({ driverUid = getOwnDriverUid(), paymentId = debtPaymentId(driverUid), file = null } = {}) {
+    const ext = extensionForFile(file || { name:"comprobante.jpg", type:"image/jpeg" });
+    return `deudas/${safe(driverUid).replace(/[^a-zA-Z0-9_-]/g, "_")}/pagos/${safe(paymentId).replace(/[^a-zA-Z0-9_-]/g, "_")}/comprobante.${ext}`;
   }
 
   function dateShort(value) {
@@ -386,6 +466,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 
   function tabAlertTargetsForMovement(collectionName = "", row = {}) {
     if (collectionName === "gastos") return ["gastos"];
+    if (collectionName === "deudas_choferes" || collectionName === "deuda_pagos") return ["pendientes"];
     if (collectionName !== "billing_records") return [];
     const method = methodOf(row);
     if (method === "cash") return ["chofer", "caja_chica"];
@@ -515,6 +596,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
           <button class="pay-tab" data-pay-tab="explora" type="button" role="tab" aria-selected="false"><span class="pay-tab-label">Explora</span><span class="pay-tab-alert-badge" hidden>🛎️ 0</span></button>
           <button class="pay-tab" data-pay-tab="gastos" type="button" role="tab" aria-selected="false"><span class="pay-tab-label">Gastos</span><span class="pay-tab-alert-badge" hidden>🛎️ 0</span></button>
           <button class="pay-tab" data-pay-tab="caja_chica" type="button" role="tab" aria-selected="false"><span class="pay-tab-label">Caja chica</span><span class="pay-tab-alert-badge" hidden>🛎️ 0</span></button>
+          <button class="pay-tab" data-pay-tab="pendientes" type="button" role="tab" aria-selected="false"><span class="pay-tab-label">Pendientes</span><span class="pay-tab-alert-badge" hidden>🛎️ 0</span></button>
         </nav>
         <section class="pay-admin-driver-picker" id="payAdminDriverPicker" hidden>
           <label for="payAdminDriverSelect">Seleccionar chofer</label>
@@ -610,6 +692,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
           <div class="pay-closure-field" id="payClosureDriverField" hidden><label for="payClosureDriverSelect">Chofer</label><select id="payClosureDriverSelect"><option value="">Cargando choferes…</option></select></div>
           <div class="pay-closure-field pay-closure-km-field" id="payClosureKmField" hidden><label for="payClosureKmInput">KM actual del auto</label><input id="payClosureKmInput" type="number" inputmode="numeric" min="0" step="1" placeholder="Ej: 100200" /><small id="payClosureKmHint">Este KM cierra el período de eficiencia y será el inicio del próximo.</small></div>
           <div class="pay-closure-summary" id="payClosureSummary"></div>
+          <div class="pay-closure-field" id="payDebtPaymentField" hidden><label for="payDebtPaymentAmountInput">Monto a pagar</label><input id="payDebtPaymentAmountInput" type="text" inputmode="numeric" autocomplete="off" placeholder="$ 0" /><small id="payDebtPaymentHint">El pago reduce la deuda pendiente actual.</small></div>
           <div class="pay-closure-field" id="payClosureFileField" hidden><label for="payClosureReceiptInput">Comprobante de transferencia</label><input id="payClosureReceiptInput" type="file" accept="image/*,application/pdf" /></div>
           <div class="pay-closure-message" id="payClosureMessage"></div>
           <div class="pay-closure-actions"><button class="pay-closure-secondary" id="payClosureCancel" type="button">Cancelar</button><button class="pay-closure-primary" id="payClosureSubmit" type="button">Pedir cierre</button></div>
@@ -661,19 +744,27 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       }
       const uid = getDriverUid();
       if (uid) {
-        const [records, expenses, closures] = await Promise.all([
+        const [records, expenses, closures, debts, debtPayments] = await Promise.all([
           getScopedDocs("billing_records", uid),
           getScopedDocs("gastos", uid),
-          getScopedDocs("cierres_semanales", uid)
+          getScopedDocs("cierres_semanales", uid),
+          getScopedDocs("deudas_choferes", uid),
+          getScopedDocs("deuda_pagos", uid)
         ]);
         state.records = records.sort((a,b)=>rowMs(b)-rowMs(a));
         state.expenses = expenses.sort((a,b)=>rowMs(b)-rowMs(a));
         state.closures = closures.sort((a,b)=>rowMs(b)-rowMs(a));
+        state.debts = debts.sort((a,b)=>debtCreatedMs(b)-debtCreatedMs(a));
+        state.debtPayments = debtPayments.sort((a,b)=>rowMs(b)-rowMs(a));
         registerTabAlertMovements("billing_records", state.records);
         registerTabAlertMovements("gastos", state.expenses);
+        registerTabAlertMovements("deudas_choferes", state.debts);
+        registerTabAlertMovements("deuda_pagos", state.debtPayments);
       } else if (isAdmin()) {
         state.records = [];
         state.expenses = [];
+        state.debts = [];
+        state.debtPayments = [];
         try {
           const snap = await getDocs(query(collection(state.db, "cierres_semanales"), limit(250)));
           state.closures = snap.docs.map(item => ({ id:item.id, ...item.data() })).sort((a,b)=>rowMs(b)-rowMs(a));
@@ -707,6 +798,10 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     }));
     document.querySelectorAll("[data-pay-run]").forEach(button => button.addEventListener("click", () => runExistingAction(button.dataset.payRun)));
     $("payClosureActionBtn")?.addEventListener("click", () => {
+      if (activeClosureKind(state.tab) === "pendientes") {
+        openDebtPaymentModal();
+        return;
+      }
       // Pedir cierre SIEMPRE crea un cierre nuevo del período abierto actual.
       // No debe abrir un cierre viejo pendiente: eso queda para "Ver", notificaciones o actividad.
       if (!closureButtonState(state.tab, state.latestSummary || computeSummary()).enabled) return;
@@ -739,7 +834,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       const button = event.target?.closest?.("[data-pay-previous-toggle]");
       if (!button) return;
       const key = activeClosureKind(button.dataset.payPreviousToggle || state.tab);
-      if (!["caja_chica", "gastos", "explora", "chofer"].includes(key)) return;
+      if (!["caja_chica", "gastos", "explora", "chofer", "pendientes"].includes(key)) return;
       state.previousDetailsOpen[key] = !state.previousDetailsOpen[key];
       renderMainCard(state.latestSummary || computeSummary());
     });
@@ -757,6 +852,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       if (action === "save-current-km") saveCurrentKmFromEfficiency().catch(error => setEfficiencyFormMessage(error?.message || "No se pudo guardar el KM actual.", "error"));
     });
     $("payClosureReceiptInput")?.addEventListener("change", event => { state.modalFile = event.target?.files?.[0] || null; renderClosureModal(); });
+    $("payDebtPaymentAmountInput")?.addEventListener("input", event => { if (window.formatCurrencyInput) event.target.value = window.formatCurrencyInput(event.target.value); });
     $("payClosureSubmit")?.addEventListener("click", submitClosureModal);
     $("payProfileClose")?.addEventListener("click", closeDriverProfileModal);
     $("payProfileBack")?.addEventListener("click", closeDriverProfileModal);
@@ -1273,8 +1369,10 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     state.records = [];
     state.expenses = [];
     state.closures = [];
+    state.debts = [];
+    state.debtPayments = [];
     state.pendingClosure = null;
-    state.previousDetailsOpen = { chofer:false, explora:false, gastos:false, caja_chica:false };
+    state.previousDetailsOpen = { chofer:false, explora:false, gastos:false, caja_chica:false, pendientes:false };
     resetTabAlertScope();
     render();
     startRealtime("admin-driver-selected");
@@ -1336,7 +1434,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       if (!targetUid) {
         return onSnapshot(scopedQuery(collectionName, targetUid), snap => {
           state[targetArray] = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-          if (collectionName === "billing_records" || collectionName === "gastos") registerTabAlertMovements(collectionName, state[targetArray]);
+          if (["billing_records", "gastos", "deudas_choferes", "deuda_pagos"].includes(collectionName)) registerTabAlertMovements(collectionName, state[targetArray]);
           render();
         }, error => {
           console.warn(`EXPLORA_PAY_LISTENER_${collectionName}`, error?.code || error?.message);
@@ -1350,7 +1448,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
           for (const item of docs) merged.set(item.id, item);
         }
         state[targetArray] = Array.from(merged.values()).sort((a,b)=>rowMs(b)-rowMs(a));
-        if (collectionName === "billing_records" || collectionName === "gastos") registerTabAlertMovements(collectionName, state[targetArray]);
+        if (["billing_records", "gastos", "deudas_choferes", "deuda_pagos"].includes(collectionName)) registerTabAlertMovements(collectionName, state[targetArray]);
         render();
       };
       const unsubs = fields.map(field => {
@@ -1388,6 +1486,8 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       if (!uid) {
         state.records = [];
         state.expenses = [];
+        state.debts = [];
+        state.debtPayments = [];
         state.pendingClosure = null;
         const unsub = listenCollection("cierres_semanales", "closures", "");
         if (unsub) state.unsubscribers.push(unsub);
@@ -1399,7 +1499,9 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const unsubs = [
       listenCollection("billing_records", "records", uid),
       listenCollection("gastos", "expenses", uid),
-      listenCollection("cierres_semanales", "closures", uid)
+      listenCollection("cierres_semanales", "closures", uid),
+      listenCollection("deudas_choferes", "debts", uid),
+      listenCollection("deuda_pagos", "debtPayments", uid)
     ].filter(Boolean);
     state.unsubscribers.push(...unsubs);
     console.info("EXPLORA_PAY_REALTIME", VERSION, reason, uid || "no-driver");
@@ -2320,14 +2422,18 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     try {
       // La eficiencia se recalcula con datos reales actuales del chofer seleccionado/logueado.
       // No compara ni consulta datos de otros choferes para armar el resultado.
-      const [records, expenses, closures] = await Promise.all([
+      const [records, expenses, closures, debts, debtPayments] = await Promise.all([
         getScopedDocs("billing_records", uid),
         getScopedDocs("gastos", uid),
-        getScopedDocs("cierres_semanales", uid)
+        getScopedDocs("cierres_semanales", uid),
+        getScopedDocs("deudas_choferes", uid),
+        getScopedDocs("deuda_pagos", uid)
       ]);
       state.records = records.sort((a,b)=>rowMs(b)-rowMs(a));
       state.expenses = expenses.sort((a,b)=>rowMs(b)-rowMs(a));
       state.closures = closures.sort((a,b)=>rowMs(b)-rowMs(a));
+      state.debts = debts.sort((a,b)=>debtCreatedMs(b)-debtCreatedMs(a));
+      state.debtPayments = debtPayments.sort((a,b)=>rowMs(b)-rowMs(a));
       if (isAdmin()) {
         await fetchDrivers().catch(()=>{});
         const selected = state.drivers.find(driver => driver.uid === uid);
@@ -2587,7 +2693,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     openClosureModal(isAdmin() ? "admin-review" : "confirm", closure, kind);
   }
 
-  function computeSummary({ records = state.records, expenses = state.expenses, closures = state.closures } = {}) {
+  function computeSummary({ records = state.records, expenses = state.expenses, closures = state.closures, debts = state.debts, debtPayments = state.debtPayments } = {}) {
     // Nuevo modo: Chofer y Explora son dos vistas del mismo cierre de facturación.
     // El corte de cualquiera de los dos corta toda la facturación: efectivo + digital.
     const resetBillingMs = lastBillingClosureMs(closures);
@@ -2659,7 +2765,10 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       summaryLabel:"Facturación abierta"
     };
 
+    const pendientesTab = summarizePendingDebts(debts);
+
     const tabs = {
+      pendientes:pendientesTab,
       caja_chica:{
         kind:"caja_chica", resetMs:resetCashboxMs, records:cashboxRecords, cashboxRecords, cashboxCashRecords, cashboxExploraRecords, expenses:[],
         gross:cashboxGross, expenseTotal:0, mainTotal:cashboxTotal,
@@ -2680,7 +2789,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 
     return {
       resetMs:tabs[activeClosureKind(state.tab) || "caja_chica"]?.resetMs || 0,
-      records:billingRecords, billingRecords, cashRecords, exploraRecords, expenses:filteredExpenses, tabs,
+      records:billingRecords, billingRecords, cashRecords, exploraRecords, expenses:filteredExpenses, debts, debtPayments, tabs, pendientes:pendientesTab,
       cashboxRecords, cashboxCashRecords, cashboxExploraRecords,
       gross, grossBeforeCashbox, cashGrossInDriver, nonCashGrossInExplora, cashboxFromBillingCash, cashboxFromBillingExplora, cashInDriver, nonCashInExplora, billingShareEach,
       cashboxRate, cashboxGross, cashboxTotal, cashboxInDriver, cashboxInExplora, cashboxAmountFromDriver, cashboxAmountToDriver,
@@ -2695,12 +2804,13 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       netSettlementToDriver,
       driverFinal:billingShareEach,
       amountToDriver:Math.max(0, netSettlementToDriver), amountFromDriver:Math.max(0, -netSettlementToDriver),
-      amountToDriverForBilling, amountFromDriverForBilling, billingNetToDriver
+      amountToDriverForBilling, amountFromDriverForBilling, billingNetToDriver,
+      pendingDebtTotal:pendientesTab.remainingAmount, pendingDebtPaid:pendientesTab.totalPaid, pendingDebtPenalty:pendientesTab.totalPenalty
     };
   }
 
   function tabSummary(summary = computeSummary(), kind = state.tab) {
-    return summary.tabs?.[activeClosureKind(kind)] || summary.tabs?.caja_chica || summary;
+    return summary.tabs?.[activeClosureKind(kind)] || summary.tabs?.[safe(kind)] || summary.tabs?.caja_chica || summary;
   }
 
   function billingWinner(summary = state.latestSummary || computeSummary()) {
@@ -2824,6 +2934,29 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
         meta:safe(row.notes || row.descripcion || row.description || "Gasto operativo"),
         detail: `Gasto cargado por el chofer: ${currency(amount)} · Explora reintegra ${currency(exploraPart)} · Parte chofer ${currency(driverPart)}`,
         amount:-amount, negative:true
+      });
+    }
+
+    for (const row of summarizePendingDebts(state.debts).activeDebts || []) {
+      const at = debtCreatedMs(row) || rowMs(row);
+      const remaining = debtRemainingAmount(row);
+      rows.push({
+        at, type:"debt", title:`${dateTimeShort(at)} · ${debtTypeLabel(row)}`,
+        meta:safe(row.description || row.descripcion || row.reasonDetail || row.notes || "Pendiente cargado por administrador"),
+        detail:`Saldo actual independiente: ${currency(remaining)} · no afecta facturación`,
+        amount:-remaining, negative:true
+      });
+    }
+
+    for (const row of debtPaymentRows(state.debtPayments)) {
+      const at = rowMs(row);
+      const amount = amountOf(row);
+      if (!(amount > 0)) continue;
+      rows.push({
+        at, type:"debt_payment", title:`${dateTimeShort(at)} · Reducción de deuda`,
+        meta:safe(row.driverName || row.choferNombre || "Comprobante cargado"),
+        detail:`Pago aplicado: ${currency(amount)} · saldo nuevo ${currency(row.newBalance || 0)}`,
+        amount, positive:true
       });
     }
 
@@ -3052,7 +3185,21 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       return;
     }
     let main = summary.cashboxTotal, sub = "Caja chica actual del período abierto", pill = "Caja chica", pillValue = 0;
-    if (activeClosureKind(state.tab) === "caja_chica") {
+    if (activeClosureKind(state.tab) === "pendientes") {
+      const t = tabSummary(summary, "pendientes");
+      main = t.remainingAmount || 0;
+      sub = "Deuda pendiente independiente. No modifica Explora, Chofer, Gastos ni Caja chica.";
+      pill = main > 0 ? "Saldo actual pendiente" : "Sin deuda pendiente";
+      pillValue = main;
+      lines.push(
+        ["Total deuda", currency(t.totalOriginal || main || 0)],
+        ["Pagado", currency(t.totalPaid || 0)],
+        ["Intereses / mora", currency(t.totalPenalty || 0)],
+        ["Deudas activas", String((t.activeDebts || []).length)]
+      );
+      const top = (t.activeDebts || []).slice(0, 3);
+      for (const debt of top) lines.push([debtTypeLabel(debt), currency(debtRemainingAmount(debt))]);
+    } else if (activeClosureKind(state.tab) === "caja_chica") {
       const t = tabSummary(summary, "caja_chica");
       main = t.cashboxTotal || 0;
       sub = "Caja chica actual del período abierto";
@@ -3109,7 +3256,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
         ["Caja chica 5% efectivo", currency(summary.cashboxInDriver || 0)]
       );
     }
-    const previousHtml = previousClosureSummaryHtml(state.tab, getDriverUid());
+    const previousHtml = activeClosureKind(state.tab) === "pendientes" ? "" : previousClosureSummaryHtml(state.tab, getDriverUid());
     amount.textContent = currency(main);
     subtitle.innerHTML = `${esc(sub)}${previousHtml}`;
     pillLabel.textContent = pill;
@@ -3120,6 +3267,19 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
   function renderClosureStatus(summary) {
     const box = $("payClosureStatus"), text = $("payClosureStatusText"), action = $("payClosureActionBtn");
     const kind = activeClosureKind(state.tab);
+    if (kind === "pendientes") {
+      const pending = tabSummary(summary, "pendientes");
+      const canPay = !isAdmin() && number(pending.remainingAmount || 0) > 0;
+      if (action) {
+        action.hidden = false;
+        action.disabled = !canPay;
+        action.classList.toggle("is-closure-ready", canPay);
+        action.classList.toggle("is-closure-locked", !canPay);
+        action.querySelector("span").innerHTML = `Reducir<br/>deuda`;
+      }
+      if (box) { box.hidden = true; box.style.display = "none"; }
+      return;
+    }
     const stateForButton = closureButtonState(kind, summary);
     if (action) {
       action.hidden = !stateForButton.visible;
@@ -3151,6 +3311,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
   }
 
   function activityIcon(type) {
+    if (type === "debt" || type === "debt_payment") return `<svg viewBox="0 0 24 24"><path d="M12 2 2 20h20L12 2Z"></path><path d="M12 8v5"></path><path d="M12 17h.01"></path></svg>`;
     if (type === "expense" || type === "cashbox") return `<svg viewBox="0 0 24 24"><path d="M4 7.5h14.5A1.5 1.5 0 0 1 20 9v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11"></path><path d="M16 12h5v4h-5a2 2 0 0 1 0-4Z"></path></svg>`;
     if (type === "closure") return `<svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"></path><path d="M14 3v5h5"></path></svg>`;
     return `<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>`;
@@ -3173,12 +3334,201 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
   }
 
   async function computeDriverSummary(uid) {
-    const [records, expenses, closures] = await Promise.all([
+    const [records, expenses, closures, debts, debtPayments] = await Promise.all([
       getScopedDocs("billing_records", uid),
       getScopedDocs("gastos", uid),
-      getScopedDocs("cierres_semanales", uid)
+      getScopedDocs("cierres_semanales", uid),
+      getScopedDocs("deudas_choferes", uid),
+      getScopedDocs("deuda_pagos", uid)
     ]);
-    return computeSummary({ records, expenses, closures });
+    return computeSummary({ records, expenses, closures, debts, debtPayments });
+  }
+
+
+  function debtPaymentSummaryHtml(pending = summarizePendingDebts()) {
+    const top = (pending.activeDebts || []).slice(0, 6);
+    const rows = [
+      ["Saldo actual", currency(pending.remainingAmount || 0), "closure-payment-result settlement-result-green"],
+      ["Total deuda", currency(pending.totalOriginal || pending.remainingAmount || 0)],
+      ["Pagado", currency(pending.totalPaid || 0)],
+      ["Intereses / mora", currency(pending.totalPenalty || 0)]
+    ].concat(top.map(row => [debtTypeLabel(row), currency(debtRemainingAmount(row))]));
+    return rows.map(([label, value, className]) => `<article${className ? ` class="${esc(className)}"` : ""}><span>${esc(label)}</span><strong>${esc(value)}</strong></article>`).join("") +
+      `<div class="pay-closure-alert">El pago se aplica automáticamente primero a la deuda más antigua. Este módulo no modifica la facturación.</div>`;
+  }
+
+  function openDebtPaymentModal() {
+    if (state.busy) return;
+    const pending = summarizePendingDebts();
+    if (isAdmin()) return;
+    if (!(pending.remainingAmount > 0)) return;
+    state.modalMode = "debt-payment";
+    state.modalKind = "pendientes";
+    state.modalClosure = null;
+    state.modalFile = null;
+    const amountInput = $("payDebtPaymentAmountInput");
+    const fileInput = $("payClosureReceiptInput");
+    if (amountInput) amountInput.value = "";
+    if (fileInput) fileInput.value = "";
+    $("payClosureBackdrop")?.classList.add("is-open");
+    $("payClosureBackdrop")?.setAttribute("aria-hidden", "false");
+    renderClosureModal();
+  }
+
+  async function uploadDebtPaymentReceipt({ driverUid, paymentId, file, amount }) {
+    if (!state.storage) throw new Error("Storage no está disponible.");
+    if (!(file instanceof File) || !(file.size > 0)) throw new Error("Cargá la foto del comprobante.");
+    if (file.size > 15 * 1024 * 1024) throw new Error("El comprobante supera 15 MB.");
+    const path = debtReceiptPath({ driverUid, paymentId, file });
+    const ext = extensionForFile(file);
+    const ref = storageRef(state.storage, path);
+    await uploadBytes(ref, file, {
+      contentType:file.type || (ext === "pdf" ? "application/pdf" : "image/jpeg"),
+      customMetadata:{ module:"pendientes_debt_payment", driverUid, paymentId, uploadedByUid:state.auth?.currentUser?.uid || "", amount:String(amount || 0) }
+    });
+    const url = await getDownloadURL(ref);
+    return { url, path, ext };
+  }
+
+  async function submitDebtPayment() {
+    const user = state.auth?.currentUser;
+    if (!user?.uid) throw new Error("No hay sesión activa.");
+    if (isAdmin()) throw new Error("Solo el chofer puede reducir su deuda desde esta tarjeta.");
+    const driverUid = getOwnDriverUid();
+    if (!driverUid) throw new Error("No se pudo identificar al chofer.");
+    const pending = summarizePendingDebts();
+    const currentBalance = moneyNumber(pending.remainingAmount || 0);
+    if (!(currentBalance > 0)) throw new Error("No tenés deuda pendiente para reducir.");
+    const amount = moneyNumber($("payDebtPaymentAmountInput")?.value || 0);
+    if (!(amount > 0)) throw new Error("Ingresá el monto que vas a pagar.");
+    if (amount > currentBalance + 0.49) throw new Error("El monto no puede ser mayor al saldo pendiente.");
+    const file = state.modalFile || $("payClosureReceiptInput")?.files?.[0] || null;
+    if (!(file instanceof File)) throw new Error("Cargá la foto del comprobante.");
+    const paymentId = debtPaymentId(driverUid);
+    const receipt = await uploadDebtPaymentReceipt({ driverUid, paymentId, file, amount });
+    const nowMs = Date.now();
+    const driverName = displayName();
+    const oldestDebt = pendingDebtOldestRow();
+    const allocations = [];
+    await runTransaction(state.db, async transaction => {
+      let remainingToApply = amount;
+      let previousBalance = 0;
+      const debtRefs = (pending.activeDebts || []).map(row => ({ row, id:safe(row.id || row.debtId) })).filter(item => item.id).map(item => ({ row:item.row, ref:doc(state.db, "deudas_choferes", item.id) }));
+      const currentRows = [];
+      for (const item of debtRefs) {
+        const snap = await transaction.get(item.ref);
+        if (!snap.exists()) continue;
+        const data = { id:snap.id, ...snap.data() };
+        if (!debtIsActive(data)) continue;
+        currentRows.push({ ref:item.ref, row:data });
+        previousBalance += debtRemainingAmount(data);
+      }
+      currentRows.sort((a,b)=>debtCreatedMs(a.row)-debtCreatedMs(b.row));
+      if (!(previousBalance > 0)) throw new Error("La deuda ya no está activa.");
+      if (amount > previousBalance + 0.49) throw new Error("El saldo cambió. Actualizá y volvé a intentar.");
+      for (const item of currentRows) {
+        if (!(remainingToApply > 0)) break;
+        const before = debtRemainingAmount(item.row);
+        if (!(before > 0)) continue;
+        const applied = Math.min(before, remainingToApply);
+        const after = Math.max(0, before - applied);
+        const paid = debtPaidAmount(item.row) + applied;
+        const status = after <= 0.49 ? "paid" : safe(item.row.status || item.row.debtStatus || "pending");
+        allocations.push({ debtId:item.ref.id, type:debtTypeOf(item.row), typeLabel:debtTypeLabel(item.row), amount:applied, previousBalance:before, newBalance:after });
+        transaction.update(item.ref, {
+          remainingAmount:after,
+          saldoPendiente:after,
+          paidAmount:paid,
+          amountPaid:paid,
+          status,
+          debtStatus:status,
+          lastPaymentAt:serverTimestamp(),
+          lastPaymentAtMs:nowMs,
+          updatedAt:serverTimestamp(),
+          updatedAtMs:nowMs,
+          sourceModule:"pendientes"
+        });
+        remainingToApply = Math.max(0, remainingToApply - applied);
+      }
+      const newBalance = Math.max(0, previousBalance - amount);
+      const paymentPayload = {
+        paymentId,
+        id:paymentId,
+        driverUid,
+        choferUid:driverUid,
+        driverId:driverUid,
+        driverName,
+        debtId:safe(oldestDebt?.id || oldestDebt?.debtId || allocations[0]?.debtId || ""),
+        allocations,
+        amount,
+        monto:amount,
+        previousBalance,
+        newBalance,
+        receiptUrl:receipt.url,
+        comprobanteUrl:receipt.url,
+        receiptPath:receipt.path,
+        status:"applied",
+        estado:"aplicado",
+        sourceModule:"pendientes",
+        createdByUid:user.uid,
+        createdByRole:"driver",
+        createdAt:serverTimestamp(),
+        createdAtMs:nowMs,
+        updatedAt:serverTimestamp(),
+        version:VERSION
+      };
+      transaction.set(doc(state.db, "deuda_pagos", paymentId), paymentPayload, { merge:false });
+      transaction.set(doc(state.db, "deuda_movimientos", `movement_${paymentId}`), {
+        movementId:`movement_${paymentId}`,
+        type:"payment",
+        driverUid,
+        driverName,
+        debtId:paymentPayload.debtId,
+        paymentId,
+        amount,
+        previousBalance,
+        newBalance,
+        receiptUrl:receipt.url,
+        receiptPath:receipt.path,
+        createdAt:serverTimestamp(),
+        createdAtMs:nowMs,
+        sourceModule:"pendientes",
+        version:VERSION
+      }, { merge:false });
+      transaction.set(doc(state.db, "notificaciones", `debt_payment_${paymentId}`), {
+        notificationId:`debt_payment_${paymentId}`,
+        type:"debt_payment",
+        category:"pendientes",
+        driverUid,
+        driverName,
+        paymentId,
+        debtId:paymentPayload.debtId,
+        title:"REDUCCIÓN DE DEUDA",
+        message:`${driverName} pagó ${currency(amount)}. Saldo anterior ${currency(previousBalance)} · saldo nuevo ${currency(newBalance)}.`,
+        receiptUrl:receipt.url,
+        receiptPath:receipt.path,
+        amount,
+        previousBalance,
+        newBalance,
+        read:false,
+        acknowledged:false,
+        createdByUid:user.uid,
+        createdByRole:"driver",
+        createdAt:serverTimestamp(),
+        createdAtMs:nowMs,
+        updatedAt:serverTimestamp(),
+        version:VERSION
+      }, { merge:false });
+    });
+    state.debtPayments = [{ id:paymentId, paymentId, driverUid, driverName, amount, previousBalance:currentBalance, newBalance:Math.max(0, currentBalance - amount), receiptUrl:receipt.url, receiptPath:receipt.path, createdAtMs:nowMs, allocations }, ...state.debtPayments];
+    state.debts = state.debts.map(row => {
+      const allocation = allocations.find(item => item.debtId === safe(row.id || row.debtId));
+      if (!allocation) return row;
+      const paid = debtPaidAmount(row) + allocation.amount;
+      const status = allocation.newBalance <= 0.49 ? "paid" : safe(row.status || row.debtStatus || "pending");
+      return { ...row, remainingAmount:allocation.newBalance, saldoPendiente:allocation.newBalance, paidAmount:paid, status, debtStatus:status, updatedAtMs:nowMs };
+    });
+    render();
   }
 
   async function openClosureModal(mode = "request", closure = null, kind = state.tab) {
@@ -3208,7 +3558,10 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     $("payClosureBackdrop")?.setAttribute("aria-hidden", "true");
     state.modalFile = null;
     state.modalClosure = null;
+    state.modalMode = "";
     state.modalKind = "";
+    const debtAmountInput = $("payDebtPaymentAmountInput");
+    if (debtAmountInput) debtAmountInput.value = "";
     state.busy = false;
   }
 
@@ -3269,13 +3622,14 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 
   function renderClosureModal() {
     renderDriverSelect();
-    const title = $("payClosureTitle"), subtitle = $("payClosureSubtitle"), summary = $("payClosureSummary"), fileField = $("payClosureFileField"), kmField = $("payClosureKmField"), kmInput = $("payClosureKmInput"), kmHint = $("payClosureKmHint"), submit = $("payClosureSubmit"), cancel = $("payClosureCancel");
+    const title = $("payClosureTitle"), subtitle = $("payClosureSubtitle"), summary = $("payClosureSummary"), fileField = $("payClosureFileField"), debtField = $("payDebtPaymentField"), debtInput = $("payDebtPaymentAmountInput"), debtHint = $("payDebtPaymentHint"), kmField = $("payClosureKmField"), kmInput = $("payClosureKmInput"), kmHint = $("payClosureKmHint"), submit = $("payClosureSubmit"), cancel = $("payClosureCancel");
     const actions = submit?.closest(".pay-closure-actions");
     if (!title || !subtitle || !summary || !fileField || !submit || !cancel) return;
     const closure = state.modalClosure;
     const kind = closureKindOf(closure || {}) || activeClosureKind(state.modalKind || state.tab) || "gastos";
     const latest = tabSummary(state.latestSummary || computeSummary(), kind);
     fileField.hidden = true;
+    if (debtField) debtField.hidden = true;
     if (kmField) kmField.hidden = true;
     if (kmInput) kmInput.required = false;
     cancel.textContent = "Cancelar";
@@ -3284,6 +3638,27 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     if (actions) actions.hidden = false;
     submit.className = "pay-closure-primary";
     submit.disabled = false;
+
+    if (state.modalMode === "debt-payment") {
+      const pending = summarizePendingDebts();
+      title.textContent = "Reducir deuda";
+      subtitle.textContent = "Cargá el monto que transferiste y adjuntá la foto del comprobante.";
+      summary.innerHTML = debtPaymentSummaryHtml(pending);
+      fileField.hidden = false;
+      const fileLabel = fileField.querySelector("label");
+      if (fileLabel) fileLabel.textContent = "Comprobante obligatorio";
+      if (debtField) debtField.hidden = false;
+      if (debtHint) debtHint.textContent = `Saldo actual: ${currency(pending.remainingAmount || 0)}. Se descuenta primero la deuda más antigua.`;
+      if (debtInput) debtInput.max = String(Math.floor(pending.remainingAmount || 0));
+      if (kmField) kmField.hidden = true;
+      submit.disabled = !(pending.remainingAmount > 0) || isAdmin();
+      submit.textContent = "Confirmar pago";
+      cancel.textContent = "Cancelar";
+      return;
+    }
+
+    const normalFileLabel = fileField.querySelector("label");
+    if (normalFileLabel) normalFileLabel.textContent = "Comprobante de transferencia";
 
     if (closure) {
       const action = closureActionForViewer(closure);
@@ -3402,7 +3777,8 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const oldText = submit?.textContent || "Aceptar";
     if (submit) submit.textContent = "Procesando…";
     try {
-      if (state.modalMode === "confirm" && state.modalClosure && closureActionForViewer(state.modalClosure) === "driver_km") await driverSubmitClosureKm(state.modalClosure);
+      if (state.modalMode === "debt-payment") await submitDebtPayment();
+      else if (state.modalMode === "confirm" && state.modalClosure && closureActionForViewer(state.modalClosure) === "driver_km") await driverSubmitClosureKm(state.modalClosure);
       else if (state.modalMode === "confirm" && state.modalClosure) await driverConfirmClosure(state.modalClosure);
       else if (state.modalMode === "admin-review" && state.modalClosure && isAdmin()) await adminSubmitClosure(state.modalClosure);
       else await requestClosure();
