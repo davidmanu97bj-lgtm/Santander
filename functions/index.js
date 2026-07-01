@@ -3,6 +3,7 @@
 const crypto = require("node:crypto");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onDocumentWritten } = require("firebase-functions/v2/firestore");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { initializeApp } = require("firebase-admin/app");
 const { getAuth } = require("firebase-admin/auth");
 const { getFirestore, FieldValue, FieldPath } = require("firebase-admin/firestore");
@@ -92,6 +93,62 @@ function jobIdForDriver(driverId) { return crypto.createHash("sha256").update(te
 function hashIdentity(value) { return crypto.createHash("sha256").update(text(value)).digest("hex"); }
 function matchAlias(value, aliases) { return aliases.has(normalized(value)); }
 function safeErrorMessage(error, fallback) { return text(error?.message || fallback).slice(0, 500); }
+
+
+function debtPenaltyMoney(value) {
+  const number = Number(value ?? 0);
+  return Number.isFinite(number) ? Math.max(0, Math.round(number * 100) / 100) : 0;
+}
+function debtPenaltyTimestampMs(value) {
+  if (!value) return 0;
+  if (typeof value.toMillis === "function") return value.toMillis();
+  if (typeof value === "number") return value;
+  if (typeof value === "string") {
+    const parsed = Date.parse(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  if (typeof value._seconds === "number") return value._seconds * 1000 + Math.floor((value._nanoseconds || 0) / 1000000);
+  if (typeof value.seconds === "number") return value.seconds * 1000 + Math.floor((value.nanoseconds || 0) / 1000000);
+  return 0;
+}
+function debtPenaltyDayKey(ms = Date.now()) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone:"America/Argentina/Buenos_Aires", year:"numeric", month:"2-digit", day:"2-digit" }).format(new Date(ms));
+}
+function debtPenaltyStatusIsActive(row = {}) {
+  const raw = normalized(row.status || row.debtStatus || row.estado || "active");
+  if (row.cancelled === true || row.cancelado === true) return false;
+  if (raw.includes("cancel") || raw.includes("paid") || raw.includes("pagad") || raw.includes("liquidad") || raw.includes("closed") || raw.includes("cerrad")) return false;
+  return true;
+}
+function debtPenaltyCreatedMs(row = {}) {
+  return debtPenaltyTimestampMs(row.createdAt)
+    || debtPenaltyTimestampMs(row.createdAtClient)
+    || debtPenaltyTimestampMs(row.createdAtMs)
+    || debtPenaltyTimestampMs(row.incidentDate)
+    || debtPenaltyTimestampMs(row.fechaIncidente);
+}
+function debtPenaltyRemaining(row = {}) {
+  const explicit = row.remainingAmount ?? row.saldoPendiente ?? row.remainingBalance ?? row.balance;
+  if (explicit !== undefined && explicit !== null && explicit !== "") return debtPenaltyMoney(explicit);
+  const total = debtPenaltyMoney(row.totalAmount ?? row.originalAmount ?? row.amount ?? row.montoTotal ?? row.monto);
+  const paid = debtPenaltyMoney(row.paidAmount ?? row.amountPaid ?? row.importePagado ?? 0);
+  return debtPenaltyMoney(total - paid);
+}
+function debtPenaltyDaysToApply({ row, nowMs, rate }) {
+  if (!(rate > 0)) return 0;
+  const graceDays = Math.max(0, Math.trunc(Number(row.penaltyGraceDays ?? 15) || 15));
+  const createdMs = debtPenaltyCreatedMs(row);
+  const penaltyStartMs = debtPenaltyTimestampMs(row.penaltyStartAt)
+    || debtPenaltyTimestampMs(row.penaltyStartAtMs)
+    || (createdMs ? createdMs + graceDays * 86400000 : 0);
+  if (!penaltyStartMs || nowMs < penaltyStartMs) return 0;
+  const lastMs = debtPenaltyTimestampMs(row.lastPenaltyAppliedAt) || debtPenaltyTimestampMs(row.lastPenaltyAppliedAtMs);
+  const todayStart = Math.floor(nowMs / 86400000) * 86400000;
+  const firstPenaltyDay = Math.floor(penaltyStartMs / 86400000) * 86400000;
+  const nextDay = lastMs > 0 ? Math.floor(lastMs / 86400000) * 86400000 + 86400000 : firstPenaltyDay;
+  if (nextDay > todayStart) return 0;
+  return Math.max(0, Math.min(60, Math.floor((todayStart - nextDay) / 86400000) + 1));
+}
 
 
 async function disableAndDeleteAuthUser(uid) {
@@ -981,3 +1038,82 @@ exports.onBillingRecordWritePersonalRecord = onDocumentWritten({
   const affected = new Set([personalRecordUid(before), personalRecordUid(after)].filter(Boolean));
   for (const uid of affected) await recomputePersonalRecord(uid);
 });
+
+exports.applyDailyDebtPenalties = onSchedule({
+  schedule: "15 3 * * *",
+  timeZone: "America/Argentina/Buenos_Aires",
+  region: "southamerica-east1",
+  timeoutSeconds: 540,
+  memory: "512MiB"
+}, async () => {
+  const nowMs = Date.now();
+  const todayKey = debtPenaltyDayKey(nowMs);
+  const snap = await db.collection("deudas_choferes").limit(1000).get();
+  let batch = db.batch();
+  let writes = 0;
+  let processed = 0;
+  let skipped = 0;
+  let totalInterest = 0;
+  const commitIfNeeded = async (force = false) => {
+    if (!writes) return;
+    if (!force && writes < 420) return;
+    await batch.commit();
+    batch = db.batch();
+    writes = 0;
+  };
+
+  for (const docSnap of snap.docs) {
+    const row = docSnap.data() || {};
+    if (row.penaltyEnabled === false) { skipped += 1; continue; }
+    if (!debtPenaltyStatusIsActive(row)) { skipped += 1; continue; }
+    if (String(row.lastPenaltyAppliedDay || "") === todayKey) { skipped += 1; continue; }
+    const remaining = debtPenaltyRemaining(row);
+    if (!(remaining > 0)) { skipped += 1; continue; }
+    const rate = Number(row.penaltyDailyRate ?? 0.03);
+    const days = debtPenaltyDaysToApply({ row, nowMs, rate });
+    if (!(days > 0)) { skipped += 1; continue; }
+    const interestAmount = debtPenaltyMoney(remaining * (Math.pow(1 + rate, days) - 1));
+    if (!(interestAmount > 0)) { skipped += 1; continue; }
+    const newBalance = debtPenaltyMoney(remaining + interestAmount);
+    const driverUid = text(row.driverUid || row.choferUid || row.uid || row.driverId);
+    const debtId = text(row.debtId || row.id || docSnap.id) || docSnap.id;
+    const movementId = `penalty_${docSnap.id}_${todayKey}`;
+
+    batch.set(docSnap.ref, {
+      remainingAmount: newBalance,
+      saldoPendiente: newBalance,
+      penaltyAccruedAmount: FieldValue.increment(interestAmount),
+      lastPenaltyAppliedAt: FieldValue.serverTimestamp(),
+      lastPenaltyAppliedAtMs: nowMs,
+      lastPenaltyAppliedDay: todayKey,
+      updatedAt: FieldValue.serverTimestamp(),
+      updatedAtMs: nowMs,
+      sourceModule: "pendientes"
+    }, { merge:true });
+    writes += 1;
+
+    batch.set(db.collection("deuda_movimientos").doc(movementId), {
+      movementId,
+      driverUid,
+      debtId,
+      type: "penalty",
+      amount: interestAmount,
+      previousBalance: remaining,
+      newBalance,
+      rate,
+      days,
+      dayKey: todayKey,
+      createdAt: FieldValue.serverTimestamp(),
+      createdAtMs: nowMs,
+      sourceModule: "pendientes",
+      version: "applyDailyDebtPenalties-v1"
+    }, { merge:false });
+    writes += 1;
+    processed += 1;
+    totalInterest = debtPenaltyMoney(totalInterest + interestAmount);
+    await commitIfNeeded(false);
+  }
+  await commitIfNeeded(true);
+  console.info("applyDailyDebtPenalties", { processed, skipped, scanned:snap.size, totalInterest, todayKey });
+});
+
