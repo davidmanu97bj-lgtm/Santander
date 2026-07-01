@@ -1,4 +1,4 @@
-export const DRIVER_DEBT_VERSION = "v2.2.3-driver-incidents";
+export const DRIVER_DEBT_VERSION = "v2.3.0-pendientes";
 
 const text = value => String(value ?? "").trim();
 const token = value => text(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[\s-]+/g, "_");
@@ -117,8 +117,13 @@ export function normalizeDebt(row = {}, activeWeeklyPeriodId = "") {
   const installmentCount = Math.max(1, Number((row.installmentCount ?? row.cantidadCuotas ?? installments.length) || 1) || 1);
   const next = installments.find(item => !["paid","settled","cancelled","canceled","anulada","cancelado"].includes(item.status));
   const weeklyInstallmentAmount = moneyValue(next?.amount ?? row.weeklyInstallmentAmount ?? row.firstInstallmentAmount ?? row.cuotaSemanal);
-  const typeToken = token(row.reason || row.reasonLabel || row.tipo || row.category || "fine");
-  const type = typeToken.includes("crash") || typeToken.includes("choque") ? "crash" : typeToken.includes("other") || typeToken.includes("otro") ? "other" : "fine";
+  const typeToken = token(row.reason || row.reasonLabel || row.tipo || row.category || row.type || "fine");
+  const type = typeToken.includes("crash") || typeToken.includes("choque") ? "crash"
+    : typeToken.includes("personal_loan") || typeToken.includes("prestamo") || typeToken.includes("loan") ? "personal_loan"
+    : typeToken.includes("advance") || typeToken.includes("adelanto") ? "advance"
+    : typeToken.includes("other") || typeToken.includes("otro") ? "other"
+    : "fine";
+  const typeLabel = type === "crash" ? "CHOQUE" : type === "personal_loan" ? "PRÉSTAMO" : type === "advance" ? "ADELANTO" : type === "other" ? "OTRO CARGO" : "MULTA";
   return Object.freeze({
     ...row,
     id:text(row.id || row.debtId || row.documentId),
@@ -127,7 +132,7 @@ export function normalizeDebt(row = {}, activeWeeklyPeriodId = "") {
     vehicleId:text(row.vehicleId || row.vehiculoId || row.originalVehicleId),
     vehiclePlate:text(row.vehiclePlate || row.patente || row.originalVehiclePlate),
     type,
-    typeLabel:type === "crash" ? "CHOQUE" : type === "other" ? "OTRO CARGO" : "MULTA",
+    typeLabel,
     description:text(row.description || row.descripcion || row.reasonDetail || row.notes || row.observaciones || "Sin descripción"),
     adminNotes:text(row.adminNotes || row.observacionesAdministrador || row.notes || row.observaciones),
     incidentDate:row.incidentDate || row.fechaIncidente || row.date || row.fecha || row.createdAt || null,
@@ -156,14 +161,17 @@ export function summarizeDebts(rows = [], activeWeeklyPeriodId = "") {
   const installment = active.filter(row => row.status === "installment");
   const totalPending = active.reduce((sum, row) => sum + row.remainingAmount, 0);
   const weeklyTotal = active.reduce((sum, row) => sum + Math.min(row.remainingAmount, row.weeklyInstallmentAmount || 0), 0);
+  const interestTotal = active.reduce((sum, row) => sum + moneyValue(row.penaltyAccruedAmount ?? row.interestAccruedAmount ?? row.intereses ?? row.mora ?? 0), 0);
   const fines = active.filter(row => row.type === "fine").length;
   const crashes = active.filter(row => row.type === "crash").length;
+  const personalLoans = active.filter(row => row.type === "personal_loan").length;
+  const advances = active.filter(row => row.type === "advance").length;
   const dashboard = pending.length
     ? { code:"pending", label:"Pago pendiente", fullLabel:`${pending.length} pago${pending.length === 1 ? "" : "s"} pendiente${pending.length === 1 ? "" : "s"}`, amount:totalPending }
     : installment.length
       ? { code:"installment", label:`${formatCompactMoney(totalPending)} en cuotas`, fullLabel:`${formatCompactMoney(totalPending)} en cuotas`, amount:totalPending }
       : { code:"ok", label:"Sin deudas", fullLabel:"Sin deudas", amount:0 };
-  return Object.freeze({ normalized:Object.freeze(normalized), active:Object.freeze(active), totalPending:moneyValue(totalPending), weeklyTotal:moneyValue(weeklyTotal), fines, crashes, pendingCount:pending.length, installmentCount:installment.length, dashboard:Object.freeze(dashboard) });
+  return Object.freeze({ normalized:Object.freeze(normalized), active:Object.freeze(active), totalPending:moneyValue(totalPending), weeklyTotal:moneyValue(weeklyTotal), interestTotal:moneyValue(interestTotal), fines, crashes, personalLoans, advances, pendingCount:pending.length, installmentCount:installment.length, dashboard:Object.freeze(dashboard) });
 }
 
 export function formatCompactMoney(value) {
