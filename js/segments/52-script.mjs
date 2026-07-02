@@ -9,7 +9,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     ranking:true, dailyRanking:true, derivationRanking:true, weeklyClosure:true, weeklyMileage:true
   });
 
-  const VERSION = "explora-pago-home-v50-admin-activity-global";
+  const VERSION = "explora-pago-home-v51-activity-photo-viewer";
   const AR_TZ = "America/Argentina/Cordoba";
   const EXPLORA_WHATSAPP = "5493757461564";
   const EXPLORA_WHATSAPP_DISPLAY = "+5493757461564";
@@ -332,11 +332,80 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     return safe(row.id || row.debtId || row.documentId || row.uid || "");
   }
 
+  const PHOTO_DIRECT_FIELDS = Object.freeze([
+    "receiptUrl", "comprobanteUrl", "attachmentUrl", "fileUrl", "downloadUrl", "url",
+    "photoUrl", "fotoUrl", "imageUrl", "voucherUrl", "proofUrl", "proofImageUrl",
+    "receiptDownloadUrl", "comprobanteDownloadUrl", "comprobantePagoUrl", "comprobanteTransferenciaUrl",
+    "driverReceiptUrl", "adminReceiptUrl", "davidReceiptUrl"
+  ]);
+  const PHOTO_OBJECT_FIELDS = Object.freeze(["receipt", "comprobante", "attachment", "file", "photo", "foto", "image", "proof"]);
+  const PHOTO_ARRAY_FIELDS = Object.freeze(["attachments", "files", "receipts", "comprobantes", "photos", "fotos", "images", "evidences"]);
+
+  function rowPhotoAttachment(row = {}) {
+    if (!row) return null;
+    for (const field of PHOTO_DIRECT_FIELDS) {
+      const url = safe(row[field]);
+      if (url) {
+        return {
+          url,
+          name:safe(row.receiptName || row.fileName || row.attachmentName || row.comprobanteName || row.photoName || row.name || "Comprobante"),
+          mime:safe(row.receiptMime || row.mimeType || row.contentType || row.fileType || "")
+        };
+      }
+    }
+    for (const field of PHOTO_OBJECT_FIELDS) {
+      const item = row[field];
+      if (!item || typeof item !== "object") continue;
+      const url = safe(item.url || item.receiptUrl || item.downloadUrl || item.fileUrl || item.photoUrl || item.imageUrl || item.comprobanteUrl);
+      if (url) {
+        return {
+          url,
+          name:safe(item.name || item.fileName || item.originalName || item.title || row.receiptName || "Comprobante"),
+          mime:safe(item.mime || item.mimeType || item.contentType || row.receiptMime || "")
+        };
+      }
+    }
+    for (const field of PHOTO_ARRAY_FIELDS) {
+      const arr = Array.isArray(row[field]) ? row[field] : [];
+      for (const item of arr) {
+        if (!item || typeof item !== "object") continue;
+        const url = safe(item.url || item.receiptUrl || item.downloadUrl || item.fileUrl || item.photoUrl || item.imageUrl || item.comprobanteUrl);
+        if (url) {
+          return {
+            url,
+            name:safe(item.name || item.fileName || item.originalName || item.title || row.receiptName || "Comprobante"),
+            mime:safe(item.mime || item.mimeType || item.contentType || row.receiptMime || "")
+          };
+        }
+      }
+    }
+    return null;
+  }
+
+  function rowHasAttachment(row = {}) {
+    return !!rowPhotoAttachment(row);
+  }
+
   function debtHasAttachment(row = {}) {
-    if (!row) return false;
-    if (row.receiptUrl || row.comprobanteUrl || row.attachmentUrl || row.fileUrl || row.downloadUrl || row.url) return true;
-    const arrays = [row.attachments, row.files, row.receipts, row.comprobantes].filter(Array.isArray);
-    return arrays.some(arr => arr.some(entry => entry && (entry.url || entry.receiptUrl || entry.downloadUrl || entry.fileUrl)));
+    return rowHasAttachment(row);
+  }
+
+  function activityPhotoKey(type = "activity", row = {}) {
+    const raw = safe(row.id || row.paymentId || row.debtPaymentId || row.debtId || row.closureId || row.documentId || row.uid || row.createdAtMs || row.updatedAtMs || rowMs(row));
+    return `${safe(type || "activity")}:${raw || rowMs(row) || Date.now()}`;
+  }
+
+  function activityPhotoRegistryRow(activity = {}) {
+    const source = activity.source || {};
+    return {
+      ...source,
+      __photoKey:activity.photoKey,
+      photoKey:activity.photoKey,
+      photoTitle:activity.photoTitle || activity.title || "Comprobante",
+      photoMeta:activity.photoMeta || activity.meta || "Comprobante cargado",
+      photoAmount:Number.isFinite(Number(activity.photoAmount)) ? Number(activity.photoAmount) : abs(activity.amount || 0),
+      activityType:activity.type || "activity"
+    };
   }
 
   function summarizePendingDebts(rows = state.debts) {
@@ -3051,13 +3120,19 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       const amount = amountOf(row), method = methodOf(row), at = rowMs(row);
       if (!(amount > 0)) continue;
       const cashbox = method === "cash" ? amount * .05 : 0;
+      const paymentHasPhoto = method !== "cash" && rowHasAttachment(row);
       rows.push({
         at, type:"payment", method, source:row, driverName:driverNameForRow(row), title:`${dateTimeShort(at)} · ${paymentLabel(method)}`,
         meta:safe(row.description || row.detalle || row.notes || row.ruta || "Servicio registrado"),
         detail: method === "cash"
           ? `Cobró el chofer en efectivo: ${currency(amount)} · caja chica separada ${currency(cashbox)}`
           : `Cobró Explora: ${currency(amount)} · no genera caja chica`,
-        amount, positive:true
+        amount, positive:true,
+        hasPhoto:paymentHasPhoto,
+        photoKey:paymentHasPhoto ? activityPhotoKey(`payment_${method}`, row) : "",
+        photoTitle:paymentLabel(method),
+        photoMeta:"Comprobante digital de Explora",
+        photoAmount:amount
       });
     }
 
@@ -3079,11 +3154,17 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       const at = rowMs(row);
       const { amount, driverPart, exploraPart } = expenseParts(row);
       if (!(amount > 0)) continue;
+      const expenseHasPhoto = rowHasAttachment(row);
       rows.push({
         at, type:"expense", source:row, driverName:driverNameForRow(row), title:`${dateTimeShort(at)} · ${expenseTypeLabel(row)}`,
         meta:safe(row.notes || row.descripcion || row.description || "Gasto operativo"),
         detail: `Gasto cargado por el chofer: ${currency(amount)} · Explora reintegra ${currency(exploraPart)} · Parte chofer ${currency(driverPart)}`,
-        amount:-amount, negative:true
+        amount:-amount, negative:true,
+        hasPhoto:expenseHasPhoto,
+        photoKey:expenseHasPhoto ? activityPhotoKey("expense", row) : "",
+        photoTitle:expenseTypeLabel(row),
+        photoMeta:"Comprobante de gasto",
+        photoAmount:amount
       });
     }
 
@@ -3093,12 +3174,17 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       const at = debtCreatedMs(row) || rowMs(row);
       const remaining = debtRemainingAmount(row);
       const debtId = debtActivityId(row);
+      const debtHasPhoto = debtHasAttachment(row);
       rows.push({
         at, type:"debt", source:row, driverName:driverNameForRow(row), title:`${dateTimeShort(at)} · ${debtTypeLabel(row)}`,
         meta:safe(row.description || row.descripcion || row.reasonDetail || row.notes || "Pendiente cargado por administrador"),
         detail:`Saldo actual independiente: ${currency(remaining)} · no afecta facturación`,
         amount:-remaining, negative:true,
-        debtId, hasPhoto: !!(debtId && debtHasAttachment(row))
+        debtId, hasPhoto:debtHasPhoto,
+        photoKey:debtHasPhoto ? activityPhotoKey("debt", row) : "",
+        photoTitle:debtTypeLabel(row),
+        photoMeta:"Comprobante de pendiente",
+        photoAmount:debtTotalAmount(row) || remaining
       });
     }
 
@@ -3107,11 +3193,17 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       const at = rowMs(row);
       const amount = amountOf(row);
       if (!(amount > 0)) continue;
+      const debtPaymentHasPhoto = rowHasAttachment(row);
       rows.push({
         at, type:"debt_payment", source:row, driverName:driverNameForRow(row), title:`${dateTimeShort(at)} · Reducción de deuda`,
         meta:safe(row.driverName || row.choferNombre || "Comprobante cargado"),
         detail:`Pago aplicado: ${currency(amount)} · saldo nuevo ${currency(row.newBalance || 0)}`,
-        amount, positive:true
+        amount, positive:true,
+        hasPhoto:debtPaymentHasPhoto,
+        photoKey:debtPaymentHasPhoto ? activityPhotoKey("debt_payment", row) : "",
+        photoTitle:"Reducción de deuda",
+        photoMeta:"Comprobante de pago",
+        photoAmount:amount
       });
     }
 
@@ -3119,11 +3211,17 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       const at = rowMs(row);
       const closureKind = closureKindOf(row);
       const stateText = closureActivityStateText(row);
+      const closureHasPhoto = rowHasAttachment(row) || !!closureProofUrl(row);
       rows.push({
         at, type:"closure", source:row, driverName:driverNameForRow(row), closureId:safe(row.id || row.closureId), tone:closurePayerClass(row), title:`${dateTimeShort(at)} · ${closureTitle(closureKind)} · ${stateText}`,
         meta:closureActivityMeta(row),
         detail:`${closureStatusText(row)} · A rendir: ${currency(row.amountDueFromDriver || 0)} · A cobrar: ${currency(row.amountDueToDriver || 0)}`,
-        amount:0
+        amount:0,
+        hasPhoto:closureHasPhoto,
+        photoKey:closureHasPhoto ? activityPhotoKey("closure", row) : "",
+        photoTitle:closureTitle(closureKind),
+        photoMeta:"Comprobante de cierre",
+        photoAmount:Math.max(number(row.amountDueFromDriver || 0), number(row.amountDueToDriver || 0), number(row.mainTotal || 0))
       });
     }
     return rows.filter(adminActivityMatches).sort((a,b)=>b.at-a.at).slice(0, adminMode ? 60 : 12);
@@ -3480,12 +3578,13 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const list = $("payActivityList");
     if (!list) return;
     const rows = movementRows(summary);
+    try { window.ExploraActivityPhotoRows = rows.filter(row => row.hasPhoto && row.photoKey).map(activityPhotoRegistryRow); } catch (_) {}
     if (!rows.length) { list.innerHTML = `<div class="pay-activity-empty">${isAdmin() ? "No hay actividades con esos filtros." : "Todavía no hay cobros ni gastos en el ciclo abierto."}</div>`; return; }
     list.innerHTML = rows.map(row => {
       const closureAttr = row.type === "closure" && row.closureId ? ` data-pay-activity-closure="${esc(row.closureId)}" role="button" tabindex="0"` : "";
       const closureTone = row.type === "closure" ? ` ${esc(row.tone || "")}` : "";
-      const photoButton = row.type === "debt" && row.hasPhoto && row.debtId
-        ? `<button class="pay-activity-photo" type="button" data-notification-attachment="${esc(row.debtId)}">ver foto</button>`
+      const photoButton = row.hasPhoto && row.photoKey
+        ? `<button class="pay-activity-photo" type="button" data-notification-attachment="${esc(row.photoKey)}">ver foto</button>`
         : "";
       const photoClass = photoButton ? " has-photo-action" : "";
       const driverLine = isAdmin() ? `<div class="pay-activity-driver-name">${esc(row.driverName || "Chofer")}</div>` : "";

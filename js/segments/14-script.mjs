@@ -9,42 +9,62 @@ const money = (v) => new Intl.NumberFormat("es-AR", { style:"currency", currency
 const state = { rows: [] };
 
 function normalizedId(row = {}) {
-  return String(row.id || row.debtId || row.documentId || row.uid || "").trim();
+  return String(row.__photoKey || row.photoKey || row.id || row.debtId || row.paymentId || row.closureId || row.documentId || row.uid || "").trim();
+}
+
+function rowMatchesViewerId(row = {}, wanted = "") {
+  const id = String(wanted || "").trim();
+  if (!id) return false;
+  if (normalizedId(row) === id) return true;
+  return String(row.id || row.debtId || row.paymentId || row.closureId || row.documentId || row.uid || "").trim() === id;
 }
 
 function findDebtById(id) {
-  const wanted = String(id || "");
-  return state.rows.find((row) => normalizedId(row) === wanted)
-    || window.ExploraPendingDebtRows?.find?.((row) => normalizedId(row) === wanted)
-    || window.ExploraDriverIncidents?.getState?.().rows?.find?.((row) => normalizedId(row) === wanted)
-    || window.ExploraDriverIncidents?.getState?.().summary?.normalized?.find?.((row) => normalizedId(row) === wanted)
+  const wanted = String(id || "").trim();
+  return state.rows.find((row) => rowMatchesViewerId(row, wanted))
+    || window.ExploraActivityPhotoRows?.find?.((row) => rowMatchesViewerId(row, wanted))
+    || window.ExploraPendingDebtRows?.find?.((row) => rowMatchesViewerId(row, wanted))
+    || window.ExploraDriverIncidents?.getState?.().rows?.find?.((row) => rowMatchesViewerId(row, wanted))
+    || window.ExploraDriverIncidents?.getState?.().summary?.normalized?.find?.((row) => rowMatchesViewerId(row, wanted))
     || null;
 }
 
 function firstAttachment(row = {}) {
-  const direct = [
-    row.receiptUrl,
-    row.comprobanteUrl,
-    row.attachmentUrl,
-    row.fileUrl,
-    row.downloadUrl,
-    row.url
-  ].find(Boolean);
+  const directFields = [
+    "receiptUrl", "comprobanteUrl", "attachmentUrl", "fileUrl", "downloadUrl", "url",
+    "photoUrl", "fotoUrl", "imageUrl", "voucherUrl", "proofUrl", "proofImageUrl",
+    "receiptDownloadUrl", "comprobanteDownloadUrl", "comprobantePagoUrl", "comprobanteTransferenciaUrl",
+    "driverReceiptUrl", "adminReceiptUrl", "davidReceiptUrl"
+  ];
+  const directField = directFields.find((field) => row[field]);
+  const direct = directField ? row[directField] : null;
   if (direct) {
     return {
       url: String(direct),
-      name: String(row.receiptName || row.fileName || row.attachmentName || "Comprobante"),
-      mime: String(row.receiptMime || row.mimeType || row.contentType || "")
+      name: String(row.receiptName || row.fileName || row.attachmentName || row.comprobanteName || row.photoName || "Comprobante"),
+      mime: String(row.receiptMime || row.mimeType || row.contentType || row.fileType || "")
     };
   }
 
-  const arrays = [row.attachments, row.files, row.receipts, row.comprobantes].filter(Array.isArray);
+  const objects = [row.receipt, row.comprobante, row.attachment, row.file, row.photo, row.foto, row.image, row.proof].filter((item) => item && typeof item === "object");
+  for (const item of objects) {
+    const url = item.url || item.receiptUrl || item.downloadUrl || item.fileUrl || item.photoUrl || item.imageUrl || item.comprobanteUrl;
+    if (url) {
+      return {
+        url: String(url),
+        name: String(item.name || item.fileName || item.originalName || item.title || row.receiptName || "Comprobante"),
+        mime: String(item.mime || item.mimeType || item.contentType || row.receiptMime || "")
+      };
+    }
+  }
+
+  const arrays = [row.attachments, row.files, row.receipts, row.comprobantes, row.photos, row.fotos, row.images, row.evidences].filter(Array.isArray);
   for (const arr of arrays) {
-    const item = arr.find((entry) => entry && (entry.url || entry.receiptUrl || entry.downloadUrl || entry.fileUrl));
+    const item = arr.find((entry) => entry && (entry.url || entry.receiptUrl || entry.downloadUrl || entry.fileUrl || entry.photoUrl || entry.imageUrl || entry.comprobanteUrl));
     if (item) {
       return {
-        url: String(item.url || item.receiptUrl || item.downloadUrl || item.fileUrl),
-        name: String(item.name || item.fileName || item.originalName || row.receiptName || "Comprobante"),
+        url: String(item.url || item.receiptUrl || item.downloadUrl || item.fileUrl || item.photoUrl || item.imageUrl || item.comprobanteUrl),
+        name: String(item.name || item.fileName || item.originalName || item.title || row.receiptName || "Comprobante"),
         mime: String(item.mime || item.mimeType || item.contentType || row.receiptMime || "")
       };
     }
@@ -119,11 +139,11 @@ function openPhotoModal(row) {
   const meta = $("debtPhotoMeta");
   const body = $("debtPhotoBody");
   const open = $("debtPhotoOpen");
-  const label = row.reasonLabel || row.reason || row.type || "Pendiente";
-  const amount = Number(row.totalAmount || row.amount || row.remainingAmount || row.saldoPendiente || 0);
+  const label = row.photoTitle || row.reasonLabel || row.reason || row.type || "Comprobante";
+  const amount = Number(row.photoAmount ?? row.totalAmount ?? row.amount ?? row.remainingAmount ?? row.saldoPendiente ?? 0);
 
-  if (title) title.textContent = `${label} · ${money(amount)}`;
-  if (meta) meta.textContent = attachment.name || "Archivo cargado por administrador";
+  if (title) title.textContent = amount > 0 && !/\$/.test(String(label)) ? `${label} · ${money(amount)}` : String(label);
+  if (meta) meta.textContent = row.photoMeta || attachment.name || "Comprobante cargado";
   if (open) open.href = attachment.url;
   if (body) {
     body.innerHTML = isImageAttachment(attachment)
