@@ -9,7 +9,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     ranking:true, dailyRanking:true, derivationRanking:true, weeklyClosure:true, weeklyMileage:true
   });
 
-  const VERSION = "explora-pago-home-v50-admin-supplier-flow";
+  const VERSION = "explora-pago-home-v49-pendientes-ui-fix";
   const AR_TZ = "America/Argentina/Cordoba";
   const EXPLORA_WHATSAPP = "5493757461564";
   const EXPLORA_WHATSAPP_DISPLAY = "+5493757461564";
@@ -28,7 +28,6 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     profile:{},
     selectedDriverUid:"",
     selectedDriverName:"",
-    adminHubSelectedUid:"",
     db:null,
     auth:null,
     storage:null,
@@ -330,38 +329,6 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     return arrays.some(arr => arr.some(entry => entry && (entry.url || entry.receiptUrl || entry.downloadUrl || entry.fileUrl)));
   }
 
-  function firstReceiptAttachment(row = {}) {
-    if (!row) return null;
-    const direct = [
-      row.receiptUrl, row.comprobanteUrl, row.attachmentUrl, row.fileUrl, row.downloadUrl, row.downloadURL,
-      row.adminReceiptUrl, row.driverReceiptUrl, row.davidReceiptUrl, row.clientReceiptUrl, row.url
-    ].find(Boolean);
-    if (direct) {
-      return {
-        url:safe(direct),
-        name:safe(row.receiptName || row.fileName || row.attachmentName || row.receiptFileName || row.originalFileName || "Comprobante"),
-        mime:safe(row.receiptMimeType || row.receiptMime || row.mimeType || row.contentType || row.fileType || "")
-      };
-    }
-    const arrays = [row.attachments, row.files, row.receipts, row.comprobantes, row.comprobantesAdjuntos].filter(Array.isArray);
-    for (const arr of arrays) {
-      const entry = arr.find(item => item && (item.url || item.receiptUrl || item.downloadUrl || item.downloadURL || item.fileUrl));
-      if (!entry) continue;
-      return {
-        url:safe(entry.url || entry.receiptUrl || entry.downloadUrl || entry.downloadURL || entry.fileUrl),
-        name:safe(entry.name || entry.fileName || entry.originalName || entry.receiptName || row.receiptName || "Comprobante"),
-        mime:safe(entry.mime || entry.mimeType || entry.contentType || row.receiptMimeType || row.receiptMime || "")
-      };
-    }
-    return null;
-  }
-
-  function activityReceiptButton(row = {}) {
-    if (!row?.requiresReceipt) return "";
-    if (!row.receiptUrl) return `<span class="pay-activity-photo is-missing" title="Este movimiento requiere comprobante y no tiene foto cargada">sin foto</span>`;
-    return `<button class="pay-activity-photo" type="button" data-pay-activity-receipt="${esc(row.receiptUrl)}" data-pay-activity-receipt-title="${esc(row.receiptTitle || "Comprobante")}" data-pay-activity-receipt-mime="${esc(row.receiptMimeType || "")}" data-pay-activity-receipt-meta="${esc(row.receiptMeta || "Última actividad")}">ver foto</button>`;
-  }
-
   function summarizePendingDebts(rows = state.debts) {
     const normalized = (Array.isArray(rows) ? rows : []).filter(debtIsActive).sort((a,b)=>debtCreatedMs(a)-debtCreatedMs(b));
     const totalOriginal = normalized.reduce((sum,row)=>sum + debtTotalAmount(row), 0);
@@ -624,24 +591,6 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const shell = document.querySelector(".dashboard-shell-real");
     if (!shell) return;
     const html = `
-      <section class="explora-admin-supplier" id="payAdminSupplierScreen" hidden aria-label="Gestión por suministrador">
-        <header class="pay-admin-supplier-head">
-          <span class="pay-admin-supplier-kicker">ADMIN</span>
-          <h1>Gestión por suministrador</h1>
-          <p>Elegí un chofer por nombre o resolvé requerimientos pendientes sin buscar en Más.</p>
-        </header>
-        <section class="pay-admin-supplier-card">
-          <label for="payAdminSupplierSelect">Ingresar como chofer</label>
-          <select id="payAdminSupplierSelect"><option value="">Cargando choferes…</option></select>
-          <small>Al seleccionar, vas a operar la pantalla del chofer con permisos de administrador.</small>
-        </section>
-        <section class="pay-admin-supplier-card pay-admin-supplier-requests">
-          <div class="pay-section-head"><h2>Requerimientos pendientes</h2><button id="payAdminSupplierRefresh" type="button">Actualizar →</button></div>
-          <div class="pay-notification-list pay-admin-supplier-list" id="payAdminSupplierNotifications">
-            <div class="pay-notification-empty">No hay cierres abiertos.</div>
-          </div>
-        </section>
-      </section>
       <section aria-label="Inicio financiero Explora" class="explora-pay-home" id="exploraPagoDashboard">
         <header class="pay-topbar">
           <div class="pay-hello">
@@ -653,11 +602,6 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
             <button class="pay-icon-btn pay-bell-btn" id="payBellBtn" type="button" aria-label="Notificaciones de cierres"><svg viewBox="0 0 24 24"><path d="M18 9a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg><span class="pay-bell-badge" id="payBellBadge" hidden>0</span></button>
           </div>
         </header>
-        <div class="pay-admin-mode-banner" id="payAdminModeBanner" hidden>
-          <span>🛡️ Gestión por suministrador</span>
-          <strong id="payAdminModeDriver">Operando como chofer</strong>
-          <button id="payAdminModeChange" type="button">Cambiar</button>
-        </div>
         <nav class="pay-tabs" aria-label="Resumen de caja Explora" role="tablist">
           <button class="pay-tab is-active" data-pay-tab="chofer" type="button" role="tab" aria-selected="true"><span class="pay-tab-label">Chofer</span><span class="pay-tab-alert-badge" hidden>🛎️ 0</span></button>
           <button class="pay-tab" data-pay-tab="explora" type="button" role="tab" aria-selected="false"><span class="pay-tab-label">Explora</span><span class="pay-tab-alert-badge" hidden>🛎️ 0</span></button>
@@ -883,8 +827,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     document.querySelectorAll("[data-pay-run]").forEach(button => button.addEventListener("click", () => runExistingAction(button.dataset.payRun)));
     $("payClosureActionBtn")?.addEventListener("click", () => {
       if (activeClosureKind(state.tab) === "pendientes") {
-        if (isAdmin()) openAdminDebtForSelectedDriver();
-        else openDebtPaymentModal();
+        openDebtPaymentModal();
         return;
       }
       // Pedir cierre SIEMPRE crea un cierre nuevo del período abierto actual.
@@ -925,9 +868,6 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     });
     $("payRefreshBtn")?.addEventListener("click", () => refreshOpenData("manual-refresh"));
     $("payAdminDriverSelect")?.addEventListener("change", event => selectAdminDriver(event.target?.value || ""));
-    $("payAdminSupplierSelect")?.addEventListener("change", event => selectAdminDriver(event.target?.value || ""));
-    $("payAdminSupplierRefresh")?.addEventListener("click", () => refreshOpenData("admin-supplier-refresh"));
-    $("payAdminModeChange")?.addEventListener("click", () => { selectAdminDriver(""); showPayView("inicio"); });
     $("payClosureClose")?.addEventListener("click", closeClosureModal);
     $("payClosureCancel")?.addEventListener("click", closeClosureModal);
     $("payClosureBackdrop")?.addEventListener("click", event => { if (event.target?.id === "payClosureBackdrop") closeClosureModal(); });
@@ -968,26 +908,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       if (!button) return;
       openClosureFromNotification(button.dataset.payNotificationClosure);
     });
-    $("payAdminSupplierNotifications")?.addEventListener("click", event => {
-      const button = event.target.closest("[data-pay-notification-closure]");
-      if (!button) return;
-      openClosureFromNotification(button.dataset.payNotificationClosure);
-    });
     $("payActivityList")?.addEventListener("click", event => {
-      const receiptButton = event.target.closest("[data-pay-activity-receipt]");
-      if (receiptButton) {
-        event.preventDefault();
-        event.stopPropagation();
-        openPayActivityReceipt(receiptButton);
-        return;
-      }
-      const deleteButton = event.target.closest("[data-pay-admin-delete-inline]");
-      if (deleteButton) {
-        event.preventDefault();
-        event.stopPropagation();
-        submitAdminDeleteMovement(deleteButton.dataset.payAdminDeleteInline, deleteButton.dataset.payAdminDeleteType, deleteButton).catch(error => window.alert(error?.message || "No se pudo borrar el movimiento."));
-        return;
-      }
       const row = event.target.closest("[data-pay-activity-closure]");
       if (!row) return;
       openClosureFromNotification(row.dataset.payActivityClosure);
@@ -1029,11 +950,6 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
   }
 
   function showPayView(view = "inicio") {
-    if (adminSupplierModeActive()) {
-      state.view = "inicio";
-      syncAdminSupplierVisibility();
-      return;
-    }
     const target = view === "mas" ? "mas" : view === "notificaciones" ? "notificaciones" : "inicio";
     state.view = target;
     const dashboard = $("exploraPagoDashboard");
@@ -1459,123 +1375,18 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     }
   }
 
-  function adminSupplierModeActive() {
-    return isAdmin() && !getDriverUid();
-  }
-
-  function getOperatingDriverContext() {
-    const driverUid = getDriverUid();
-    const driver = state.drivers.find(item => item.uid === driverUid) || null;
-    const operatedByAdmin = isAdmin() && !!driverUid;
-    return {
-      driverUid,
-      driverName:operatedByAdmin ? safe(state.selectedDriverName || driver?.name || "Chofer") : displayName(),
-      profileDocumentId:operatedByAdmin ? safe(driver?.id || driverUid) : safe(state.profileDocumentId || driverUid),
-      profile:operatedByAdmin ? (driver?.profile || {}) : (state.profile || {}),
-      operatedByAdmin,
-      operatedByUid:safe(state.user?.uid || state.auth?.currentUser?.uid || window.ExploraSession?.authUser?.uid || ""),
-      operatedByName:accountName(),
-      operatingMode:operatedByAdmin ? "gestion_por_suministrador" : "driver"
-    };
-  }
-
-  function publishOperatingDriverContext() {
-    try { window.ExploraPagoHomeOperatingDriver = getOperatingDriverContext(); } catch (_) {}
-  }
-
-  function renderAdminModeBanner() {
-    const banner = $("payAdminModeBanner");
-    const driver = $("payAdminModeDriver");
-    if (!banner) return;
-    const show = isAdmin() && !!getDriverUid();
-    banner.hidden = !show;
-    banner.style.display = show ? "" : "none";
-    if (driver) driver.textContent = show ? `Operando como ${state.selectedDriverName || "chofer"}` : "";
-  }
-
-  function notificationRowsMarkup(rows = []) {
-    if (!rows.length) return `<div class="pay-notification-empty">No hay cierres abiertos.</div>`;
-    return rows.map(row => {
-      const kind = closureKindOf(row) || "gastos";
-      const action = closureActionForViewer(row);
-      const driver = closureDriverName(row);
-      const requestedByRole = safe(row.requestedByRole || row.solicitadoPorRol || row.requestedRole).toLowerCase();
-      let title = isAdmin()
-        ? (requestedByRole === "driver" || requestedByRole === "chofer" ? `${driver} pidió cierre` : `Cierre de ${driver}`)
-        : (requestedByRole === "admin" || requestedByRole === "explora" ? "Explora pidió el cierre" : "Tu cierre solicitado");
-      if (action === "admin_review") title = `${driver} envió comprobante`;
-      if (action === "admin_waiting_driver") title = `Esperando comprobante de ${driver}`;
-      if (action === "driver_review") title = "Explora envió comprobante";
-      if (action === "driver_waiting_admin") title = "Esperando comprobante de Explora";
-      if (action === "driver_km") title = "Cargar KM actual";
-      const subtitle = `${closureTitle(kind)} · ${closureResultText(row)}`;
-      const status = action === "driver_km"
-        ? "Cargar KM"
-        : action === "driver_upload" || action === "admin_upload"
-          ? "Cargar comprobante"
-          : action === "admin_review"
-          ? "Revisar comprobante"
-          : action === "driver_review"
-            ? "Ver comprobante"
-            : action === "admin_waiting_driver" || action === "driver_waiting_admin"
-              ? "Esperando comprobante"
-              : "Resolver";
-      const helper = action === "driver_km" ? "Declarar KM para completar la eficiencia." : action === "admin_upload" || action === "driver_upload" ? "Resolver directamente desde este aviso." : closureStatusText(row);
-      return `<button class="pay-notification-row" data-pay-notification-closure="${esc(row.id)}" type="button">
-        <span class="pay-notification-icon">${notificationIcon(kind)}</span>
-        <span class="pay-notification-copy"><strong>${esc(title)}</strong><small>${esc(helper)}</small><em>${esc(subtitle)}</em></span>
-        <span class="pay-notification-side"><time>${esc(closureTimeLabel(row))}</time><b>${esc(status)}</b></span>
-      </button>`;
-    }).join("");
-  }
-
-  function renderAdminSupplierScreen() {
-    const screen = $("payAdminSupplierScreen");
-    const select = $("payAdminSupplierSelect");
-    const list = $("payAdminSupplierNotifications");
-    if (!screen) return;
-    const show = adminSupplierModeActive();
-    screen.hidden = !show;
-    screen.style.display = show ? "block" : "none";
-    document.body.classList.toggle("pay-admin-supplier-open", show);
-    if (!show) return;
-    if (select) {
-      select.innerHTML = [`<option value="">Seleccionar chofer…</option>`].concat(state.drivers.map(driver => `<option value="${esc(driver.uid)}">${esc(driver.name)}</option>`)).join("");
-      select.value = "";
-    }
-    if (list) list.innerHTML = notificationRowsMarkup(pendingClosureRows(""));
-  }
-
-  function syncAdminSupplierVisibility() {
-    const active = adminSupplierModeActive();
-    const dashboard = $("exploraPagoDashboard");
-    const more = $("payMoreScreen");
-    const notifications = $("payNotificationsScreen");
-    const bottom = $("payBottomNav");
-    const efficiency = $("payEfficiencyBtn");
-    renderAdminSupplierScreen();
-    if (dashboard && active) { dashboard.hidden = true; dashboard.style.display = "none"; dashboard.setAttribute("aria-hidden", "true"); }
-    if (dashboard && !active && state.view === "inicio") { dashboard.hidden = false; dashboard.style.display = ""; dashboard.setAttribute("aria-hidden", "false"); }
-    if (more && active) { more.hidden = true; more.style.display = "none"; }
-    if (notifications && active) { notifications.hidden = true; notifications.style.display = "none"; }
-    if (bottom) bottom.hidden = active;
-    if (efficiency) efficiency.hidden = active;
-    if (active) setBottomNavActive("");
-  }
-
   function renderAdminDriverPicker() {
     const picker = $("payAdminDriverPicker");
     const select = $("payAdminDriverSelect");
     const hint = $("payAdminDriverHint");
     if (!picker || !select) return;
-    if (isAdmin()) {
-      picker.hidden = true;
-      picker.style.display = "none";
-      if (hint) hint.textContent = "";
-      return;
-    }
-    picker.hidden = true;
-    picker.style.display = "none";
+    picker.hidden = !isAdmin();
+    if (!isAdmin()) return;
+    const current = safe(state.selectedDriverUid);
+    const options = [`<option value="">Seleccionar chofer…</option>`].concat(state.drivers.map(driver => `<option value="${esc(driver.uid)}">${esc(driver.name)}</option>`));
+    select.innerHTML = options.join("");
+    select.value = current;
+    if (hint) hint.textContent = current ? `Viendo datos abiertos de ${state.selectedDriverName || "chofer seleccionado"}.` : "Hasta seleccionar un chofer, todos los valores se muestran en $0.";
   }
 
   function selectAdminDriver(uid = "") {
@@ -1583,8 +1394,6 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const driver = state.drivers.find(item => item.uid === nextUid);
     state.selectedDriverUid = nextUid;
     state.selectedDriverName = driver?.name || "";
-    state.adminHubSelectedUid = "";
-    if (nextUid) state.view = "inicio";
     state.records = [];
     state.expenses = [];
     state.closures = [];
@@ -1593,7 +1402,6 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     state.pendingClosure = null;
     state.previousDetailsOpen = { chofer:false, explora:false, gastos:false, caja_chica:false, pendientes:false };
     resetTabAlertScope();
-    publishOperatingDriverContext();
     render();
     startRealtime("admin-driver-selected");
   }
@@ -2842,7 +2650,44 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
   function renderNotificationsScreen() {
     const list = $("payNotificationList");
     if (!list) return;
-    list.innerHTML = notificationRowsMarkup(pendingClosureRows(notificationDriverUid()));
+    const targetUid = notificationDriverUid();
+    const rows = pendingClosureRows(targetUid);
+    if (!rows.length) {
+      list.innerHTML = `<div class="pay-notification-empty">No tenés cierres abiertos.</div>`;
+      return;
+    }
+    list.innerHTML = rows.map(row => {
+      const kind = closureKindOf(row) || "gastos";
+      const action = closureActionForViewer(row);
+      const driver = closureDriverName(row);
+      const requestedByRole = safe(row.requestedByRole || row.solicitadoPorRol || row.requestedRole).toLowerCase();
+      let title = isAdmin()
+        ? (requestedByRole === "driver" || requestedByRole === "chofer" ? `${driver} pidió cierre` : `Cierre de ${driver}`)
+        : (requestedByRole === "admin" || requestedByRole === "explora" ? "Explora pidió el cierre" : "Tu cierre solicitado");
+      if (action === "admin_review") title = `${driver} envió comprobante`;
+      if (action === "admin_waiting_driver") title = `Esperando comprobante de ${driver}`;
+      if (action === "driver_review") title = "Explora envió comprobante";
+      if (action === "driver_waiting_admin") title = "Esperando comprobante de Explora";
+      if (action === "driver_km") title = "Cargar KM actual";
+      const subtitle = `${closureTitle(kind)} · ${closureResultText(row)}`;
+      const status = action === "driver_km"
+        ? "Cargar KM"
+        : action === "driver_upload" || action === "admin_upload"
+          ? "Cargar comprobante"
+          : action === "admin_review"
+          ? "Revisar comprobante"
+          : action === "driver_review"
+            ? "Ver comprobante"
+            : action === "admin_waiting_driver" || action === "driver_waiting_admin"
+              ? "Esperando comprobante"
+              : "Ver detalle";
+      const helper = action === "driver_km" ? "Declará el KM actual para completar la eficiencia del período." : action === "admin_upload" || action === "driver_upload" ? "Resolvé tu situación" : closureStatusText(row);
+      return `<button class="pay-notification-row" data-pay-notification-closure="${esc(row.id)}" type="button">
+        <span class="pay-notification-icon">${notificationIcon(kind)}</span>
+        <span class="pay-notification-copy"><strong>${esc(title)}</strong><small>${esc(helper)}</small><em>${esc(subtitle)}</em></span>
+        <span class="pay-notification-side"><time>${esc(closureTimeLabel(row))}</time><b>${esc(status)}</b></span>
+      </button>`;
+    }).join("");
   }
 
   function notificationIcon(kind = "gastos") {
@@ -3086,17 +2931,13 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       const amount = amountOf(row), method = methodOf(row), at = rowMs(row);
       if (!(amount > 0)) continue;
       const cashbox = method === "cash" ? amount * .05 : 0;
-      const receipt = method === "cash" ? null : firstReceiptAttachment(row);
-      const paymentId = safe(row.id || row.billingId || row.operationId || row.recordId);
       rows.push({
         at, type:"payment", title:`${dateTimeShort(at)} · ${paymentLabel(method)}`,
         meta:safe(row.description || row.detalle || row.notes || row.ruta || "Servicio registrado"),
         detail: method === "cash"
           ? `Cobró el chofer en efectivo: ${currency(amount)} · caja chica separada ${currency(cashbox)}`
           : `Cobró Explora: ${currency(amount)} · no genera caja chica`,
-        amount, positive:true,
-        requiresReceipt:method !== "cash", receiptUrl:receipt?.url || "", receiptMimeType:receipt?.mime || "", receiptTitle:`Comprobante de ${paymentLabel(method)}`, receiptMeta:safe(row.driverName || row.choferNombre || state.selectedDriverName || "Última actividad"),
-        deleteId:paymentId, deleteType:"cobro"
+        amount, positive:true
       });
     }
 
@@ -3108,8 +2949,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
         at: at + 1, type:"cashbox", title:`${dateTimeShort(at)} · Caja chica 5%`,
         meta:safe(row.description || row.detalle || row.notes || row.ruta || "Generada automáticamente por cobro efectivo"),
         detail:`Caja chica generada solo por efectivo: la tiene el chofer y debe pasarla a Explora`,
-        amount:-cashbox, negative:true,
-        deleteId:safe(row.id || row.billingId || row.operationId || row.recordId), deleteType:"caja_chica"
+        amount:-cashbox, negative:true
       });
     }
 
@@ -3117,14 +2957,11 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       const at = rowMs(row);
       const { amount, driverPart, exploraPart } = expenseParts(row);
       if (!(amount > 0)) continue;
-      const receipt = firstReceiptAttachment(row);
       rows.push({
         at, type:"expense", title:`${dateTimeShort(at)} · ${expenseTypeLabel(row)}`,
         meta:safe(row.notes || row.descripcion || row.description || "Gasto operativo"),
         detail: `Gasto cargado por el chofer: ${currency(amount)} · Explora reintegra ${currency(exploraPart)} · Parte chofer ${currency(driverPart)}`,
-        amount:-amount, negative:true,
-        requiresReceipt:true, receiptUrl:receipt?.url || "", receiptMimeType:receipt?.mime || "", receiptTitle:"Comprobante de gasto", receiptMeta:safe(row.driverName || row.choferNombre || state.selectedDriverName || "Última actividad"),
-        deleteId:safe(row.id || row.expenseId || row.gastoId || row.operationId), deleteType:"gasto"
+        amount:-amount, negative:true
       });
     }
 
@@ -3139,8 +2976,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
         meta:safe(row.description || row.descripcion || row.reasonDetail || row.notes || "Pendiente cargado por administrador"),
         detail:`Saldo actual independiente: ${currency(remaining)} · no afecta facturación`,
         amount:-remaining, negative:true,
-        debtId, hasPhoto: !!(debtId && debtHasAttachment(row)),
-        requiresReceipt:debtHasAttachment(row), receiptUrl:firstReceiptAttachment(row)?.url || "", receiptMimeType:firstReceiptAttachment(row)?.mime || "", receiptTitle:`Comprobante de ${debtTypeLabel(row)}`, receiptMeta:safe(row.driverName || row.choferNombre || state.selectedDriverName || "Pendientes")
+        debtId, hasPhoto: !!(debtId && debtHasAttachment(row))
       });
     }
 
@@ -3148,13 +2984,11 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       const at = rowMs(row);
       const amount = amountOf(row);
       if (!(amount > 0)) continue;
-      const receipt = firstReceiptAttachment(row);
       rows.push({
         at, type:"debt_payment", title:`${dateTimeShort(at)} · Reducción de deuda`,
         meta:safe(row.driverName || row.choferNombre || "Comprobante cargado"),
         detail:`Pago aplicado: ${currency(amount)} · saldo nuevo ${currency(row.newBalance || 0)}`,
-        amount, positive:true,
-        requiresReceipt:true, receiptUrl:receipt?.url || "", receiptMimeType:receipt?.mime || "", receiptTitle:"Comprobante de reducción de deuda", receiptMeta:safe(row.driverName || row.choferNombre || state.selectedDriverName || "Pendientes")
+        amount, positive:true
       });
     }
 
@@ -3162,13 +2996,11 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       const at = rowMs(row);
       const closureKind = closureKindOf(row);
       const stateText = closureActivityStateText(row);
-      const receipt = firstReceiptAttachment(row);
       rows.push({
         at, type:"closure", closureId:safe(row.id || row.closureId), tone:closurePayerClass(row), title:`${dateTimeShort(at)} · ${closureTitle(closureKind)} · ${stateText}`,
         meta:closureActivityMeta(row),
         detail:`${closureStatusText(row)} · A rendir: ${currency(row.amountDueFromDriver || 0)} · A cobrar: ${currency(row.amountDueToDriver || 0)}`,
-        amount:0,
-        requiresReceipt:closureHasProof(row), receiptUrl:receipt?.url || closureProofUrl(row) || "", receiptMimeType:receipt?.mime || safe(row.receiptMimeType || ""), receiptTitle:"Comprobante de cierre", receiptMeta:safe(closureDriverName(row) || state.selectedDriverName || "Cierre")
+        amount:0
       });
     }
     return rows.sort((a,b)=>b.at-a.at).slice(0,12);
@@ -3179,7 +3011,6 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const summary = computeSummary();
     state.latestSummary = summary;
     state.pendingClosure = pendingClosureFor(getDriverUid(), state.tab);
-    publishOperatingDriverContext();
     if (!PAY_TAB_ORDER.includes(state.tab)) state.tab = "chofer";
     document.querySelectorAll("[data-pay-tab]").forEach(button => {
       const active = button.dataset.payTab === state.tab;
@@ -3191,8 +3022,6 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     const greeting = $("payGreeting");
     if (greeting) greeting.textContent = isAdmin() ? (state.selectedDriverName ? `Chofer, ${displayName()}` : "Seleccionar chofer") : `Hola, ${displayName()}`;
     renderAdminDriverPicker();
-    renderAdminModeBanner();
-    renderAdminSupplierScreen();
     renderMainCard(summary);
     renderClosureStatus(summary);
     renderEfficiencyButton();
@@ -3207,7 +3036,6 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     }
     if ($("payClosureBackdrop")?.classList.contains("is-open")) renderClosureModal();
     if ($("payAdminDeleteBackdrop")?.classList.contains("is-open")) renderAdminDeleteModal();
-    syncAdminSupplierVisibility();
   }
 
   function pendingValueForTab(closure = {}, kind = state.tab) {
@@ -3476,13 +3304,12 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       setPendingActionMode(true);
       const pending = tabSummary(summary, "pendientes");
       const canPay = !isAdmin() && number(pending.remainingAmount || 0) > 0;
-      const canAdminAdd = isAdmin() && !!getDriverUid();
       if (action) {
         action.hidden = false;
-        action.disabled = isAdmin() ? !canAdminAdd : !canPay;
-        action.classList.toggle("is-closure-ready", isAdmin() ? canAdminAdd : canPay);
-        action.classList.toggle("is-closure-locked", isAdmin() ? !canAdminAdd : !canPay);
-        action.querySelector("span").innerHTML = isAdmin() ? `Agregar<br/>deuda` : `Reducir<br/>deuda`;
+        action.disabled = !canPay;
+        action.classList.toggle("is-closure-ready", canPay);
+        action.classList.toggle("is-closure-locked", !canPay);
+        action.querySelector("span").innerHTML = `Reducir<br/>deuda`;
       }
       if (box) { box.hidden = true; box.style.display = "none"; }
       return;
@@ -3533,17 +3360,15 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     list.innerHTML = rows.map(row => {
       const closureAttr = row.type === "closure" && row.closureId ? ` data-pay-activity-closure="${esc(row.closureId)}" role="button" tabindex="0"` : "";
       const closureTone = row.type === "closure" ? ` ${esc(row.tone || "")}` : "";
-      const photoButton = activityReceiptButton(row);
-      const deleteButton = isAdmin() && row.deleteId && row.deleteType
-        ? `<button class="pay-activity-delete" type="button" data-pay-admin-delete-inline="${esc(row.deleteId)}" data-pay-admin-delete-type="${esc(row.deleteType)}">borrar</button>`
+      const photoButton = row.type === "debt" && row.hasPhoto && row.debtId
+        ? `<button class="pay-activity-photo" type="button" data-notification-attachment="${esc(row.debtId)}">ver foto</button>`
         : "";
-      const actions = `${photoButton}${deleteButton}`;
-      const photoClass = actions ? " has-photo-action" : "";
+      const photoClass = photoButton ? " has-photo-action" : "";
       return `<article class="pay-activity ${row.type === "closure" ? "is-clickable" : ""}${closureTone}${photoClass}"${closureAttr}>
         <span class="pay-activity-icon">${activityIcon(row.type)}</span>
         <div><div class="pay-activity-title">${esc(row.title)}</div><div class="pay-activity-meta">${esc(row.meta)}</div><div class="pay-activity-detail">${esc(row.detail)}</div></div>
         <strong class="pay-activity-amount ${row.positive ? "is-positive" : row.negative ? "is-negative" : ""}">${row.amount ? (row.amount > 0 ? "+" : "") + currency(row.amount) : ""}</strong>
-        ${actions ? `<div class="pay-activity-actions">${actions}</div>` : ""}
+        ${photoButton}
       </article>`;
     }).join("");
   }
@@ -3570,32 +3395,6 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
     ].concat(top.map(row => [debtTypeLabel(row), currency(debtRemainingAmount(row))]));
     return rows.map(([label, value, className]) => `<article${className ? ` class="${esc(className)}"` : ""}><span>${esc(label)}</span><strong>${esc(value)}</strong></article>`).join("") +
       `<div class="pay-closure-alert">El pago se aplica automáticamente primero a la deuda más antigua. Este módulo no modifica la facturación.</div>`;
-  }
-
-  function openPayActivityReceipt(button) {
-    const url = safe(button?.dataset?.payActivityReceipt);
-    if (!url) return;
-    const title = safe(button?.dataset?.payActivityReceiptTitle || "Comprobante");
-    const mime = safe(button?.dataset?.payActivityReceiptMime || "");
-    const meta = safe(button?.dataset?.payActivityReceiptMeta || "Última actividad");
-    if (window.ExploraReceiptEngine?.openReceiptViewer) {
-      window.ExploraReceiptEngine.openReceiptViewer({ receiptUrl:url, receiptMimeType:mime, title, subtitle:meta });
-      return;
-    }
-    window.open(url, "_blank", "noopener");
-  }
-
-  function openAdminDebtForSelectedDriver() {
-    if (!isAdmin()) return;
-    const driverUid = getDriverUid();
-    if (!driverUid) { window.alert("Seleccioná un chofer antes de agregar una deuda."); return; }
-    const driverName = state.selectedDriverName || state.drivers.find(item => item.uid === driverUid)?.name || "Chofer";
-    try { window.ExploraAdminDebtPrefill = { driverUid, driverName, from:"pay-home-pendientes", at:Date.now() }; } catch (_) {}
-    if (typeof window.ExploraAdminTools?.openDebtForDriver === "function") {
-      window.ExploraAdminTools.openDebtForDriver(driverUid, driverName);
-      return;
-    }
-    window.ExploraAdminTools?.openDebt?.();
   }
 
   function openDebtPaymentModal() {
@@ -4404,7 +4203,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
       state.selectedDriverUid = "";
       state.selectedDriverName = "";
     }
-    state.previousDetailsOpen = { caja_chica:false, gastos:false, explora:false, chofer:false, pendientes:false };
+    state.previousDetailsOpen = { caja_chica:false, gastos:false, explora:false, chofer:false };
     forceHomeLanding();
     render();
     startRealtime("session");
@@ -4444,5 +4243,5 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/f
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once:true });
   else boot();
-  window.ExploraPagoHome = Object.freeze({ version:VERSION, render, openClosureModal, computeSummary, refreshOpenData, openEfficiencyModal, getOperatingDriverContext, selectAdminDriver });
+  window.ExploraPagoHome = Object.freeze({ version:VERSION, render, openClosureModal, computeSummary, refreshOpenData, openEfficiencyModal });
 })();

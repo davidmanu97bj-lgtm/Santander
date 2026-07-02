@@ -80,46 +80,6 @@ async function getSession() {
 function getDriverName(session) {
   return String(session.profile?.nombre || session.profile?.nombreCompleto || session.profile?.displayName || session.user?.displayName || "Chofer").trim();
 }
-function getOperatingDriverContext(session = {}) {
-  const currentUid = String(auth?.currentUser?.uid || session?.user?.uid || session?.uid || "").trim();
-  let ctx = {};
-  try {
-    if (typeof window.ExploraPagoHome?.getOperatingDriverContext === "function") ctx = window.ExploraPagoHome.getOperatingDriverContext() || {};
-    else ctx = window.ExploraPagoHomeOperatingDriver || {};
-  } catch (_) { ctx = {}; }
-  const driverUid = String(ctx.driverUid || "").trim();
-  const adminOperating = ctx.operatedByAdmin === true && !!driverUid && !!currentUid && driverUid !== currentUid;
-  if (adminOperating) {
-    return {
-      isAdminOperating:true,
-      driverUid,
-      driverName:String(ctx.driverName || "Chofer").trim() || "Chofer",
-      profileDocumentId:String(ctx.profileDocumentId || driverUid).trim() || driverUid,
-      profile:ctx.profile || {},
-      uploadedByUid:currentUid,
-      uploadedByRole:"admin",
-      createdByRole:"admin",
-      operatedByAdmin:true,
-      operatedByUid:currentUid,
-      operatedByName:String(ctx.operatedByName || "Administrador").trim() || "Administrador",
-      operatingMode:"gestion_por_suministrador"
-    };
-  }
-  return {
-    isAdminOperating:false,
-    driverUid:String(session.uid || currentUid || "").trim(),
-    driverName:getDriverName(session),
-    profileDocumentId:String(session.profileDocumentId || session.driverId || session.uid || currentUid || "").trim(),
-    profile:session.profile || {},
-    uploadedByUid:currentUid,
-    uploadedByRole:"driver",
-    createdByRole:"driver",
-    operatedByAdmin:false,
-    operatedByUid:"",
-    operatedByName:"",
-    operatingMode:"driver"
-  };
-}
 function stableId(prefix, uid) {
   return `${prefix}_${String(uid).slice(0,10)}_${Date.now()}_${globalThis.crypto?.randomUUID?.().slice(0,8) || Math.random().toString(36).slice(2,10)}`.replace(/[^a-zA-Z0-9_-]/g, "").slice(0,110);
 }
@@ -711,14 +671,8 @@ window.ExploraRegisterBillingRecord = async function(input = {}) {
     emitStage("SESSION");
     session = await getSession();
     authUid = String(auth?.currentUser?.uid || "").trim();
-    if (!authUid) throw makeAliasBillingError("auth/unauthenticated", "No se pudo verificar la sesión.");
-    const operating = getOperatingDriverContext(session);
-    const effectiveDriverUid = String(operating.driverUid || "").trim();
-    const effectiveDriverName = String(operating.driverName || getDriverName(session) || "Chofer").trim();
-    const effectiveProfileId = String(operating.profileDocumentId || session.profileDocumentId || effectiveDriverUid).trim();
-    const uploadedByRole = operating.isAdminOperating ? "admin" : "driver";
-    if (!operating.isAdminOperating && String(session.uid || "").trim() !== authUid) throw makeAliasBillingError("BILLING_AUTH_UID_MISMATCH", "El UID de la sesión no coincide con Firebase Authentication.");
-    if (!effectiveDriverUid) throw makeAliasBillingError("BILLING_DRIVER_UID_INVALID", "Selecciona un chofer antes de registrar el cobro.");
+    if (!authUid) throw makeAliasBillingError("auth/unauthenticated", "No se pudo verificar la sesión del chofer.");
+    if (String(session.uid || "").trim() !== authUid) throw makeAliasBillingError("BILLING_AUTH_UID_MISMATCH", "El UID de la sesión no coincide con Firebase Authentication.");
 
     emitStage("VALIDATION");
     paymentMethod = String(input.paymentMethod || "").toLowerCase();
@@ -727,9 +681,9 @@ window.ExploraRegisterBillingRecord = async function(input = {}) {
     receiptMethodLabel = ({card:"tarjeta",transfer:"transferencia",qr:"qr",cash:"efectivo"})[paymentMethod] || paymentMethod;
     amount = parseCurrencyInput(input.amount);
     if (!(amount > 0)) throw makeAliasBillingError("BILLING_AMOUNT_INVALID", "Ingresa un monto válido.");
-    operationId = String(input.operationId || stableId("bill", effectiveDriverUid)).replace(/[^a-zA-Z0-9_-]/g, "").slice(0,110);
+    operationId = String(input.operationId || stableId("bill", session.uid)).replace(/[^a-zA-Z0-9_-]/g, "").slice(0,110);
     if (!operationId) throw makeAliasBillingError("BILLING_ID_INVALID", "No se pudo generar el identificador del cobro.");
-    if (!effectiveDriverUid || /(?:undefined|null)/i.test(effectiveDriverUid)) throw makeAliasBillingError("BILLING_DRIVER_UID_INVALID", "No se pudo identificar al chofer.");
+    if (!session.uid || /(?:undefined|null)/i.test(session.uid)) throw makeAliasBillingError("BILLING_DRIVER_UID_INVALID", "No se pudo identificar al chofer.");
     billingRef = doc(db, "billing_records", operationId);
     const periods = activePeriods();
 
@@ -737,20 +691,19 @@ window.ExploraRegisterBillingRecord = async function(input = {}) {
       if (!(input.receiptFile instanceof File)) throw makeAliasBillingError("PAYMENT_RECEIPT_REQUIRED", "Selecciona un comprobante válido.");
       if (!(input.receiptFile.size > 0)) throw makeAliasBillingError("PAYMENT_RECEIPT_EMPTY", "El comprobante seleccionado está vacío.");
       if (!storage) throw makeAliasBillingError("storage/not-initialized", "Firebase Storage no está inicializado.");
-      if (!authUid) throw makeAliasBillingError("auth/unauthenticated", "No se pudo verificar la sesión.");
-      if (!operating.isAdminOperating && authUid !== String(session.uid || "").trim()) throw makeAliasBillingError("auth/unauthenticated", "No se pudo verificar la sesión del chofer.");
+      if (!authUid || authUid !== String(session.uid || "").trim()) throw makeAliasBillingError("auth/unauthenticated", "No se pudo verificar la sesión del chofer.");
 
       receipt = await window.motorCargaComprobanteGasto({
         file:input.receiptFile,
         context:"aliasPayment",
-        ownerUid:effectiveDriverUid,
-        driverUid:effectiveDriverUid,
+        ownerUid:authUid,
+        driverUid:authUid,
         recordId:operationId,
         weeklyPeriodId:periods.weeklyPeriodId,
-        destinationPath:`gastos/${effectiveDriverUid}/${operationId}/comprobante.{extension}`,
+        destinationPath:`gastos/${authUid}/${operationId}/comprobante.{extension}`,
         allowPdf:false,
         uploadedByUid:authUid,
-        uploadedByRole:uploadedByRole,
+        uploadedByRole:"driver",
         category:"payment",
         metadata:{ type:"payment", paymentMethod:receiptMethodLabel, receiptCategory:"cliente", amount },
         onStage:(stage,detail={})=>{
@@ -768,8 +721,8 @@ window.ExploraRegisterBillingRecord = async function(input = {}) {
 
     const now = new Date();
     const payload = {
-      billingId:operationId, id:operationId, operationId, driverUid:effectiveDriverUid, uid:effectiveDriverUid, choferUid:effectiveDriverUid,
-      choferId:effectiveProfileId, profileDocumentId:effectiveProfileId, driverName:effectiveDriverName, choferNombre:effectiveDriverName, amount, monto:amount, valor:amount, finalPrice:amount,
+      billingId:operationId, id:operationId, operationId, driverUid:session.uid, uid:session.uid, choferUid:session.uid,
+      choferId:session.profileDocumentId, profileDocumentId:session.profileDocumentId, driverName:getDriverName(session), amount, monto:amount, valor:amount, finalPrice:amount,
       paymentMethod, metodoPago:paymentMethod, financialCategory:paymentMethod === "transfer" ? "alias" : paymentMethod,
       type:receiptRequired ? "payment" : "billing", receiptCategory:receiptRequired ? "cliente" : null, receiptPaymentMethod:receiptRequired ? receiptMethodLabel : paymentMethod,
       manualTransfer:paymentMethod === "transfer", manualPointPayment:paymentMethod === "card" || paymentMethod === "qr", receiptRequired,
@@ -779,8 +732,7 @@ window.ExploraRegisterBillingRecord = async function(input = {}) {
       status:"completed", estado:"completado", source:"manual_billing", weeklyPeriodId:periods.weeklyPeriodId, periodoSemanalId:periods.weeklyPeriodId,
       monthlyPeriodId:periods.monthlyPeriodId, yearlyPeriodId:periods.yearlyPeriodId, year:periods.year, month:periods.month,
       fecha:now.toLocaleDateString("es-AR", { timeZone:AR_TZ }), hora:now.toLocaleTimeString("es-AR", { timeZone:AR_TZ, hour:"2-digit", minute:"2-digit" }),
-      ...saveReceiptMetadata(receipt || {}, { ownerUid:effectiveDriverUid, uploadedByUid:authUid, uploadedByRole }),
-      createdByUid:authUid, createdByRole:uploadedByRole, operatedByAdmin:!!operating.isAdminOperating, operatedByUid:operating.isAdminOperating ? authUid : "", operatedByName:operating.operatedByName || "", operatingMode:operating.operatingMode || "driver",
+      ...saveReceiptMetadata(receipt || {}, { ownerUid:session.uid, uploadedByUid:session.uid, uploadedByRole:"driver" }),
       createdAt:serverTimestamp(), completedAt:serverTimestamp(), updatedAt:serverTimestamp()
     };
 
@@ -788,12 +740,12 @@ window.ExploraRegisterBillingRecord = async function(input = {}) {
     await runTransaction(db, async transaction => {
       const existing = await transaction.get(billingRef);
       if (existing.exists()) {
-        if (String(existing.data()?.driverUid || existing.data()?.uid || "") !== effectiveDriverUid) throw makeAliasBillingError("BILLING_OPERATION_CONFLICT", "El identificador del cobro pertenece a otra operación.");
+        if (String(existing.data()?.driverUid || existing.data()?.uid || "") !== session.uid) throw makeAliasBillingError("BILLING_OPERATION_CONFLICT", "El identificador del cobro pertenece a otra operación.");
         return;
       }
       transaction.set(billingRef, payload);
       if (receipt) {
-        const indexPayload = buildReceiptIndexPayload({ category:"payment", recordId:operationId, driverUid:effectiveDriverUid, ownerUid:effectiveDriverUid, uploadedByUid:authUid, uploadedByRole, weeklyPeriodId:periods.weeklyPeriodId, amount, receipt, status:"uploaded" });
+        const indexPayload = buildReceiptIndexPayload({ category:"payment", recordId:operationId, driverUid:session.uid, ownerUid:session.uid, uploadedByUid:session.uid, uploadedByRole:"driver", weeklyPeriodId:periods.weeklyPeriodId, amount, receipt, status:"uploaded" });
         const detailLabel = paymentMethod === "card" ? "Tarjeta del cliente" : paymentMethod === "qr" ? "Código QR del cliente" : "Transferencia del cliente";
         Object.assign(indexPayload,{type:"payment",paymentMethod:receiptMethodLabel,receiptCategory:"cliente",detail:detailLabel});
         transaction.set(doc(db, "receipt_index", indexPayload.receiptId), indexPayload);
@@ -1854,13 +1806,6 @@ const ExploraExpenseV202 = (() => {
       setStage("SESSION");
       const user = auth?.currentUser || null;
       if (!user?.uid) throw makeError("auth/unauthenticated", "No se encontró una sesión autenticada.");
-      const session = await getSession();
-      const operating = getOperatingDriverContext(session);
-      const effectiveDriverUid = String(operating.driverUid || "").trim();
-      const effectiveDriverName = String(operating.driverName || getDriverName(session) || "Chofer").trim();
-      const effectiveProfileId = String(operating.profileDocumentId || session.profileDocumentId || effectiveDriverUid).trim();
-      const uploadedByRole = operating.isAdminOperating ? "admin" : "driver";
-      if (!effectiveDriverUid) throw makeError("EXPENSE_DRIVER_REQUIRED", "Selecciona un chofer antes de registrar el gasto.");
       expenseUploadState.weeklyPeriodId = String(activePeriods().weeklyPeriodId || "").trim();
       if (!expenseUploadState.weeklyPeriodId) throw makeError("EXPENSE_WEEKLY_PERIOD_MISSING", "No se pudo determinar la semana activa.");
 
@@ -1929,7 +1874,7 @@ const ExploraExpenseV202 = (() => {
         : `Conversión real verificada: .${expenseUploadState.sourceExtension || "—"} → .${uploadExtension} (${verifiedFormat.signature})`;
 
       setStage("STORAGE_PATH");
-      const path = `gastos/${effectiveDriverUid}/${expenseUploadState.expenseId}/comprobante.${uploadExtension}`;
+      const path = `gastos/${user.uid}/${expenseUploadState.expenseId}/comprobante.${uploadExtension}`;
       if (/undefined|null|\[object Object\]/i.test(path)) throw makeError("EXPENSE_STORAGE_PATH_INVALID", "La ruta del comprobante contiene un valor inválido.");
       expenseUploadState.receiptPath = path;
       const reference = storageRef(storage, path);
@@ -1943,12 +1888,12 @@ const ExploraExpenseV202 = (() => {
         snapshot = await uploadExpenseReceiptResumable(reference, fileToUpload, {
           contentType:uploadContentType,
           customMetadata:{
-            ownerUid:String(effectiveDriverUid),
-            driverUid:String(effectiveDriverUid),
+            ownerUid:String(user.uid),
+            driverUid:String(user.uid),
             expenseId:String(expenseUploadState.expenseId),
             weeklyPeriodId:String(expenseUploadState.weeklyPeriodId),
             uploadedByUid:String(user.uid),
-            uploadedByRole:uploadedByRole,
+            uploadedByRole:"driver",
             expenseType,
             module:"expense",
             relatedDocumentId:String(expenseUploadState.expenseId),
@@ -1975,17 +1920,17 @@ const ExploraExpenseV202 = (() => {
       const uploadedAt = serverTimestamp();
       const originalFileName = String(file.name || `comprobante.${uploadExtension}`).slice(0, 180);
       const nowMs = Date.now();
-      const profileId = effectiveProfileId || String(window.ExploraSession?.profileDocumentId || window.ExploraSession?.driverId || effectiveDriverUid || "").trim();
-      const profileName = effectiveDriverName || String(window.ExploraSession?.profile?.nombre || window.ExploraSession?.profile?.nombreCompleto || window.ExploraSession?.profile?.displayName || user.displayName || "Chofer").trim();
+      const profileId = String(window.ExploraSession?.profileDocumentId || window.ExploraSession?.driverId || user.uid || "").trim();
+      const profileName = String(window.ExploraSession?.profile?.nombre || window.ExploraSession?.profile?.nombreCompleto || window.ExploraSession?.profile?.displayName || user.displayName || "Chofer").trim();
       const expensePayload = {
         id:expenseUploadState.expenseId,
         gastoId:expenseUploadState.expenseId,
         operationId:expenseUploadState.expenseId,
         expenseId:expenseUploadState.expenseId,
-        driverUid:effectiveDriverUid,
-        choferUid:effectiveDriverUid,
-        uid:effectiveDriverUid,
-        ownerUid:effectiveDriverUid,
+        driverUid:user.uid,
+        choferUid:user.uid,
+        uid:user.uid,
+        ownerUid:user.uid,
         driverId:profileId,
         choferId:profileId,
         driverName:profileName,
@@ -2015,13 +1960,7 @@ const ExploraExpenseV202 = (() => {
         receiptSize:Number(processed.blob.size),
         receiptUploadedAt:uploadedAt,
         receiptUploadedByUid:user.uid,
-        receiptUploadedByRole:uploadedByRole,
-        createdByUid:user.uid,
-        createdByRole:uploadedByRole,
-        operatedByAdmin:!!operating.isAdminOperating,
-        operatedByUid:operating.isAdminOperating ? user.uid : "",
-        operatedByName:operating.operatedByName || "",
-        operatingMode:operating.operatingMode || "driver",
+        receiptUploadedByRole:"driver",
         createdAt:serverTimestamp(),
         updatedAt:serverTimestamp(),
         status:"active"
@@ -2033,11 +1972,11 @@ const ExploraExpenseV202 = (() => {
         category:"expense",
         categoryLabel:TYPE_LABELS[expenseType],
         recordId:expenseUploadState.expenseId,
-        driverUid:effectiveDriverUid,
-        driverName:profileName || String(profile.nombre || profile.nombreCompleto || profile.displayName || user.displayName || "Chofer"),
-        ownerUid:effectiveDriverUid,
+        driverUid:user.uid,
+        driverName:String(profile.nombre || profile.nombreCompleto || profile.displayName || user.displayName || "Chofer"),
+        ownerUid:user.uid,
         uploadedByUid:user.uid,
-        uploadedByRole:uploadedByRole,
+        uploadedByRole:"driver",
         weeklyPeriodId:expenseUploadState.weeklyPeriodId,
         amount,
         notes:expensePayload.notes,
