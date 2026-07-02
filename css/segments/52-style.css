@@ -833,3 +833,49 @@ body.explora-pay-mode.pay-notifications-open #payEfficiencyBtn{display:none!impo
   box-shadow:none;
 }
 .pay-activity-photo:active{transform:scale(.97);}
+
+/* v50 · Admin: home simplificado de últimas actividades */
+.explora-pay-home.is-admin-activity-home .pay-tabs,
+.explora-pay-home.is-admin-activity-home .pay-main-card{
+  display:none!important;
+}
+.explora-pay-home.is-admin-activity-home .pay-section{
+  margin-top:12px;
+}
+.explora-pay-home.is-admin-activity-home .pay-admin-activity-filters{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-bottom:14px;
+}
+.explora-pay-home.is-admin-activity-home .pay-admin-activity-filters[hidden]{display:none!important;}
+.pay-admin-filter-field{display:grid;gap:7px;}
+.explora-pay-home.is-admin-activity-home .pay-admin-activity-filters small{
+  grid-column:1/-1;
+  background:#f6f7fb;
+  border:1px solid rgba(212,218,235,.8);
+  border-radius:16px;
+  padding:10px 12px;
+}
+.pay-activity-driver-name{
+  display:inline-flex;
+  align-items:center;
+  width:max-content;
+  max-width:100%;
+  border-radius:999px;
+  background:#111827;
+  color:#fff;
+  font-size:11.5px;
+  font-weight:900;
+  letter-spacing:.045em;
+  text-transform:uppercase;
+  padding:4px 8px;
+  margin:0 0 7px;
+}
+.explora-admin-activity-home .pay-floating-spark{display:none!important;}
+
+@media (max-width:480px){
+  .explora-pay-home.is-admin-activity-home .pay-admin-activity-filters{
+    grid-template-columns:1fr;
+  }
+}
