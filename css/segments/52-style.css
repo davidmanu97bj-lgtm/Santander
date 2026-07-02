@@ -833,3 +833,168 @@ body.explora-pay-mode.pay-notifications-open #payEfficiencyBtn{display:none!impo
   box-shadow:none;
 }
 .pay-activity-photo:active{transform:scale(.97);}
+
+/* EXPLORA v4022 · Gestión por suministrador */
+.explora-admin-supplier{
+  width:min(760px,100%);
+  margin:0 auto;
+  padding:18px 14px 92px;
+  color:var(--pay-ink,#24283a);
+}
+.explora-admin-supplier[hidden]{display:none!important;}
+.pay-admin-supplier-head{
+  display:grid;
+  gap:7px;
+  padding:18px 4px 16px;
+}
+.pay-admin-supplier-kicker{
+  width:max-content;
+  padding:6px 10px;
+  border-radius:999px;
+  background:#111827;
+  color:#f7d987;
+  font-size:11px;
+  font-weight:950;
+  letter-spacing:.12em;
+}
+.pay-admin-supplier-head h1{
+  margin:0;
+  font-size:clamp(30px,8vw,46px);
+  line-height:.98;
+  letter-spacing:-.055em;
+  font-weight:980;
+}
+.pay-admin-supplier-head p{
+  margin:0;
+  max-width:560px;
+  color:#697086;
+  font-size:15px;
+  font-weight:760;
+  line-height:1.35;
+}
+.pay-admin-supplier-card{
+  display:grid;
+  gap:10px;
+  margin:0 0 14px;
+  padding:15px;
+  border:1px solid rgba(213,218,233,.9);
+  border-radius:24px;
+  background:rgba(255,255,255,.92);
+  box-shadow:0 12px 30px rgba(15,23,42,.08);
+}
+.pay-admin-supplier-card label{
+  font-size:12px;
+  font-weight:950;
+  color:#4e556b;
+  text-transform:uppercase;
+  letter-spacing:.055em;
+}
+.pay-admin-supplier-card select{
+  width:100%;
+  border:1px solid rgba(196,204,225,.95);
+  border-radius:18px;
+  background:#fff;
+  color:#222638;
+  font-size:17px;
+  font-weight:850;
+  padding:14px 15px;
+}
+.pay-admin-supplier-card small{
+  color:#6d7489;
+  font-size:13px;
+  font-weight:760;
+  line-height:1.3;
+}
+.pay-admin-supplier-requests .pay-section-head{
+  margin:0 0 2px;
+}
+.pay-admin-supplier-list{
+  gap:10px;
+}
+.pay-admin-mode-banner{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin:0 0 12px;
+  padding:10px 11px;
+  border-radius:18px;
+  border:1px solid rgba(194,158,57,.38);
+  background:linear-gradient(135deg,#151923,#27212d 52%,#2d230d);
+  color:#fff4ce;
+  box-shadow:0 12px 28px rgba(17,24,39,.18);
+}
+.pay-admin-mode-banner[hidden]{display:none!important;}
+.pay-admin-mode-banner span{
+  font-size:12px;
+  font-weight:950;
+  text-transform:uppercase;
+  letter-spacing:.045em;
+  white-space:nowrap;
+}
+.pay-admin-mode-banner strong{
+  min-width:0;
+  flex:1;
+  color:#fff;
+  font-size:13px;
+  font-weight:900;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.pay-admin-mode-banner button{
+  border:0;
+  border-radius:999px;
+  background:rgba(255,255,255,.14);
+  color:#fff;
+  padding:8px 10px;
+  font-size:12px;
+  font-weight:950;
+}
+.pay-activity-actions{
+  position:absolute;
+  right:13px;
+  bottom:10px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:7px;
+  max-width:calc(100% - 28px);
+  flex-wrap:wrap;
+}
+.pay-activity-actions .pay-activity-photo{
+  position:static;
+  right:auto;
+  bottom:auto;
+}
+.pay-activity-photo.is-missing{
+  display:inline-flex;
+  align-items:center;
+  min-height:28px;
+  padding:0 12px;
+  border:1px solid rgba(190,135,20,.18);
+  border-radius:999px;
+  background:#fff8e4;
+  color:#8a5b00;
+  font-size:11px;
+  font-weight:950;
+  letter-spacing:.01em;
+  text-transform:lowercase;
+}
+.pay-activity-delete{
+  min-height:28px;
+  padding:0 12px;
+  border:1px solid rgba(185,28,28,.16);
+  border-radius:999px;
+  background:#fff1f1;
+  color:#a21a1a;
+  font-size:11px;
+  font-weight:950;
+  letter-spacing:.01em;
+  text-transform:lowercase;
+}
+.pay-activity-delete:disabled{opacity:.55;}
+@media (max-width:430px){
+  .pay-admin-mode-banner{align-items:flex-start;display:grid;grid-template-columns:1fr auto;}
+  .pay-admin-mode-banner span{grid-column:1 / -1;}
+  .pay-admin-mode-banner strong{white-space:normal;}
+}
